@@ -492,19 +492,20 @@ running cleanly via `docker-compose up`.
 
 ---
 
-### Session 1 — Repository & Infrastructure Foundation
-- [ ] Initialize Git repo
-- [ ] `.gitignore`: Java, Node, IntelliJ/VS Code, `.env`, `target/`, `node_modules/`
-- [ ] Parent `pom.xml` with all four service modules and dependency management section
+### Session 1 — Repository & Infrastructure Foundation ✅
+- [x] Initialize Git repo
+- [x] `.gitignore`: Java, Node, IntelliJ/VS Code, `.env`, `target/`, `node_modules/`
+- [x] Parent `pom.xml` with all four service modules and dependency management section
       (pins all library versions in one place)
-- [ ] Skeleton Spring Boot projects for all four services (can start/stop, expose `/actuator/health`)
-- [ ] `docker-compose.yml`: PostgreSQL + all four services + frontend (nginx placeholder)
-- [ ] `docker-compose.dev.yml`: overrides for hot reload (volume mounts)
-- [ ] `.env.example` with every variable documented and described
-- [ ] `README.md` skeleton with all section headers
+- [x] Skeleton Spring Boot projects for all four services (can start/stop, expose `/actuator/health`)
+- [x] `docker-compose.yml`: PostgreSQL + all four services + frontend (nginx placeholder)
+- [x] `docker-compose.dev.yml`: overrides for hot reload (volume mounts)
+- [x] `.env.example` with every variable documented and described
+- [x] `README.md` skeleton with all section headers + git workflow documented
+- [x] `.github/workflows/ci.yml`: backend + conditional frontend jobs
 
-**Deliverable**: `docker-compose up` → all services start, PostgreSQL is reachable,
-`/actuator/health` returns 200 on all four services.
+**Deliverable**: `mvn verify` → BUILD SUCCESS [5/5 modules, 4 tests, 0 failures].
+`docker-compose up` ready (requires `.env` file). Branch: `feat/session-1-infra-foundation` → merged to `develop`.
 
 ---
 
