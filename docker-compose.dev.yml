@@ -1,0 +1,48 @@
+# =============================================================
+# Training App — Development Overrides
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Differences from the base compose file:
+#   - PostgreSQL port 5432 is published so local DB tools (e.g., DBeaver,
+#     pgAdmin, IntelliJ DB plugin) can connect directly.
+#   - Backend services run with SPRING_PROFILES_ACTIVE=dev.
+#   - JVM heap is capped to keep resource usage reasonable on a dev machine.
+#   - All internal service ports are published for direct curl/Postman testing
+#     without going through the gateway.
+# =============================================================
+
+services:
+
+  postgres:
+    ports:
+      - "5432:5432"   # Expose DB to localhost for dev tooling
+
+  auth-service:
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      JAVA_TOOL_OPTIONS: "-Xmx256m"
+
+  training-service:
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      JAVA_TOOL_OPTIONS: "-Xmx256m"
+
+  analytics-service:
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      JAVA_TOOL_OPTIONS: "-Xmx256m"
+
+  api-gateway:
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      JAVA_TOOL_OPTIONS: "-Xmx256m"
+
+  frontend:
+    environment:
+      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx/conf.d

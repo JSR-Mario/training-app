@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ================================================================
+         Parent: Spring Boot BOM — manages Flyway, PostgreSQL driver,
+         JUnit 5, Mockito, Jackson, Tomcat, and more.
+         All other library versions are pinned explicitly below.
+    ================================================================ -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.trainingapp</groupId>
+    <artifactId>training-app</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>training-app</name>
+    <description>Microservices-based personal training tracker</description>
+
+    <!-- ================================================================
+         Service modules
+    ================================================================ -->
+    <modules>
+        <module>services/api-gateway</module>
+        <module>services/auth-service</module>
+        <module>services/training-service</module>
+        <module>services/analytics-service</module>
+    </modules>
+
+    <!-- ================================================================
+         Pinned versions — all library versions live here and nowhere else.
+         Child POMs declare dependencies WITHOUT a <version> tag.
+    ================================================================ -->
+    <properties>
+        <java.version>21</java.version>
+
+        <!-- Spring Cloud (compatible with Spring Boot 3.3.x) -->
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
+
+        <!-- JWT -->
+        <jjwt.version>0.12.6</jjwt.version>
+
+        <!-- API Documentation -->
+        <springdoc.version>2.6.0</springdoc.version>
+
+        <!-- Code generation helper (used for JPA entities) -->
+        <lombok.version>1.18.34</lombok.version>
+    </properties>
+
+    <!-- ================================================================
+         Dependency management — imports third-party BOMs and pins
+         any library not already managed by spring-boot-starter-parent.
+    ================================================================ -->
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- Spring Cloud BOM — manages spring-cloud-starter-gateway
+                 and all related reactive/netty dependencies -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- JWT API (runtime + implementation must always be aligned) -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <!-- OpenAPI / Swagger UI for servlet-based services -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+
+            <!-- Lombok — reduces boilerplate in JPA entities -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <optional>true</optional>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ================================================================
+         Build configuration shared across all modules
+    ================================================================ -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Spring Boot Maven Plugin — produces executable fat JAR -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <!-- Exclude Lombok from the packaged JAR -->
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+
+                <!-- Compiler — enforce Java 21 source and target -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <parameters>true</parameters>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>
