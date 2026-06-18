@@ -1,0 +1,131 @@
+# =============================================================
+# Training App — Full Stack Compose
+# Usage: docker-compose up
+# Requires a .env file at the project root (copy from .env.example).
+# =============================================================
+
+services:
+
+  # -----------------------------------------------------------
+  # Database — shared PostgreSQL instance, one schema per service
+  # -----------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # Not exposed externally — accessed only via internal Docker network.
+    # Use docker-compose.dev.yml to expose 5432 for local DB tools.
+
+  # -----------------------------------------------------------
+  # auth-service (port 8081)
+  # -----------------------------------------------------------
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRY_MINUTES: ${JWT_ACCESS_EXPIRY_MINUTES}
+      JWT_REFRESH_EXPIRY_DAYS: ${JWT_REFRESH_EXPIRY_DAYS}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Port is intentionally NOT published — only the gateway reaches this service.
+
+  # -----------------------------------------------------------
+  # training-service (port 8082)
+  # -----------------------------------------------------------
+  training-service:
+    build:
+      context: .
+      dockerfile: services/training-service/Dockerfile
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ANALYTICS_SERVICE_URL: ${ANALYTICS_SERVICE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Port intentionally not published.
+
+  # -----------------------------------------------------------
+  # analytics-service (port 8083)
+  # -----------------------------------------------------------
+  analytics-service:
+    build:
+      context: .
+      dockerfile: services/analytics-service/Dockerfile
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Port intentionally not published.
+
+  # -----------------------------------------------------------
+  # api-gateway (port 8080) — the only public entry point
+  # -----------------------------------------------------------
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}
+      TRAINING_SERVICE_URL: ${TRAINING_SERVICE_URL}
+      ANALYTICS_SERVICE_URL: ${ANALYTICS_SERVICE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN}
+    depends_on:
+      - auth-service
+      - training-service
+      - analytics-service
+
+  # -----------------------------------------------------------
+  # frontend — nginx serving the React PWA
+  # Placeholder until Session 7 adds the real build.
+  # -----------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+
+volumes:
+  postgres_data:
+    driver: local
