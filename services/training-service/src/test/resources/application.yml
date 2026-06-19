@@ -1,0 +1,24 @@
+# Test configuration — uses H2 in-memory database.
+# Flyway is disabled; Hibernate creates the schema from entity definitions.
+
+server:
+  port: 0
+
+spring:
+  datasource:
+    url: "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;INIT=CREATE SCHEMA IF NOT EXISTS \"training\""
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: training
+    show-sql: false
+
+  flyway:
+    enabled: false
