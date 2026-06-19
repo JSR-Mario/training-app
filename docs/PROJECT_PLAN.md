@@ -525,19 +525,19 @@ on first start. Branch: `feat/session-2-auth-service` ready for PR.
 
 ---
 
-### Session 3 — Training Service: Domain Entities & Program Structure
-- [ ] All JPA entities with Flyway migrations
-- [ ] `ExerciseService`: CRUD + body part target management. `userId` filter on all reads.
-- [ ] `ProgramService`: CRUD. `userId` filter.
-- [ ] `WeekTemplateService`: CRUD. Validates program belongs to requesting user.
-- [ ] `DayTemplateService`: CRUD. Validates week belongs to requesting user.
-- [ ] `DayExerciseService`: CRUD + reorder endpoint.
-- [ ] All controllers with `@Valid` + `GlobalExceptionHandler`
-- [ ] JWT extraction utility: reads `userId` from SecurityContext, available to all services
-- [ ] Unit tests for all services
+### Session 3 — Training Service: Domain Entities & Program Structure ✅
+- [x] All JPA entities with Flyway migrations
+- [x] `ExerciseService`: CRUD + body part target management. `userId` filter on all reads.
+- [x] `ProgramService`: CRUD. `userId` filter.
+- [x] `WeekTemplateService`: CRUD. Validates program belongs to requesting user.
+- [x] `DayTemplateService`: CRUD. Validates week belongs to requesting user.
+- [x] `DayExerciseService`: CRUD + reorder endpoint.
+- [x] All controllers with `@Valid` + `GlobalExceptionHandler`
+- [x] JWT extraction utility: reads `userId` from SecurityContext, available to all services
+- [x] Unit tests for all services
 
 **Deliverable**: Full program structure (program → weeks → days → exercises) can be
-created and queried via REST.
+created and queried via REST. Branch: `feat/session-3-training-domain` ready for PR.
 
 ---
 

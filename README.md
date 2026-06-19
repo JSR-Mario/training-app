@@ -184,7 +184,7 @@ docs/*        ← documentation-only changes.
 |---------|--------|-------|--------|
 | 1 | `feat/session-1-infra-foundation` | Repository & Infrastructure Foundation | ✅ Done |
 | 2 | `feat/session-2-auth-service` | Auth Service | ✅ Done |
-| 3 | `feat/session-3-training-domain` | Training Service: Domain Entities | ⬜ Pending |
+| 3 | `feat/session-3-training-domain` | Training Service: Domain Entities | ✅ Done |
 | 4 | `feat/session-4-workout-logging` | Training Service: Workout Logging | ⬜ Pending |
 | 5 | `feat/session-5-analytics-service` | Analytics Service | ⬜ Pending |
 | 6 | `feat/session-6-api-gateway` | API Gateway | ⬜ Pending |
