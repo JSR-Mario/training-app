@@ -509,19 +509,19 @@ running cleanly via `docker-compose up`.
 
 ---
 
-### Session 2 — Auth Service
-- [ ] `User` entity + `UserRepository`
-- [ ] Flyway: `V1__create_users_table.sql`
-- [ ] `AuthController`: `/register`, `/login`, `/refresh`, `/logout`, `/me`
-- [ ] JWT generation (access token) + refresh token (HttpOnly cookie)
-- [ ] Spring Security config: permit auth endpoints, require JWT everywhere else
-- [ ] `DataInitializer`: seeds admin user from `ADMIN_USERNAME`, `ADMIN_PASSWORD`,
+### Session 2 — Auth Service ✅
+- [x] `User` entity + `UserRepository`
+- [x] Flyway: `V1__create_users_table.sql`
+- [x] `AuthController`: `/register`, `/login`, `/refresh`, `/logout`, `/me`
+- [x] JWT generation (access token) + refresh token (HttpOnly cookie)
+- [x] Spring Security config: permit auth endpoints, require JWT everywhere else
+- [x] `DataInitializer`: seeds admin user from `ADMIN_USERNAME`, `ADMIN_PASSWORD`,
       `ADMIN_EMAIL` env vars. Idempotent.
-- [ ] `GlobalExceptionHandler` with RFC 7807 problem detail responses
-- [ ] Unit tests for `AuthService` and `JwtService`
+- [x] `GlobalExceptionHandler` with RFC 7807 problem detail responses
+- [x] Unit tests for `AuthService` and `JwtService`
 
 **Deliverable**: Register, login, get access token, use refresh token. Admin created
-on first start.
+on first start. Branch: `feat/session-2-auth-service` ready for PR.
 
 ---
 
