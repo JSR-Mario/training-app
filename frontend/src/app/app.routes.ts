@@ -31,6 +31,22 @@ export const routes: Routes = [
         loadComponent: () => import('./features/programs/pages/program-detail/program-detail.component').then(m => m.ProgramDetailComponent)
       },
       {
+        path: 'workout',
+        loadComponent: () => import('./features/workout/pages/workout-dashboard/workout-dashboard.component').then(m => m.WorkoutDashboardComponent)
+      },
+      {
+        path: 'workout/start',
+        loadComponent: () => import('./features/workout/pages/start-session/start-session.component').then(m => m.StartSessionComponent)
+      },
+      {
+        path: 'workout/:id',
+        loadComponent: () => import('./features/workout/pages/active-workout/active-workout.component').then(m => m.ActiveWorkoutComponent)
+      },
+      {
+        path: 'workout/:id/summary',
+        loadComponent: () => import('./features/workout/pages/workout-summary/workout-summary.component').then(m => m.WorkoutSummaryComponent)
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'
