@@ -2,7 +2,7 @@
 
 A microservices-based personal training tracker. Single-user MVP, multi-user ready from day one.
 
-> **Status**: In development — Session 8 complete. See [Development Sessions](#development-sessions) for progress.
+> **Status**: In development — Session 9 complete. See [Development Sessions](#development-sessions) for progress.
 
 ---
 
@@ -25,7 +25,14 @@ A microservices-based personal training tracker. Single-user MVP, multi-user rea
 
 ## 1. Architecture Overview
 
-The system is composed of an API Gateway and three domain-specific microservices, backed by a single PostgreSQL instance (with isolated schemas) and Redis for rate limiting.
+The system is composed of an API Gateway, three domain-specific microservices, and a frontend PWA. The backend services are backed by a single PostgreSQL instance (with isolated schemas) and Redis for rate limiting.
+
+### Containerization & Deployment (CV Highlight)
+This project is built from the ground up to be fully containerized and cloud-native.
+- **Docker & Docker Compose**: The entire stack (Backend Microservices, Frontend PWA, PostgreSQL, and Redis) runs seamlessly in Docker. `docker-compose.yml` serves as the core orchestrator for local deployments, ensuring environmental parity between dev, testing, and production.
+- **Multi-Stage Builds**: Every service and the frontend uses highly optimized multi-stage Dockerfiles. The frontend compiles via Node.js and serves statically via Nginx (Alpine), while Java services build via Maven and run on lightweight JRE containers.
+- **CI/CD Pipeline**: Automated GitHub Actions workflows run on every PR to validate tests, compile modules (`mvn verify` and `npm run build`), and enforce code linting. Upon merge to `main`, the CD pipeline automatically builds and pushes the Docker images to a Container Registry for deployment.
+- **Kubernetes (K8s) Ready**: The `k8s/` directory contains complete Kubernetes manifests (Deployments, Services, ConfigMaps, HPAs) designed to run the application on any standard K8s cluster.
 
 ```mermaid
 graph TD
@@ -228,7 +235,7 @@ docs/*        ← documentation-only changes.
 | 5 | `feat/session-5-analytics-service` | Analytics Service | ✅ Done |
 | 6 | `feat/session-6-api-gateway` | API Gateway | ✅ Done |
 | 7 | `feat/session-7-frontend-foundation` | Frontend: Foundation + Auth | ✅ Done |
-| 8 | `feat/session-8-frontend-programs` | Frontend: Program & Exercise Management | ⬜ Pending |
-| 9 | `feat/session-9-frontend-workout` | Frontend: Workout Logging | ⬜ Pending |
+| 8 | `feat/session-8-frontend-programs` | Frontend: Program & Exercise Management | ✅ Done |
+| 9 | `feat/session-9-frontend-workout` | Frontend: Workout Logging | ✅ Done |
 | 10 | `feat/session-10-frontend-analytics` | Frontend: Analytics Charts | ⬜ Pending |
 | 11 | `feat/session-11-cicd-deployment` | Dockerfiles, CI/CD & Deployment | ⬜ Pending |
