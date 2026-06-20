@@ -179,7 +179,11 @@ export class ExerciseListComponent implements OnInit {
     // Assuming backend targets are immutable, we just delete and recreate if changed, 
     // but the API doesn't have an updateTarget method, only add and delete.
     
-    targetsToDelete.forEach(t => this.exerciseService.deleteTarget(exerciseId, t.id).subscribe());
+    targetsToDelete.forEach(t => {
+      if (t.id) {
+        this.exerciseService.deleteTarget(exerciseId, t.id).subscribe();
+      }
+    });
     targetsToAdd.forEach(t => this.exerciseService.addTarget(exerciseId, { bodyPart: t.bodyPart, targetValue: t.targetValue }).subscribe());
 
     setTimeout(() => {
