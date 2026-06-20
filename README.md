@@ -38,19 +38,19 @@ graph TD
     classDef cache fill:#9b2c2c,stroke:#e53e3e,stroke-width:2px,color:#fff;
     classDef module fill:#4a5568,stroke:#718096,stroke-width:1px,color:#e2e8f0;
 
-    subgraph ClientLayer ["📱 Frontend Layer (Angular 18 PWA)"]
+    subgraph ClientLayer ["Frontend Layer (Angular 18 PWA)"]
         direction LR
-        UI_Auth["🔐 Auth Module"]:::module
-        UI_Training["🏋️ Training Module"]:::module
-        UI_Analytics["📊 Analytics Module"]:::module
+        UI_Auth["Auth Module"]:::module
+        UI_Training["Training Module"]:::module
+        UI_Analytics["Analytics Module"]:::module
     end
 
     ClientLayer --> |"HTTP REST (JWT Auth)"| Gateway
 
-    subgraph DockerNetwork ["🐳 Containerized Backend Network (Docker)"]
+    subgraph DockerNetwork ["Containerized Backend Network (Docker)"]
         direction TB
         
-        Gateway["🛡️ API Gateway (:8080)<br/>Spring Cloud • JWT Filter • Rate Limiter"]:::gateway
+        Gateway["API Gateway (:8080)<br/>Spring Cloud • JWT Filter • Rate Limiter"]:::gateway
         
         subgraph Microservices ["Microservices (Java 21 / Spring Boot)"]
             direction LR
@@ -67,8 +67,8 @@ graph TD
 
         subgraph Persistence ["Persistence Layer"]
             direction LR
-            Postgres[/"🐘 PostgreSQL 16<br/>(One DB, Isolated Schemas)"/]:::database
-            Redis[/"🔴 Redis 7<br/>(Rate Limiting)"/]:::cache
+            Postgres[/"PostgreSQL 16<br/>(One DB, Isolated Schemas)"/]:::database
+            Redis[/"Redis 7<br/>(Rate Limiting)"/]:::cache
         end
 
         Auth -->|"schema: public"| Postgres
