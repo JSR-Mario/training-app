@@ -20,8 +20,8 @@ trigger: always_on
 | ORM | Spring Data JPA + Hibernate. Flyway migrations. Entities never exposed by controllers |
 | Database | PostgreSQL 16, one instance, one schema per service |
 | Build | Maven multi-module, all versions pinned in parent POM, no floating versions |
-| Charts | ng2-charts (Chart.js) only |
-| Styling | Tailwind utility classes only, no component libraries, no decorative icons. Light animations allowed |
+| Charts | ng2-charts (Chart.js) |
+| Styling | Tailwind utility classes, UI libraries allowed if lightweight. Animations and transitions allowed if they don't add significant computational cost |
 | Language | English everywhere: code, comments, commits, docs |
 
 ## Tech Stack (pinned versions — never upgrade without explicit instruction)
@@ -49,9 +49,9 @@ logged, never propagated — session data is never lost, metrics can be recalcul
 ## Hard Constraints (override any "best practice" judgment)
 - No placeholder data, sample exercises, or default programs. The user populates everything.
 - No images anywhere except PWA icons. No `<img>` tags otherwise.
-- No emojis, no decorative icons. Light, non-flashy animations and CSS transitions are allowed.
-- ng2-charts is the only allowed visual enhancement.
-- No component libraries (no Angular Material, PrimeNG). Tailwind utility classes only.
+- Lightweight animations and transitions are allowed to improve UX, but must not add significant computational cost (keep app cheap to run).
+- UI component libraries are allowed if they are lightweight and well-maintained.
+- Visual enhancements are encouraged as long as performance is preserved.
 - `/internal/**` (analytics internal endpoint) must never be routable through the gateway.
 - All `userId` values come from the JWT. Never from request body or query params.
 - Every DB migration is additive. No `DROP` statements in any migration file.
@@ -82,13 +82,9 @@ logged, never propagated — session data is never lost, metrics can be recalcul
 - DTOs are Java records, always separate from JPA entities.
 - No magic numbers — use a `Constants` class or enum.
 - Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`.
-- Git Commits & Pushes: Always include a detailed description body in the commit (using `git commit -m "title" -m "detailed description"`), not just the subject title.
-- Pull Requests: The agent creates branches and pushes changes to the remote. The User is responsible for creating, reviewing, and merging Pull Requests. The agent should NOT merge directly into `main`.
 - One `@ControllerAdvice` per service. Never swallow exceptions silently.
 - Use Java 21 features: records, `switch` expressions, text blocks for SQL in tests.
   Enable `spring.threads.virtual.enabled=true`.
-- **TypeScript Strictness**: Always enforce strict typing (`strictNullChecks`). Never bypass type errors with `any` or the non-null assertion operator (`!`) blindly. Always use proper type guards, optional chaining (`?.`), or explicit `if` checks when dealing with optional properties (e.g., `id?: string`) before passing them to functions that expect strictly typed arguments.
-- **Testing (Mandatory)**: Every single change must be fully testable. Follow industry standards: Unit tests (JUnit 5 + Mockito) for all services and controllers. Integration tests (Testcontainers/Spring Boot Test) for critical flows. Frontend testing (Jasmine/Karma) for Angular components and services. No session is complete without passing tests covering the new functionality.
 
 ## Domain Essentials
 Fixed `BodyPart` enum (Java enum, no table, no CRUD):
