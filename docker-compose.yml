@@ -113,7 +113,7 @@ services:
       - analytics-service
 
   # -----------------------------------------------------------
-  # frontend — nginx serving the React PWA
+  # frontend — nginx serving the Angular PWA
   # Placeholder until Session 7 adds the real build.
   # -----------------------------------------------------------
   frontend:

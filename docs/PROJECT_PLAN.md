@@ -11,15 +11,15 @@
 | Users | Single user MVP, multi-user ready | All entities carry `user_id` from day one. Expansion requires no schema changes. |
 | Analytics scope | Pre-calculated metrics only | Weekly volume snapshots + exercise progress entries. No raw event logs. |
 | Analytics communication | HTTP fire-and-forget (training → analytics) | Simplest pattern that keeps services decoupled. Swappable for a message broker later with no domain changes. |
-| Frontend | React PWA (installable, no offline) | Works in Android browser and installable to home screen. No service worker caching. |
-| Frontend rendering | Responsive web only | No native app. No React Native. |
+| Frontend | Angular PWA (installable, no offline) | Works in Android browser and installable to home screen. No service worker caching. |
+| Frontend rendering | Responsive web only | No native app. No Native Apps. |
 | Auth strategy | JWT (access + refresh). HttpOnly cookie for refresh token | Secure by default. Multi-user expansion requires zero auth rework. |
 | Password storage | BCrypt cost 12 | Industry standard. |
 | Admin user | Seeded from env vars on startup | No hardcoded credentials in source. |
 | ORM | Spring Data JPA + Hibernate | Standard. Flyway manages migrations. Entities never exposed directly from controllers. |
 | Database | PostgreSQL 16 | One instance for MVP; each service gets its own schema. |
 | Build | Maven multi-module | Shared dependency versions in parent POM. All versions pinned. No floating versions. |
-| Charts | Recharts | Minimal, functional, no animations configured. |
+| Charts | ng2-charts | Minimal, functional, no animations configured. |
 | Styling | Tailwind CSS utility classes only | No component libraries. No animations. No decorative icons. |
 | PWA | vite-plugin-pwa + manifest.json | Enables Android installation. No offline caching. |
 | Language | English everywhere | Variable names, functions, comments, commits, docs. |
@@ -46,14 +46,14 @@
 ### Frontend
 | Component | Library | Version |
 |-----------|---------|---------|
-| Framework | React + TypeScript | 18.x |
-| Build | Vite | 5.x |
-| PWA | vite-plugin-pwa | 0.20.x |
-| Router | React Router | 6.x |
-| Data fetching | TanStack Query | 5.x |
-| Charts | Recharts | 2.x |
+| Framework | Angular + TypeScript | 18.x |
+| Build | Angular CLI | 18.x |
+| PWA | @angular/pwa | 18.x |
+| Router | Angular Router | 18.x |
+| Data fetching | RxJS / Angular Signals | 18.x |
+| Charts | ng2-charts | 6.x |
 | Styling | Tailwind CSS | 3.x |
-| HTTP client | Axios | 1.x |
+| HTTP client | Angular HttpClient | 18.x |
 
 ### Infrastructure
 | Component | Tool |
@@ -182,7 +182,7 @@ training-app/
 │   ├── public/
 │   │   └── icons/                      # PWA icons (192px, 512px)
 │   ├── Dockerfile
-│   ├── vite.config.ts                  # vite-plugin-pwa configured here
+│   ├── angular.json                    # Angular CLI configuration
 │   ├── tailwind.config.ts
 │   └── package.json
 │
@@ -419,30 +419,25 @@ POST   /internal/events/session-completed                  → called by trainin
 
 ## PWA Configuration
 
-Add to `vite.config.ts` using `vite-plugin-pwa`:
+Add to Angular via `@angular/pwa`:
 
-```typescript
+```json
 VitePWA({
   registerType: 'autoUpdate',
   includeAssets: ['icons/*.png'],
-  manifest: {
-    name: 'Training App',
-    short_name: 'Training',
-    theme_color: '#ffffff',
-    background_color: '#ffffff',
-    display: 'standalone',
-    start_url: '/',
-    icons: [
-      { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' }
-    ]
-  },
-  workbox: {
-    // No offline caching. Service worker exists only to enable installation.
-    navigateFallback: null,
-    runtimeCaching: []
-  }
-})
+```json
+{
+  "name": "Training App",
+  "short_name": "Training",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
 ```
 
 ---
@@ -482,6 +477,16 @@ Must be fully implemented before internet deployment. No exceptions.
 - **Error handling**: one `@ControllerAdvice` per service. No `try/catch` swallowed silently.
 - **Java 21 features**: use records for DTOs, `switch` expressions, text blocks for
   multi-line SQL in tests. Virtual threads enabled via `spring.threads.virtual.enabled=true`.
+
+---
+
+## Testing Standards
+
+- **Mandatory Testing**: Every single change, new feature, or fix must be fully testable and include corresponding tests.
+- **Backend Unit Tests**: Use JUnit 5 and Mockito for all services, controllers, and utility classes.
+- **Backend Integration Tests**: Use Testcontainers and `@SpringBootTest` for critical workflows (like database interactions and API endpoints).
+- **Frontend Tests**: Use Jasmine/Karma (or Angular's default test runner) for all Angular components, guards, interceptors, and services.
+- **Test-Driven / Test-After**: Both are acceptable, but code must not be merged or considered complete without passing tests covering the changes.
 
 ---
 
@@ -588,13 +593,13 @@ unreachable from outside Docker network.
 ---
 
 ### Session 7 — Frontend: Foundation + Auth
-- [ ] Vite + React 18 + TypeScript + Tailwind + vite-plugin-pwa project
-- [ ] React Router: define all routes, protected route wrapper
-- [ ] `AuthContext`: stores access token in memory (not localStorage),
+- [ ] Angular CLI + Angular 18 + TypeScript + Tailwind + @angular/pwa project
+- [ ] Angular Router: define all routes, auth guard wrapper
+- [ ] `AuthService`: stores access token in memory (not localStorage),
       handles login/logout/refresh
-- [ ] Axios instance: base URL from `VITE_API_BASE_URL` env var, JWT interceptor,
+- [ ] HttpInterceptor: base URL from environment, JWT interceptor,
       auto-refresh on 401
-- [ ] TanStack Query client
+- [ ] RxJS / Signals for data state
 - [ ] Login page (username + password form, no register UI needed — admin only)
 - [ ] Base layout: sidebar on desktop, bottom navigation bar on mobile
 - [ ] PWA manifest + icons configured and tested (Android "Add to Home Screen" works)
@@ -633,11 +638,11 @@ unreachable from outside Docker network.
 ### Session 10 — Frontend: Analytics
 - [ ] Volume dashboard:
   - Week selector (navigate between weeks)
-  - Horizontal bar chart (Recharts `BarChart`) showing total sets × target per body part
+  - Horizontal bar chart (ng2-charts BarChart) showing total sets × target per body part
   - No colors beyond a single neutral tone
 - [ ] Progress view per exercise:
   - Exercise selector dropdown
-  - Line chart (Recharts `LineChart`) showing max weight over time
+  - Line chart (ng2-charts LineChart) showing max weight over time
   - Secondary line for total volume (optional toggle)
 - [ ] Both views share one page with a tab/toggle switcher
 
@@ -698,7 +703,7 @@ TRAINING_SERVICE_URL=http://training-service:8082
 ANALYTICS_SERVICE_URL=http://analytics-service:8083
 
 # Frontend
-VITE_API_BASE_URL=http://localhost:8080
+API_BASE_URL=http://localhost:8080
 ```
 
 ---
@@ -727,7 +732,7 @@ These override any "best practice" judgment the agent might apply.
 - No placeholder data, sample exercises, or default programs. The user populates everything.
 - No images in the application. No `<img>` tags except PWA icons.
 - No emojis. No decorative icons. No animations. No CSS transitions.
-- Charts (Recharts only) are the single allowed visual enhancement.
+- Charts (ng2-charts only) are the single allowed visual enhancement.
 - No component libraries (no shadcn, no MUI, no Chakra). Tailwind utility classes only.
 - The analytics internal endpoint (`/internal/**`) must never be routable through the gateway.
 - All `userId` values come from the JWT. Never from request body or query params.

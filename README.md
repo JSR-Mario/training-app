@@ -54,7 +54,7 @@ training-service ──[HTTP POST, fire-and-forget]──► analytics-service
 | Auth | JWT access token (15 min) + refresh token in HttpOnly cookie (7 days) |
 | Database | PostgreSQL 16 — one instance, one schema per service |
 | Build | Maven multi-module — all versions pinned in parent `pom.xml` |
-| Frontend | React 18 PWA — installable on Android, no offline caching |
+| Frontend | Angular 18 PWA — installable on Android, no offline caching |
 | Styling | Tailwind utility classes only — no component libraries |
 | Analytics | Pre-calculated metrics only — HTTP fire-and-forget from training-service |
 
