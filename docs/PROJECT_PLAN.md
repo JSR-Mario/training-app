@@ -19,8 +19,8 @@
 | ORM | Spring Data JPA + Hibernate | Standard. Flyway manages migrations. Entities never exposed directly from controllers. |
 | Database | PostgreSQL 16 | One instance for MVP; each service gets its own schema. |
 | Build | Maven multi-module | Shared dependency versions in parent POM. All versions pinned. No floating versions. |
-| Charts | ng2-charts | Minimal, functional, light animations allowed. |
-| Styling | Tailwind CSS utility classes only | No component libraries. Light animations allowed. No decorative icons. |
+| Charts | ng2-charts | Minimal, functional. |
+| Styling | Tailwind CSS utility classes, lightweight UI libraries allowed | Lightweight animations/transitions allowed if they don't impact computational cost. |
 | PWA | vite-plugin-pwa + manifest.json | Enables Android installation. No offline caching. |
 | Language | English everywhere | Variable names, functions, comments, commits, docs. |
 
@@ -731,8 +731,7 @@ These override any "best practice" judgment the agent might apply.
 - No placeholder data, sample exercises, or default programs. The user populates everything.
 - No images in the application. No `<img>` tags except PWA icons.
 - No emojis. No decorative icons. Light, non-flashy animations and CSS transitions are allowed.
-- Charts (ng2-charts only) are the single allowed visual enhancement.
-- No component libraries (no shadcn, no MUI, no Chakra). Tailwind utility classes only.
+- Lightweight UI component libraries and visual enhancements (animations, transitions) are allowed to improve UX, but must preserve app performance and low computational cost.
 - The analytics internal endpoint (`/internal/**`) must never be routable through the gateway.
 - All `userId` values come from the JWT. Never from request body or query params.
 - Every database migration is additive. No `DROP` statements in any migration file.
