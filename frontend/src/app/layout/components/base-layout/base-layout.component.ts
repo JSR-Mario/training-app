@@ -20,6 +20,9 @@ import { AuthService } from '../../../core/auth/auth.service';
           <a routerLink="/dashboard" routerLinkActive="bg-gray-700/50 text-white" class="flex items-center px-4 py-3 text-gray-300 rounded-xl hover:bg-gray-700/30 transition-colors">
             <span class="font-medium">Dashboard</span>
           </a>
+          <a routerLink="/workout" routerLinkActive="bg-gray-700/50 text-white" class="flex items-center px-4 py-3 text-gray-300 rounded-xl hover:bg-gray-700/30 transition-colors">
+            <span class="font-medium">Workout</span>
+          </a>
           <a routerLink="/programs" routerLinkActive="bg-gray-700/50 text-white" class="flex items-center px-4 py-3 text-gray-300 rounded-xl hover:bg-gray-700/30 transition-colors">
             <span class="font-medium">Programs</span>
           </a>
@@ -46,7 +49,10 @@ import { AuthService } from '../../../core/auth/auth.service';
       <nav class="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-gray-700/50 z-50">
         <div class="flex justify-around items-center h-16">
           <a routerLink="/dashboard" routerLinkActive="text-blue-400" class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-200 transition-colors">
-            <span class="text-xs font-medium mt-1">Dashboard</span>
+            <span class="text-xs font-medium mt-1">Home</span>
+          </a>
+          <a routerLink="/workout" routerLinkActive="text-blue-400" class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-200 transition-colors">
+            <span class="text-xs font-medium mt-1">Workout</span>
           </a>
           <a routerLink="/programs" routerLinkActive="text-blue-400" class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-200 transition-colors">
             <span class="text-xs font-medium mt-1">Programs</span>

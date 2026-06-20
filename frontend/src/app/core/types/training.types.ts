@@ -54,3 +54,35 @@ export interface TrainingProgram {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface WorkoutSessionRequest {
+  dayTemplateId: string;
+  performedOn: string;
+  weekNumber: number;
+}
+
+export interface WorkoutSessionResponse {
+  id: string;
+  dayTemplateId: string;
+  dayTemplateName: string;
+  performedOn: string;
+  weekNumber: number;
+  completedAt: string | null;
+}
+
+export interface WorkoutSetRequest {
+  dayExerciseId: string;
+  setNumber: number;
+  repsCompleted: number;
+  weightKg: number;
+}
+
+export interface WorkoutSetResponse {
+  id: string;
+  sessionId: string;
+  dayExerciseId: string;
+  setNumber: number;
+  repsCompleted: number;
+  weightKg: number;
+  loggedAt: string;
+}
