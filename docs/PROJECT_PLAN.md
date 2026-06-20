@@ -634,18 +634,18 @@ unreachable from outside Docker network. Branch: `feat/session-6-api-gateway` re
 
 ---
 
-### Session 10 — Frontend: Analytics
-- [ ] Volume dashboard:
+### Session 10 — Frontend: Analytics ✅
+- [x] Volume dashboard:
   - Week selector (navigate between weeks)
   - Horizontal bar chart (ng2-charts BarChart) showing total sets × target per body part
   - No colors beyond a single neutral tone
-- [ ] Progress view per exercise:
+- [x] Progress view per exercise:
   - Exercise selector dropdown
   - Line chart (ng2-charts LineChart) showing max weight over time
   - Secondary line for total volume (optional toggle)
-- [ ] Both views share one page with a tab/toggle switcher
+- [x] Both views share one page with a tab/toggle switcher
 
-**Deliverable**: User can see weekly volume per body part and weight progression per exercise.
+**Deliverable**: User can see weekly volume per body part and weight progression per exercise. Branch: `feat/session-10-frontend-analytics` ready for PR.
 
 ---
 
