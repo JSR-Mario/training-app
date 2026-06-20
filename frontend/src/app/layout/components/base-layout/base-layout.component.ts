@@ -23,6 +23,9 @@ import { AuthService } from '../../../core/auth/auth.service';
           <a routerLink="/programs" routerLinkActive="bg-gray-700/50 text-white" class="flex items-center px-4 py-3 text-gray-300 rounded-xl hover:bg-gray-700/30 transition-colors">
             <span class="font-medium">Programs</span>
           </a>
+          <a routerLink="/exercises" routerLinkActive="bg-gray-700/50 text-white" class="flex items-center px-4 py-3 text-gray-300 rounded-xl hover:bg-gray-700/30 transition-colors">
+            <span class="font-medium">Exercises</span>
+          </a>
         </nav>
 
         <div class="p-4 border-t border-gray-700/50">
@@ -47,6 +50,9 @@ import { AuthService } from '../../../core/auth/auth.service';
           </a>
           <a routerLink="/programs" routerLinkActive="text-blue-400" class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-200 transition-colors">
             <span class="text-xs font-medium mt-1">Programs</span>
+          </a>
+          <a routerLink="/exercises" routerLinkActive="text-blue-400" class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-200 transition-colors">
+            <span class="text-xs font-medium mt-1">Exercises</span>
           </a>
           <button (click)="logout()" class="flex flex-col items-center justify-center w-full h-full text-red-400 hover:text-red-300 transition-colors">
             <span class="text-xs font-medium mt-1">Logout</span>
