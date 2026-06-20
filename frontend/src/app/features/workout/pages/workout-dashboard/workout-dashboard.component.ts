@@ -31,8 +31,9 @@ import { TrainingProgram, WorkoutSessionResponse } from '../../../../core/types/
       <!-- Filters -->
       <div class="glass-card p-4 flex flex-col sm:flex-row gap-4 items-end">
         <div class="w-full sm:w-1/2">
-          <label class="block text-sm font-medium text-gray-300 mb-1">Select Program</label>
+          <label for="programSelect" class="block text-sm font-medium text-gray-300 mb-1">Select Program</label>
           <select 
+            id="programSelect"
             [(ngModel)]="selectedProgramId"
             (ngModelChange)="onProgramChange()"
             class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white appearance-none"
@@ -43,8 +44,9 @@ import { TrainingProgram, WorkoutSessionResponse } from '../../../../core/types/
         </div>
 
         <div class="w-full sm:w-1/4">
-          <label class="block text-sm font-medium text-gray-300 mb-1">Week Number</label>
+          <label for="weekSelect" class="block text-sm font-medium text-gray-300 mb-1">Week Number</label>
           <select 
+            id="weekSelect"
             [(ngModel)]="selectedWeek"
             (ngModelChange)="loadSessions()"
             [disabled]="!selectedProgramId()"

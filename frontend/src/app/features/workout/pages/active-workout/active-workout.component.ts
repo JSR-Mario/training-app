@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -79,8 +79,9 @@ import {
             <div *ngIf="!session()?.completedAt" class="bg-gray-900/50 p-4 rounded-xl border border-gray-700">
               <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3">
                 <div class="w-1/3">
-                  <label class="block text-xs font-medium text-gray-400 mb-1">Weight (kg)</label>
+                  <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Weight (kg)</label>
                   <input 
+                    [id]="'weight-' + ex.id"
                     type="number" 
                     inputmode="decimal"
                     step="0.5"
@@ -90,8 +91,9 @@ import {
                   >
                 </div>
                 <div class="w-1/3">
-                  <label class="block text-xs font-medium text-gray-400 mb-1">Reps</label>
+                  <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps</label>
                   <input 
+                    [id]="'reps-' + ex.id"
                     type="number" 
                     inputmode="numeric"
                     min="0"
