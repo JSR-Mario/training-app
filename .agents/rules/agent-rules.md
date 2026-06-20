@@ -20,8 +20,8 @@ trigger: always_on
 | ORM | Spring Data JPA + Hibernate. Flyway migrations. Entities never exposed by controllers |
 | Database | PostgreSQL 16, one instance, one schema per service |
 | Build | Maven multi-module, all versions pinned in parent POM, no floating versions |
-| Charts | ng2-charts (Chart.js) only, no animations |
-| Styling | Tailwind utility classes only, no component libraries, no decorative icons |
+| Charts | ng2-charts (Chart.js) only |
+| Styling | Tailwind utility classes only, no component libraries, no decorative icons. Light animations allowed |
 | Language | English everywhere: code, comments, commits, docs |
 
 ## Tech Stack (pinned versions — never upgrade without explicit instruction)
@@ -49,7 +49,7 @@ logged, never propagated — session data is never lost, metrics can be recalcul
 ## Hard Constraints (override any "best practice" judgment)
 - No placeholder data, sample exercises, or default programs. The user populates everything.
 - No images anywhere except PWA icons. No `<img>` tags otherwise.
-- No emojis, no decorative icons, no animations, no CSS transitions.
+- No emojis, no decorative icons. Light, non-flashy animations and CSS transitions are allowed.
 - ng2-charts is the only allowed visual enhancement.
 - No component libraries (no Angular Material, PrimeNG). Tailwind utility classes only.
 - `/internal/**` (analytics internal endpoint) must never be routable through the gateway.

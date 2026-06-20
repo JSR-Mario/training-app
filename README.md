@@ -208,7 +208,7 @@ docs/*        ← documentation-only changes.
 | 4 | `feat/session-4-workout-logging` | Training Service: Workout Logging | ✅ Done |
 | 5 | `feat/session-5-analytics-service` | Analytics Service | ✅ Done |
 | 6 | `feat/session-6-api-gateway` | API Gateway | ✅ Done |
-| 7 | `feat/session-7-frontend-foundation` | Frontend: Foundation + Auth | ⬜ Pending |
+| 7 | `feat/session-7-frontend-foundation` | Frontend: Foundation + Auth | ✅ Done |
 | 8 | `feat/session-8-frontend-programs` | Frontend: Program & Exercise Management | ⬜ Pending |
 | 9 | `feat/session-9-frontend-workout` | Frontend: Workout Logging | ⬜ Pending |
 | 10 | `feat/session-10-frontend-analytics` | Frontend: Analytics Charts | ⬜ Pending |
