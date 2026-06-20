@@ -25,43 +25,31 @@ describe('AnalyticsService', () => {
     expect(service).toBeTruthy();
   });
 
-  describe('getWeeklyVolume', () => {
-    it('should fetch weekly volume for a program and week', () => {
-      const mockResponse: WeeklyVolumeSnapshot[] = [
-        { bodyPart: 'CHEST', totalSets: 12 },
-        { bodyPart: 'BACK', totalSets: 14 }
-      ];
-      const programId = 'prog-123';
-      const weekNumber = 2;
-
-      service.getWeeklyVolume(programId, weekNumber).subscribe(data => {
-        expect(data).toEqual(mockResponse);
-      });
-
-      const req = httpMock.expectOne(request => 
-        request.url === `${environment.apiUrl}/api/v1/analytics/volume` &&
-        request.params.get('programId') === programId &&
-        request.params.get('weekNumber') === weekNumber.toString()
-      );
-      expect(req.request.method).toBe('GET');
-      req.flush(mockResponse);
+  it('should fetch weekly volume', () => {
+    const mockResponse: WeeklyVolumeSnapshot[] = [
+      { bodyPart: 'CHEST', totalSets: 10 }
+    ];
+    
+    service.getWeeklyVolume('prog-123', 1).subscribe(res => {
+      expect(res).toEqual(mockResponse);
     });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/v1/analytics/volume?programId=prog-123&weekNumber=1`);
+    expect(req.request.method).toBe('GET');
+    req.flush(mockResponse);
   });
 
-  describe('getExerciseProgress', () => {
-    it('should fetch progress for an exercise', () => {
-      const mockResponse: ExerciseProgressEntry[] = [
-        { sessionDate: '2026-06-20', maxWeightKg: 100, totalVolumeKg: 1000, totalSets: 5 }
-      ];
-      const exerciseId = 'ex-456';
+  it('should fetch exercise progress', () => {
+    const mockResponse: ExerciseProgressEntry[] = [
+      { sessionDate: '2023-01-01', maxWeightKg: 100, totalVolumeKg: 1000, totalSets: 3 }
+    ];
 
-      service.getExerciseProgress(exerciseId).subscribe(data => {
-        expect(data).toEqual(mockResponse);
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/api/v1/analytics/progress/${exerciseId}`);
-      expect(req.request.method).toBe('GET');
-      req.flush(mockResponse);
+    service.getExerciseProgress('ex-123').subscribe(res => {
+      expect(res).toEqual(mockResponse);
     });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/v1/analytics/progress/ex-123`);
+    expect(req.request.method).toBe('GET');
+    req.flush(mockResponse);
   });
 });
