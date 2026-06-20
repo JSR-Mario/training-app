@@ -1,0 +1,70 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service:
+          - { name: api-gateway, context: ., dockerfile: services/api-gateway/Dockerfile }
+          - { name: auth-service, context: ., dockerfile: services/auth-service/Dockerfile }
+          - { name: training-service, context: ., dockerfile: services/training-service/Dockerfile }
+          - { name: analytics-service, context: ., dockerfile: services/analytics-service/Dockerfile }
+          - { name: frontend, context: frontend, dockerfile: frontend/Dockerfile }
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3.0.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service.name }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5.0.0
+        with:
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    name: Deploy to Antigravity (Placeholder)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        
+      - name: Deploy Placeholder
+        run: |
+          echo "========================================================="
+          echo "Simulating deployment to Antigravity Infrastructure..."
+          echo "Images successfully pushed to GHCR."
+          echo "In a real scenario, this step would apply Kustomize manifests"
+          echo "or trigger an ArgoCD/Flux sync, or use the Antigravity CLI."
+          echo "========================================================="
