@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
 /**
  * Internal API controller for receiving events from other services.
  * This endpoint should NEVER be exposed through the API Gateway.
@@ -23,7 +25,7 @@ public class AnalyticsEventHandlerController {
     }
 
     @PostMapping("/session-completed")
-    public ResponseEntity<Void> handleSessionCompleted(@RequestBody SessionCompletedEvent event) {
+    public ResponseEntity<Void> handleSessionCompleted(@Valid @RequestBody SessionCompletedEvent event) {
         metricsCalculationService.processSessionCompleted(event);
         return ResponseEntity.ok().build();
     }
