@@ -1,0 +1,16 @@
+{
+  "name": "Training App",
+  "short_name": "Training",
+  "theme_color": "#1f2937",
+  "background_color": "#111827",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "16x16 32x32",
+      "type": "image/x-icon"
+    }
+  ]
+}

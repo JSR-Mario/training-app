@@ -13,23 +13,23 @@ trigger: always_on
 | Users | Single-user MVP, multi-user ready (every entity carries `user_id` from day one) |
 | Analytics scope | Pre-calculated metrics only (weekly volume + exercise progress). No raw event logs |
 | Analytics comms | HTTP fire-and-forget, training-service → analytics-service |
-| Frontend | React PWA, installable, **no offline caching**, no React Native |
+| Frontend | Angular PWA, installable, **no offline caching**, no Native Apps |
 | Auth | JWT access+refresh. Refresh token in HttpOnly cookie |
 | Passwords | BCrypt cost 12 |
 | Admin user | Seeded from env vars on startup, idempotent. No hardcoded credentials |
 | ORM | Spring Data JPA + Hibernate. Flyway migrations. Entities never exposed by controllers |
 | Database | PostgreSQL 16, one instance, one schema per service |
 | Build | Maven multi-module, all versions pinned in parent POM, no floating versions |
-| Charts | Recharts only, no animations |
-| Styling | Tailwind utility classes only, no component libraries, no decorative icons |
+| Charts | ng2-charts (Chart.js) |
+| Styling | Tailwind utility classes, UI libraries allowed if lightweight. Animations and transitions allowed if they don't add significant computational cost |
 | Language | English everywhere: code, comments, commits, docs |
 
 ## Tech Stack (pinned versions — never upgrade without explicit instruction)
 **Backend:** Java 21 · Spring Boot 3.3.x · Flyway 10.x · Spring Security + jjwt 0.12.x ·
 Spring Cloud Gateway 2023.x · Spring WebClient · Springdoc OpenAPI 2.x · PostgreSQL 16 ·
 Maven 3.9.x · JUnit 5 + Mockito.
-**Frontend:** React 18 + TypeScript · Vite 5.x · vite-plugin-pwa 0.20.x · React Router 6.x ·
-TanStack Query 5.x · Recharts 2.x · Tailwind 3.x · Axios 1.x.
+**Frontend:** Angular 18 + TypeScript · @angular/cli 18.x · @angular/pwa 18.x · @angular/router 18.x ·
+RxJS / HttpClient · ng2-charts 6.x · Tailwind 3.x.
 **Infra:** Docker + Docker Compose · Antigravity deploy · Kubernetes (future) ·
 GitHub Actions CI/CD · secrets via env vars / K8s Secrets.
 
@@ -49,9 +49,9 @@ logged, never propagated — session data is never lost, metrics can be recalcul
 ## Hard Constraints (override any "best practice" judgment)
 - No placeholder data, sample exercises, or default programs. The user populates everything.
 - No images anywhere except PWA icons. No `<img>` tags otherwise.
-- No emojis, no decorative icons, no animations, no CSS transitions.
-- Recharts is the only allowed visual enhancement.
-- No component libraries (no shadcn, MUI, Chakra). Tailwind utility classes only.
+- Lightweight animations and transitions are allowed to improve UX, but must not add significant computational cost (keep app cheap to run).
+- UI component libraries are allowed if they are lightweight and well-maintained.
+- Visual enhancements are encouraged as long as performance is preserved.
 - `/internal/**` (analytics internal endpoint) must never be routable through the gateway.
 - All `userId` values come from the JWT. Never from request body or query params.
 - Every DB migration is additive. No `DROP` statements in any migration file.

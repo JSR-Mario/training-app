@@ -11,16 +11,16 @@
 | Users | Single user MVP, multi-user ready | All entities carry `user_id` from day one. Expansion requires no schema changes. |
 | Analytics scope | Pre-calculated metrics only | Weekly volume snapshots + exercise progress entries. No raw event logs. |
 | Analytics communication | HTTP fire-and-forget (training → analytics) | Simplest pattern that keeps services decoupled. Swappable for a message broker later with no domain changes. |
-| Frontend | React PWA (installable, no offline) | Works in Android browser and installable to home screen. No service worker caching. |
-| Frontend rendering | Responsive web only | No native app. No React Native. |
+| Frontend | Angular PWA (installable, no offline) | Works in Android browser and installable to home screen. No service worker caching. |
+| Frontend rendering | Responsive web only | No native app. No Native Apps. |
 | Auth strategy | JWT (access + refresh). HttpOnly cookie for refresh token | Secure by default. Multi-user expansion requires zero auth rework. |
 | Password storage | BCrypt cost 12 | Industry standard. |
 | Admin user | Seeded from env vars on startup | No hardcoded credentials in source. |
 | ORM | Spring Data JPA + Hibernate | Standard. Flyway manages migrations. Entities never exposed directly from controllers. |
 | Database | PostgreSQL 16 | One instance for MVP; each service gets its own schema. |
 | Build | Maven multi-module | Shared dependency versions in parent POM. All versions pinned. No floating versions. |
-| Charts | Recharts | Minimal, functional, no animations configured. |
-| Styling | Tailwind CSS utility classes only | No component libraries. No animations. No decorative icons. |
+| Charts | ng2-charts | Minimal, functional. |
+| Styling | Tailwind CSS utility classes, lightweight UI libraries allowed | Lightweight animations/transitions allowed if they don't impact computational cost. |
 | PWA | vite-plugin-pwa + manifest.json | Enables Android installation. No offline caching. |
 | Language | English everywhere | Variable names, functions, comments, commits, docs. |
 
@@ -46,14 +46,14 @@
 ### Frontend
 | Component | Library | Version |
 |-----------|---------|---------|
-| Framework | React + TypeScript | 18.x |
-| Build | Vite | 5.x |
-| PWA | vite-plugin-pwa | 0.20.x |
-| Router | React Router | 6.x |
-| Data fetching | TanStack Query | 5.x |
-| Charts | Recharts | 2.x |
+| Framework | Angular + TypeScript | 18.x |
+| Build | Angular CLI | 18.x |
+| PWA | @angular/pwa | 18.x |
+| Router | Angular Router | 18.x |
+| Data fetching | RxJS / Angular Signals | 18.x |
+| Charts | ng2-charts | 6.x |
 | Styling | Tailwind CSS | 3.x |
-| HTTP client | Axios | 1.x |
+| HTTP client | Angular HttpClient | 18.x |
 
 ### Infrastructure
 | Component | Tool |
@@ -182,7 +182,7 @@ training-app/
 │   ├── public/
 │   │   └── icons/                      # PWA icons (192px, 512px)
 │   ├── Dockerfile
-│   ├── vite.config.ts                  # vite-plugin-pwa configured here
+│   ├── angular.json                    # Angular CLI configuration
 │   ├── tailwind.config.ts
 │   └── package.json
 │
@@ -419,30 +419,25 @@ POST   /internal/events/session-completed                  → called by trainin
 
 ## PWA Configuration
 
-Add to `vite.config.ts` using `vite-plugin-pwa`:
+Add to Angular via `@angular/pwa`:
 
-```typescript
+```json
 VitePWA({
   registerType: 'autoUpdate',
   includeAssets: ['icons/*.png'],
-  manifest: {
-    name: 'Training App',
-    short_name: 'Training',
-    theme_color: '#ffffff',
-    background_color: '#ffffff',
-    display: 'standalone',
-    start_url: '/',
-    icons: [
-      { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' }
-    ]
-  },
-  workbox: {
-    // No offline caching. Service worker exists only to enable installation.
-    navigateFallback: null,
-    runtimeCaching: []
-  }
-})
+```json
+{
+  "name": "Training App",
+  "short_name": "Training",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
 ```
 
 ---
@@ -485,6 +480,16 @@ Must be fully implemented before internet deployment. No exceptions.
 
 ---
 
+## Testing Standards
+
+- **Mandatory Testing**: Every single change, new feature, or fix must be fully testable and include corresponding tests.
+- **Backend Unit Tests**: Use JUnit 5 and Mockito for all services, controllers, and utility classes.
+- **Backend Integration Tests**: Use Testcontainers and `@SpringBootTest` for critical workflows (like database interactions and API endpoints).
+- **Frontend Tests**: Use Jasmine/Karma (or Angular's default test runner) for all Angular components, guards, interceptors, and services.
+- **Test-Driven / Test-After**: Both are acceptable, but code must not be merged or considered complete without passing tests covering the changes.
+
+---
+
 ## Development Sessions
 
 Each session ends with all code committed, all tests passing, and the full stack
@@ -492,108 +497,108 @@ running cleanly via `docker-compose up`.
 
 ---
 
-### Session 1 — Repository & Infrastructure Foundation
-- [ ] Initialize Git repo
-- [ ] `.gitignore`: Java, Node, IntelliJ/VS Code, `.env`, `target/`, `node_modules/`
-- [ ] Parent `pom.xml` with all four service modules and dependency management section
+### Session 1 — Repository & Infrastructure Foundation ✅
+- [x] Initialize Git repo
+- [x] `.gitignore`: Java, Node, IntelliJ/VS Code, `.env`, `target/`, `node_modules/`
+- [x] Parent `pom.xml` with all four service modules and dependency management section
       (pins all library versions in one place)
-- [ ] Skeleton Spring Boot projects for all four services (can start/stop, expose `/actuator/health`)
-- [ ] `docker-compose.yml`: PostgreSQL + all four services + frontend (nginx placeholder)
-- [ ] `docker-compose.dev.yml`: overrides for hot reload (volume mounts)
-- [ ] `.env.example` with every variable documented and described
-- [ ] `README.md` skeleton with all section headers
+- [x] Skeleton Spring Boot projects for all four services (can start/stop, expose `/actuator/health`)
+- [x] `docker-compose.yml`: PostgreSQL + all four services + frontend (nginx placeholder)
+- [x] `docker-compose.dev.yml`: overrides for hot reload (volume mounts)
+- [x] `.env.example` with every variable documented and described
+- [x] `README.md` skeleton with all section headers + git workflow documented
+- [x] `.github/workflows/ci.yml`: backend + conditional frontend jobs
 
-**Deliverable**: `docker-compose up` → all services start, PostgreSQL is reachable,
-`/actuator/health` returns 200 on all four services.
+**Deliverable**: `mvn verify` → BUILD SUCCESS [5/5 modules, 4 tests, 0 failures].
+`docker-compose up` ready (requires `.env` file). Branch: `feat/session-1-infra-foundation` → merged to `develop`.
 
 ---
 
-### Session 2 — Auth Service
-- [ ] `User` entity + `UserRepository`
-- [ ] Flyway: `V1__create_users_table.sql`
-- [ ] `AuthController`: `/register`, `/login`, `/refresh`, `/logout`, `/me`
-- [ ] JWT generation (access token) + refresh token (HttpOnly cookie)
-- [ ] Spring Security config: permit auth endpoints, require JWT everywhere else
-- [ ] `DataInitializer`: seeds admin user from `ADMIN_USERNAME`, `ADMIN_PASSWORD`,
+### Session 2 — Auth Service ✅
+- [x] `User` entity + `UserRepository`
+- [x] Flyway: `V1__create_users_table.sql`
+- [x] `AuthController`: `/register`, `/login`, `/refresh`, `/logout`, `/me`
+- [x] JWT generation (access token) + refresh token (HttpOnly cookie)
+- [x] Spring Security config: permit auth endpoints, require JWT everywhere else
+- [x] `DataInitializer`: seeds admin user from `ADMIN_USERNAME`, `ADMIN_PASSWORD`,
       `ADMIN_EMAIL` env vars. Idempotent.
-- [ ] `GlobalExceptionHandler` with RFC 7807 problem detail responses
-- [ ] Unit tests for `AuthService` and `JwtService`
+- [x] `GlobalExceptionHandler` with RFC 7807 problem detail responses
+- [x] Unit tests for `AuthService` and `JwtService`
 
 **Deliverable**: Register, login, get access token, use refresh token. Admin created
-on first start.
+on first start. Branch: `feat/session-2-auth-service` ready for PR.
 
 ---
 
-### Session 3 — Training Service: Domain Entities & Program Structure
-- [ ] All JPA entities with Flyway migrations
-- [ ] `ExerciseService`: CRUD + body part target management. `userId` filter on all reads.
-- [ ] `ProgramService`: CRUD. `userId` filter.
-- [ ] `WeekTemplateService`: CRUD. Validates program belongs to requesting user.
-- [ ] `DayTemplateService`: CRUD. Validates week belongs to requesting user.
-- [ ] `DayExerciseService`: CRUD + reorder endpoint.
-- [ ] All controllers with `@Valid` + `GlobalExceptionHandler`
-- [ ] JWT extraction utility: reads `userId` from SecurityContext, available to all services
-- [ ] Unit tests for all services
+### Session 3 — Training Service: Domain Entities & Program Structure ✅
+- [x] All JPA entities with Flyway migrations
+- [x] `ExerciseService`: CRUD + body part target management. `userId` filter on all reads.
+- [x] `ProgramService`: CRUD. `userId` filter.
+- [x] `WeekTemplateService`: CRUD. Validates program belongs to requesting user.
+- [x] `DayTemplateService`: CRUD. Validates week belongs to requesting user.
+- [x] `DayExerciseService`: CRUD + reorder endpoint.
+- [x] All controllers with `@Valid` + `GlobalExceptionHandler`
+- [x] JWT extraction utility: reads `userId` from SecurityContext, available to all services
+- [x] Unit tests for all services
 
 **Deliverable**: Full program structure (program → weeks → days → exercises) can be
-created and queried via REST.
+created and queried via REST. Branch: `feat/session-3-training-domain` ready for PR.
 
 ---
 
-### Session 4 — Training Service: Workout Logging
-- [ ] `WorkoutSessionService`: create session (choose day template + week number),
+### Session 4 — Training Service: Workout Logging ✅
+- [x] `WorkoutSessionService`: create session (choose day template + week number),
       complete session (sets `completed_at`, fires analytics notification)
-- [ ] `WorkoutSetService`: log a set, update a set, delete a set
-- [ ] `AnalyticsNotificationClient` (WebClient): sends session payload to analytics-service
+- [x] `WorkoutSetService`: log a set, update a set, delete a set
+- [x] `AnalyticsNotificationClient` (WebClient): sends session payload to analytics-service
       on session completion. Fire-and-forget. Errors are logged, never propagated.
-- [ ] Unit tests. Integration test verifying the notification client is called on completion.
+- [x] Unit tests. Integration test verifying the notification client is called on completion.
 
 **Deliverable**: User can log a full workout session. Completion fires an (ignorable-if-down)
-notification to analytics-service.
+notification to analytics-service. Branch: `feat/session-4-workout-logging` ready for PR.
 
 ---
 
-### Session 5 — Analytics Service
-- [ ] `WeeklyVolumeSnapshot` + `ExerciseProgressEntry` entities + Flyway migrations
-- [ ] `SessionCompletedEventHandler`: receives POST from training-service, calculates
+### Session 5 — Analytics Service ✅
+- [x] `WeeklyVolumeSnapshot` + `ExerciseProgressEntry` entities + Flyway migrations
+- [x] `SessionCompletedEventHandler`: receives POST from training-service, calculates
       and upserts both metric types
-- [ ] `AnalyticsController`:
+- [x] `AnalyticsController`:
   - `GET /api/v1/analytics/volume?programId=&weekNumber=`
   - `GET /api/v1/analytics/progress/{exerciseId}`
-- [ ] Internal endpoint `POST /internal/events/session-completed` (not gateway-exposed)
-- [ ] Unit tests for metric calculation logic
-- [ ] Manual recalculation endpoint (admin only): rebuilds snapshots from a re-sent payload
+- [x] Internal endpoint `POST /internal/events/session-completed` (not gateway-exposed)
+- [x] Unit tests for metric calculation logic
+- [x] Manual recalculation endpoint (admin only): rebuilds snapshots from a re-sent payload
 
 **Deliverable**: After completing a session, volume and progress metrics are available
-from analytics-service.
+from analytics-service. Branch: `feat/session-5-analytics-service` ready for PR.
 
 ---
 
-### Session 6 — API Gateway
-- [ ] Routes to all three backend services with path rewriting
-- [ ] `JwtValidationFilter`: validates token, rejects with 401 if invalid.
+### Session 6 — API Gateway ✅
+- [x] Routes to all three backend services with path rewriting
+- [x] `JwtValidationFilter`: validates token, rejects with 401 if invalid.
       Passes `X-User-Id` header to downstream services.
-- [ ] `SecurityHeadersFilter`: adds HSTS, X-Frame-Options, X-Content-Type-Options,
+- [x] `SecurityHeadersFilter`: adds HSTS, X-Frame-Options, X-Content-Type-Options,
       Referrer-Policy to every response
-- [ ] `InternalPathFilter`: blocks any request to `/internal/**` from external clients
-- [ ] CORS global filter using `ALLOWED_ORIGIN` env var
-- [ ] Rate limiter on `/api/v1/auth/**`: 20 req/min per IP (Redis-backed or in-memory
-      for MVP)
-- [ ] `GET /api/v1/health`: aggregates health from all downstream services
+- [x] `InternalPathFilter`: blocks any request to `/internal/**` from external clients
+- [x] CORS global filter using `ALLOWED_ORIGIN` env var
+- [x] Rate limiter on `/api/v1/auth/**`: 20 req/min per IP (Redis-backed)
+- [x] `GET /api/v1/health`: aggregates health from all downstream services
 
 **Deliverable**: All API calls go through port 8080 only. Direct service ports
-unreachable from outside Docker network.
+unreachable from outside Docker network. Branch: `feat/session-6-api-gateway` ready for PR.
 
 ---
 
 ### Session 7 — Frontend: Foundation + Auth
-- [ ] Vite + React 18 + TypeScript + Tailwind + vite-plugin-pwa project
-- [ ] React Router: define all routes, protected route wrapper
-- [ ] `AuthContext`: stores access token in memory (not localStorage),
+- [ ] Angular CLI + Angular 18 + TypeScript + Tailwind + @angular/pwa project
+- [ ] Angular Router: define all routes, auth guard wrapper
+- [ ] `AuthService`: stores access token in memory (not localStorage),
       handles login/logout/refresh
-- [ ] Axios instance: base URL from `VITE_API_BASE_URL` env var, JWT interceptor,
+- [ ] HttpInterceptor: base URL from environment, JWT interceptor,
       auto-refresh on 401
-- [ ] TanStack Query client
+- [ ] RxJS / Signals for data state
 - [ ] Login page (username + password form, no register UI needed — admin only)
 - [ ] Base layout: sidebar on desktop, bottom navigation bar on mobile
 - [ ] PWA manifest + icons configured and tested (Android "Add to Home Screen" works)
@@ -602,45 +607,45 @@ unreachable from outside Docker network.
 
 ---
 
-### Session 8 — Frontend: Program & Exercise Management
-- [ ] Exercise catalog page: list all exercises, add/edit/delete
-- [ ] Body part target editor: within exercise form, list each body part with a
+### Session 8 — Frontend: Program & Exercise Management ✅
+- [x] Exercise catalog page: list all exercises, add/edit/delete
+- [x] Body part target editor: within exercise form, list each body part with a
       decimal input for target value. Add/remove targets.
-- [ ] Program list page: create, list, delete programs
-- [ ] Week template builder: add named days to a week
-- [ ] Day exercise editor: add exercises to a day, set sets/reps, reorder with
+- [x] Program list page: create, list, delete programs
+- [x] Week template builder: add named days to a week
+- [x] Day exercise editor: add exercises to a day, set sets/reps, reorder with
       up/down controls (no drag-and-drop)
 
-**Deliverable**: User can configure a complete training program from the UI.
+**Deliverable**: User can configure a complete training program from the UI. Branch: `feat/session-8-frontend-programs` ready for PR.
 
 ---
 
-### Session 9 — Frontend: Workout Logging
-- [ ] Session list page: shows sessions by week number for the active program
-- [ ] Start session view: pick which day template to log today
-- [ ] Active workout view:
+### Session 9 — Frontend: Workout Logging ✅
+- [x] Session list page: shows sessions by week number for the active program
+- [x] Start session view: pick which day template to log today
+- [x] Active workout view:
   - Lists exercises in sort order
   - For each exercise: a row per set with reps and weight inputs
   - Mobile-optimized: large inputs, tap-friendly controls
   - "Complete Workout" button marks session done
-- [ ] Completed session summary: shows what was logged
+- [x] Completed session summary: shows what was logged
 
-**Deliverable**: User can log a full workout from phone or desktop browser.
+**Deliverable**: User can log a full workout from phone or desktop browser. Branch: `feat/session-9-frontend-workout` merged to main.
 
 ---
 
-### Session 10 — Frontend: Analytics
-- [ ] Volume dashboard:
+### Session 10 — Frontend: Analytics ✅
+- [x] Volume dashboard:
   - Week selector (navigate between weeks)
-  - Horizontal bar chart (Recharts `BarChart`) showing total sets × target per body part
+  - Horizontal bar chart (ng2-charts BarChart) showing total sets × target per body part
   - No colors beyond a single neutral tone
-- [ ] Progress view per exercise:
+- [x] Progress view per exercise:
   - Exercise selector dropdown
-  - Line chart (Recharts `LineChart`) showing max weight over time
+  - Line chart (ng2-charts LineChart) showing max weight over time
   - Secondary line for total volume (optional toggle)
-- [ ] Both views share one page with a tab/toggle switcher
+- [x] Both views share one page with a tab/toggle switcher
 
-**Deliverable**: User can see weekly volume per body part and weight progression per exercise.
+**Deliverable**: User can see weekly volume per body part and weight progression per exercise. Branch: `feat/session-10-frontend-analytics` ready for PR.
 
 ---
 
@@ -697,7 +702,7 @@ TRAINING_SERVICE_URL=http://training-service:8082
 ANALYTICS_SERVICE_URL=http://analytics-service:8083
 
 # Frontend
-VITE_API_BASE_URL=http://localhost:8080
+API_BASE_URL=http://localhost:8080
 ```
 
 ---
@@ -725,9 +730,8 @@ These override any "best practice" judgment the agent might apply.
 
 - No placeholder data, sample exercises, or default programs. The user populates everything.
 - No images in the application. No `<img>` tags except PWA icons.
-- No emojis. No decorative icons. No animations. No CSS transitions.
-- Charts (Recharts only) are the single allowed visual enhancement.
-- No component libraries (no shadcn, no MUI, no Chakra). Tailwind utility classes only.
+- No emojis. No decorative icons. Light, non-flashy animations and CSS transitions are allowed.
+- Lightweight UI component libraries and visual enhancements (animations, transitions) are allowed to improve UX, but must preserve app performance and low computational cost.
 - The analytics internal endpoint (`/internal/**`) must never be routable through the gateway.
 - All `userId` values come from the JWT. Never from request body or query params.
 - Every database migration is additive. No `DROP` statements in any migration file.

@@ -1,0 +1,67 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "${ALLOWED_ORIGIN:http://localhost:3000}"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 20
+            redis-rate-limiter.burstCapacity: 20
+            key-resolver: "#{@ipKeyResolver}"
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/auth/**
+          # No JwtValidationFilter here, auth needs to be open for login/register
+          # RateLimiter is applied by default-filters
+
+        - id: training-service
+          uri: ${TRAINING_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/v1/training/**
+          filters:
+            - JwtValidationFilter
+
+        - id: analytics-service
+          uri: ${ANALYTICS_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/analytics/**
+          filters:
+            - JwtValidationFilter
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
