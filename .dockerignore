@@ -1,0 +1,14 @@
+.git
+.github
+.agents
+frontend
+docs
+k8s
+target/
+*.class
+*.jar
+*.war
+.idea/
+.vscode/
+*.log
+.env

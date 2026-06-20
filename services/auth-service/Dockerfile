@@ -1,31 +1,15 @@
-# =============================================================
-# auth-service — Multi-stage Dockerfile
-# Build context must be the project root (see docker-compose.yml).
-# =============================================================
-
-# ---- Stage 1: Build ----
-FROM maven:3.9.6-eclipse-temurin-21 AS builder
-WORKDIR /build
-
-COPY pom.xml ./
-COPY services/api-gateway/pom.xml     services/api-gateway/
-COPY services/auth-service/pom.xml    services/auth-service/
-COPY services/training-service/pom.xml services/training-service/
-COPY services/analytics-service/pom.xml services/analytics-service/
-
-RUN mvn dependency:go-offline -pl services/auth-service -am -B --no-transfer-progress
-
-COPY services/auth-service/src services/auth-service/src
-RUN mvn -pl services/auth-service -am package -DskipTests -B --no-transfer-progress
-
-# ---- Stage 2: Runtime ----
-FROM eclipse-temurin:21-jre-alpine
+# Build stage
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
+# Copy the whole backend project (frontend and others ignored via .dockerignore)
+COPY . .
+RUN mvn clean package -pl services/auth-service -am -DskipTests
 
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-
-COPY --from=builder /build/services/auth-service/target/*.jar app.jar
-
-USER appuser
+# Runtime stage
+FROM eclipse-temurin:21-jre-alpine
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+WORKDIR /app
+COPY --from=build /app/services/auth-service/target/*.jar app.jar
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]

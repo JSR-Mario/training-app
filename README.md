@@ -2,7 +2,7 @@
 
 A microservices-based personal training tracker. Single-user MVP, multi-user ready from day one.
 
-> **Status**: In development — Session 9 complete. See [Development Sessions](#development-sessions) for progress.
+> **Status**: In development — Session 11 complete (Docker & CI/CD Setup). See [Development Sessions](#development-sessions) for progress.
 
 ---
 
@@ -32,7 +32,7 @@ This project is built from the ground up to be fully containerized and cloud-nat
 - **Docker & Docker Compose**: The entire stack (Backend Microservices, Frontend PWA, PostgreSQL, and Redis) runs seamlessly in Docker. `docker-compose.yml` serves as the core orchestrator for local deployments, ensuring environmental parity between dev, testing, and production.
 - **Multi-Stage Builds**: Every service and the frontend uses highly optimized multi-stage Dockerfiles. The frontend compiles via Node.js and serves statically via Nginx (Alpine), while Java services build via Maven and run on lightweight JRE containers.
 - **CI/CD Pipeline**: Automated GitHub Actions workflows run on every PR to validate tests, compile modules (`mvn verify` and `npm run build`), and enforce code linting. Upon merge to `main`, the CD pipeline automatically builds and pushes the Docker images to a Container Registry for deployment.
-- **Kubernetes (K8s) Ready**: The `k8s/` directory contains complete Kubernetes manifests (Deployments, Services, ConfigMaps, HPAs) designed to run the application on any standard K8s cluster.
+- **Kubernetes (K8s) Ready**: The architecture is designed to run on any standard K8s cluster (manifests postponed pending initial verification).
 
 ```mermaid
 graph TD
@@ -92,28 +92,41 @@ graph TD
 
 ## 2. Decisions Log
 
-> _Full table to be completed in Session 11. See `docs/PROJECT_PLAN.md` for the complete log._
-
-| Decision | Choice |
-|----------|--------|
-| Users | Single-user MVP, multi-user ready (`user_id` on every entity) |
-| Auth | JWT access token (15 min) + refresh token in HttpOnly cookie (7 days) |
-| Database | PostgreSQL 16 — one instance, one schema per service |
-| Build | Maven multi-module — all versions pinned in parent `pom.xml` |
-| Frontend | Angular 18 PWA — installable on Android, no offline caching |
-| Styling | Tailwind utility classes only — no component libraries |
-| Analytics | Pre-calculated metrics only — HTTP fire-and-forget from training-service |
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Users | Single user MVP, multi-user ready | All entities carry `user_id` from day one. Expansion requires no schema changes. |
+| Analytics scope | Pre-calculated metrics only | Weekly volume snapshots + exercise progress entries. No raw event logs. |
+| Analytics communication | HTTP fire-and-forget (training → analytics) | Simplest pattern that keeps services decoupled. Swappable for a message broker later. |
+| Frontend | Angular PWA (installable, no offline) | Works in Android browser and installable to home screen. No service worker caching. |
+| Frontend rendering | Responsive web only | No native app. |
+| Auth strategy | JWT (access + refresh). HttpOnly cookie for refresh token | Secure by default. Multi-user expansion requires zero auth rework. |
+| Password storage | BCrypt cost 12 | Industry standard. |
+| Admin user | Seeded from env vars on startup | No hardcoded credentials in source. |
+| ORM | Spring Data JPA + Hibernate | Standard. Flyway manages migrations. Entities never exposed directly from controllers. |
+| Database | PostgreSQL 16 | One instance for MVP; each service gets its own schema. |
+| Build | Maven multi-module | Shared dependency versions in parent POM. All versions pinned. No floating versions. |
+| Charts | ng2-charts | Minimal, functional. |
+| Styling | Tailwind CSS utility classes, lightweight UI libraries allowed | Lightweight animations/transitions allowed if they don't impact computational cost. |
+| PWA | vite-plugin-pwa + manifest.json | Enables Android installation. No offline caching. |
+| Language | English everywhere | Variable names, functions, comments, commits, docs. |
 
 ---
 
 ## 3. Domain Model
 
-> _Full ERD to be completed in Session 11. See `docs/PROJECT_PLAN.md` for entity definitions._
+**training-service entities:**
+- `Exercise`: Global catalog of exercises.
+- `ExerciseBodyPartTarget`: Defines how much an exercise "hits" a specific body part.
+- `TrainingProgram`: Top-level container.
+- `WeekTemplate`: The repeating week blueprint.
+- `DayTemplate`: A training day within the week (no fixed weekday).
+- `DayExercise`: Exercise assigned to a DayTemplate.
+- `WorkoutSession`: An actual training day performed by the user.
+- `WorkoutSet`: One logged set within a session.
 
-**training-service entities:** `Exercise`, `ExerciseBodyPartTarget`, `TrainingProgram`,
-`WeekTemplate`, `DayTemplate`, `DayExercise`, `WorkoutSession`, `WorkoutSet`
-
-**analytics-service entities (derived, read-only):** `WeeklyVolumeSnapshot`, `ExerciseProgressEntry`
+**analytics-service entities (derived, read-only):**
+- `WeeklyVolumeSnapshot`: Total sets × target_value across all sessions in a week per body part.
+- `ExerciseProgressEntry`: Heaviest set logged and total volume per exercise per session.
 
 ---
 
@@ -130,9 +143,7 @@ QUADS, HAMSTRINGS, GLUTES, CALVES, CORE, FOREARMS, TRAPS
 
 ## 5. Local Development Setup
 
-> _Step-by-step guide to be completed in Session 11._
-
-**Prerequisites:** Java 21, Maven 3.9.x, Docker, Docker Compose, Node 20
+**Prerequisites:** Docker, Docker Compose
 
 **Quick start:**
 
@@ -141,10 +152,11 @@ git clone https://github.com/JSR-Mario/training-app.git
 cd training-app
 cp .env.example .env
 # Edit .env — fill in all values before starting
-docker-compose up
+docker-compose up -d
 ```
+The application will be available at `http://localhost:3000` (Frontend) and `http://localhost:8080` (API Gateway).
 
-**Dev mode** (exposes all internal ports, activates `dev` Spring profile):
+**Dev mode** (exposes all internal ports, activates `dev` Spring profile for hot reload):
 
 ```bash
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
@@ -154,73 +166,91 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 ## 6. Environment Variables
 
-> _Full reference table to be completed in Session 11. See [.env.example](.env.example) for all variables and descriptions._
+All secrets and variables are managed via `.env`.
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `POSTGRES_DB` | Master DB name | `trainingapp` |
+| `POSTGRES_USER` | DB User | `trainingapp_user` |
+| `POSTGRES_PASSWORD` | DB Password | `supersecret123` |
+| `REDIS_PASSWORD` | Redis auth pass | `redissecret123` |
+| `JWT_SECRET` | 256-bit random hex string | `e0c...` |
+| `JWT_ACCESS_EXPIRY_MINUTES` | Access token lifespan | `15` |
+| `JWT_REFRESH_EXPIRY_DAYS` | Refresh token lifespan | `7` |
+| `ADMIN_USERNAME` | Initial admin user | `admin` |
+| `ADMIN_EMAIL` | Initial admin email | `admin@trainingapp.local` |
+| `ADMIN_PASSWORD` | Initial admin password | `admin123` |
+| `ALLOWED_ORIGIN` | CORS frontend origin | `http://localhost:3000` |
+| `API_BASE_URL` | Frontend API target | `http://localhost:8080` |
 
 ---
 
 ## 7. API Reference
 
-> _To be completed in Session 11._
+All requests must go through the API Gateway at port `8080`.
+Swagger UI is available at: `http://localhost:8080/swagger-ui.html`
 
-Swagger UI: `http://localhost:8080/swagger-ui.html` (available once full stack is running).
+- **Auth Service**: `/api/v1/auth/**` (Register, Login, Refresh, Me)
+- **Training Service**: `/api/v1/training/**` (Programs, Weeks, Days, Exercises, Sessions)
+- **Analytics Service**: `/api/v1/analytics/**` (Volume, Progress)
 
 ---
 
 ## 8. Analytics Event Flow
 
-> _To be completed in Session 11._
+When a `WorkoutSession` is marked as completed in training-service:
+1. `WorkoutSessionService` calls `AnalyticsNotificationClient` (WebClient, non-blocking).
+2. `AnalyticsNotificationClient` sends `POST /internal/events/session-completed` with the full session payload.
+3. analytics-service receives the event, calculates metrics, and upserts into its tables.
+4. If analytics-service is down, the call fails silently. Session data is safely preserved in training-service and metrics can be recalculated on demand via admin endpoints.
 
 ---
 
 ## 9. Deployment Guide
 
-> _To be completed in Session 11._
+Deployment is standard Docker-based deployment.
+1. Ensure your server has Docker and Docker Compose installed.
+2. Clone the repository and setup the `.env` file with production secrets.
+3. Run `docker-compose up -d --build`.
+4. Expose port `3000` (Frontend) and `8080` (API Gateway) through your preferred Reverse Proxy or Cloud Load Balancer.
 
 ---
 
 ## 10. CI/CD Pipeline
 
-> _Full documentation to be completed in Session 11._
+The project uses GitHub Actions for Continuous Integration and Continuous Deployment.
 
-**CI** (`ci.yml`) runs on every push and pull request to `develop` or `main`:
-- `backend` job: `mvn verify` — compiles all modules and runs all tests.
-- `frontend` job: `npm ci` + `npm run build` + `npm run lint` — skips automatically until Session 7 adds `frontend/package.json`.
+**CI (`.github/workflows/ci.yml`)**:
+Runs on every push and pull request to `develop` or `main`.
+- `backend` job: Uses `maven:3.9-eclipse-temurin-21` to run `mvn verify` across all modules.
+- `frontend` job: Uses `node:24` to run `npm ci`, `npm run build`, and `npm run lint`.
 
-**CD** (`cd.yml`, added in Session 11): triggers on merge to `main` — builds Docker images, pushes to GHCR, deploys to Antigravity.
-
-### Git Workflow
-
-```
-main          ← production. Protected. CD triggers here.
-develop       ← integration. Protected. All sessions merge here first.
-feat/session-N-* ← one branch per session (agent creates these).
-fix/*         ← bug fixes branched from develop.
-chore/*       ← infra, config, tooling changes.
-docs/*        ← documentation-only changes.
-```
-
-**Per-session flow:**
-1. Agent creates `feat/session-N-*` from `develop`, does the work, pushes.
-2. You open a PR: `feat/*` → `develop`.
-3. CI must pass before merge.
-4. You merge and delete the branch (enabled via repo settings).
-5. Repeat for the next session.
-
-**Production release** (Session 11 only):
-1. You open a PR: `develop` → `main`.
-2. CI passes → you merge → CD deploys automatically.
+**CD (`.github/workflows/cd.yml`)**:
+Triggers on merge to `main`.
+- `build-and-push` job: Builds all 5 multi-stage Dockerfiles concurrently and pushes them to GitHub Container Registry (`ghcr.io`).
+- `deploy` job: Placeholder step for triggering the deployment on Antigravity infrastructure.
 
 ---
 
 ## 11. Security Notes
 
-> _To be completed in Session 11._
+1. **Tokens**: JWT access token has a 15-minute expiry. Refresh token is a 7-day HttpOnly, Secure, SameSite=Strict cookie. Never in localStorage.
+2. **Passwords**: BCrypt cost factor 12 for all passwords.
+3. **Data Isolation**: Every query filters by `userId` extracted from the JWT.
+4. **Rate Limiting**: Gateway limits `/api/v1/auth/**` to 20 requests/minute per IP via Redis.
+5. **Headers**: Security headers added via Gateway (`Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`).
+6. **Internal Traffic**: The analytics internal endpoint (`/internal/**`) is strictly blocked at the gateway level.
 
 ---
 
 ## 12. Adding a New Service
 
-> _To be completed in Session 11._
+1. Create a new module folder under `services/`.
+2. Add the module to the parent `pom.xml`.
+3. Configure the service to use its own PostgreSQL schema in its `application.yml`.
+4. Update `api-gateway` routes and internal filters if it requires external exposure.
+5. Create a `Dockerfile` for the new service.
+6. Add the service to `docker-compose.yml` and `.github/workflows/cd.yml`.
 
 ---
 
@@ -237,5 +267,5 @@ docs/*        ← documentation-only changes.
 | 7 | `feat/session-7-frontend-foundation` | Frontend: Foundation + Auth | ✅ Done |
 | 8 | `feat/session-8-frontend-programs` | Frontend: Program & Exercise Management | ✅ Done |
 | 9 | `feat/session-9-frontend-workout` | Frontend: Workout Logging | ✅ Done |
-| 10 | `feat/session-10-frontend-analytics` | Frontend: Analytics Charts | ⬜ Pending |
-| 11 | `feat/session-11-cicd-deployment` | Dockerfiles, CI/CD & Deployment | ⬜ Pending |
+| 10 | `feat/session-10-frontend-analytics` | Frontend: Analytics Charts | ✅ Done |
+| 11 | `feat/session-11-cicd-deployment` | Dockerfiles, CI/CD & Deployment | ✅ Done |
