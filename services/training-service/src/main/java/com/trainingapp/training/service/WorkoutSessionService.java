@@ -8,6 +8,7 @@ import com.trainingapp.training.dto.SessionCompletedEvent;
 import com.trainingapp.training.dto.WorkoutSessionRequest;
 import com.trainingapp.training.dto.WorkoutSessionResponse;
 import com.trainingapp.training.repository.DayTemplateRepository;
+import com.trainingapp.training.repository.ExerciseBodyPartTargetRepository;
 import com.trainingapp.training.repository.WorkoutSessionRepository;
 import com.trainingapp.training.repository.WorkoutSetRepository;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -28,15 +31,18 @@ public class WorkoutSessionService {
     private final WorkoutSessionRepository sessionRepository;
     private final DayTemplateRepository dayTemplateRepository;
     private final WorkoutSetRepository setRepository;
+    private final ExerciseBodyPartTargetRepository targetRepository;
     private final AnalyticsNotificationClient analyticsClient;
 
     public WorkoutSessionService(WorkoutSessionRepository sessionRepository,
                                  DayTemplateRepository dayTemplateRepository,
                                  WorkoutSetRepository setRepository,
+                                 ExerciseBodyPartTargetRepository targetRepository,
                                  AnalyticsNotificationClient analyticsClient) {
         this.sessionRepository = sessionRepository;
         this.dayTemplateRepository = dayTemplateRepository;
         this.setRepository = setRepository;
+        this.targetRepository = targetRepository;
         this.analyticsClient = analyticsClient;
     }
 
@@ -91,8 +97,30 @@ public class WorkoutSessionService {
 
         // Fire analytics event
         List<WorkoutSet> sets = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId());
+        
+        Set<UUID> exerciseIds = sets.stream()
+            .map(s -> s.getDayExercise().getExercise().getId())
+            .collect(Collectors.toSet());
+            
+        Map<UUID, Map<String, java.math.BigDecimal>> targetsByExerciseId = targetRepository.findByExerciseIdIn(exerciseIds).stream()
+            .collect(Collectors.groupingBy(
+                t -> t.getExercise().getId(),
+                Collectors.toMap(
+                    t -> t.getBodyPart().name(),
+                    t -> t.getTargetValue()
+                )
+            ));
+
         List<SessionCompletedEvent.SetData> setDatas = sets.stream()
-            .map(s -> new SessionCompletedEvent.SetData(s.getDayExercise().getExercise().getId(), s.getRepsCompleted(), s.getWeightKg()))
+            .map(s -> {
+                UUID exId = s.getDayExercise().getExercise().getId();
+                return new SessionCompletedEvent.SetData(
+                    exId, 
+                    s.getRepsCompleted(), 
+                    s.getWeightKg(),
+                    targetsByExerciseId.getOrDefault(exId, Map.of())
+                );
+            })
             .collect(Collectors.toList());
 
         SessionCompletedEvent event = new SessionCompletedEvent(
