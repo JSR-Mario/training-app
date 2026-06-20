@@ -136,7 +136,6 @@ services:
 
   # -----------------------------------------------------------
   # frontend — nginx serving the Angular PWA
-  # Placeholder until Session 7 adds the real build.
   # -----------------------------------------------------------
   frontend:
     build:
