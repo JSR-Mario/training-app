@@ -1,0 +1,56 @@
+<div class="max-w-7xl mx-auto space-y-6">
+  
+  <header class="mb-8">
+    <h1 class="text-3xl font-extrabold text-white tracking-tight sm:text-4xl">
+      Analytics <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-violet-500">Dashboard</span>
+    </h1>
+    <p class="mt-2 text-lg text-slate-400">Track your volume and progression over time.</p>
+  </header>
+
+  <!-- Custom CSS-animated Tabs -->
+  <div class="glass-panel p-1.5 rounded-xl inline-flex w-full sm:w-auto overflow-hidden relative">
+    <div 
+      class="absolute top-1.5 left-1.5 bottom-1.5 w-[calc(50%-0.375rem)] sm:w-32 bg-slate-700/50 rounded-lg shadow-sm backdrop-blur-md transition-transform duration-300 ease-out border border-slate-600/50"
+      [class.translate-x-0]="activeTab() === 'volume'"
+      [class.translate-x-full]="activeTab() === 'progress'">
+    </div>
+    
+    <button 
+      (click)="setTab('volume')"
+      class="relative z-10 w-1/2 sm:w-32 py-2 text-sm font-medium transition-colors duration-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+      [class.text-white]="activeTab() === 'volume'"
+      [class.text-slate-400]="activeTab() !== 'volume'"
+      [class.hover:text-slate-200]="activeTab() !== 'volume'">
+      Volume
+    </button>
+    
+    <button 
+      (click)="setTab('progress')"
+      class="relative z-10 w-1/2 sm:w-32 py-2 text-sm font-medium transition-colors duration-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+      [class.text-white]="activeTab() === 'progress'"
+      [class.text-slate-400]="activeTab() !== 'progress'"
+      [class.hover:text-slate-200]="activeTab() !== 'progress'">
+      Progress
+    </button>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="mt-6 relative">
+    
+    <div 
+      [class.block]="activeTab() === 'volume'" 
+      [class.hidden]="activeTab() !== 'volume'"
+      class="animate-fade-in-up">
+      <app-volume-chart></app-volume-chart>
+    </div>
+
+    <div 
+      [class.block]="activeTab() === 'progress'" 
+      [class.hidden]="activeTab() !== 'progress'"
+      class="animate-fade-in-up">
+      <app-progress-chart></app-progress-chart>
+    </div>
+
+  </div>
+
+</div>

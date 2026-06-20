@@ -47,6 +47,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/workout/pages/workout-summary/workout-summary.component').then(m => m.WorkoutSummaryComponent)
       },
       {
+        path: 'analytics',
+        loadComponent: () => import('./features/analytics/pages/analytics-dashboard/analytics-dashboard.component').then(m => m.AnalyticsDashboardComponent)
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'

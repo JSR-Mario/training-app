@@ -620,17 +620,17 @@ unreachable from outside Docker network. Branch: `feat/session-6-api-gateway` re
 
 ---
 
-### Session 9 — Frontend: Workout Logging
-- [ ] Session list page: shows sessions by week number for the active program
-- [ ] Start session view: pick which day template to log today
-- [ ] Active workout view:
+### Session 9 — Frontend: Workout Logging ✅
+- [x] Session list page: shows sessions by week number for the active program
+- [x] Start session view: pick which day template to log today
+- [x] Active workout view:
   - Lists exercises in sort order
   - For each exercise: a row per set with reps and weight inputs
   - Mobile-optimized: large inputs, tap-friendly controls
   - "Complete Workout" button marks session done
-- [ ] Completed session summary: shows what was logged
+- [x] Completed session summary: shows what was logged
 
-**Deliverable**: User can log a full workout from phone or desktop browser.
+**Deliverable**: User can log a full workout from phone or desktop browser. Branch: `feat/session-9-frontend-workout` merged to main.
 
 ---
 
