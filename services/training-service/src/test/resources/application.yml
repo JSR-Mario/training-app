@@ -22,3 +22,7 @@ spring:
 
   flyway:
     enabled: false
+
+app:
+  analytics:
+    url: http://localhost:8083

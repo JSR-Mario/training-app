@@ -37,3 +37,7 @@ management:
   endpoint:
     health:
       show-details: never
+
+app:
+  analytics:
+    url: ${ANALYTICS_SERVICE_URL:http://localhost:8083}
