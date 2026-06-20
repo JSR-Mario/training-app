@@ -575,20 +575,19 @@ from analytics-service. Branch: `feat/session-5-analytics-service` ready for PR.
 
 ---
 
-### Session 6 — API Gateway
-- [ ] Routes to all three backend services with path rewriting
-- [ ] `JwtValidationFilter`: validates token, rejects with 401 if invalid.
+### Session 6 — API Gateway ✅
+- [x] Routes to all three backend services with path rewriting
+- [x] `JwtValidationFilter`: validates token, rejects with 401 if invalid.
       Passes `X-User-Id` header to downstream services.
-- [ ] `SecurityHeadersFilter`: adds HSTS, X-Frame-Options, X-Content-Type-Options,
+- [x] `SecurityHeadersFilter`: adds HSTS, X-Frame-Options, X-Content-Type-Options,
       Referrer-Policy to every response
-- [ ] `InternalPathFilter`: blocks any request to `/internal/**` from external clients
-- [ ] CORS global filter using `ALLOWED_ORIGIN` env var
-- [ ] Rate limiter on `/api/v1/auth/**`: 20 req/min per IP (Redis-backed or in-memory
-      for MVP)
-- [ ] `GET /api/v1/health`: aggregates health from all downstream services
+- [x] `InternalPathFilter`: blocks any request to `/internal/**` from external clients
+- [x] CORS global filter using `ALLOWED_ORIGIN` env var
+- [x] Rate limiter on `/api/v1/auth/**`: 20 req/min per IP (Redis-backed)
+- [x] `GET /api/v1/health`: aggregates health from all downstream services
 
 **Deliverable**: All API calls go through port 8080 only. Direct service ports
-unreachable from outside Docker network.
+unreachable from outside Docker network. Branch: `feat/session-6-api-gateway` ready for PR.
 
 ---
 

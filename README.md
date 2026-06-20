@@ -2,7 +2,7 @@
 
 A microservices-based personal training tracker. Single-user MVP, multi-user ready from day one.
 
-> **Status**: In development — Session 5 complete. See [Development Sessions](#development-sessions) for progress.
+> **Status**: In development — Session 6 complete. See [Development Sessions](#development-sessions) for progress.
 
 ---
 
@@ -25,21 +25,41 @@ A microservices-based personal training tracker. Single-user MVP, multi-user rea
 
 ## 1. Architecture Overview
 
-> _Full diagram to be completed in Session 11._
+The system is composed of an API Gateway and three domain-specific microservices, backed by a single PostgreSQL instance (with isolated schemas) and Redis for rate limiting.
 
-**Services at a glance:**
+```mermaid
+graph TD
+    %% Styling
+    classDef client fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef gateway fill:#ff9,stroke:#333,stroke-width:2px;
+    classDef service fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef database fill:#dfd,stroke:#333,stroke-width:2px;
+    classDef cache fill:#fdd,stroke:#333,stroke-width:2px;
 
-```
-Client
-  │
-  ▼
-api-gateway :8080        ← JWT validation, CORS, rate limiting, routing
-  ├── /api/v1/auth/**    ──► auth-service :8081
-  ├── /api/v1/training/**──► training-service :8082
-  └── /api/v1/analytics/**► analytics-service :8083
+    Client((Frontend App)):::client --> |HTTP :8080| Gateway[API Gateway]:::gateway
 
-training-service ──[HTTP POST, fire-and-forget]──► analytics-service
-  (triggered on WorkoutSession completion)
+    subgraph API Gateway Core
+        Gateway --> RateLimiter[Redis Rate Limiter]
+        RateLimiter --> JwtFilter[JWT Validation]
+        JwtFilter --> SecurityHeaders[Security Headers]
+        SecurityHeaders --> InternalBlock[Internal Path Blocker]
+    end
+
+    InternalBlock --> |/api/v1/auth| Auth[Auth Service :8081]:::service
+    InternalBlock --> |/api/v1/training| Training[Training Service :8082]:::service
+    InternalBlock --> |/api/v1/analytics| Analytics[Analytics Service :8083]:::service
+
+    %% Async Communication
+    Training -.-> |HTTP POST Fire-and-Forget<br/>/internal/events/session-completed| Analytics
+
+    %% Databases
+    Postgres[(PostgreSQL 16)]:::database
+    Redis[(Redis 7)]:::cache
+
+    Auth --> |Schema: public| Postgres
+    Training --> |Schema: training| Postgres
+    Analytics --> |Schema: analytics| Postgres
+    RateLimiter --- Redis
 ```
 
 ---
@@ -187,7 +207,7 @@ docs/*        ← documentation-only changes.
 | 3 | `feat/session-3-training-domain` | Training Service: Domain Entities | ✅ Done |
 | 4 | `feat/session-4-workout-logging` | Training Service: Workout Logging | ✅ Done |
 | 5 | `feat/session-5-analytics-service` | Analytics Service | ✅ Done |
-| 6 | `feat/session-6-api-gateway` | API Gateway | ⬜ Pending |
+| 6 | `feat/session-6-api-gateway` | API Gateway | ✅ Done |
 | 7 | `feat/session-7-frontend-foundation` | Frontend: Foundation + Auth | ⬜ Pending |
 | 8 | `feat/session-8-frontend-programs` | Frontend: Program & Exercise Management | ⬜ Pending |
 | 9 | `feat/session-9-frontend-workout` | Frontend: Workout Logging | ⬜ Pending |
