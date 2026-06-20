@@ -6,7 +6,7 @@ import {
   WorkoutSessionResponse, 
   WorkoutSetRequest, 
   WorkoutSetResponse 
-} from '../../core/types/training.types';
+} from '../../../core/types/training.types';
 
 @Injectable({
   providedIn: 'root'
