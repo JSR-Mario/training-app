@@ -9,7 +9,7 @@ import { WeeklyVolumeSnapshot, ExerciseProgressEntry } from '../../../core/types
 })
 export class AnalyticsService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiBaseUrl}/api/v1/analytics`;
+  private apiUrl = `${environment.apiUrl}/api/v1/analytics`;
 
   getWeeklyVolume(programId: string, weekNumber: number): Observable<WeeklyVolumeSnapshot[]> {
     const params = new HttpParams()

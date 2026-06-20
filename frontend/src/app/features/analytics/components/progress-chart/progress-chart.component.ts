@@ -4,7 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { AnalyticsService } from '../../services/analytics.service';
-import { ExerciseService } from '../../../programs/services/exercise.service';
+import { ExerciseService } from '../../../exercises/services/exercise.service';
 import { Exercise } from '../../../../core/types/training.types';
 import { finalize } from 'rxjs';
 

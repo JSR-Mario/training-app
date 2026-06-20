@@ -39,7 +39,7 @@ describe('AnalyticsService', () => {
       });
 
       const req = httpMock.expectOne(request => 
-        request.url === `${environment.apiBaseUrl}/api/v1/analytics/volume` &&
+        request.url === `${environment.apiUrl}/api/v1/analytics/volume` &&
         request.params.get('programId') === programId &&
         request.params.get('weekNumber') === weekNumber.toString()
       );
@@ -59,7 +59,7 @@ describe('AnalyticsService', () => {
         expect(data).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/analytics/progress/${exerciseId}`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/v1/analytics/progress/${exerciseId}`);
       expect(req.request.method).toBe('GET');
       req.flush(mockResponse);
     });
