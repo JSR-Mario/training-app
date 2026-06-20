@@ -98,7 +98,7 @@ export class LoginComponent {
           const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
           this.router.navigateByUrl(returnUrl);
         },
-        error: (err) => {
+        error: () => {
           this.isLoading.set(false);
           this.error.set('Invalid username or password');
         }

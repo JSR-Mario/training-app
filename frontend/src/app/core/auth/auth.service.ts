@@ -26,7 +26,7 @@ export class AuthService {
     return this.accessTokenSignal() !== null;
   }
 
-  login(credentials: any): Observable<AuthResponse> {
+  login(credentials: Record<string, string>): Observable<AuthResponse> {
     return this.http.post<AuthResponse>('/api/v1/auth/login', credentials).pipe(
       tap(response => {
         this.accessTokenSignal.set(response.accessToken);
