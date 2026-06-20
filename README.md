@@ -2,7 +2,7 @@
 
 A microservices-based personal training tracker. Single-user MVP, multi-user ready from day one.
 
-> **Status**: In development — Session 5 complete. See [Development Sessions](#development-sessions) for progress.
+> **Status**: In development — Session 6 complete. See [Development Sessions](#development-sessions) for progress.
 
 ---
 
@@ -187,7 +187,7 @@ docs/*        ← documentation-only changes.
 | 3 | `feat/session-3-training-domain` | Training Service: Domain Entities | ✅ Done |
 | 4 | `feat/session-4-workout-logging` | Training Service: Workout Logging | ✅ Done |
 | 5 | `feat/session-5-analytics-service` | Analytics Service | ✅ Done |
-| 6 | `feat/session-6-api-gateway` | API Gateway | ⬜ Pending |
+| 6 | `feat/session-6-api-gateway` | API Gateway | ✅ Done |
 | 7 | `feat/session-7-frontend-foundation` | Frontend: Foundation + Auth | ⬜ Pending |
 | 8 | `feat/session-8-frontend-programs` | Frontend: Program & Exercise Management | ⬜ Pending |
 | 9 | `feat/session-9-frontend-workout` | Frontend: Workout Logging | ⬜ Pending |
