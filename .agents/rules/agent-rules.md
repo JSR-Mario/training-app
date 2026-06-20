@@ -87,6 +87,7 @@ logged, never propagated — session data is never lost, metrics can be recalcul
 - One `@ControllerAdvice` per service. Never swallow exceptions silently.
 - Use Java 21 features: records, `switch` expressions, text blocks for SQL in tests.
   Enable `spring.threads.virtual.enabled=true`.
+- **TypeScript Strictness**: Always enforce strict typing (`strictNullChecks`). Never bypass type errors with `any` or the non-null assertion operator (`!`) blindly. Always use proper type guards, optional chaining (`?.`), or explicit `if` checks when dealing with optional properties (e.g., `id?: string`) before passing them to functions that expect strictly typed arguments.
 - **Testing (Mandatory)**: Every single change must be fully testable. Follow industry standards: Unit tests (JUnit 5 + Mockito) for all services and controllers. Integration tests (Testcontainers/Spring Boot Test) for critical flows. Frontend testing (Jasmine/Karma) for Angular components and services. No session is complete without passing tests covering the new functionality.
 
 ## Domain Essentials
