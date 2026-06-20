@@ -39,7 +39,7 @@ jobs:
   # Frontend — build and lint (skipped until frontend/ is scaffolded)
   # ----------------------------------------------------------------
   frontend:
-    name: Frontend (Node 20 / Vite)
+    name: Frontend (Node 24 / Angular)
     runs-on: ubuntu-latest
 
     steps:
