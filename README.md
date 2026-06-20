@@ -30,36 +30,55 @@ The system is composed of an API Gateway and three domain-specific microservices
 ```mermaid
 graph TD
     %% Styling
-    classDef client fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef gateway fill:#ff9,stroke:#333,stroke-width:2px;
-    classDef service fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef database fill:#dfd,stroke:#333,stroke-width:2px;
-    classDef cache fill:#fdd,stroke:#333,stroke-width:2px;
+    classDef client fill:#2d3748,stroke:#4fd1c5,stroke-width:2px,color:#fff;
+    classDef docker fill:#1a202c,stroke:#2b6cb0,stroke-width:2px,stroke-dasharray: 5 5,color:#fff;
+    classDef gateway fill:#2b6cb0,stroke:#2c5282,stroke-width:2px,color:#fff;
+    classDef service fill:#4a5568,stroke:#a0aec0,stroke-width:2px,color:#fff;
+    classDef database fill:#276749,stroke:#38a169,stroke-width:2px,color:#fff;
+    classDef cache fill:#9b2c2c,stroke:#e53e3e,stroke-width:2px,color:#fff;
+    classDef module fill:#4a5568,stroke:#718096,stroke-width:1px,color:#e2e8f0;
 
-    Client((Frontend App)):::client --> |HTTP :8080| Gateway[API Gateway]:::gateway
-
-    subgraph API Gateway Core
-        Gateway --> RateLimiter[Redis Rate Limiter]
-        RateLimiter --> JwtFilter[JWT Validation]
-        JwtFilter --> SecurityHeaders[Security Headers]
-        SecurityHeaders --> InternalBlock[Internal Path Blocker]
+    subgraph ClientLayer ["📱 Frontend Layer (Angular 18 PWA)"]
+        direction LR
+        UI_Auth["🔐 Auth Module"]:::module
+        UI_Training["🏋️ Training Module"]:::module
+        UI_Analytics["📊 Analytics Module"]:::module
     end
 
-    InternalBlock --> |/api/v1/auth| Auth[Auth Service :8081]:::service
-    InternalBlock --> |/api/v1/training| Training[Training Service :8082]:::service
-    InternalBlock --> |/api/v1/analytics| Analytics[Analytics Service :8083]:::service
+    ClientLayer --> |"HTTP REST (JWT Auth)"| Gateway
 
-    %% Async Communication
-    Training -.-> |HTTP POST Fire-and-Forget<br/>/internal/events/session-completed| Analytics
+    subgraph DockerNetwork ["🐳 Containerized Backend Network (Docker)"]
+        direction TB
+        
+        Gateway["🛡️ API Gateway (:8080)<br/>Spring Cloud • JWT Filter • Rate Limiter"]:::gateway
+        
+        subgraph Microservices ["Microservices (Java 21 / Spring Boot)"]
+            direction LR
+            Auth["Auth Service (:8081)"]:::service
+            Training["Training Service (:8082)"]:::service
+            Analytics["Analytics Service (:8083)"]:::service
+        end
+        
+        Gateway --> |"/api/v1/auth"| Auth
+        Gateway --> |"/api/v1/training"| Training
+        Gateway --> |"/api/v1/analytics"| Analytics
+        
+        Training -.-> |"Async Fire-and-Forget<br/>/internal/events"| Analytics
 
-    %% Databases
-    Postgres[(PostgreSQL 16)]:::database
-    Redis[(Redis 7)]:::cache
+        subgraph Persistence ["Persistence Layer"]
+            direction LR
+            Postgres[/"🐘 PostgreSQL 16<br/>(One DB, Isolated Schemas)"/]:::database
+            Redis[/"🔴 Redis 7<br/>(Rate Limiting)"/]:::cache
+        end
 
-    Auth --> |Schema: public| Postgres
-    Training --> |Schema: training| Postgres
-    Analytics --> |Schema: analytics| Postgres
-    RateLimiter --- Redis
+        Auth -->|"schema: public"| Postgres
+        Training -->|"schema: training"| Postgres
+        Analytics -->|"schema: analytics"| Postgres
+        Gateway -.->|"Token Bucket"| Redis
+    end
+
+    class ClientLayer client;
+    class DockerNetwork docker;
 ```
 
 ---
