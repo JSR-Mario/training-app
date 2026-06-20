@@ -17,6 +17,10 @@ services:
     ports:
       - "5432:5432"   # Expose DB to localhost for dev tooling
 
+  redis:
+    ports:
+      - "6379:6379"   # Expose Redis to localhost for dev tooling
+
   auth-service:
     ports:
       - "8081:8081"
