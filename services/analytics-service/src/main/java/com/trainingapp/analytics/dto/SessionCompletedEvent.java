@@ -1,11 +1,12 @@
-package com.trainingapp.training.dto;
+package com.trainingapp.analytics.dto;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 /** 
- * Event payload sent to the analytics service when a workout session is completed. 
+ * Event payload received from the training-service when a workout session is completed.
+ * It contains the necessary target multipliers within the SetData.
  */
 public record SessionCompletedEvent(
     UUID sessionId,
@@ -15,7 +16,6 @@ public record SessionCompletedEvent(
     LocalDate performedOn,
     List<SetData> sets
 ) {
-    /** Simplified set data needed for analytics calculation. */
     public record SetData(
         UUID exerciseId,
         int repsCompleted,

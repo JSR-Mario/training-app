@@ -8,6 +8,7 @@ import com.trainingapp.training.domain.WorkoutSession;
 import com.trainingapp.training.dto.WorkoutSessionRequest;
 import com.trainingapp.training.dto.WorkoutSessionResponse;
 import com.trainingapp.training.repository.DayTemplateRepository;
+import com.trainingapp.training.repository.ExerciseBodyPartTargetRepository;
 import com.trainingapp.training.repository.WorkoutSessionRepository;
 import com.trainingapp.training.repository.WorkoutSetRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,6 +38,7 @@ class WorkoutSessionServiceTest {
     @Mock private WorkoutSessionRepository sessionRepository;
     @Mock private DayTemplateRepository dayTemplateRepository;
     @Mock private WorkoutSetRepository setRepository;
+    @Mock private ExerciseBodyPartTargetRepository targetRepository;
     @Mock private AnalyticsNotificationClient analyticsClient;
 
     @InjectMocks private WorkoutSessionService sessionService;
@@ -111,6 +114,7 @@ class WorkoutSessionServiceTest {
 
         when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
         when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(Collections.emptyList());
+        when(targetRepository.findByExerciseIdIn(any())).thenReturn(List.of());
 
         sessionService.completeSession(sessionId, userId);
 

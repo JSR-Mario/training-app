@@ -82,6 +82,7 @@ logged, never propagated — session data is never lost, metrics can be recalcul
 - DTOs are Java records, always separate from JPA entities.
 - No magic numbers — use a `Constants` class or enum.
 - Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`.
+- Git Commits & Pushes: Always include a detailed description body in the commit (using `git commit -m "title" -m "detailed description"`), not just the subject title.
 - One `@ControllerAdvice` per service. Never swallow exceptions silently.
 - Use Java 21 features: records, `switch` expressions, text blocks for SQL in tests.
   Enable `spring.threads.virtual.enabled=true`.

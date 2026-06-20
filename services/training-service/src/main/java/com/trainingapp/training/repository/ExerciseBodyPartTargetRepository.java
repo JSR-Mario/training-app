@@ -8,4 +8,5 @@ import java.util.UUID;
 /** Spring Data JPA repository for {@link ExerciseBodyPartTarget} entities. */
 public interface ExerciseBodyPartTargetRepository extends JpaRepository<ExerciseBodyPartTarget, UUID> {
     List<ExerciseBodyPartTarget> findByExerciseId(UUID exerciseId);
+    List<ExerciseBodyPartTarget> findByExerciseIdIn(java.util.Collection<UUID> exerciseIds);
 }
