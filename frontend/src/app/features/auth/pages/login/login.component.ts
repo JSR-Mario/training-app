@@ -93,7 +93,12 @@ export class LoginComponent {
       this.isLoading.set(true);
       this.error.set('');
       
-      this.authService.login(this.loginForm.value).subscribe({
+      const credentials: Record<string, string> = {
+        username: this.loginForm.value.username ?? '',
+        password: this.loginForm.value.password ?? ''
+      };
+      
+      this.authService.login(credentials).subscribe({
         next: () => {
           const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
           this.router.navigateByUrl(returnUrl);
