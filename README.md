@@ -2,7 +2,7 @@
 
 A microservices-based personal training tracker. Single-user MVP, multi-user ready from day one.
 
-> **Status**: In development — Session 6 complete. See [Development Sessions](#development-sessions) for progress.
+> **Status**: In development — Session 7 complete. See [Development Sessions](#development-sessions) for progress.
 
 ---
 
