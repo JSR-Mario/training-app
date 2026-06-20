@@ -607,16 +607,16 @@ unreachable from outside Docker network. Branch: `feat/session-6-api-gateway` re
 
 ---
 
-### Session 8 — Frontend: Program & Exercise Management
-- [ ] Exercise catalog page: list all exercises, add/edit/delete
-- [ ] Body part target editor: within exercise form, list each body part with a
+### Session 8 — Frontend: Program & Exercise Management ✅
+- [x] Exercise catalog page: list all exercises, add/edit/delete
+- [x] Body part target editor: within exercise form, list each body part with a
       decimal input for target value. Add/remove targets.
-- [ ] Program list page: create, list, delete programs
-- [ ] Week template builder: add named days to a week
-- [ ] Day exercise editor: add exercises to a day, set sets/reps, reorder with
+- [x] Program list page: create, list, delete programs
+- [x] Week template builder: add named days to a week
+- [x] Day exercise editor: add exercises to a day, set sets/reps, reorder with
       up/down controls (no drag-and-drop)
 
-**Deliverable**: User can configure a complete training program from the UI.
+**Deliverable**: User can configure a complete training program from the UI. Branch: `feat/session-8-frontend-programs` ready for PR.
 
 ---
 

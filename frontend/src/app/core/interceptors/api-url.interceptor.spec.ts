@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { apiUrlInterceptor } from './api-url.interceptor';
 import { environment } from '../../../environments/environment';
@@ -10,9 +10,9 @@ describe('ApiUrlInterceptor', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
-        provideHttpClient(withInterceptors([apiUrlInterceptor]))
+        provideHttpClient(withInterceptors([apiUrlInterceptor])),
+        provideHttpClientTesting()
       ]
     });
     http = TestBed.inject(HttpClient);
