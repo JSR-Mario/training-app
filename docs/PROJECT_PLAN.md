@@ -546,32 +546,32 @@ created and queried via REST. Branch: `feat/session-3-training-domain` ready for
 
 ---
 
-### Session 4 — Training Service: Workout Logging
-- [ ] `WorkoutSessionService`: create session (choose day template + week number),
+### Session 4 — Training Service: Workout Logging ✅
+- [x] `WorkoutSessionService`: create session (choose day template + week number),
       complete session (sets `completed_at`, fires analytics notification)
-- [ ] `WorkoutSetService`: log a set, update a set, delete a set
-- [ ] `AnalyticsNotificationClient` (WebClient): sends session payload to analytics-service
+- [x] `WorkoutSetService`: log a set, update a set, delete a set
+- [x] `AnalyticsNotificationClient` (WebClient): sends session payload to analytics-service
       on session completion. Fire-and-forget. Errors are logged, never propagated.
-- [ ] Unit tests. Integration test verifying the notification client is called on completion.
+- [x] Unit tests. Integration test verifying the notification client is called on completion.
 
 **Deliverable**: User can log a full workout session. Completion fires an (ignorable-if-down)
-notification to analytics-service.
+notification to analytics-service. Branch: `feat/session-4-workout-logging` ready for PR.
 
 ---
 
-### Session 5 — Analytics Service
-- [ ] `WeeklyVolumeSnapshot` + `ExerciseProgressEntry` entities + Flyway migrations
-- [ ] `SessionCompletedEventHandler`: receives POST from training-service, calculates
+### Session 5 — Analytics Service ✅
+- [x] `WeeklyVolumeSnapshot` + `ExerciseProgressEntry` entities + Flyway migrations
+- [x] `SessionCompletedEventHandler`: receives POST from training-service, calculates
       and upserts both metric types
-- [ ] `AnalyticsController`:
+- [x] `AnalyticsController`:
   - `GET /api/v1/analytics/volume?programId=&weekNumber=`
   - `GET /api/v1/analytics/progress/{exerciseId}`
-- [ ] Internal endpoint `POST /internal/events/session-completed` (not gateway-exposed)
-- [ ] Unit tests for metric calculation logic
-- [ ] Manual recalculation endpoint (admin only): rebuilds snapshots from a re-sent payload
+- [x] Internal endpoint `POST /internal/events/session-completed` (not gateway-exposed)
+- [x] Unit tests for metric calculation logic
+- [x] Manual recalculation endpoint (admin only): rebuilds snapshots from a re-sent payload
 
 **Deliverable**: After completing a session, volume and progress metrics are available
-from analytics-service.
+from analytics-service. Branch: `feat/session-5-analytics-service` ready for PR.
 
 ---
 

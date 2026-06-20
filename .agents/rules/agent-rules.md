@@ -83,6 +83,7 @@ logged, never propagated — session data is never lost, metrics can be recalcul
 - No magic numbers — use a `Constants` class or enum.
 - Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`.
 - Git Commits & Pushes: Always include a detailed description body in the commit (using `git commit -m "title" -m "detailed description"`), not just the subject title.
+- Pull Requests: The agent creates branches and pushes changes to the remote. The User is responsible for creating, reviewing, and merging Pull Requests. The agent should NOT merge directly into `main`.
 - One `@ControllerAdvice` per service. Never swallow exceptions silently.
 - Use Java 21 features: records, `switch` expressions, text blocks for SQL in tests.
   Enable `spring.threads.virtual.enabled=true`.
