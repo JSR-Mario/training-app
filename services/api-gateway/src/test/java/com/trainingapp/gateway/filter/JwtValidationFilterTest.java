@@ -37,13 +37,24 @@ class JwtValidationFilterTest {
         // Generate a 256-bit key for HMAC-SHA256
         byte[] keyBytes = new byte[32];
         new java.util.Random().nextBytes(keyBytes);
-        validSecret = Base64.getEncoder().encodeToString(keyBytes);
+        validSecret = java.util.HexFormat.of().formatHex(keyBytes);
 
         ReflectionTestUtils.setField(filterFactory, "jwtSecret", validSecret);
 
         filter = filterFactory.apply(new JwtValidationFilter.Config());
         filterChain = mock(GatewayFilterChain.class);
         when(filterChain.filter(any(ServerWebExchange.class))).thenReturn(Mono.empty());
+    }
+
+    @Test
+    void shouldPassOptionsRequestWithoutAuth() {
+        MockServerHttpRequest request = MockServerHttpRequest.options("/api/v1/training/programs").build();
+        ServerWebExchange exchange = MockServerWebExchange.from(request);
+
+        Mono<Void> result = filter.filter(exchange, filterChain);
+        result.subscribe();
+
+        verify(filterChain, times(1)).filter(any());
     }
 
     @Test
@@ -79,7 +90,7 @@ class JwtValidationFilterTest {
                 .subject(userId)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 10000))
-                .signWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(validSecret)))
+                .signWith(Keys.hmacShaKeyFor(java.util.HexFormat.of().parseHex(validSecret)))
                 .compact();
 
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/v1/training/programs")
