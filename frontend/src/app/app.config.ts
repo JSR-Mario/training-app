@@ -4,6 +4,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
 import { apiUrlInterceptor } from './core/interceptors/api-url.interceptor';
+import { credentialsInterceptor } from './core/interceptors/credentials.interceptor';
 import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
 import { authErrorInterceptor } from './core/interceptors/auth-error.interceptor';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
@@ -13,6 +14,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(withInterceptors([
       apiUrlInterceptor,
+      credentialsInterceptor,
       jwtInterceptor,
       authErrorInterceptor
     ])),
