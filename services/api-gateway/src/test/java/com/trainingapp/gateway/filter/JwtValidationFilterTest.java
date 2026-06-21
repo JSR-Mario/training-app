@@ -52,7 +52,7 @@ class JwtValidationFilterTest {
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         Mono<Void> result = filter.filter(exchange, filterChain);
-        result.subscribe();
+        result.block();
 
         verify(filterChain, times(1)).filter(any());
     }
@@ -63,7 +63,7 @@ class JwtValidationFilterTest {
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         Mono<Void> result = filter.filter(exchange, filterChain);
-        result.subscribe();
+        result.block();
 
         assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
         verify(filterChain, never()).filter(any());
@@ -77,7 +77,7 @@ class JwtValidationFilterTest {
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         Mono<Void> result = filter.filter(exchange, filterChain);
-        result.subscribe();
+        result.block();
 
         assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
         verify(filterChain, never()).filter(any());
@@ -99,7 +99,7 @@ class JwtValidationFilterTest {
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         Mono<Void> result = filter.filter(exchange, filterChain);
-        result.subscribe();
+        result.block();
 
         verify(filterChain, times(1)).filter(argThat(ex -> {
             String injectedUserId = ex.getRequest().getHeaders().getFirst("X-User-Id");
