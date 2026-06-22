@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -45,6 +46,8 @@ class ExerciseServiceTest {
         sampleExercise = new Exercise();
         sampleExercise.setUserId(userId);
         sampleExercise.setName("Bench Press");
+        sampleExercise.setEquipmentBrand("Hammer Strength");
+        sampleExercise.setUnilateral(false);
     }
 
     @Test
@@ -53,28 +56,36 @@ class ExerciseServiceTest {
         List<ExerciseResponse> result = exerciseService.findAll(userId);
         assertThat(result).hasSize(1);
         assertThat(result.get(0).name()).isEqualTo("Bench Press");
+        assertThat(result.get(0).equipmentBrand()).isEqualTo("Hammer Strength");
+        assertThat(result.get(0).unilateral()).isFalse();
     }
 
     @Test
-    void create_savesAndReturns() {
+    void create_savesWithAllFields() {
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
-        ExerciseResponse result = exerciseService.create(userId, new ExerciseRequest("Bench Press"));
+        ExerciseResponse result = exerciseService.create(userId,
+                new ExerciseRequest("Bench Press", "Hammer Strength", false));
         assertThat(result.name()).isEqualTo("Bench Press");
+        assertThat(result.equipmentBrand()).isEqualTo("Hammer Strength");
         verify(exerciseRepository).save(any());
     }
 
     @Test
-    void update_existingExercise_updatesName() {
+    void update_existingExercise_updatesAllFields() {
         when(exerciseRepository.findByIdAndUserId(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
-        exerciseService.update(userId, exerciseId, new ExerciseRequest("Incline Press"));
+        exerciseService.update(userId, exerciseId,
+                new ExerciseRequest("Incline Press", "Rogue", true));
         assertThat(sampleExercise.getName()).isEqualTo("Incline Press");
+        assertThat(sampleExercise.getEquipmentBrand()).isEqualTo("Rogue");
+        assertThat(sampleExercise.isUnilateral()).isTrue();
     }
 
     @Test
     void update_notFound_throwsResourceNotFound() {
         when(exerciseRepository.findByIdAndUserId(exerciseId, userId)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> exerciseService.update(userId, exerciseId, new ExerciseRequest("X")))
+        assertThatThrownBy(() -> exerciseService.update(userId, exerciseId,
+                new ExerciseRequest("X", null, false)))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -83,6 +94,15 @@ class ExerciseServiceTest {
         when(exerciseRepository.findByIdAndUserId(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
         exerciseService.delete(userId, exerciseId);
         verify(exerciseRepository).delete(sampleExercise);
+    }
+
+    @Test
+    void search_returnsMatchingExercises() {
+        when(exerciseRepository.findTop3ByUserIdAndNameContainingIgnoreCase(userId, "bench"))
+                .thenReturn(List.of(sampleExercise));
+        List<ExerciseResponse> result = exerciseService.search(userId, "bench");
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).name()).isEqualTo("Bench Press");
     }
 
     @Test

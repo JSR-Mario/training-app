@@ -16,6 +16,8 @@ export interface Exercise {
   id: string;
   userId: string;
   name: string;
+  equipmentBrand?: string;
+  unilateral: boolean;
   targets: ExerciseTarget[];
   createdAt: string;
   updatedAt: string;
