@@ -41,11 +41,11 @@ export class ProgramService {
   }
 
   createWeek(programId: string, weekName: string, sortOrder: number): Observable<WeekTemplate> {
-    return this.http.post<WeekTemplate>(`/api/v1/training/programs/${programId}/weeks`, { weekName, sortOrder });
+    return this.http.post<WeekTemplate>(`/api/v1/training/programs/${programId}/weeks`, { name: weekName });
   }
 
   updateWeek(weekId: string, weekName: string, sortOrder: number): Observable<WeekTemplate> {
-    return this.http.put<WeekTemplate>(`/api/v1/training/weeks/${weekId}`, { weekName, sortOrder });
+    return this.http.put<WeekTemplate>(`/api/v1/training/weeks/${weekId}`, { name: weekName });
   }
 
   deleteWeek(weekId: string): Observable<void> {
@@ -58,11 +58,11 @@ export class ProgramService {
   }
 
   createDay(weekId: string, dayName: string, sortOrder: number): Observable<DayTemplate> {
-    return this.http.post<DayTemplate>(`/api/v1/training/weeks/${weekId}/days`, { dayName, sortOrder });
+    return this.http.post<DayTemplate>(`/api/v1/training/weeks/${weekId}/days`, { name: dayName });
   }
 
   updateDay(dayId: string, dayName: string, sortOrder: number): Observable<DayTemplate> {
-    return this.http.put<DayTemplate>(`/api/v1/training/days/${dayId}`, { dayName, sortOrder });
+    return this.http.put<DayTemplate>(`/api/v1/training/days/${dayId}`, { name: dayName });
   }
 
   deleteDay(dayId: string): Observable<void> {
