@@ -32,6 +32,12 @@ public class Exercise {
     @Column(nullable = false, length = 200)
     private String name;
 
+    @Column(name = "equipment_brand", length = 100)
+    private String equipmentBrand;
+
+    @Column(nullable = false)
+    private boolean unilateral;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -45,5 +51,9 @@ public class Exercise {
     public void setUserId(UUID userId) { this.userId = userId; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getEquipmentBrand() { return equipmentBrand; }
+    public void setEquipmentBrand(String equipmentBrand) { this.equipmentBrand = equipmentBrand; }
+    public boolean isUnilateral() { return unilateral; }
+    public void setUnilateral(boolean unilateral) { this.unilateral = unilateral; }
     public Instant getCreatedAt() { return createdAt; }
 }

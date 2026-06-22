@@ -39,20 +39,33 @@ public class ExerciseService {
                 .toList();
     }
 
+    /** Returns up to 3 exercises matching the query for autocomplete. */
+    @Transactional(readOnly = true)
+    public List<ExerciseResponse> search(UUID userId, String query) {
+        return exerciseRepository.findTop3ByUserIdAndNameContainingIgnoreCase(userId, query)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     /** Creates a new exercise for the given user. */
     @Transactional
     public ExerciseResponse create(UUID userId, ExerciseRequest request) {
         Exercise exercise = new Exercise();
         exercise.setUserId(userId);
         exercise.setName(request.name());
+        exercise.setEquipmentBrand(request.equipmentBrand());
+        exercise.setUnilateral(request.unilateral());
         return toResponse(exerciseRepository.save(exercise));
     }
 
-    /** Updates the exercise name. Validates ownership. */
+    /** Updates exercise fields. Validates ownership. */
     @Transactional
     public ExerciseResponse update(UUID userId, UUID exerciseId, ExerciseRequest request) {
         Exercise exercise = findOwned(userId, exerciseId);
         exercise.setName(request.name());
+        exercise.setEquipmentBrand(request.equipmentBrand());
+        exercise.setUnilateral(request.unilateral());
         return toResponse(exerciseRepository.save(exercise));
     }
 
@@ -113,7 +126,7 @@ public class ExerciseService {
     }
 
     private ExerciseResponse toResponse(Exercise e) {
-        return new ExerciseResponse(e.getId(), e.getName(), e.getCreatedAt());
+        return new ExerciseResponse(e.getId(), e.getName(), e.getEquipmentBrand(), e.isUnilateral(), e.getCreatedAt());
     }
 
     private ExerciseTargetResponse toTargetResponse(ExerciseBodyPartTarget t) {

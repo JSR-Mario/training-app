@@ -30,6 +30,12 @@ public class ExerciseController {
         return exerciseService.findAll(UserContext.getCurrentUserId());
     }
 
+    /** Returns up to 3 exercises matching the query string for autocomplete. */
+    @GetMapping("/exercises/search")
+    public List<ExerciseResponse> search(@RequestParam("q") String query) {
+        return exerciseService.search(UserContext.getCurrentUserId(), query);
+    }
+
     @PostMapping("/exercises")
     public ResponseEntity<ExerciseResponse> create(@Valid @RequestBody ExerciseRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)

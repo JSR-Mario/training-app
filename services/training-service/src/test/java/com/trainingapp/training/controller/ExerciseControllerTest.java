@@ -1,7 +1,6 @@
 package com.trainingapp.training.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.trainingapp.training.domain.BodyPart;
 import com.trainingapp.training.dto.ExerciseRequest;
 import com.trainingapp.training.dto.ExerciseResponse;
 import com.trainingapp.training.service.ExerciseService;
@@ -18,10 +17,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,7 +43,6 @@ class ExerciseControllerTest {
         SecurityContextHolder.clearContext();
     }
 
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -55,8 +55,8 @@ class ExerciseControllerTest {
     @Test
     void createExercise_Success() throws Exception {
         UUID userId = testUserId;
-        ExerciseRequest req = new ExerciseRequest("Bench Press");
-        ExerciseResponse resp = new ExerciseResponse(UUID.randomUUID(), "Bench Press", java.time.Instant.now());
+        ExerciseRequest req = new ExerciseRequest("Bench Press", "Hammer Strength", false);
+        ExerciseResponse resp = new ExerciseResponse(UUID.randomUUID(), "Bench Press", "Hammer Strength", false, java.time.Instant.now());
 
         Mockito.when(exerciseService.create(eq(userId), any())).thenReturn(resp);
 
@@ -65,8 +65,22 @@ class ExerciseControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("Bench Press"));
+                .andExpect(jsonPath("$.name").value("Bench Press"))
+                .andExpect(jsonPath("$.equipmentBrand").value("Hammer Strength"))
+                .andExpect(jsonPath("$.unilateral").value(false));
+    }
+
+    @Test
+    void searchExercises_Success() throws Exception {
+        UUID userId = testUserId;
+        ExerciseResponse resp = new ExerciseResponse(UUID.randomUUID(), "Bench Press", null, false, java.time.Instant.now());
+
+        Mockito.when(exerciseService.search(eq(userId), eq("bench"))).thenReturn(List.of(resp));
+
+        mockMvc.perform(get("/api/v1/training/exercises/search")
+                .param("q", "bench")
+                .header("X-User-Id", userId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Bench Press"));
     }
 }
-
-

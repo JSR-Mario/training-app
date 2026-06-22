@@ -10,4 +10,7 @@ import java.util.UUID;
 public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
     List<Exercise> findByUserId(UUID userId);
     Optional<Exercise> findByIdAndUserId(UUID id, UUID userId);
+
+    /** Returns up to 3 exercises whose name contains the query (case-insensitive). */
+    List<Exercise> findTop3ByUserIdAndNameContainingIgnoreCase(UUID userId, String name);
 }
