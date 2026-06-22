@@ -31,12 +31,12 @@ class SecurityHeadersFilterTest {
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         when(filterChain.filter(any(ServerWebExchange.class))).thenAnswer(invocation -> {
-            // Simulate response handling
-            return Mono.empty();
+            // Simulate response being committed (triggers beforeCommit callbacks)
+            return exchange.getResponse().setComplete();
         });
 
         Mono<Void> result = filter.filter(exchange, filterChain);
-        result.subscribe();
+        result.block();
 
         HttpHeaders headers = exchange.getResponse().getHeaders();
 

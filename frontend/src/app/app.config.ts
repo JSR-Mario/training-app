@@ -1,21 +1,37 @@
-import { ApplicationConfig, isDevMode } from '@angular/core';
+import { ApplicationConfig, isDevMode, APP_INITIALIZER } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
 import { apiUrlInterceptor } from './core/interceptors/api-url.interceptor';
+import { credentialsInterceptor } from './core/interceptors/credentials.interceptor';
 import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
 import { authErrorInterceptor } from './core/interceptors/auth-error.interceptor';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+import { AuthService } from './core/auth/auth.service';
+import { catchError, of } from 'rxjs';
+
+function initializeAuth(authService: AuthService) {
+  return () => authService.refreshToken().pipe(
+    catchError(() => of(null)) // Ignore errors on startup (e.g., no cookie)
+  );
+}
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideHttpClient(withInterceptors([
       apiUrlInterceptor,
+      credentialsInterceptor,
       jwtInterceptor,
       authErrorInterceptor
     ])),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeAuth,
+      deps: [AuthService],
+      multi: true
+    },
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       // Disable caching for data APIs by making registration strategy manual or caching none.

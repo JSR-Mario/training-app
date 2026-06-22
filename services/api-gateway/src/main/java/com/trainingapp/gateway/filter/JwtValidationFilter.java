@@ -3,17 +3,18 @@ package com.trainingapp.gateway.filter;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.util.HexFormat;
 
 /**
  * Filter that intercepts incoming requests to protected routes, validates the JWT,
@@ -34,6 +35,11 @@ public class JwtValidationFilter extends AbstractGatewayFilterFactory<JwtValidat
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
+            // Skip CORS preflight requests — they never carry an Authorization header
+            if (request.getMethod() == HttpMethod.OPTIONS) {
+                return chain.filter(exchange);
+            }
+
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
@@ -48,7 +54,7 @@ public class JwtValidationFilter extends AbstractGatewayFilterFactory<JwtValidat
             String token = authHeader.substring(7);
 
             try {
-                byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+                byte[] keyBytes = HexFormat.of().parseHex(jwtSecret);
                 SecretKey key = Keys.hmacShaKeyFor(keyBytes);
 
                 Claims claims = Jwts.parser()
