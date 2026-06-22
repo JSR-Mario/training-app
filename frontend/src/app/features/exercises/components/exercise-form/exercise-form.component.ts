@@ -270,9 +270,9 @@ export class ExerciseFormComponent implements OnInit {
 
   getPartsFor(category: string, group: string): string[] {
     if (!category || !group) return [];
-    const catData = this.hierarchy[category as keyof typeof this.hierarchy];
+    const catData = this.hierarchy[category as keyof typeof this.hierarchy] as Record<string, readonly string[]>;
     if (!catData) return [];
-    const parts = (catData as any)[group];
+    const parts = catData[group];
     return parts ? [...parts] : [];
   }
 
