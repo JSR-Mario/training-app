@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -52,9 +53,11 @@ class AuthServiceTest {
     void setUp() {
         sampleId = UUID.randomUUID();
         sampleUser = new User();
+        ReflectionTestUtils.setField(sampleUser, "id", sampleId);
         sampleUser.setUsername("testuser");
         sampleUser.setEmail("test@example.com");
         sampleUser.setPasswordHash("hashed");
+        sampleUser.setRole(com.trainingapp.auth.domain.Role.ROLE_USER);
     }
 
     // ----------------------------------------------------------------

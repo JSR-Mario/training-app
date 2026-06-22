@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import com.trainingapp.auth.domain.Role;
 import com.trainingapp.auth.domain.User;
 
+import org.springframework.test.util.ReflectionTestUtils;
+
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +39,7 @@ class JwtServiceTest {
     @Test
     void generateAccessToken_producesValidToken() {
         User user = new User();
+        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
         user.setRole(Role.ROLE_USER);
         String token = jwtService.generateAccessToken(user);
 
@@ -47,6 +50,7 @@ class JwtServiceTest {
     @Test
     void generateAccessToken_subjectIsUserId() {
         User user = new User();
+        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
         user.setRole(Role.ROLE_USER);
         String token = jwtService.generateAccessToken(user);
 
@@ -56,6 +60,7 @@ class JwtServiceTest {
     @Test
     void generateAccessToken_isNotRefreshToken() {
         User user = new User();
+        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
         user.setRole(Role.ROLE_USER);
         String token = jwtService.generateAccessToken(user);
 
@@ -65,6 +70,7 @@ class JwtServiceTest {
     @Test
     void generateRefreshToken_isRefreshToken() {
         User user = new User();
+        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
         user.setRole(Role.ROLE_USER);
         String token = jwtService.generateRefreshToken(user);
 
@@ -74,6 +80,7 @@ class JwtServiceTest {
     @Test
     void generateRefreshToken_subjectIsUserId() {
         User user = new User();
+        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
         user.setRole(Role.ROLE_USER);
         String token = jwtService.generateRefreshToken(user);
 
@@ -99,8 +106,10 @@ class JwtServiceTest {
     @Test
     void differentUsers_produceDistinctTokens() {
         User userA = new User();
+        ReflectionTestUtils.setField(userA, "id", UUID.randomUUID());
         userA.setRole(Role.ROLE_USER);
         User userB = new User();
+        ReflectionTestUtils.setField(userB, "id", UUID.randomUUID());
         userB.setRole(Role.ROLE_USER);
 
         String tokenA = jwtService.generateAccessToken(userA);
