@@ -9,7 +9,11 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 
 /**
  * A user-defined exercise in the exercise catalog.
@@ -41,6 +45,9 @@ public class Exercise {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ExerciseBodyPartTarget> targets = new ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
@@ -55,5 +62,7 @@ public class Exercise {
     public void setEquipmentBrand(String equipmentBrand) { this.equipmentBrand = equipmentBrand; }
     public boolean isUnilateral() { return unilateral; }
     public void setUnilateral(boolean unilateral) { this.unilateral = unilateral; }
+    public List<ExerciseBodyPartTarget> getTargets() { return targets; }
+    public void setTargets(List<ExerciseBodyPartTarget> targets) { this.targets = targets; }
     public Instant getCreatedAt() { return createdAt; }
 }

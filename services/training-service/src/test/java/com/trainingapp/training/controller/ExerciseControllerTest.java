@@ -56,7 +56,7 @@ class ExerciseControllerTest {
     void createExercise_Success() throws Exception {
         UUID userId = testUserId;
         ExerciseRequest req = new ExerciseRequest("Bench Press", "Hammer Strength", false);
-        ExerciseResponse resp = new ExerciseResponse(UUID.randomUUID(), "Bench Press", "Hammer Strength", false, java.time.Instant.now());
+        ExerciseResponse resp = new ExerciseResponse(UUID.randomUUID(), "Bench Press", "Hammer Strength", false, java.time.Instant.now(), java.util.Collections.emptyList());
 
         Mockito.when(exerciseService.create(eq(userId), any())).thenReturn(resp);
 
@@ -73,7 +73,7 @@ class ExerciseControllerTest {
     @Test
     void searchExercises_Success() throws Exception {
         UUID userId = testUserId;
-        ExerciseResponse resp = new ExerciseResponse(UUID.randomUUID(), "Bench Press", null, false, java.time.Instant.now());
+        ExerciseResponse resp = new ExerciseResponse(UUID.randomUUID(), "Bench Press", null, false, java.time.Instant.now(), java.util.Collections.emptyList());
 
         Mockito.when(exerciseService.search(eq(userId), eq("bench"))).thenReturn(List.of(resp));
 

@@ -126,7 +126,10 @@ public class ExerciseService {
     }
 
     private ExerciseResponse toResponse(Exercise e) {
-        return new ExerciseResponse(e.getId(), e.getName(), e.getEquipmentBrand(), e.isUnilateral(), e.getCreatedAt());
+        List<ExerciseTargetResponse> targetResponses = e.getTargets().stream()
+                .map(this::toTargetResponse)
+                .toList();
+        return new ExerciseResponse(e.getId(), e.getName(), e.getEquipmentBrand(), e.isUnilateral(), e.getCreatedAt(), targetResponses);
     }
 
     private ExerciseTargetResponse toTargetResponse(ExerciseBodyPartTarget t) {
