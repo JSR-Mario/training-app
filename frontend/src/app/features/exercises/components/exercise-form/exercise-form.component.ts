@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Exercise, BODY_PARTS } from '../../../../core/types/training.types';
+import { Exercise, BODY_PARTS_GROUPED } from '../../../../core/types/training.types';
 import { ExerciseService } from '../../services/exercise.service';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 
@@ -112,7 +112,9 @@ export interface ExerciseFormData {
                   class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
                 >
                   <option value="" disabled>Select Body Part</option>
-                  <option *ngFor="let part of bodyParts" [value]="part">{{ part }}</option>
+                  <optgroup *ngFor="let group of bodyPartGroups | keyvalue" [label]="group.key">
+                    <option *ngFor="let part of group.value" [value]="part">{{ part }}</option>
+                  </optgroup>
                 </select>
               </div>
               
@@ -173,7 +175,7 @@ export class ExerciseFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private exerciseService = inject(ExerciseService);
   
-  bodyParts = BODY_PARTS;
+  bodyPartGroups = BODY_PARTS_GROUPED;
   suggestions = signal<Exercise[]>([]);
   showSuggestions = signal<boolean>(false);
   

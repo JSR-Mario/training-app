@@ -60,7 +60,7 @@ class AnalyticsControllerTest {
         int weekNumber = 1;
 
         WeeklyVolumeSnapshot snapshot = new WeeklyVolumeSnapshot();
-        snapshot.setBodyPart("CHEST");
+        snapshot.setBodyPart("MID_CHEST");
         snapshot.setTotalSets(new BigDecimal("5.00"));
 
         when(volumeRepository.findByUserIdAndProgramIdAndWeekNumber(userId, programId, weekNumber))
@@ -70,7 +70,7 @@ class AnalyticsControllerTest {
                 .param("programId", programId.toString())
                 .param("weekNumber", String.valueOf(weekNumber)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].bodyPart").value("CHEST"))
+                .andExpect(jsonPath("$[0].bodyPart").value("MID_CHEST"))
                 .andExpect(jsonPath("$[0].totalSets").value(5.00));
     }
 
