@@ -110,13 +110,13 @@ class ExerciseServiceTest {
         when(exerciseRepository.findByIdAndUserId(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
         ExerciseBodyPartTarget saved = new ExerciseBodyPartTarget();
         saved.setExercise(sampleExercise);
-        saved.setBodyPart(BodyPart.CHEST);
+        saved.setBodyPart(BodyPart.MID_CHEST);
         saved.setTargetValue(BigDecimal.ONE);
         when(targetRepository.save(any())).thenReturn(saved);
 
         ExerciseTargetResponse result = exerciseService.createTarget(
-                userId, exerciseId, new ExerciseTargetRequest(BodyPart.CHEST, BigDecimal.ONE));
-        assertThat(result.bodyPart()).isEqualTo(BodyPart.CHEST);
+                userId, exerciseId, new ExerciseTargetRequest(BodyPart.MID_CHEST, BigDecimal.ONE));
+        assertThat(result.bodyPart()).isEqualTo(BodyPart.MID_CHEST);
     }
 
     @Test

@@ -11,17 +11,26 @@ package com.trainingapp.training.domain;
  * in the project rules.
  */
 public enum BodyPart {
-
-    CHEST,
-    BACK,
-    SHOULDERS,
+    // UPPER & CORE
+    UPPER_CHEST,
+    MID_CHEST,
+    LOWER_CHEST,
+    LATS,
+    MID_BACK,
+    LOWER_BACK,
+    FRONT_DELTS,
+    LATERAL_DELTS,
+    REAR_DELTS,
+    TRAPS,
     BICEPS,
     TRICEPS,
+    FOREARMS,
+    CORE,
+
+    // LOWER
     QUADS,
     HAMSTRINGS,
     GLUTES,
     CALVES,
-    CORE,
-    FOREARMS,
-    TRAPS
+    ADDUCTORS
 }

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Exercise, BODY_PARTS } from '../../../../core/types/training.types';
+import { Exercise, BODY_PARTS_HIERARCHY, getBodyPartPath } from '../../../../core/types/training.types';
 import { ExerciseService } from '../../services/exercise.service';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 
@@ -103,37 +103,53 @@ export interface ExerciseFormData {
           </div>
           
           <div formArrayName="targets" class="space-y-3">
-            <div *ngFor="let targetForm of targets.controls; let i = index" [formGroupName]="i" class="flex gap-3 items-start">
-              <div class="flex-1">
-                <label [for]="'bodyPart' + i" class="sr-only">Body Part</label>
+            <div *ngFor="let targetForm of targets.controls; let i = index" [formGroupName]="i" class="flex gap-3 items-start bg-gray-800/30 p-3 rounded-xl border border-gray-700/50">
+              <div class="flex-1 flex flex-col gap-2">
                 <select 
-                  [id]="'bodyPart' + i"
-                  formControlName="bodyPart"
-                  class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                  formControlName="category"
+                  (change)="onCategoryChange(i)"
+                  class="w-full px-3 py-2 text-sm bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white"
                 >
-                  <option value="" disabled>Select Body Part</option>
-                  <option *ngFor="let part of bodyParts" [value]="part">{{ part }}</option>
+                  <option value="" disabled>Select Region</option>
+                  <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+                </select>
+                
+                <select 
+                  *ngIf="targetForm.get('category')?.value"
+                  formControlName="group"
+                  (change)="onGroupChange(i)"
+                  class="w-full px-3 py-2 text-sm bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                >
+                  <option value="" disabled>Select Muscle Group</option>
+                  <option *ngFor="let grp of getGroupsFor(targetForm.get('category')?.value)" [value]="grp">{{ grp }}</option>
+                </select>
+                
+                <select 
+                  *ngIf="targetForm.get('group')?.value"
+                  formControlName="bodyPart"
+                  class="w-full px-3 py-2 text-sm bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white border-l-2 border-l-blue-500"
+                >
+                  <option value="" disabled>Select Specific Part</option>
+                  <option *ngFor="let part of getPartsFor(targetForm.get('category')?.value, targetForm.get('group')?.value)" [value]="part">{{ part }}</option>
                 </select>
               </div>
               
-              <div class="w-32">
-                <label [for]="'targetValue' + i" class="sr-only">Target Value</label>
+              <div class="w-24">
                 <input 
-                  [id]="'targetValue' + i"
                   type="number" 
                   step="0.1"
                   min="0"
                   max="1"
                   formControlName="targetValue"
-                  class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
-                  placeholder="0.0 - 1.0"
+                  class="w-full px-3 py-2 text-sm bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                  placeholder="0.0-1.0"
                 >
               </div>
               
               <button 
                 type="button" 
                 (click)="removeTarget(i)"
-                class="p-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-xl transition-colors mt-1"
+                class="p-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg transition-colors"
                 title="Remove Target"
               >
                 X
@@ -173,7 +189,8 @@ export class ExerciseFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private exerciseService = inject(ExerciseService);
   
-  bodyParts = BODY_PARTS;
+  hierarchy = BODY_PARTS_HIERARCHY;
+  categories = Object.keys(BODY_PARTS_HIERARCHY);
   suggestions = signal<Exercise[]>([]);
   showSuggestions = signal<boolean>(false);
   
@@ -199,8 +216,11 @@ export class ExerciseFormComponent implements OnInit {
       });
       
       this.exercise.targets.forEach(target => {
+        const path = getBodyPartPath(target.bodyPart);
         this.targets.push(this.fb.group({
           id: [target.id],
+          category: [path?.category || ''],
+          group: [path?.group || ''],
           bodyPart: [target.bodyPart, Validators.required],
           targetValue: [target.targetValue, [Validators.required, Validators.min(0.1), Validators.max(1)]]
         }));
@@ -236,9 +256,35 @@ export class ExerciseFormComponent implements OnInit {
 
   addTarget() {
     this.targets.push(this.fb.group({
+      category: [''],
+      group: [''],
       bodyPart: ['', Validators.required],
       targetValue: [1.0, [Validators.required, Validators.min(0.1), Validators.max(1)]]
     }));
+  }
+
+  getGroupsFor(category: string): string[] {
+    if (!category || !this.hierarchy[category as keyof typeof this.hierarchy]) return [];
+    return Object.keys(this.hierarchy[category as keyof typeof this.hierarchy]);
+  }
+
+  getPartsFor(category: string, group: string): string[] {
+    if (!category || !group) return [];
+    const catData = this.hierarchy[category as keyof typeof this.hierarchy] as Record<string, readonly string[]>;
+    if (!catData) return [];
+    const parts = catData[group];
+    return parts ? [...parts] : [];
+  }
+
+  onCategoryChange(index: number) {
+    const targetGroup = this.targets.at(index);
+    targetGroup.get('group')?.setValue('');
+    targetGroup.get('bodyPart')?.setValue('');
+  }
+
+  onGroupChange(index: number) {
+    const targetGroup = this.targets.at(index);
+    targetGroup.get('bodyPart')?.setValue('');
   }
 
   removeTarget(index: number) {
