@@ -45,6 +45,9 @@ public class Exercise {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic = false;
+
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ExerciseBodyPartTarget> targets = new ArrayList<>();
 
@@ -65,4 +68,10 @@ public class Exercise {
     public List<ExerciseBodyPartTarget> getTargets() { return targets; }
     public void setTargets(List<ExerciseBodyPartTarget> targets) { this.targets = targets; }
     public Instant getCreatedAt() { return createdAt; }
+
+    /** Returns whether the exercise is public and visible to everyone. */
+    public boolean getIsPublic() { return isPublic; }
+
+    /** Sets whether the exercise is public and visible to everyone. */
+    public void setIsPublic(boolean isPublic) { this.isPublic = isPublic; }
 }

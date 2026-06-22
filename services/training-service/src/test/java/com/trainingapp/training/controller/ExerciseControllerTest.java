@@ -35,7 +35,7 @@ class ExerciseControllerTest {
     @BeforeEach
     void setUp() {
         testUserId = UUID.randomUUID();
-        SecurityContextHolder.getContext().setAuthentication(new UserIdAuthenticationToken(testUserId));
+        SecurityContextHolder.getContext().setAuthentication(new UserIdAuthenticationToken(testUserId, java.util.List.of()));
     }
 
     @AfterEach
@@ -55,8 +55,8 @@ class ExerciseControllerTest {
     @Test
     void createExercise_Success() throws Exception {
         UUID userId = testUserId;
-        ExerciseRequest req = new ExerciseRequest("Bench Press", "Hammer Strength", false);
-        ExerciseResponse resp = new ExerciseResponse(UUID.randomUUID(), "Bench Press", "Hammer Strength", false, java.time.Instant.now(), java.util.Collections.emptyList());
+        ExerciseRequest req = new ExerciseRequest("Bench Press", "Hammer Strength", false, false);
+        ExerciseResponse resp = new ExerciseResponse(UUID.randomUUID(), "Bench Press", "Hammer Strength", false, false, java.time.Instant.now(), java.util.Collections.emptyList());
 
         Mockito.when(exerciseService.create(eq(userId), any())).thenReturn(resp);
 
@@ -73,7 +73,7 @@ class ExerciseControllerTest {
     @Test
     void searchExercises_Success() throws Exception {
         UUID userId = testUserId;
-        ExerciseResponse resp = new ExerciseResponse(UUID.randomUUID(), "Bench Press", null, false, java.time.Instant.now(), java.util.Collections.emptyList());
+        ExerciseResponse resp = new ExerciseResponse(UUID.randomUUID(), "Bench Press", null, false, false, java.time.Instant.now(), java.util.Collections.emptyList());
 
         Mockito.when(exerciseService.search(eq(userId), eq("bench"))).thenReturn(List.of(resp));
 

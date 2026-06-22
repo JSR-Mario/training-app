@@ -6,6 +6,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
@@ -40,6 +42,10 @@ public class User {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private Role role = Role.ROLE_USER;
 
     /**
      * Sets {@code createdAt} to the current UTC instant before the first persist.
@@ -77,4 +83,10 @@ public class User {
 
     /** Returns the UTC instant when this account was created. */
     public Instant getCreatedAt() { return createdAt; }
+
+    /** Returns the user role. */
+    public Role getRole() { return role; }
+
+    /** Sets the user role. */
+    public void setRole(Role role) { this.role = role; }
 }

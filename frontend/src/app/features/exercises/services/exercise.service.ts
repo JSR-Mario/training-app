@@ -25,11 +25,11 @@ export class ExerciseService {
     });
   }
 
-  createExercise(data: { name: string; equipmentBrand?: string; unilateral: boolean }): Observable<Exercise> {
+  createExercise(data: { name: string; equipmentBrand?: string; unilateral: boolean; isPublic: boolean }): Observable<Exercise> {
     return this.http.post<Exercise>(this.BASE_URL, data);
   }
 
-  updateExercise(id: string, data: { name: string; equipmentBrand?: string; unilateral: boolean }): Observable<Exercise> {
+  updateExercise(id: string, data: { name: string; equipmentBrand?: string; unilateral: boolean; isPublic: boolean }): Observable<Exercise> {
     return this.http.put<Exercise>(`${this.BASE_URL}/${id}`, data);
   }
 

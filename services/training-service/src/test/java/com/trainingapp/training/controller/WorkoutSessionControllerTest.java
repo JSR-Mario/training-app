@@ -47,7 +47,7 @@ class WorkoutSessionControllerTest {
     void setUp() {
         objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         userId = UUID.randomUUID();
-        SecurityContextHolder.getContext().setAuthentication(new UserIdAuthenticationToken(userId));
+        SecurityContextHolder.getContext().setAuthentication(new UserIdAuthenticationToken(userId, java.util.List.of()));
     }
 
     @AfterEach

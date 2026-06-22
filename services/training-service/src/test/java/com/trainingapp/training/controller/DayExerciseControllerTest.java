@@ -33,7 +33,7 @@ class DayExerciseControllerTest {
     @BeforeEach
     void setUp() {
         testUserId = UUID.randomUUID();
-        SecurityContextHolder.getContext().setAuthentication(new UserIdAuthenticationToken(testUserId));
+        SecurityContextHolder.getContext().setAuthentication(new UserIdAuthenticationToken(testUserId, java.util.List.of()));
     }
 
     @AfterEach

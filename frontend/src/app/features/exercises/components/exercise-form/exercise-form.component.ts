@@ -3,12 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Exercise, BODY_PARTS_HIERARCHY, getBodyPartPath } from '../../../../core/types/training.types';
 import { ExerciseService } from '../../services/exercise.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 
 export interface ExerciseFormData {
   name: string;
   equipmentBrand: string;
   unilateral: boolean;
+  isPublic: boolean;
   targets: { id?: string; bodyPart: string; targetValue: number }[];
 }
 
@@ -86,6 +88,23 @@ export interface ExerciseFormData {
           <label for="unilateral" class="text-sm font-medium text-gray-300 cursor-pointer">
             Unilateral exercise
             <span class="text-gray-500 text-xs ml-1">(one side at a time)</span>
+          </label>
+        </div>
+
+        <!-- Public Checkbox (Admins Only) -->
+        <div *ngIf="authService.isAdmin" class="flex items-center gap-3">
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              formControlName="isPublic"
+              class="sr-only peer"
+              id="isPublic"
+            >
+            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+          </label>
+          <label for="isPublic" class="text-sm font-medium text-gray-300 cursor-pointer">
+            Public exercise
+            <span class="text-gray-500 text-xs ml-1">(visible to all users)</span>
           </label>
         </div>
 
@@ -188,6 +207,7 @@ export class ExerciseFormComponent implements OnInit {
 
   private fb = inject(FormBuilder);
   private exerciseService = inject(ExerciseService);
+  authService = inject(AuthService);
   
   hierarchy = BODY_PARTS_HIERARCHY;
   categories = Object.keys(BODY_PARTS_HIERARCHY);
@@ -200,6 +220,7 @@ export class ExerciseFormComponent implements OnInit {
     name: ['', [Validators.required, Validators.maxLength(200)]],
     equipmentBrand: [''],
     unilateral: [false],
+    isPublic: [false],
     targets: this.fb.array([])
   });
 
@@ -212,7 +233,8 @@ export class ExerciseFormComponent implements OnInit {
       this.form.patchValue({
         name: this.exercise.name,
         equipmentBrand: this.exercise.equipmentBrand || '',
-        unilateral: this.exercise.unilateral || false
+        unilateral: this.exercise.unilateral || false,
+        isPublic: this.exercise.isPublic || false
       });
       
       this.exercise.targets.forEach(target => {

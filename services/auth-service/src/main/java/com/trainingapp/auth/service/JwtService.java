@@ -1,5 +1,7 @@
 package com.trainingapp.auth.service;
 
+import com.trainingapp.auth.domain.User;
+
 import com.trainingapp.auth.config.AuthConstants;
 import com.trainingapp.auth.config.JwtProperties;
 import com.trainingapp.auth.exception.InvalidTokenException;
@@ -44,28 +46,30 @@ public class JwtService {
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
+
     /**
      * Generates a short-lived JWT access token for the given user.
      *
-     * @param userId the user's UUID (becomes the token subject)
+     * @param user the user entity
      * @return a signed, compact JWT string
      */
-    public String generateAccessToken(UUID userId) {
+    public String generateAccessToken(User user) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(jwtProperties.accessExpiryMinutes() * 60);
-        return buildToken(userId, AuthConstants.TOKEN_TYPE_ACCESS, now, expiry);
+        return buildToken(user.getId(), user.getRole().name(), AuthConstants.TOKEN_TYPE_ACCESS, now, expiry);
     }
+
 
     /**
      * Generates a long-lived JWT refresh token for the given user.
      *
-     * @param userId the user's UUID (becomes the token subject)
+     * @param user the user entity
      * @return a signed, compact JWT string
      */
-    public String generateRefreshToken(UUID userId) {
+    public String generateRefreshToken(User user) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(jwtProperties.refreshExpiryDays() * 86400);
-        return buildToken(userId, AuthConstants.TOKEN_TYPE_REFRESH, now, expiry);
+        return buildToken(user.getId(), user.getRole().name(), AuthConstants.TOKEN_TYPE_REFRESH, now, expiry);
     }
 
     /**
@@ -120,10 +124,11 @@ public class JwtService {
     // Private helpers
     // ----------------------------------------------------------------
 
-    private String buildToken(UUID userId, String type, Instant issuedAt, Instant expiry) {
+    private String buildToken(UUID userId, String role, String type, Instant issuedAt, Instant expiry) {
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim(AuthConstants.TOKEN_TYPE_CLAIM, type)
+                .claim("role", role)
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(expiry))
                 .signWith(signingKey)
