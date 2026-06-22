@@ -64,10 +64,12 @@ public class JwtValidationFilter extends AbstractGatewayFilterFactory<JwtValidat
                         .getPayload();
 
                 String userId = claims.getSubject();
+                String role = claims.get("role", String.class);
 
-                // Mutate request to add X-User-Id header
+                // Mutate request to add X-User-Id and X-User-Role headers
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                         .header("X-User-Id", userId)
+                        .header("X-User-Role", role != null ? role : "ROLE_USER")
                         .build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());

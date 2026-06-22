@@ -68,6 +68,12 @@ import { ExerciseFormComponent } from '../../components/exercise-form/exercise-f
                 >
                   BILATERAL
                 </span>
+                <span 
+                  *ngIf="exercise.isPublic"
+                  class="px-2 py-0.5 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30"
+                >
+                  PUBLIC
+                </span>
               </div>
             </div>
             <div class="flex gap-2">
@@ -149,14 +155,15 @@ export class ExerciseListComponent implements OnInit {
     this.selectedExercise.set(null);
   }
 
-  onSaveExercise(formData: { name: string; equipmentBrand: string; unilateral: boolean; targets: { id?: string; bodyPart: string; targetValue: number }[] }) {
+  onSaveExercise(formData: { name: string; equipmentBrand: string; unilateral: boolean; isPublic: boolean; targets: { id?: string; bodyPart: string; targetValue: number }[] }) {
     this.isLoading.set(true);
     const exercise = this.selectedExercise();
     
     const exercisePayload = {
       name: formData.name,
       equipmentBrand: formData.equipmentBrand || undefined,
-      unilateral: formData.unilateral
+      unilateral: formData.unilateral,
+      isPublic: formData.isPublic || false
     };
 
     if (exercise) {

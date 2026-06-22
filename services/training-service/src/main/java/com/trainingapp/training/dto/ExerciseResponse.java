@@ -10,6 +10,7 @@ public record ExerciseResponse(
         String name,
         String equipmentBrand,
         boolean unilateral,
+        boolean isPublic,
         Instant createdAt,
         List<ExerciseTargetResponse> targets
 ) {}

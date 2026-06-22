@@ -52,7 +52,7 @@ class ExerciseServiceTest {
 
     @Test
     void findAll_returnsUserExercises() {
-        when(exerciseRepository.findByUserId(userId)).thenReturn(List.of(sampleExercise));
+        when(exerciseRepository.findByUserIdOrIsPublic(userId)).thenReturn(List.of(sampleExercise));
         List<ExerciseResponse> result = exerciseService.findAll(userId);
         assertThat(result).hasSize(1);
         assertThat(result.get(0).name()).isEqualTo("Bench Press");
@@ -64,7 +64,7 @@ class ExerciseServiceTest {
     void create_savesWithAllFields() {
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
         ExerciseResponse result = exerciseService.create(userId,
-                new ExerciseRequest("Bench Press", "Hammer Strength", false));
+                new ExerciseRequest("Bench Press", "Hammer Strength", false, false));
         assertThat(result.name()).isEqualTo("Bench Press");
         assertThat(result.equipmentBrand()).isEqualTo("Hammer Strength");
         verify(exerciseRepository).save(any());
@@ -72,10 +72,10 @@ class ExerciseServiceTest {
 
     @Test
     void update_existingExercise_updatesAllFields() {
-        when(exerciseRepository.findByIdAndUserId(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
+        when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
         exerciseService.update(userId, exerciseId,
-                new ExerciseRequest("Incline Press", "Rogue", true));
+                new ExerciseRequest("Incline Press", "Rogue", true, false));
         assertThat(sampleExercise.getName()).isEqualTo("Incline Press");
         assertThat(sampleExercise.getEquipmentBrand()).isEqualTo("Rogue");
         assertThat(sampleExercise.isUnilateral()).isTrue();
@@ -83,22 +83,22 @@ class ExerciseServiceTest {
 
     @Test
     void update_notFound_throwsResourceNotFound() {
-        when(exerciseRepository.findByIdAndUserId(exerciseId, userId)).thenReturn(Optional.empty());
+        when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> exerciseService.update(userId, exerciseId,
-                new ExerciseRequest("X", null, false)))
+                new ExerciseRequest("X", null, false, false)))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     void delete_existingExercise_deletes() {
-        when(exerciseRepository.findByIdAndUserId(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
+        when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
         exerciseService.delete(userId, exerciseId);
         verify(exerciseRepository).delete(sampleExercise);
     }
 
     @Test
     void search_returnsMatchingExercises() {
-        when(exerciseRepository.findTop3ByUserIdAndNameContainingIgnoreCase(userId, "bench"))
+        when(exerciseRepository.searchExercises(eq(userId), eq("bench"), any()))
                 .thenReturn(List.of(sampleExercise));
         List<ExerciseResponse> result = exerciseService.search(userId, "bench");
         assertThat(result).hasSize(1);
@@ -107,7 +107,7 @@ class ExerciseServiceTest {
 
     @Test
     void createTarget_savesAndReturns() {
-        when(exerciseRepository.findByIdAndUserId(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
+        when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
         ExerciseBodyPartTarget saved = new ExerciseBodyPartTarget();
         saved.setExercise(sampleExercise);
         saved.setBodyPart(BodyPart.MID_CHEST);

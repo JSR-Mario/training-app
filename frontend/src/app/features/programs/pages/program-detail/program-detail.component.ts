@@ -180,12 +180,10 @@ export class ProgramDetailComponent implements OnInit {
     const pId = this.programId();
     if (!pId) return;
 
-    const nextOrder = this.weeks().length > 0 
-      ? Math.max(...this.weeks().map(w => w.sortOrder)) + 1 
-      : 0;
-    const defaultName = `Week ${nextOrder + 1}`;
+    const nextWeekNumber = this.weeks().length + 1;
+    const defaultName = `Week ${nextWeekNumber}`;
 
-    this.programService.createWeek(pId, defaultName, nextOrder).subscribe({
+    this.programService.createWeek(pId, defaultName).subscribe({
       next: () => this.loadProgramData(),
       error: (err) => console.error('Error adding week', err)
     });
@@ -207,12 +205,7 @@ export class ProgramDetailComponent implements OnInit {
 
   onSubmitDay(weekId: string) {
     if (this.dayForm.valid) {
-      const week = this.weeks().find(w => w.id === weekId);
-      const nextOrder = week && week.days && week.days.length > 0 
-        ? Math.max(...week.days.map(d => d.sortOrder)) + 1 
-        : 0;
-      
-      this.programService.createDay(weekId, this.dayForm.value.dayName, nextOrder).subscribe({
+      this.programService.createDay(weekId, this.dayForm.value.dayName).subscribe({
         next: () => {
           this.activeAddDayWeekId.set(null);
           this.loadProgramData();

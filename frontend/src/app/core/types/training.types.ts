@@ -41,6 +41,7 @@ export interface Exercise {
   name: string;
   equipmentBrand?: string;
   unilateral: boolean;
+  isPublic: boolean;
   targets: ExerciseTarget[];
   createdAt: string;
   updatedAt: string;
