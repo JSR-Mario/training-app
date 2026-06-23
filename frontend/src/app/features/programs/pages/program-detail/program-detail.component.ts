@@ -4,13 +4,12 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProgramService } from '../../services/program.service';
 import { TrainingProgram, DayTemplate } from '../../../../core/types/training.types';
-import { DayBuilderComponent } from '../../components/day-builder/day-builder.component';
 import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-program-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, DayBuilderComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule],
   template: `
     <div class="max-w-7xl mx-auto space-y-6">
       

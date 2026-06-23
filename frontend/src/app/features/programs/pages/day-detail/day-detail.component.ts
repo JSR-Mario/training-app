@@ -1,16 +1,17 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProgramService } from '../../services/program.service';
 import { ExerciseService } from '../../../exercises/services/exercise.service';
 import { DayTemplate, DayExercise, Exercise } from '../../../../core/types/training.types';
+import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-day-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
   template: `
     <div class="max-w-7xl mx-auto space-y-6 pb-24">
       
@@ -37,21 +38,16 @@ import { forkJoin } from 'rxjs';
       <!-- Add Exercise Form -->
       <div *ngIf="showAddExercise() && !isLoading()" class="glass-card p-6 border border-blue-500/30">
         <h3 class="text-lg font-bold text-white mb-4">Add Exercise to {{ day()?.name }}</h3>
-        <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
-          
-          <div>
-            <label for="exerciseSelect" class="block text-sm font-medium text-gray-300 mb-1">Select Exercise</label>
-            <select 
-              id="exerciseSelect"
-              formControlName="exerciseId"
-              class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm"
-            >
-              <option value="" disabled>Choose an exercise</option>
-              <option *ngFor="let ex of availableExercises()" [value]="ex.id">{{ ex.name }}</option>
-            </select>
-          </div>
+        
+        <app-exercise-search *ngIf="!selectedExercise()" (select)="onExerciseSelected($event)"></app-exercise-search>
 
-          <div class="flex gap-4">
+        <form *ngIf="selectedExercise()" [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
+          <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
+            Selected: {{ selectedExercise()?.name }}
+            <span *ngIf="selectedExercise()?.type === 'CARDIO'" class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
+          </div>
+          
+          <div class="flex gap-4" *ngIf="selectedExercise()?.type !== 'CARDIO'">
             <div class="flex-1">
               <label for="setsInput" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
               <input 
@@ -84,10 +80,43 @@ import { forkJoin } from 'rxjs';
             </div>
           </div>
 
+          <div class="flex gap-4" *ngIf="selectedExercise()?.type === 'CARDIO'">
+            <div class="flex-1">
+              <label for="durationInput" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
+              <input 
+                id="durationInput"
+                type="number" 
+                formControlName="durationMinutes"
+                min="1"
+                class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm"
+              >
+            </div>
+            <div class="flex-1">
+              <label for="inclineInput" class="block text-sm font-medium text-gray-300 mb-1">Incline</label>
+              <input 
+                id="inclineInput"
+                type="number" 
+                formControlName="incline"
+                step="0.1"
+                class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm"
+              >
+            </div>
+            <div class="flex-1">
+              <label for="resistanceInput" class="block text-sm font-medium text-gray-300 mb-1">Resistance</label>
+              <input 
+                id="resistanceInput"
+                type="number" 
+                formControlName="resistance"
+                step="0.1"
+                class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm"
+              >
+            </div>
+          </div>
+
           <div class="flex justify-end gap-3 pt-2">
             <button 
               type="button" 
-              (click)="showAddExercise.set(false)"
+              (click)="cancelAdd()"
               class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm"
             >
               Cancel
@@ -104,53 +133,85 @@ import { forkJoin } from 'rxjs';
       </div>
 
       <!-- Exercises List -->
-      <div *ngIf="!isLoading() && day()" class="space-y-3">
+      <div *ngIf="!isLoading() && day()" class="space-y-6 mt-4">
         
         <div *ngIf="exercises().length === 0 && !showAddExercise()" class="text-center py-12 glass-card border border-dashed border-gray-700">
           <p class="text-gray-400">No exercises added yet.</p>
           <button (click)="openAddExercise()" class="mt-4 text-blue-400 hover:text-blue-300 text-sm">Add your first exercise</button>
         </div>
 
-        <div *ngFor="let ex of exercises(); let i = index" class="glass-card p-4 flex items-center justify-between group hover:border-gray-600 transition-colors">
-          <div class="flex items-center gap-4">
-            <!-- Reorder handles -->
-            <div class="flex flex-col gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
-              <button 
-                (click)="moveExercise(i, -1)" 
-                [disabled]="i === 0"
-                class="text-gray-400 hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
-                title="Move Up"
-              >
-                &uarr;
-              </button>
-              <button 
-                (click)="moveExercise(i, 1)" 
-                [disabled]="i === exercises().length - 1"
-                class="text-gray-400 hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
-                title="Move Down"
-              >
-                &darr;
-              </button>
+        <div *ngIf="strengthExs().length > 0" class="space-y-3">
+          <h4 class="text-gray-300 font-semibold mb-2">Strength Exercises</h4>
+          <div *ngFor="let ex of strengthExs(); let i = index" class="glass-card p-4 flex items-center justify-between group hover:border-gray-600 transition-colors">
+            <div class="flex items-center gap-4">
+              <!-- Reorder handles -->
+              <div class="flex flex-col gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                <button 
+                  (click)="moveStrengthExercise(ex.id, -1)" 
+                  [disabled]="i === 0"
+                  class="text-gray-400 hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
+                  title="Move Up"
+                >
+                  &uarr;
+                </button>
+                <button 
+                  (click)="moveStrengthExercise(ex.id, 1)" 
+                  [disabled]="i === strengthExs().length - 1"
+                  class="text-gray-400 hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
+                  title="Move Down"
+                >
+                  &darr;
+                </button>
+              </div>
+              
+              <div>
+                <h4 class="font-semibold text-lg text-white">{{ ex.exerciseName }}</h4>
+                <p class="text-gray-400 text-sm">
+                  {{ ex.sets }} sets &times; 
+                  {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps
+                </p>
+              </div>
             </div>
             
-            <div>
-              <h4 class="font-semibold text-lg text-white">{{ ex.exerciseName }}</h4>
-              <p class="text-gray-400 text-sm">
-                {{ ex.sets }} sets &times; 
-                {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps
-              </p>
-            </div>
+            <button 
+              (click)="deleteExercise(ex.id)"
+              class="text-red-400 hover:text-red-300 p-2 opacity-50 group-hover:opacity-100 transition-opacity"
+              title="Remove"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            </button>
           </div>
-          
-          <button 
-            (click)="deleteExercise(ex.id)"
-            class="text-red-400 hover:text-red-300 p-2 opacity-50 group-hover:opacity-100 transition-opacity"
-            title="Remove"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-            </svg>
-          </button>
+        </div>
+
+        <div *ngIf="cardioExs().length > 0" class="space-y-3">
+          <h4 class="text-purple-400 font-semibold mb-2 mt-6">Cardio</h4>
+          <div *ngFor="let ex of cardioExs()" class="glass-card p-4 flex items-center justify-between group border border-purple-500/20 bg-purple-900/10">
+            <div class="flex items-center gap-4 pl-8"> <!-- Pl-8 to align with strength exercises text which have move buttons -->
+              <div>
+                <h4 class="font-semibold text-lg text-white flex items-center gap-2">
+                  {{ ex.exerciseName }}
+                  <span class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
+                </h4>
+                <p class="text-gray-400 text-sm">
+                  {{ ex.durationMinutes }} min
+                  <span *ngIf="ex.incline"> &bull; Inc: {{ ex.incline }}</span>
+                  <span *ngIf="ex.resistance"> &bull; Res: {{ ex.resistance }}</span>
+                </p>
+              </div>
+            </div>
+            
+            <button 
+              (click)="deleteExercise(ex.id)"
+              class="text-red-400 hover:text-red-300 p-2 opacity-50 group-hover:opacity-100 transition-opacity"
+              title="Remove"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
         </div>
 
       </div>
@@ -169,14 +230,21 @@ export class DayDetailComponent implements OnInit {
   exercises = signal<DayExercise[]>([]);
   availableExercises = signal<Exercise[]>([]);
   
+  strengthExs = computed(() => this.exercises().filter(e => !e.durationMinutes));
+  cardioExs = computed(() => this.exercises().filter(e => !!e.durationMinutes));
+
   isLoading = signal<boolean>(true);
   showAddExercise = signal<boolean>(false);
+  selectedExercise = signal<Exercise | null>(null);
 
   exerciseForm: FormGroup = this.fb.group({
     exerciseId: ['', Validators.required],
-    sets: [3, [Validators.required, Validators.min(1)]],
-    reps: [10, [Validators.required, Validators.min(1)]],
-    repsMax: [null]
+    sets: [3],
+    reps: [10],
+    repsMax: [null],
+    durationMinutes: [null],
+    incline: [null],
+    resistance: [null]
   });
 
   ngOnInit() {
@@ -216,19 +284,61 @@ export class DayDetailComponent implements OnInit {
 
   openAddExercise() {
     this.showAddExercise.set(true);
+    this.selectedExercise.set(null);
     this.exerciseForm.reset({ sets: 3, reps: 10, repsMax: null });
+  }
+
+  cancelAdd() {
+    this.showAddExercise.set(false);
+    this.selectedExercise.set(null);
+  }
+
+  onExerciseSelected(ex: Exercise) {
+    this.selectedExercise.set(ex);
+    this.exerciseForm.patchValue({ exerciseId: ex.id });
+
+    if (ex.type === 'CARDIO') {
+      this.exerciseForm.get('sets')?.clearValidators();
+      this.exerciseForm.get('reps')?.clearValidators();
+      this.exerciseForm.get('durationMinutes')?.setValidators([Validators.required, Validators.min(1)]);
+    } else {
+      this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
+      this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+      this.exerciseForm.get('durationMinutes')?.clearValidators();
+    }
+    
+    this.exerciseForm.get('sets')?.updateValueAndValidity();
+    this.exerciseForm.get('reps')?.updateValueAndValidity();
+    this.exerciseForm.get('durationMinutes')?.updateValueAndValidity();
   }
 
   onSubmitExercise() {
     const dayId = this.dayId();
     if (this.exerciseForm.valid && dayId) {
-      const { exerciseId, sets, reps, repsMax } = this.exerciseForm.value;
+      const type = this.selectedExercise()?.type;
+      const formVal = this.exerciseForm.value;
       const sortOrder = this.exercises().length;
 
-      // Note: addDayExercise needs to support repsMax
-      this.programService.addDayExercise(dayId, exerciseId, sets, reps, sortOrder, repsMax).subscribe({
+      const sets = type === 'CARDIO' ? undefined : formVal.sets;
+      const reps = type === 'CARDIO' ? undefined : formVal.reps;
+      const repsMax = type === 'CARDIO' ? undefined : formVal.repsMax;
+      const duration = type === 'CARDIO' ? formVal.durationMinutes : undefined;
+      const incline = type === 'CARDIO' ? formVal.incline : undefined;
+      const resistance = type === 'CARDIO' ? formVal.resistance : undefined;
+
+      this.programService.addDayExercise(
+        dayId, 
+        formVal.exerciseId, 
+        sets, 
+        reps, 
+        sortOrder, 
+        repsMax, 
+        duration, 
+        incline, 
+        resistance
+      ).subscribe({
         next: () => {
-          this.showAddExercise.set(false);
+          this.cancelAdd();
           this.loadData();
         },
         error: (err) => console.error('Error adding exercise', err)
@@ -245,19 +355,26 @@ export class DayDetailComponent implements OnInit {
     }
   }
 
-  moveExercise(index: number, direction: number) {
+  moveStrengthExercise(id: string, direction: number) {
     const dayId = this.dayId();
     if (!dayId) return;
 
     const currentEx = this.exercises();
-    if (index + direction < 0 || index + direction >= currentEx.length) return;
+    const strengthExs = currentEx.filter(e => !e.durationMinutes);
+    const cardioExs = currentEx.filter(e => !!e.durationMinutes);
 
-    const items = [...currentEx];
-    const temp = items[index];
-    items[index] = items[index + direction];
-    items[index + direction] = temp;
+    const index = strengthExs.findIndex(e => e.id === id);
+    if (index === -1) return;
+    if (index + direction < 0 || index + direction >= strengthExs.length) return;
 
-    const orderedItems = items.map((ex, idx) => ({ id: ex.id, sortOrder: idx }));
+    // Swap elements
+    const temp = strengthExs[index];
+    strengthExs[index] = strengthExs[index + direction];
+    strengthExs[index + direction] = temp;
+
+    // Recombine keeping cardio at the bottom
+    const combined = [...strengthExs, ...cardioExs];
+    const orderedItems = combined.map((ex, idx) => ({ id: ex.id, sortOrder: idx }));
 
     this.programService.reorderDayExercises(dayId, orderedItems).subscribe({
       next: () => this.loadData(),

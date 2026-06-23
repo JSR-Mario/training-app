@@ -91,7 +91,7 @@ export interface ExerciseFormData {
         </div>
 
         <!-- Unilateral Checkbox -->
-        <div class="flex items-center gap-3">
+        <div *ngIf="form.get('type')?.value === 'STRENGTH'" class="flex items-center gap-3">
           <label class="relative inline-flex items-center cursor-pointer">
             <input 
               type="checkbox" 
