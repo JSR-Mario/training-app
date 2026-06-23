@@ -1,9 +1,9 @@
 import { Component, EventEmitter, OnInit, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Exercise, BODY_PARTS_HIERARCHY } from '../../../../core/types/training.types';
 import { ExerciseService } from '../../services/exercise.service';
-import { Subject, debounceTime, distinctUntilChanged, switchMap, of, map, combineLatest, startWith } from 'rxjs';
+import { debounceTime } from 'rxjs';
 
 @Component({
   selector: 'app-exercise-search',
@@ -38,8 +38,9 @@ import { Subject, debounceTime, distinctUntilChanged, switchMap, of, map, combin
         <!-- Filters -->
         <div *ngIf="showFilters()" class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-gray-900/50 rounded-lg">
           <div>
-            <label class="block text-xs text-gray-400 mb-1">Region</label>
+            <label for="categorySelect" class="block text-xs text-gray-400 mb-1">Region</label>
             <select 
+              id="categorySelect"
               formControlName="category"
               class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
             >
@@ -48,8 +49,9 @@ import { Subject, debounceTime, distinctUntilChanged, switchMap, of, map, combin
             </select>
           </div>
           <div>
-            <label class="block text-xs text-gray-400 mb-1">Muscle Group</label>
+            <label for="groupSelect" class="block text-xs text-gray-400 mb-1">Muscle Group</label>
             <select 
+              id="groupSelect"
               formControlName="group"
               class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
             >
@@ -58,8 +60,9 @@ import { Subject, debounceTime, distinctUntilChanged, switchMap, of, map, combin
             </select>
           </div>
           <div>
-            <label class="block text-xs text-gray-400 mb-1">Specific Part</label>
+            <label for="bodyPartSelect" class="block text-xs text-gray-400 mb-1">Specific Part</label>
             <select 
+              id="bodyPartSelect"
               formControlName="bodyPart"
               class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
             >
@@ -77,9 +80,10 @@ import { Subject, debounceTime, distinctUntilChanged, switchMap, of, map, combin
           No exercises found.
         </div>
         
-        <div 
+        <button 
           *ngFor="let ex of filteredExercises()"
-          class="p-3 bg-gray-900/80 hover:bg-gray-700/80 rounded-lg border border-gray-700 cursor-pointer transition-colors flex justify-between items-center group"
+          type="button"
+          class="w-full text-left p-3 bg-gray-900/80 hover:bg-gray-700/80 rounded-lg border border-gray-700 cursor-pointer transition-colors flex justify-between items-center group"
           (click)="select.emit(ex)"
         >
           <div>
@@ -98,10 +102,10 @@ import { Subject, debounceTime, distinctUntilChanged, switchMap, of, map, combin
               </span>
             </div>
           </div>
-          <button class="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center justify-center">
+          <div class="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center justify-center">
             +
-          </button>
-        </div>
+          </div>
+        </button>
       </div>
     </div>
   `,
@@ -183,7 +187,7 @@ export class ExerciseSearchComponent implements OnInit {
     return [...(catData[grp] || [])];
   }
 
-  private applyFilters(filters: any) {
+  private applyFilters(filters: { query?: string | null, category?: string | null, group?: string | null, bodyPart?: string | null }) {
     const query = (filters.query || '').toLowerCase();
     const category = filters.category;
     const group = filters.group;

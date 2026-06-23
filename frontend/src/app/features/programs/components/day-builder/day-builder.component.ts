@@ -39,27 +39,27 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
           
           <ng-container *ngIf="selectedExercise()?.type !== 'CARDIO'">
             <div class="w-24">
-              <label class="block text-xs text-gray-400 mb-1">Sets</label>
-              <input type="number" min="1" formControlName="sets" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+              <label for="setsInput" class="block text-xs text-gray-400 mb-1">Sets</label>
+              <input id="setsInput" type="number" min="1" formControlName="sets" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
             </div>
             <div class="w-24">
-              <label class="block text-xs text-gray-400 mb-1">Reps</label>
-              <input type="number" min="1" formControlName="reps" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+              <label for="repsInput" class="block text-xs text-gray-400 mb-1">Reps</label>
+              <input id="repsInput" type="number" min="1" formControlName="reps" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
             </div>
           </ng-container>
 
           <ng-container *ngIf="selectedExercise()?.type === 'CARDIO'">
             <div class="w-28">
-              <label class="block text-xs text-gray-400 mb-1">Duration (min)</label>
-              <input type="number" min="1" formControlName="durationMinutes" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+              <label for="durationInput" class="block text-xs text-gray-400 mb-1">Duration (min)</label>
+              <input id="durationInput" type="number" min="1" formControlName="durationMinutes" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
             </div>
             <div class="w-24">
-              <label class="block text-xs text-gray-400 mb-1">Incline</label>
-              <input type="number" step="0.1" formControlName="incline" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+              <label for="inclineInput" class="block text-xs text-gray-400 mb-1">Incline</label>
+              <input id="inclineInput" type="number" step="0.1" formControlName="incline" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
             </div>
             <div class="w-24">
-              <label class="block text-xs text-gray-400 mb-1">Resistance</label>
-              <input type="number" step="0.1" formControlName="resistance" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+              <label for="resistanceInput" class="block text-xs text-gray-400 mb-1">Resistance</label>
+              <input id="resistanceInput" type="number" step="0.1" formControlName="resistance" class="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
             </div>
           </ng-container>
           

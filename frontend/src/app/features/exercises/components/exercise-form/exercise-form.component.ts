@@ -61,8 +61,8 @@ export interface ExerciseFormData {
         </div>
 
         <!-- Exercise Type -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Exercise Type</label>
+        <fieldset>
+          <legend class="block text-sm font-medium text-gray-300 mb-2">Exercise Type</legend>
           <div class="flex gap-4">
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="radio" formControlName="type" value="STRENGTH" class="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 focus:ring-blue-600 focus:ring-2">
@@ -73,7 +73,7 @@ export interface ExerciseFormData {
               <span class="text-white text-sm">Cardio</span>
             </label>
           </div>
-        </div>
+        </fieldset>
 
         <!-- Equipment Brand (optional) -->
         <div>
