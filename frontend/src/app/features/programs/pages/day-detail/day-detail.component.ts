@@ -92,7 +92,7 @@ import { forkJoin } from 'rxjs';
               >
             </div>
             <div class="flex-1">
-              <label for="inclineInput" class="block text-sm font-medium text-gray-300 mb-1">Incline</label>
+              <label for="inclineInput" class="block text-sm font-medium text-gray-300 mb-1">Incline <span class="text-xs text-gray-500">(Optional)</span></label>
               <input 
                 id="inclineInput"
                 type="number" 
@@ -102,7 +102,7 @@ import { forkJoin } from 'rxjs';
               >
             </div>
             <div class="flex-1">
-              <label for="resistanceInput" class="block text-sm font-medium text-gray-300 mb-1">Resistance</label>
+              <label for="resistanceInput" class="block text-sm font-medium text-gray-300 mb-1">Speed / Resistance <span class="text-xs text-gray-500">(Optional)</span></label>
               <input 
                 id="resistanceInput"
                 type="number" 
@@ -197,7 +197,7 @@ import { forkJoin } from 'rxjs';
                 <p class="text-gray-400 text-sm">
                   {{ ex.durationMinutes }} min
                   <span *ngIf="ex.incline"> &bull; Inc: {{ ex.incline }}</span>
-                  <span *ngIf="ex.resistance"> &bull; Res: {{ ex.resistance }}</span>
+                  <span *ngIf="ex.resistance"> &bull; Spd/Res: {{ ex.resistance }}</span>
                 </p>
               </div>
             </div>
