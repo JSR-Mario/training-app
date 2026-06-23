@@ -10,5 +10,6 @@ public record DayExerciseRequest(
         @NotNull UUID exerciseId,
         @Positive int sets,
         @Positive int reps,
+        @PositiveOrZero Integer repsMax,
         @PositiveOrZero int sortOrder
 ) {}

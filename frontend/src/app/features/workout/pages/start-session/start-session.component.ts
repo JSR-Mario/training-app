@@ -46,9 +46,9 @@ import { TrainingProgram, WeekTemplate } from '../../../../core/types/training.t
               class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white appearance-none"
             >
               <option value="" disabled>Choose a day to train</option>
-              <optgroup *ngFor="let week of weeks()" [label]="week.weekName">
+              <optgroup *ngFor="let week of weeks()" [label]="week.name">
                 <option *ngFor="let day of week.days" [value]="day.id">
-                  {{ day.dayName }} ({{ day.exercises?.length || 0 }} exercises)
+                  {{ day.name }} ({{ day.exercises?.length || 0 }} exercises)
                 </option>
               </optgroup>
             </select>
@@ -151,11 +151,9 @@ export class StartSessionComponent implements OnInit {
         this.program.set(prog);
         this.programService.getWeeks(id).subscribe({
           next: (weeksData) => {
-            const sortedWeeks = weeksData.sort((a, b) => a.sortOrder - b.sortOrder);
+            const sortedWeeks = weeksData;
             sortedWeeks.forEach(w => {
-              if (w.days) {
-                w.days.sort((a, b) => a.sortOrder - b.sortOrder);
-              } else {
+              if (!w.days) {
                 w.days = [];
               }
             });

@@ -43,6 +43,9 @@ public class DayExercise {
     @Column(nullable = false)
     private int reps;
 
+    @Column(name = "reps_max")
+    private Integer repsMax;
+
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
@@ -55,6 +58,8 @@ public class DayExercise {
     public void setSets(int sets) { this.sets = sets; }
     public int getReps() { return reps; }
     public void setReps(int reps) { this.reps = reps; }
+    public Integer getRepsMax() { return repsMax; }
+    public void setRepsMax(Integer repsMax) { this.repsMax = repsMax; }
     public int getSortOrder() { return sortOrder; }
     public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
 }

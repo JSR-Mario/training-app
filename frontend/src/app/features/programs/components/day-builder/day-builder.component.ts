@@ -13,7 +13,7 @@ import { DayTemplate, DayExercise, Exercise } from '../../../../core/types/train
     <div class="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50 mt-4">
       <div class="flex justify-between items-center mb-4">
         <h4 class="text-lg font-bold text-gray-200 flex items-center gap-2">
-          {{ day.dayName }}
+          {{ day.name }}
           <button (click)="deleteDay.emit()" class="text-red-400 hover:text-red-300 text-xs ml-2">Delete Day</button>
         </h4>
         

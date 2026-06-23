@@ -53,20 +53,21 @@ export interface DayExercise {
   exerciseName?: string;
   sets: number;
   reps: number;
+  repsMax?: number;
   sortOrder: number;
 }
 
 export interface DayTemplate {
   id: string;
-  dayName: string;
-  sortOrder: number;
+  weekTemplateId: string;
+  name: string;
   exercises: DayExercise[];
 }
 
 export interface WeekTemplate {
   id: string;
-  weekName: string;
-  sortOrder: number;
+  programId: string;
+  name: string;
   days: DayTemplate[];
 }
 
@@ -76,7 +77,6 @@ export interface TrainingProgram {
   name: string;
   durationWeeks: number;
   isActive: boolean;
-  weeks: WeekTemplate[];
   createdAt: string;
   updatedAt: string;
 }
@@ -87,6 +87,12 @@ export interface WorkoutSessionRequest {
   weekNumber: number;
 }
 
+export interface SessionRatingResponse {
+  id: string;
+  dayExerciseId: string;
+  rating: number;
+}
+
 export interface WorkoutSessionResponse {
   id: string;
   dayTemplateId: string;
@@ -94,6 +100,8 @@ export interface WorkoutSessionResponse {
   performedOn: string;
   weekNumber: number;
   completedAt: string | null;
+  notes?: string;
+  ratings?: SessionRatingResponse[];
 }
 
 export interface WorkoutSetRequest {

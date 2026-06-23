@@ -39,6 +39,16 @@ public class WorkoutSessionController {
         return sessionService.getSession(id, UserContext.getCurrentUserId());
     }
 
+    @PatchMapping("/{id}/notes")
+    public WorkoutSessionResponse updateNotes(@PathVariable UUID id, @Valid @RequestBody com.trainingapp.training.dto.SessionNotesRequest request) {
+        return sessionService.updateNotes(id, UserContext.getCurrentUserId(), request);
+    }
+
+    @PutMapping("/{id}/ratings/{dayExerciseId}")
+    public WorkoutSessionResponse updateRating(@PathVariable UUID id, @PathVariable UUID dayExerciseId, @Valid @RequestBody com.trainingapp.training.dto.SessionRatingRequest request) {
+        return sessionService.updateRating(id, UserContext.getCurrentUserId(), dayExerciseId, request);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         sessionService.deleteSession(id, UserContext.getCurrentUserId());

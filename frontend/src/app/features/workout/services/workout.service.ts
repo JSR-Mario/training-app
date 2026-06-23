@@ -38,6 +38,14 @@ export class WorkoutService {
     return this.http.post<void>(`${this.baseUrl}/sessions/${id}/complete`, {});
   }
 
+  updateSessionNotes(id: string, notes: string): Observable<WorkoutSessionResponse> {
+    return this.http.patch<WorkoutSessionResponse>(`${this.baseUrl}/sessions/${id}/notes`, { notes });
+  }
+
+  updateExerciseRating(sessionId: string, dayExerciseId: string, rating: number): Observable<WorkoutSessionResponse> {
+    return this.http.put<WorkoutSessionResponse>(`${this.baseUrl}/sessions/${sessionId}/ratings/${dayExerciseId}`, { rating });
+  }
+
   getSets(sessionId: string): Observable<WorkoutSetResponse[]> {
     return this.http.get<WorkoutSetResponse[]>(`${this.baseUrl}/sessions/${sessionId}/sets`);
   }
