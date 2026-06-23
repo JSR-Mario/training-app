@@ -4,7 +4,8 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { WorkoutService } from '../../services/workout.service';
 import { ProgramService } from '../../../programs/services/program.service';
-import { TrainingProgram, WeekTemplate } from '../../../../core/types/training.types';
+import { TrainingProgram, DayTemplate } from '../../../../core/types/training.types';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-start-session',
@@ -46,11 +47,9 @@ import { TrainingProgram, WeekTemplate } from '../../../../core/types/training.t
               class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white appearance-none"
             >
               <option value="" disabled>Choose a day to train</option>
-              <optgroup *ngFor="let week of weeks()" [label]="week.name">
-                <option *ngFor="let day of week.days" [value]="day.id">
-                  {{ day.name }} ({{ day.exercises?.length || 0 }} exercises)
-                </option>
-              </optgroup>
+              <option *ngFor="let day of days()" [value]="day.id">
+                {{ day.name }} ({{ day.exercises?.length || 0 }} exercises)
+              </option>
             </select>
           </div>
 
@@ -70,7 +69,7 @@ import { TrainingProgram, WeekTemplate } from '../../../../core/types/training.t
               [disabled]="form.invalid || isSubmitting()"
               class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-lg rounded-xl shadow-lg disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-95"
             >
-              {{ isSubmitting() ? 'Starting...' : 'Let\\'s Go! 🚀' }}
+              {{ isSubmitting() ? 'Starting...' : 'Let\\'s Go!' }}
             </button>
             <div class="text-center mt-4">
               <a routerLink="/workout" class="text-gray-400 hover:text-white text-sm transition-colors">Cancel</a>
@@ -93,7 +92,7 @@ export class StartSessionComponent implements OnInit {
   programId = signal<string | null>(null);
   targetWeekNumber = signal<number>(1);
   program = signal<TrainingProgram | null>(null);
-  weeks = signal<WeekTemplate[]>([]);
+  days = signal<DayTemplate[]>([]);
   
   isLoading = signal<boolean>(true);
   isSubmitting = signal<boolean>(false);
@@ -118,7 +117,6 @@ export class StartSessionComponent implements OnInit {
 
   getTodayString(): string {
     const today = new Date();
-    // Format YYYY-MM-DD
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
@@ -133,7 +131,7 @@ export class StartSessionComponent implements OnInit {
         const active = progs.find(p => p.isActive) || progs[0];
         if (active) {
           this.programId.set(active.id);
-          this.fetchWeeks(active.id);
+          this.fetchProgramDays(active.id);
         } else {
           this.isLoading.set(false);
         }
@@ -141,30 +139,65 @@ export class StartSessionComponent implements OnInit {
       return;
     }
     
-    this.fetchWeeks(id);
+    this.fetchProgramDays(id);
   }
 
-  fetchWeeks(id: string) {
+  fetchProgramDays(programId: string) {
     this.isLoading.set(true);
-    this.programService.getProgram(id).subscribe({
+    this.programService.getProgram(programId).subscribe({
       next: (prog) => {
         this.program.set(prog);
-        this.programService.getWeeks(id).subscribe({
+        // Get weeks, then get days for the first (only) week
+        this.programService.getWeeks(programId).subscribe({
           next: (weeksData) => {
-            const sortedWeeks = weeksData;
-            sortedWeeks.forEach(w => {
-              if (!w.days) {
-                w.days = [];
+            if (weeksData.length === 0) {
+              this.days.set([]);
+              this.isLoading.set(false);
+              return;
+            }
+            const weekId = weeksData[0].id;
+            this.programService.getDays(weekId).subscribe({
+              next: (daysData) => {
+                if (daysData.length === 0) {
+                  this.days.set([]);
+                  this.isLoading.set(false);
+                  return;
+                }
+
+                // Fetch exercises per day to show count
+                const exerciseRequests = daysData.map(day =>
+                  this.programService.getDayExercises(day.id)
+                );
+
+                forkJoin(exerciseRequests).subscribe({
+                  next: (exerciseArrays) => {
+                    const enrichedDays = daysData.map((day, index) => ({
+                      ...day,
+                      exercises: exerciseArrays[index]
+                    }));
+                    this.days.set(enrichedDays);
+
+                    // Auto-select first day
+                    if (enrichedDays.length > 0) {
+                      this.form.patchValue({ dayTemplateId: enrichedDays[0].id });
+                    }
+                    this.isLoading.set(false);
+                  },
+                  error: () => {
+                    // Still show days even if exercise fetch fails
+                    this.days.set(daysData.map(d => ({ ...d, exercises: [] })));
+                    if (daysData.length > 0) {
+                      this.form.patchValue({ dayTemplateId: daysData[0].id });
+                    }
+                    this.isLoading.set(false);
+                  }
+                });
+              },
+              error: (err) => {
+                console.error('Failed to load days', err);
+                this.isLoading.set(false);
               }
             });
-            this.weeks.set(sortedWeeks);
-            
-            // Auto-select first day if available
-            if (sortedWeeks.length > 0 && sortedWeeks[0].days.length > 0) {
-              this.form.patchValue({ dayTemplateId: sortedWeeks[0].days[0].id });
-            }
-
-            this.isLoading.set(false);
           },
           error: (err) => {
             console.error('Failed to load weeks', err);

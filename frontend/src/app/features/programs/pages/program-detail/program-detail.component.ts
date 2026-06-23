@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ProgramService } from '../../services/program.service';
 import { TrainingProgram, DayTemplate } from '../../../../core/types/training.types';
 import { DayBuilderComponent } from '../../components/day-builder/day-builder.component';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-program-detail',
@@ -22,11 +23,11 @@ import { DayBuilderComponent } from '../../components/day-builder/day-builder.co
         <div *ngIf="!isLoading() && program()" class="flex justify-between items-end border-b border-gray-800 pb-4">
           <div>
             <h1 class="text-3xl font-bold text-white">{{ program()?.name }}</h1>
-            <p class="text-gray-400 mt-1">Duration: {{ program()?.durationWeeks }} weeks</p>
+            <p class="text-gray-400 mt-1">This template repeats for {{ program()?.durationWeeks }} weeks</p>
           </div>
           <button 
             *ngIf="weekTemplateId()"
-            (click)="addDay()"
+            (click)="openAddDay()"
             class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg"
           >
             + Add Day
@@ -64,7 +65,7 @@ import { DayBuilderComponent } from '../../components/day-builder/day-builder.co
         <!-- Days Grid -->
         <div *ngIf="days().length === 0 && !showAddDay()" class="text-center py-12 glass-card border border-dashed border-gray-700">
           <p class="text-gray-400">No days configured for this program.</p>
-          <button (click)="addDay()" class="mt-4 text-blue-400 hover:text-blue-300 text-sm">Add your first day</button>
+          <button (click)="openAddDay()" class="mt-4 text-blue-400 hover:text-blue-300 text-sm">Add your first day</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -105,7 +106,6 @@ export class ProgramDetailComponent implements OnInit {
   weekTemplateId = signal<string | null>(null);
   days = signal<DayTemplate[]>([]);
   isLoading = signal<boolean>(true);
-
   showAddDay = signal<boolean>(false);
 
   dayForm: FormGroup = this.fb.group({
@@ -131,14 +131,28 @@ export class ProgramDetailComponent implements OnInit {
       next: (prog) => {
         this.program.set(prog);
         
+        // Fetch weeks for this program
         this.programService.getWeeks(id).subscribe({
           next: (weeksData) => {
-            if (weeksData.length > 0) {
+            if (weeksData.length === 0) {
+              // Auto-create the single week template
+              this.programService.createWeek(id, 'Training Week').subscribe({
+                next: (newWeek) => {
+                  this.weekTemplateId.set(newWeek.id);
+                  this.days.set([]);
+                  this.isLoading.set(false);
+                },
+                error: (err) => {
+                  console.error('Failed to auto-create week template', err);
+                  this.isLoading.set(false);
+                }
+              });
+            } else {
+              // Use the first (and only) week template
               const week = weeksData[0];
               this.weekTemplateId.set(week.id);
-              this.days.set(week.days || []);
+              this.loadDays(week.id);
             }
-            this.isLoading.set(false);
           },
           error: (err) => {
             console.error('Failed to load weeks', err);
@@ -153,9 +167,52 @@ export class ProgramDetailComponent implements OnInit {
     });
   }
 
-  addDay() {
+  loadDays(weekId: string) {
+    this.programService.getDays(weekId).subscribe({
+      next: (daysData) => {
+        // Fetch exercises for each day in parallel
+        if (daysData.length === 0) {
+          this.days.set([]);
+          this.isLoading.set(false);
+          return;
+        }
+
+        const exerciseRequests = daysData.map(day => 
+          this.programService.getDayExercises(day.id)
+        );
+
+        forkJoin(exerciseRequests).subscribe({
+          next: (exerciseArrays) => {
+            const enrichedDays: DayTemplate[] = daysData.map((day, index) => ({
+              ...day,
+              exercises: exerciseArrays[index].sort((a, b) => a.sortOrder - b.sortOrder)
+            }));
+            this.days.set(enrichedDays);
+            this.isLoading.set(false);
+          },
+          error: (err) => {
+            console.error('Failed to load day exercises', err);
+            // Still show days even if exercises fail
+            const daysWithEmptyExercises = daysData.map(day => ({
+              ...day,
+              exercises: day.exercises || []
+            }));
+            this.days.set(daysWithEmptyExercises);
+            this.isLoading.set(false);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Failed to load days', err);
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  openAddDay() {
+    const nextDayNumber = this.days().length + 1;
+    this.dayForm.patchValue({ dayName: `Day ${nextDayNumber}` });
     this.showAddDay.set(true);
-    this.dayForm.reset();
   }
 
   onSubmitDay() {
@@ -164,7 +221,7 @@ export class ProgramDetailComponent implements OnInit {
       this.programService.createDay(weekId, this.dayForm.value.dayName).subscribe({
         next: () => {
           this.showAddDay.set(false);
-          this.loadProgramData();
+          this.loadDays(weekId);
         },
         error: (err) => console.error('Error adding day', err)
       });
@@ -173,9 +230,10 @@ export class ProgramDetailComponent implements OnInit {
 
   deleteDay(dayId: string, event: Event) {
     event.stopPropagation();
-    if (confirm('Delete this day and its exercises?')) {
+    const weekId = this.weekTemplateId();
+    if (confirm('Delete this day and its exercises?') && weekId) {
       this.programService.deleteDay(dayId).subscribe({
-        next: () => this.loadProgramData(),
+        next: () => this.loadDays(weekId),
         error: (err) => console.error('Error deleting day', err)
       });
     }
