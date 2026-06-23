@@ -36,40 +36,55 @@ import { debounceTime } from 'rxjs';
         </div>
 
         <!-- Filters -->
-        <div *ngIf="showFilters()" class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-gray-900/50 rounded-lg">
+        <div *ngIf="showFilters()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 bg-gray-900/50 rounded-lg">
           <div>
-            <label for="categorySelect" class="block text-xs text-gray-400 mb-1">Region</label>
+            <label for="typeSelect" class="block text-xs text-gray-400 mb-1">Type</label>
             <select 
-              id="categorySelect"
-              formControlName="category"
+              id="typeSelect"
+              formControlName="type"
               class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
             >
-              <option value="">All Regions</option>
-              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+              <option value="">All Types</option>
+              <option value="STRENGTH">Strength</option>
+              <option value="CARDIO">Cardio</option>
             </select>
           </div>
-          <div>
-            <label for="groupSelect" class="block text-xs text-gray-400 mb-1">Muscle Group</label>
-            <select 
-              id="groupSelect"
-              formControlName="group"
-              class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
-            >
-              <option value="">All Groups</option>
-              <option *ngFor="let grp of availableGroups()" [value]="grp">{{ grp }}</option>
-            </select>
-          </div>
-          <div>
-            <label for="bodyPartSelect" class="block text-xs text-gray-400 mb-1">Specific Part</label>
-            <select 
-              id="bodyPartSelect"
-              formControlName="bodyPart"
-              class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
-            >
-              <option value="">All Parts</option>
-              <option *ngFor="let part of availableParts()" [value]="part">{{ part }}</option>
-            </select>
-          </div>
+
+          <ng-container *ngIf="searchForm.get('type')?.value !== 'CARDIO'">
+            <div>
+              <label for="categorySelect" class="block text-xs text-gray-400 mb-1">Region</label>
+              <select 
+                id="categorySelect"
+                formControlName="category"
+                class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
+              >
+                <option value="">All Regions</option>
+                <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+              </select>
+            </div>
+            <div>
+              <label for="groupSelect" class="block text-xs text-gray-400 mb-1">Muscle Group</label>
+              <select 
+                id="groupSelect"
+                formControlName="group"
+                class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
+              >
+                <option value="">All Groups</option>
+                <option *ngFor="let grp of availableGroups()" [value]="grp">{{ grp }}</option>
+              </select>
+            </div>
+            <div>
+              <label for="bodyPartSelect" class="block text-xs text-gray-400 mb-1">Specific Part</label>
+              <select 
+                id="bodyPartSelect"
+                formControlName="bodyPart"
+                class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
+              >
+                <option value="">All Parts</option>
+                <option *ngFor="let part of availableParts()" [value]="part">{{ part }}</option>
+              </select>
+            </div>
+          </ng-container>
         </div>
       </form>
 
@@ -142,6 +157,7 @@ export class ExerciseSearchComponent implements OnInit {
 
   searchForm = this.fb.group({
     query: [''],
+    type: [''],
     category: [''],
     group: [''],
     bodyPart: ['']
@@ -157,6 +173,11 @@ export class ExerciseSearchComponent implements OnInit {
     });
 
     // Cascading dropdowns
+    this.searchForm.get('type')?.valueChanges.subscribe(val => {
+      if (val === 'CARDIO') {
+        this.searchForm.patchValue({ category: '', group: '', bodyPart: '' }, { emitEvent: false });
+      }
+    });
     this.searchForm.get('category')?.valueChanges.subscribe(() => {
       this.searchForm.patchValue({ group: '', bodyPart: '' }, { emitEvent: false });
     });
@@ -187,13 +208,19 @@ export class ExerciseSearchComponent implements OnInit {
     return [...(catData[grp] || [])];
   }
 
-  private applyFilters(filters: { query?: string | null, category?: string | null, group?: string | null, bodyPart?: string | null }) {
+  private applyFilters(filters: { query?: string | null, type?: string | null, category?: string | null, group?: string | null, bodyPart?: string | null }) {
     const query = (filters.query || '').toLowerCase();
+    const type = filters.type;
     const category = filters.category;
     const group = filters.group;
     const bodyPart = filters.bodyPart;
 
     let result = this.allExercises;
+
+    // 0. Type Filter
+    if (type) {
+      result = result.filter(ex => ex.type === type);
+    }
 
     // 1. Text Search
     if (query) {
