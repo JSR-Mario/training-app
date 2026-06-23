@@ -155,7 +155,7 @@ export class ExerciseListComponent implements OnInit {
     this.selectedExercise.set(null);
   }
 
-  onSaveExercise(formData: { name: string; equipmentBrand: string; unilateral: boolean; isPublic: boolean; targets: { id?: string; bodyPart: string; targetValue: number }[] }) {
+  onSaveExercise(formData: { name: string; equipmentBrand: string; unilateral: boolean; isPublic: boolean; type: 'STRENGTH' | 'CARDIO'; targets: { id?: string; bodyPart: string; targetValue: number }[] }) {
     this.isLoading.set(true);
     const exercise = this.selectedExercise();
     
@@ -163,7 +163,8 @@ export class ExerciseListComponent implements OnInit {
       name: formData.name,
       equipmentBrand: formData.equipmentBrand || undefined,
       unilateral: formData.unilateral,
-      isPublic: formData.isPublic || false
+      isPublic: formData.isPublic || false,
+      type: formData.type
     };
 
     if (exercise) {
