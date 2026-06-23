@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { WorkoutService } from '../../services/workout.service';
 import { ProgramService } from '../../../programs/services/program.service';
 import { 
@@ -114,13 +114,47 @@ import {
             </div>
             
             <!-- Progress Bar inside Exercise Card -->
-            <div class="mt-4 h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+            <div class="mt-4 h-1 w-full bg-gray-800 rounded-full overflow-hidden mb-4">
               <div 
                 class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
                 [style.width.%]="(getSetsForExercise(ex.id).length / ex.sets) * 100"
               ></div>
             </div>
 
+            <!-- Rating Section -->
+            <div *ngIf="!session()?.completedAt" class="pt-4 border-t border-gray-700/50 mt-4">
+              <p class="text-sm text-gray-400 mb-2">How did this exercise feel? (1 = Very Easy, 10 = Max Effort)</p>
+              <div class="flex gap-1 flex-wrap">
+                <button 
+                  *ngFor="let r of [1,2,3,4,5,6,7,8,9,10]" 
+                  (click)="setRating(ex.id, r)"
+                  [class.bg-blue-600]="getRating(ex.id) === r"
+                  [class.text-white]="getRating(ex.id) === r"
+                  [class.bg-gray-800]="getRating(ex.id) !== r"
+                  [class.text-gray-400]="getRating(ex.id) !== r"
+                  class="w-8 h-8 rounded-full text-xs font-bold hover:bg-blue-500 hover:text-white transition-colors"
+                >
+                  {{ r }}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Session Notes -->
+        <div class="glass-card p-6 mt-8">
+          <h3 class="text-xl font-bold text-white mb-2">Session Notes</h3>
+          <p class="text-sm text-gray-400 mb-4">Any specific thoughts or things to remember next time?</p>
+          <textarea 
+            [formControl]="notesControl"
+            (blur)="saveNotes()"
+            placeholder="Type your notes here..."
+            class="w-full h-32 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm resize-none"
+          ></textarea>
+          <div class="flex justify-end mt-2">
+            <span *ngIf="isSavingNotes()" class="text-xs text-blue-400">Saving...</span>
+            <span *ngIf="savedNotesSuccess()" class="text-xs text-green-400">Saved!</span>
           </div>
         </div>
       </div>
@@ -156,6 +190,10 @@ export class ActiveWorkoutComponent implements OnInit {
   isLoading = signal<boolean>(true);
   isLoggingSet = signal<boolean>(false);
   isCompleting = signal<boolean>(false);
+  isSavingNotes = signal<boolean>(false);
+  savedNotesSuccess = signal<boolean>(false);
+
+  notesControl = new FormControl('');
 
   // Map of exerciseId -> FormGroup
   forms = new Map<string, FormGroup>();
@@ -178,6 +216,9 @@ export class ActiveWorkoutComponent implements OnInit {
     this.workoutService.getSession(id).subscribe({
       next: (sess) => {
         this.session.set(sess);
+        if (sess.notes) {
+          this.notesControl.setValue(sess.notes, { emitEvent: false });
+        }
         
         // Load sets
         this.workoutService.getSets(id).subscribe({
@@ -292,6 +333,9 @@ export class ActiveWorkoutComponent implements OnInit {
 
     if (confirm('Are you sure you are done? This will finalize the workout and update analytics.')) {
       this.isCompleting.set(true);
+      // Ensure notes are saved before completing if changed
+      this.saveNotes();
+
       this.workoutService.completeSession(id).subscribe({
         next: () => {
           this.isCompleting.set(false);
@@ -304,5 +348,51 @@ export class ActiveWorkoutComponent implements OnInit {
         }
       });
     }
+  }
+
+  saveNotes() {
+    const id = this.sessionId();
+    const notes = this.notesControl.value;
+    const currentNotes = this.session()?.notes || '';
+    
+    if (!id || this.session()?.completedAt) return;
+    if (notes === currentNotes && !this.isSavingNotes()) return; // Don't save if no change
+
+    this.isSavingNotes.set(true);
+    this.savedNotesSuccess.set(false);
+
+    this.workoutService.updateSessionNotes(id, notes || '').subscribe({
+      next: (updatedSession) => {
+        this.session.set(updatedSession);
+        this.isSavingNotes.set(false);
+        this.savedNotesSuccess.set(true);
+        setTimeout(() => this.savedNotesSuccess.set(false), 2000);
+      },
+      error: (err) => {
+        console.error('Error saving notes', err);
+        this.isSavingNotes.set(false);
+      }
+    });
+  }
+
+  getRating(dayExerciseId: string): number | null {
+    const session = this.session();
+    if (!session || !session.ratings) return null;
+    const ratingObj = session.ratings.find(r => r.dayExerciseId === dayExerciseId);
+    return ratingObj ? ratingObj.rating : null;
+  }
+
+  setRating(dayExerciseId: string, rating: number) {
+    const id = this.sessionId();
+    if (!id || this.session()?.completedAt) return;
+
+    this.workoutService.updateExerciseRating(id, dayExerciseId, rating).subscribe({
+      next: (updatedSession) => {
+        this.session.set(updatedSession);
+      },
+      error: (err) => {
+        console.error('Error saving rating', err);
+      }
+    });
   }
 }

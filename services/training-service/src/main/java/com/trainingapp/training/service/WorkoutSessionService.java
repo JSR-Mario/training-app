@@ -7,10 +7,17 @@ import com.trainingapp.training.domain.WorkoutSet;
 import com.trainingapp.training.dto.SessionCompletedEvent;
 import com.trainingapp.training.dto.WorkoutSessionRequest;
 import com.trainingapp.training.dto.WorkoutSessionResponse;
+import com.trainingapp.training.dto.SessionNotesRequest;
 import com.trainingapp.training.repository.DayTemplateRepository;
 import com.trainingapp.training.repository.ExerciseBodyPartTargetRepository;
 import com.trainingapp.training.repository.WorkoutSessionRepository;
 import com.trainingapp.training.repository.WorkoutSetRepository;
+import com.trainingapp.training.repository.SessionExerciseRatingRepository;
+import com.trainingapp.training.repository.DayExerciseRepository;
+import com.trainingapp.training.domain.SessionExerciseRating;
+import com.trainingapp.training.domain.DayExercise;
+import com.trainingapp.training.dto.SessionRatingRequest;
+import com.trainingapp.training.dto.SessionRatingResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,17 +40,23 @@ public class WorkoutSessionService {
     private final WorkoutSetRepository setRepository;
     private final ExerciseBodyPartTargetRepository targetRepository;
     private final AnalyticsNotificationClient analyticsClient;
+    private final SessionExerciseRatingRepository ratingRepository;
+    private final DayExerciseRepository dayExerciseRepository;
 
     public WorkoutSessionService(WorkoutSessionRepository sessionRepository,
                                  DayTemplateRepository dayTemplateRepository,
                                  WorkoutSetRepository setRepository,
                                  ExerciseBodyPartTargetRepository targetRepository,
-                                 AnalyticsNotificationClient analyticsClient) {
+                                 AnalyticsNotificationClient analyticsClient,
+                                 SessionExerciseRatingRepository ratingRepository,
+                                 DayExerciseRepository dayExerciseRepository) {
         this.sessionRepository = sessionRepository;
         this.dayTemplateRepository = dayTemplateRepository;
         this.setRepository = setRepository;
         this.targetRepository = targetRepository;
         this.analyticsClient = analyticsClient;
+        this.ratingRepository = ratingRepository;
+        this.dayExerciseRepository = dayExerciseRepository;
     }
 
     @Transactional
@@ -82,6 +95,31 @@ public class WorkoutSessionService {
     public void deleteSession(UUID id, UUID userId) {
         WorkoutSession session = getSessionEntity(id, userId);
         sessionRepository.delete(session);
+    }
+
+    @Transactional
+    public WorkoutSessionResponse updateNotes(UUID id, UUID userId, SessionNotesRequest request) {
+        WorkoutSession session = getSessionEntity(id, userId);
+        session.setNotes(request.notes());
+        WorkoutSession saved = sessionRepository.save(session);
+        return mapToResponse(saved);
+    }
+
+    @Transactional
+    public WorkoutSessionResponse updateRating(UUID id, UUID userId, UUID dayExerciseId, SessionRatingRequest request) {
+        WorkoutSession session = getSessionEntity(id, userId);
+        DayExercise dayExercise = dayExerciseRepository.findById(dayExerciseId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Day exercise not found"));
+
+        SessionExerciseRating rating = ratingRepository.findBySessionIdAndDayExerciseId(session.getId(), dayExerciseId)
+            .orElse(new SessionExerciseRating());
+        
+        rating.setSession(session);
+        rating.setDayExercise(dayExercise);
+        rating.setRating(request.rating());
+
+        ratingRepository.save(rating);
+        return mapToResponse(session);
     }
 
     @Transactional
@@ -141,13 +179,20 @@ public class WorkoutSessionService {
     }
 
     private WorkoutSessionResponse mapToResponse(WorkoutSession session) {
+        List<SessionRatingResponse> ratings = ratingRepository.findBySessionId(session.getId())
+            .stream()
+            .map(r -> new SessionRatingResponse(r.getId(), r.getDayExercise().getId(), r.getRating()))
+            .collect(Collectors.toList());
+
         return new WorkoutSessionResponse(
             session.getId(),
             session.getDayTemplate().getId(),
             session.getDayTemplate().getName(),
             session.getPerformedOn(),
             session.getWeekNumber(),
-            session.getCompletedAt()
+            session.getCompletedAt(),
+            session.getNotes(),
+            ratings
         );
     }
 }

@@ -53,6 +53,7 @@ export interface DayExercise {
   exerciseName?: string;
   sets: number;
   reps: number;
+  repsMax?: number;
   sortOrder: number;
 }
 
@@ -86,6 +87,12 @@ export interface WorkoutSessionRequest {
   weekNumber: number;
 }
 
+export interface SessionRatingResponse {
+  id: string;
+  dayExerciseId: string;
+  rating: number;
+}
+
 export interface WorkoutSessionResponse {
   id: string;
   dayTemplateId: string;
@@ -93,6 +100,8 @@ export interface WorkoutSessionResponse {
   performedOn: string;
   weekNumber: number;
   completedAt: string | null;
+  notes?: string;
+  ratings?: SessionRatingResponse[];
 }
 
 export interface WorkoutSetRequest {
