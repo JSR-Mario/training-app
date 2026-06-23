@@ -71,6 +71,12 @@ export interface DayTemplate {
   exercises: DayExercise[];
 }
 
+export interface BodyWeightEntry {
+  id?: string;
+  date: string; // YYYY-MM-DD
+  weightKg: number;
+}
+
 export interface WeekTemplate {
   id: string;
   programId: string;
