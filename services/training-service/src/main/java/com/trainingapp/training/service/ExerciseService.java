@@ -9,11 +9,14 @@ import com.trainingapp.training.dto.ExerciseTargetResponse;
 import com.trainingapp.training.exception.ResourceNotFoundException;
 import com.trainingapp.training.repository.ExerciseBodyPartTargetRepository;
 import com.trainingapp.training.repository.ExerciseRepository;
+import com.trainingapp.training.repository.SessionExerciseRatingRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,28 +32,28 @@ public class ExerciseService {
 
     private final ExerciseRepository exerciseRepository;
     private final ExerciseBodyPartTargetRepository targetRepository;
+    private final SessionExerciseRatingRepository ratingRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository,
-                           ExerciseBodyPartTargetRepository targetRepository) {
+                           ExerciseBodyPartTargetRepository targetRepository,
+                           SessionExerciseRatingRepository ratingRepository) {
         this.exerciseRepository = exerciseRepository;
         this.targetRepository = targetRepository;
+        this.ratingRepository = ratingRepository;
     }
 
     /** Returns all exercises belonging to the given user or public exercises. */
     @Transactional(readOnly = true)
     public List<ExerciseResponse> findAll(UUID userId) {
-        return exerciseRepository.findByUserIdOrIsPublic(userId).stream()
-                .map(this::toResponse)
-                .toList();
+        List<Exercise> exercises = exerciseRepository.findByUserIdOrIsPublic(userId);
+        return mapExercisesWithRatings(exercises);
     }
 
     /** Returns up to 3 exercises matching the query for autocomplete. */
     @Transactional(readOnly = true)
     public List<ExerciseResponse> search(UUID userId, String query) {
-        return exerciseRepository.searchExercises(userId, query, org.springframework.data.domain.PageRequest.of(0, 3))
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        List<Exercise> exercises = exerciseRepository.searchExercises(userId, query, org.springframework.data.domain.PageRequest.of(0, 3));
+        return mapExercisesWithRatings(exercises);
     }
 
     /** Creates a new exercise. Only admins can create public exercises. */
@@ -61,6 +64,9 @@ public class ExerciseService {
         exercise.setName(request.name());
         exercise.setEquipmentBrand(request.equipmentBrand());
         exercise.setUnilateral(request.unilateral());
+        if (request.type() != null) {
+            exercise.setType(request.type());
+        }
         
         if (request.isPublic()) {
             if (!isAdmin()) {
@@ -71,7 +77,7 @@ public class ExerciseService {
             exercise.setIsPublic(false);
         }
         
-        return toResponse(exerciseRepository.save(exercise));
+        return toResponse(exerciseRepository.save(exercise), 5.0);
     }
 
     /** Updates exercise fields. Validates ownership and public roles. */
@@ -81,6 +87,9 @@ public class ExerciseService {
         exercise.setName(request.name());
         exercise.setEquipmentBrand(request.equipmentBrand());
         exercise.setUnilateral(request.unilateral());
+        if (request.type() != null) {
+            exercise.setType(request.type());
+        }
         
         if (request.isPublic() != exercise.getIsPublic()) {
             if (!isAdmin()) {
@@ -89,7 +98,7 @@ public class ExerciseService {
             exercise.setIsPublic(request.isPublic());
         }
         
-        return toResponse(exerciseRepository.save(exercise));
+        return mapExercisesWithRatings(List.of(exerciseRepository.save(exercise))).get(0);
     }
 
     /** Deletes the exercise. Validates ownership and public roles. Cascades to targets. */
@@ -170,11 +179,28 @@ public class ExerciseService {
         return authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
     }
 
-    private ExerciseResponse toResponse(Exercise e) {
+    private List<ExerciseResponse> mapExercisesWithRatings(List<Exercise> exercises) {
+        if (exercises.isEmpty()) return List.of();
+        
+        List<UUID> exerciseIds = exercises.stream().map(Exercise::getId).toList();
+        List<Object[]> rawRatings = ratingRepository.getAverageRatingsForExercises(exerciseIds);
+        
+        Map<UUID, Double> ratingsMap = rawRatings.stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Double) row[1]
+                ));
+                
+        return exercises.stream()
+                .map(e -> toResponse(e, ratingsMap.getOrDefault(e.getId(), 5.0)))
+                .toList();
+    }
+
+    private ExerciseResponse toResponse(Exercise e, Double averageRating) {
         List<ExerciseTargetResponse> targetResponses = e.getTargets().stream()
                 .map(this::toTargetResponse)
                 .toList();
-        return new ExerciseResponse(e.getId(), e.getName(), e.getEquipmentBrand(), e.isUnilateral(), e.getIsPublic(), e.getCreatedAt(), targetResponses);
+        return new ExerciseResponse(e.getId(), e.getName(), e.getEquipmentBrand(), e.isUnilateral(), e.getIsPublic(), e.getType(), e.getCreatedAt(), targetResponses, averageRating);
     }
 
     private ExerciseTargetResponse toTargetResponse(ExerciseBodyPartTarget t) {

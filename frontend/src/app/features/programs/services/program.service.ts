@@ -78,12 +78,12 @@ export class ProgramService {
     return this.http.get<DayExercise[]>(`/api/v1/training/days/${dayId}/exercises`);
   }
 
-  addDayExercise(dayId: string, exerciseId: string, sets: number, reps: number, sortOrder: number, repsMax?: number): Observable<DayExercise> {
-    return this.http.post<DayExercise>(`/api/v1/training/days/${dayId}/exercises`, { exerciseId, sets, reps, sortOrder, repsMax });
+  addDayExercise(dayId: string, exerciseId: string, sets: number | undefined, reps: number | undefined, sortOrder: number, repsMax?: number, durationMinutes?: number, incline?: number, resistance?: number): Observable<DayExercise> {
+    return this.http.post<DayExercise>(`/api/v1/training/days/${dayId}/exercises`, { exerciseId, sets, reps, sortOrder, repsMax, durationMinutes, incline, resistance });
   }
 
-  updateDayExercise(dayExerciseId: string, sets: number, reps: number, sortOrder: number, repsMax?: number): Observable<DayExercise> {
-    return this.http.put<DayExercise>(`/api/v1/training/day-exercises/${dayExerciseId}`, { sets, reps, sortOrder, repsMax });
+  updateDayExercise(dayExerciseId: string, sets: number | undefined, reps: number | undefined, sortOrder: number, repsMax?: number, durationMinutes?: number, incline?: number, resistance?: number): Observable<DayExercise> {
+    return this.http.put<DayExercise>(`/api/v1/training/day-exercises/${dayExerciseId}`, { sets, reps, sortOrder, repsMax, durationMinutes, incline, resistance });
   }
 
   deleteDayExercise(dayExerciseId: string): Observable<void> {

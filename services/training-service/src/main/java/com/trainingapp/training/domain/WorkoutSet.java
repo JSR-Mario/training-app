@@ -38,11 +38,20 @@ public class WorkoutSet {
     @Column(name = "set_number", nullable = false)
     private int setNumber;
 
-    @Column(name = "reps_completed", nullable = false)
-    private int repsCompleted;
+    @Column(name = "reps_completed")
+    private Integer repsCompleted;
 
-    @Column(name = "weight_kg", nullable = false)
+    @Column(name = "weight_kg")
     private BigDecimal weightKg;
+
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
+
+    @Column(name = "incline", precision = 5, scale = 2)
+    private BigDecimal incline;
+
+    @Column(name = "resistance", precision = 5, scale = 2)
+    private BigDecimal resistance;
 
     @Column(name = "logged_at", nullable = false, updatable = false)
     private Instant loggedAt;
@@ -61,10 +70,16 @@ public class WorkoutSet {
     public void setDayExercise(DayExercise dayExercise) { this.dayExercise = dayExercise; }
     public int getSetNumber() { return setNumber; }
     public void setSetNumber(int setNumber) { this.setNumber = setNumber; }
-    public int getRepsCompleted() { return repsCompleted; }
-    public void setRepsCompleted(int repsCompleted) { this.repsCompleted = repsCompleted; }
+    public Integer getRepsCompleted() { return repsCompleted; }
+    public void setRepsCompleted(Integer repsCompleted) { this.repsCompleted = repsCompleted; }
     public BigDecimal getWeightKg() { return weightKg; }
     public void setWeightKg(BigDecimal weightKg) { this.weightKg = weightKg; }
+    public Integer getDurationMinutes() { return durationMinutes; }
+    public void setDurationMinutes(Integer durationMinutes) { this.durationMinutes = durationMinutes; }
+    public BigDecimal getIncline() { return incline; }
+    public void setIncline(BigDecimal incline) { this.incline = incline; }
+    public BigDecimal getResistance() { return resistance; }
+    public void setResistance(BigDecimal resistance) { this.resistance = resistance; }
     public Instant getLoggedAt() { return loggedAt; }
     public void setLoggedAt(Instant loggedAt) { this.loggedAt = loggedAt; }
 }

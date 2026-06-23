@@ -11,6 +11,7 @@ export interface ExerciseFormData {
   equipmentBrand: string;
   unilateral: boolean;
   isPublic: boolean;
+  type: 'STRENGTH' | 'CARDIO';
   targets: { id?: string; bodyPart: string; targetValue: number }[];
 }
 
@@ -56,6 +57,21 @@ export interface ExerciseFormData {
               <span *ngIf="suggestion.equipmentBrand" class="text-gray-400 text-xs ml-2">({{ suggestion.equipmentBrand }})</span>
               <span *ngIf="suggestion.unilateral" class="ml-2 px-1.5 py-0.5 text-[10px] font-semibold bg-amber-500/20 text-amber-400 rounded">UNI</span>
             </button>
+          </div>
+        </div>
+
+        <!-- Exercise Type -->
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Exercise Type</label>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" formControlName="type" value="STRENGTH" class="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 focus:ring-blue-600 focus:ring-2">
+              <span class="text-white text-sm">Strength</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" formControlName="type" value="CARDIO" class="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 focus:ring-purple-600 focus:ring-2">
+              <span class="text-white text-sm">Cardio</span>
+            </label>
           </div>
         </div>
 
@@ -109,7 +125,7 @@ export interface ExerciseFormData {
         </div>
 
         <!-- Body Part Targets -->
-        <div>
+        <div *ngIf="form.get('type')?.value === 'STRENGTH'">
           <div class="flex justify-between items-center mb-2">
             <h3 class="block text-sm font-medium text-gray-300">Body Part Targets</h3>
             <button 
@@ -221,6 +237,7 @@ export class ExerciseFormComponent implements OnInit {
     equipmentBrand: [''],
     unilateral: [false],
     isPublic: [false],
+    type: ['STRENGTH', Validators.required],
     targets: this.fb.array([])
   });
 
@@ -234,7 +251,8 @@ export class ExerciseFormComponent implements OnInit {
         name: this.exercise.name,
         equipmentBrand: this.exercise.equipmentBrand || '',
         unilateral: this.exercise.unilateral || false,
-        isPublic: this.exercise.isPublic || false
+        isPublic: this.exercise.isPublic || false,
+        type: this.exercise.type || 'STRENGTH'
       });
       
       this.exercise.targets.forEach(target => {
@@ -315,7 +333,11 @@ export class ExerciseFormComponent implements OnInit {
 
   onSubmit() {
     if (this.form.valid) {
-      this.saveExercise.emit(this.form.value);
+      const formValue = this.form.value;
+      if (formValue.type === 'CARDIO') {
+        formValue.targets = []; // Cardio exercises don't use body part targets
+      }
+      this.saveExercise.emit(formValue);
     }
   }
 }
