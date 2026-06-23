@@ -58,15 +58,15 @@ export interface DayExercise {
 
 export interface DayTemplate {
   id: string;
-  dayName: string;
-  sortOrder: number;
+  weekTemplateId: string;
+  name: string;
   exercises: DayExercise[];
 }
 
 export interface WeekTemplate {
   id: string;
-  weekName: string;
-  sortOrder: number;
+  programId: string;
+  name: string;
   days: DayTemplate[];
 }
 
@@ -76,7 +76,6 @@ export interface TrainingProgram {
   name: string;
   durationWeeks: number;
   isActive: boolean;
-  weeks: WeekTemplate[];
   createdAt: string;
   updatedAt: string;
 }
