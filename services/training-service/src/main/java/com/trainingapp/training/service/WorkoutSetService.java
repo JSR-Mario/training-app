@@ -57,6 +57,9 @@ public class WorkoutSetService {
         set.setSetNumber(request.setNumber());
         set.setRepsCompleted(request.repsCompleted());
         set.setWeightKg(request.weightKg());
+        set.setDurationMinutes(request.durationMinutes());
+        set.setIncline(request.incline());
+        set.setResistance(request.resistance());
 
         WorkoutSet saved = setRepository.save(set);
         return mapToResponse(saved);
@@ -92,6 +95,9 @@ public class WorkoutSetService {
         set.setSetNumber(request.setNumber());
         set.setRepsCompleted(request.repsCompleted());
         set.setWeightKg(request.weightKg());
+        set.setDurationMinutes(request.durationMinutes());
+        set.setIncline(request.incline());
+        set.setResistance(request.resistance());
 
         WorkoutSet saved = setRepository.save(set);
         return mapToResponse(saved);
@@ -117,6 +123,9 @@ public class WorkoutSetService {
             set.getSetNumber(),
             set.getRepsCompleted(),
             set.getWeightKg(),
+            set.getDurationMinutes(),
+            set.getIncline(),
+            set.getResistance(),
             set.getLoggedAt()
         );
     }

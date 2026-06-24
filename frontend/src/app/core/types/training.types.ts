@@ -35,6 +35,8 @@ export interface ExerciseTarget {
   targetValue: number;
 }
 
+export type ExerciseType = 'STRENGTH' | 'CARDIO';
+
 export interface Exercise {
   id: string;
   userId: string;
@@ -42,7 +44,9 @@ export interface Exercise {
   equipmentBrand?: string;
   unilateral: boolean;
   isPublic: boolean;
+  type: ExerciseType;
   targets: ExerciseTarget[];
+  averageRating?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,9 +55,12 @@ export interface DayExercise {
   id: string;
   exerciseId: string;
   exerciseName?: string;
-  sets: number;
-  reps: number;
+  sets?: number;
+  reps?: number;
   repsMax?: number;
+  durationMinutes?: number;
+  incline?: number;
+  resistance?: number;
   sortOrder: number;
 }
 
@@ -107,8 +114,11 @@ export interface WorkoutSessionResponse {
 export interface WorkoutSetRequest {
   dayExerciseId: string;
   setNumber: number;
-  repsCompleted: number;
-  weightKg: number;
+  repsCompleted?: number;
+  weightKg?: number;
+  durationMinutes?: number;
+  incline?: number;
+  resistance?: number;
 }
 
 export interface WorkoutSetResponse {
@@ -116,7 +126,10 @@ export interface WorkoutSetResponse {
   sessionId: string;
   dayExerciseId: string;
   setNumber: number;
-  repsCompleted: number;
-  weightKg: number;
+  repsCompleted?: number;
+  weightKg?: number;
+  durationMinutes?: number;
+  incline?: number;
+  resistance?: number;
   loggedAt: string;
 }

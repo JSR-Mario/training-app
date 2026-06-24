@@ -11,6 +11,8 @@ public record ExerciseResponse(
         String equipmentBrand,
         boolean unilateral,
         boolean isPublic,
+        com.trainingapp.training.domain.ExerciseType type,
         Instant createdAt,
-        List<ExerciseTargetResponse> targets
+        List<ExerciseTargetResponse> targets,
+        Double averageRating
 ) {}
