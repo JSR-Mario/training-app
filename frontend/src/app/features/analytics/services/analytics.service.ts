@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
+
 import { WeeklyVolumeSnapshot, ExerciseProgressEntry } from '../../../core/types/analytics.types';
 
 @Injectable({
@@ -9,7 +9,7 @@ import { WeeklyVolumeSnapshot, ExerciseProgressEntry } from '../../../core/types
 })
 export class AnalyticsService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/api/v1/analytics`;
+  private apiUrl = '/api/v1/analytics';
 
   getWeeklyVolume(programId: string, weekNumber: number): Observable<WeeklyVolumeSnapshot[]> {
     const params = new HttpParams()
