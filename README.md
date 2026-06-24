@@ -63,5 +63,27 @@ Swagger UI is available at: `http://localhost:8080/swagger-ui.html`
 2. **Passwords**: BCrypt cost factor 12 for all passwords.
 3. **Data Isolation**: Every query filters by `userId` extracted from the JWT.
 4. **Rate Limiting**: Gateway limits `/api/v1/auth/**` to 20 requests/minute per IP via Redis.
-5. **Headers**: Security headers added via Gateway (`Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`).
 6. **Internal Traffic**: The analytics internal endpoint (`/internal/**`) is strictly blocked at the gateway level.
+
+---
+
+## Deployment Guide (EC2)
+
+This application is designed to be deployed using Docker Compose on any standard Linux VM.
+
+**Steps to deploy to a new EC2 instance:**
+1. Provision an EC2 instance (e.g., Ubuntu 22.04 LTS).
+2. Open ports `22` (SSH), `8080` (API Gateway), and `3000` (Frontend) in your AWS Security Group. Ensure ports `5432` and `6379` remain **closed** to the public.
+3. SSH into your instance and install Docker, Docker Compose, and Git.
+4. Clone this repository: `git clone https://github.com/JSR-Mario/training-app.git`
+5. Copy `.env.example` to `.env` and fill in secure passwords, a random JWT secret, and your EC2's public IP.
+6. Run `docker compose up -d --build`. The multi-stage Dockerfiles will handle compiling the Java backends and the Angular frontend directly on the server.
+
+---
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and continuous deployment:
+
+- **CI (`ci.yml`)**: Runs automatically on pull requests and pushes to `main`. It checks out the code, sets up Java and Node, runs Maven verify (tests + build), and runs `npm lint` + `npm run build` for the frontend. PRs cannot be merged if these checks fail.
+- **CD (`cd.yml`)**: Runs automatically when code is merged into `main`. It connects to the configured EC2 instance via SSH and automatically pulls the latest code and rebuilds the containers (`docker compose up -d --build`). This requires `EC2_HOST`, `EC2_USERNAME`, and `EC2_SSH_KEY` to be configured in GitHub repository secrets.
