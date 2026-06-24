@@ -10,6 +10,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 
 /**
  * Spring Security configuration for the auth-service.
@@ -26,6 +28,12 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @EnableConfigurationProperties(JwtProperties.class)
 public class SecurityConfig {
+
+    private final UserIdAuthenticationFilter userIdAuthenticationFilter;
+
+    public SecurityConfig(UserIdAuthenticationFilter userIdAuthenticationFilter) {
+        this.userIdAuthenticationFilter = userIdAuthenticationFilter;
+    }
 
     /**
      * Configures the security filter chain.
@@ -46,7 +54,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
+                        .anyRequest().permitAll()
+                )
+                .addFilterBefore(userIdAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
