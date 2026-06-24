@@ -14,7 +14,13 @@
     handle /swagger-ui/* {
         reverse_proxy api-gateway:8080
     }
+    handle /swagger-ui.html {
+        reverse_proxy api-gateway:8080
+    }
     handle /v3/api-docs/* {
+        reverse_proxy api-gateway:8080
+    }
+    handle /webjars/* {
         reverse_proxy api-gateway:8080
     }
 
