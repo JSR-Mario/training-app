@@ -53,7 +53,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   deploy:
-    name: Deploy to Antigravity (Placeholder)
+    name: Deploy to EC2
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
