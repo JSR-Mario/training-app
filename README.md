@@ -6,6 +6,20 @@ A microservices-based personal training tracker. Built to be a cloud-native, sca
 
 ## Architecture Overview
 
+*(Inserta aquí tu diagrama exportado desde draw.io. Ejemplo: `![Architecture Diagram](docs/architecture.png)`)*
+
+**Guía para dibujar el diagrama en draw.io:**
+1. **El Cliente (Actor)**: Dibuja un ícono de un celular o navegador web a la izquierda.
+2. **Caddy (Reverse Proxy)**: El Cliente se conecta a una caja de Caddy usando una flecha con la etiqueta `HTTPS (443)`.
+3. **Frontend**: De Caddy sale una flecha hacia una caja **Angular Frontend (Puerto 80)** etiquetada con `Resto del tráfico`.
+4. **API Gateway**: De Caddy sale otra flecha hacia una caja **Spring Cloud API Gateway (Puerto 8080)** etiquetada con `Rutas /api/* y /swagger-ui/*`. Añade un cilindro de **Redis (6379)** conectado al Gateway etiquetado como `Rate Limiting`.
+5. **Microservicios**: Del API Gateway salen 3 flechas (rutas internas, sin acceso público):
+   - **Auth Service (8081)**: Rutas `/api/v1/auth/**`. Genera/valida JWTs.
+   - **Training Service (8082)**: Rutas `/api/v1/training/**`. Maneja rutinas y logs.
+   - **Analytics Service (8083)**: Rutas `/api/v1/analytics/**`. Maneja volumen y progreso.
+6. **Base de Datos**: De los tres microservicios salen flechas hacia un solo cilindro principal **PostgreSQL (5432)**, etiquetado con `Esquemas aislados por servicio`.
+7. **Comunicación Interna (Eventos)**: Dibuja una flecha *punteada* desde el **Training Service** hacia el **Analytics Service** etiquetada como `POST /internal/... (Cálculo Asíncrono)`.
+
 The system is composed of an API Gateway, three domain-specific microservices, and a frontend PWA. The backend services are backed by a single PostgreSQL instance (with isolated schemas) and Redis for rate limiting.
 
 The frontend is an Angular 18 Progressive Web App that communicates exclusively with the Spring Cloud API Gateway. The Gateway handles JWT validation, CORS, and Rate Limiting. Once authenticated, the Gateway routes requests to the appropriate microservice (Auth, Training, or Analytics). When a user completes a workout, the Training service asynchronously notifies the Analytics service to pre-calculate progress and volume metrics.
