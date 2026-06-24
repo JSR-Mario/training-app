@@ -42,6 +42,9 @@ public class WorkoutSession {
     @Column(name = "completed_at")
     private Instant completedAt;
 
+    @Column(name = "notes")
+    private String notes;
+
     public UUID getId() { return id; }
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
@@ -53,4 +56,6 @@ public class WorkoutSession {
     public void setWeekNumber(int weekNumber) { this.weekNumber = weekNumber; }
     public Instant getCompletedAt() { return completedAt; }
     public void setCompletedAt(Instant completedAt) { this.completedAt = completedAt; }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 }

@@ -55,11 +55,11 @@ class MetricsCalculationServiceTest {
         // Arrange
         SessionCompletedEvent.SetData set1 = new SessionCompletedEvent.SetData(
             exerciseId, 10, new BigDecimal("50.00"), 
-            Map.of("CHEST", new BigDecimal("1.0"), "TRICEPS", new BigDecimal("0.5"))
+            Map.of("MID_CHEST", new BigDecimal("1.0"), "TRICEPS", new BigDecimal("0.5"))
         );
         SessionCompletedEvent.SetData set2 = new SessionCompletedEvent.SetData(
             exerciseId, 8, new BigDecimal("55.00"), 
-            Map.of("CHEST", new BigDecimal("1.0"), "TRICEPS", new BigDecimal("0.5"))
+            Map.of("MID_CHEST", new BigDecimal("1.0"), "TRICEPS", new BigDecimal("0.5"))
         );
 
         SessionCompletedEvent event = new SessionCompletedEvent(
@@ -69,7 +69,7 @@ class MetricsCalculationServiceTest {
         when(progressRepository.findByUserIdAndExerciseIdAndSessionDate(userId, exerciseId, sessionDate))
             .thenReturn(Optional.empty());
 
-        when(volumeRepository.findByUserIdAndProgramIdAndWeekNumberAndBodyPart(userId, programId, 1, "CHEST"))
+        when(volumeRepository.findByUserIdAndProgramIdAndWeekNumberAndBodyPart(userId, programId, 1, "MID_CHEST"))
             .thenReturn(Optional.empty());
         when(volumeRepository.findByUserIdAndProgramIdAndWeekNumberAndBodyPart(userId, programId, 1, "TRICEPS"))
             .thenReturn(Optional.empty());
@@ -94,7 +94,7 @@ class MetricsCalculationServiceTest {
         List<WeeklyVolumeSnapshot> volumes = volumeCaptor.getAllValues();
         assertThat(volumes).hasSize(2);
         
-        WeeklyVolumeSnapshot chestVol = volumes.stream().filter(v -> v.getBodyPart().equals("CHEST")).findFirst().get();
+        WeeklyVolumeSnapshot chestVol = volumes.stream().filter(v -> v.getBodyPart().equals("MID_CHEST")).findFirst().get();
         // 2 sets * 1.0
         assertThat(chestVol.getTotalSets()).isEqualByComparingTo("2.0");
 

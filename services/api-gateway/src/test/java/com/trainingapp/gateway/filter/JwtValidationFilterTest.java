@@ -37,7 +37,7 @@ class JwtValidationFilterTest {
         // Generate a 256-bit key for HMAC-SHA256
         byte[] keyBytes = new byte[32];
         new java.util.Random().nextBytes(keyBytes);
-        validSecret = Base64.getEncoder().encodeToString(keyBytes);
+        validSecret = java.util.HexFormat.of().formatHex(keyBytes);
 
         ReflectionTestUtils.setField(filterFactory, "jwtSecret", validSecret);
 
@@ -47,12 +47,23 @@ class JwtValidationFilterTest {
     }
 
     @Test
+    void shouldPassOptionsRequestWithoutAuth() {
+        MockServerHttpRequest request = MockServerHttpRequest.options("/api/v1/training/programs").build();
+        ServerWebExchange exchange = MockServerWebExchange.from(request);
+
+        Mono<Void> result = filter.filter(exchange, filterChain);
+        result.block();
+
+        verify(filterChain, times(1)).filter(any());
+    }
+
+    @Test
     void shouldReturnUnauthorizedWhenNoAuthHeader() {
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/v1/training/programs").build();
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         Mono<Void> result = filter.filter(exchange, filterChain);
-        result.subscribe();
+        result.block();
 
         assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
         verify(filterChain, never()).filter(any());
@@ -66,7 +77,7 @@ class JwtValidationFilterTest {
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         Mono<Void> result = filter.filter(exchange, filterChain);
-        result.subscribe();
+        result.block();
 
         assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
         verify(filterChain, never()).filter(any());
@@ -79,7 +90,7 @@ class JwtValidationFilterTest {
                 .subject(userId)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 10000))
-                .signWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(validSecret)))
+                .signWith(Keys.hmacShaKeyFor(java.util.HexFormat.of().parseHex(validSecret)))
                 .compact();
 
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/v1/training/programs")
@@ -88,7 +99,7 @@ class JwtValidationFilterTest {
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         Mono<Void> result = filter.filter(exchange, filterChain);
-        result.subscribe();
+        result.block();
 
         verify(filterChain, times(1)).filter(argThat(ex -> {
             String injectedUserId = ex.getRequest().getHeaders().getFirst("X-User-Id");

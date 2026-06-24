@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -52,9 +53,11 @@ class AuthServiceTest {
     void setUp() {
         sampleId = UUID.randomUUID();
         sampleUser = new User();
+        ReflectionTestUtils.setField(sampleUser, "id", sampleId);
         sampleUser.setUsername("testuser");
         sampleUser.setEmail("test@example.com");
         sampleUser.setPasswordHash("hashed");
+        sampleUser.setRole(com.trainingapp.auth.domain.Role.ROLE_USER);
     }
 
     // ----------------------------------------------------------------
@@ -115,15 +118,15 @@ class AuthServiceTest {
     void login_success_returnsLoginResult() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(sampleUser));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
-        when(jwtService.generateAccessToken(any())).thenReturn("access.token");
-        when(jwtService.generateRefreshToken(any())).thenReturn("refresh.token");
+        when(jwtService.generateAccessToken(any(User.class))).thenReturn("access-token-123");
+        when(jwtService.generateRefreshToken(any(User.class))).thenReturn("refresh-token-456");
         when(jwtService.accessExpirySeconds()).thenReturn(900L);
 
         AuthService.LoginResult result = authService.login(new LoginRequest("testuser", "password123"));
 
-        assertThat(result.authResponse().accessToken()).isEqualTo("access.token");
+        assertThat(result.authResponse().accessToken()).isEqualTo("access-token-123");
         assertThat(result.authResponse().tokenType()).isEqualTo("Bearer");
-        assertThat(result.refreshToken()).isEqualTo("refresh.token");
+        assertThat(result.refreshToken()).isEqualTo("refresh-token-456");
     }
 
     @Test
@@ -152,8 +155,9 @@ class AuthServiceTest {
         when(jwtService.isValid("refresh.token")).thenReturn(true);
         when(jwtService.isRefreshToken("refresh.token")).thenReturn(true);
         when(jwtService.extractUserId("refresh.token")).thenReturn(sampleId);
-        when(jwtService.generateAccessToken(sampleId)).thenReturn("new.access.token");
+        when(jwtService.generateAccessToken(any(User.class))).thenReturn("new.access.token");
         when(jwtService.accessExpirySeconds()).thenReturn(900L);
+        when(userRepository.findById(sampleId)).thenReturn(Optional.of(sampleUser));
 
         AuthResponse response = authService.refresh("refresh.token");
 
@@ -187,7 +191,9 @@ class AuthServiceTest {
 
         UserResponse response = authService.getUser(sampleId);
 
+        assertThat(response.id()).isEqualTo(sampleId);
         assertThat(response.username()).isEqualTo("testuser");
+        assertThat(response.role()).isEqualTo("ROLE_USER");
     }
 
     @Test

@@ -53,6 +53,10 @@ public class DayExerciseService {
         dayExercise.setExercise(exercise);
         dayExercise.setSets(request.sets());
         dayExercise.setReps(request.reps());
+        dayExercise.setRepsMax(request.repsMax());
+        dayExercise.setDurationMinutes(request.durationMinutes());
+        dayExercise.setIncline(request.incline());
+        dayExercise.setResistance(request.resistance());
         dayExercise.setSortOrder(request.sortOrder());
         return toResponse(dayExerciseRepository.save(dayExercise));
     }
@@ -65,6 +69,10 @@ public class DayExerciseService {
         dayExercise.setExercise(exercise);
         dayExercise.setSets(request.sets());
         dayExercise.setReps(request.reps());
+        dayExercise.setRepsMax(request.repsMax());
+        dayExercise.setDurationMinutes(request.durationMinutes());
+        dayExercise.setIncline(request.incline());
+        dayExercise.setResistance(request.resistance());
         dayExercise.setSortOrder(request.sortOrder());
         return toResponse(dayExerciseRepository.save(dayExercise));
     }
@@ -111,6 +119,10 @@ public class DayExerciseService {
                 de.getExercise().getName(),
                 de.getSets(),
                 de.getReps(),
+                de.getRepsMax(),
+                de.getDurationMinutes(),
+                de.getIncline(),
+                de.getResistance(),
                 de.getSortOrder()
         );
     }

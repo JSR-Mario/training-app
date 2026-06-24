@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { WorkoutService } from '../../services/workout.service';
 import { ProgramService } from '../../../programs/services/program.service';
 import { 
@@ -48,7 +48,12 @@ import {
             <div class="flex items-start justify-between mb-4 border-b border-gray-700/50 pb-4">
               <div>
                 <h2 class="text-xl font-bold text-white"><span class="text-blue-500 mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</h2>
-                <p class="text-gray-400 text-sm mt-1">Goal: {{ ex.sets }} sets × {{ ex.reps }} reps</p>
+                <p *ngIf="!ex.durationMinutes" class="text-gray-400 text-sm mt-1">Goal: {{ ex.sets }} sets × {{ ex.reps }} reps</p>
+                <p *ngIf="ex.durationMinutes" class="text-gray-400 text-sm mt-1">
+                  Goal: {{ ex.durationMinutes }} min 
+                  <span *ngIf="ex.incline"> • Inc: {{ ex.incline }}</span> 
+                  <span *ngIf="ex.resistance"> • Res: {{ ex.resistance }}</span>
+                </p>
               </div>
             </div>
 
@@ -56,11 +61,21 @@ import {
             <div class="space-y-3 mb-4">
               <div *ngFor="let set of getSetsForExercise(ex.id)" class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border border-gray-700">
                 <div class="flex items-center gap-4">
-                  <span class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-bold border border-blue-500/30">
+                  <span *ngIf="!ex.durationMinutes" class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-bold border border-blue-500/30">
                     {{ set.setNumber }}
                   </span>
+                  <span *ngIf="ex.durationMinutes" class="px-2 py-1 rounded bg-purple-600/20 text-purple-400 text-xs font-bold border border-purple-500/30 uppercase">
+                    Log
+                  </span>
                   <div class="text-gray-200 font-medium">
-                    {{ set.weightKg }} <span class="text-gray-500 text-xs uppercase">kg</span> × {{ set.repsCompleted }} <span class="text-gray-500 text-xs uppercase">reps</span>
+                    <ng-container *ngIf="!ex.durationMinutes">
+                      {{ set.weightKg }} <span class="text-gray-500 text-xs uppercase">kg</span> × {{ set.repsCompleted }} <span class="text-gray-500 text-xs uppercase">reps</span>
+                    </ng-container>
+                    <ng-container *ngIf="ex.durationMinutes">
+                      {{ set.durationMinutes }} <span class="text-gray-500 text-xs uppercase">min</span>
+                      <span *ngIf="set.incline" class="ml-2 text-gray-400 text-xs">Inc: {{ set.incline }}</span>
+                      <span *ngIf="set.resistance" class="ml-2 text-gray-400 text-xs">Res: {{ set.resistance }}</span>
+                    </ng-container>
                   </div>
                 </div>
                 <button 
@@ -77,36 +92,36 @@ import {
 
             <!-- Log New Set Form -->
             <div *ngIf="!session()?.completedAt" class="bg-gray-900/50 p-4 rounded-xl border border-gray-700">
-              <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3">
-                <div class="w-1/3">
-                  <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Weight (kg)</label>
-                  <input 
-                    [id]="'weight-' + ex.id"
-                    type="number" 
-                    inputmode="decimal"
-                    step="0.5"
-                    min="0"
-                    formControlName="weightKg"
-                    class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center"
-                  >
-                </div>
-                <div class="w-1/3">
-                  <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps</label>
-                  <input 
-                    [id]="'reps-' + ex.id"
-                    type="number" 
-                    inputmode="numeric"
-                    min="0"
-                    formControlName="repsCompleted"
-                    class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center"
-                  >
-                </div>
-                <div class="w-1/3">
-                  <button 
-                    type="submit" 
-                    [disabled]="getForm(ex.id).invalid || isLoggingSet()"
-                    class="w-full h-[42px] bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors"
-                  >
+              <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
+                
+                <ng-container *ngIf="!ex.durationMinutes">
+                  <div class="flex-1 min-w-[80px]">
+                    <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Weight (kg)</label>
+                    <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
+                  </div>
+                  <div class="flex-1 min-w-[80px]">
+                    <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps</label>
+                    <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
+                  </div>
+                </ng-container>
+
+                <ng-container *ngIf="ex.durationMinutes">
+                  <div class="flex-1 min-w-[70px]">
+                    <label [for]="'dur-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Time(m)</label>
+                    <input [id]="'dur-' + ex.id" type="number" min="0" formControlName="durationMinutes" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-base font-bold text-center">
+                  </div>
+                  <div class="flex-1 min-w-[70px]">
+                    <label [for]="'inc-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Incline</label>
+                    <input [id]="'inc-' + ex.id" type="number" step="0.1" formControlName="incline" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-base font-bold text-center">
+                  </div>
+                  <div class="flex-1 min-w-[70px]">
+                    <label [for]="'res-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Resis.</label>
+                    <input [id]="'res-' + ex.id" type="number" step="0.1" formControlName="resistance" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-base font-bold text-center">
+                  </div>
+                </ng-container>
+
+                <div class="w-full sm:w-auto mt-2 sm:mt-0">
+                  <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px]">
                     Log
                   </button>
                 </div>
@@ -114,13 +129,47 @@ import {
             </div>
             
             <!-- Progress Bar inside Exercise Card -->
-            <div class="mt-4 h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+            <div class="mt-4 h-1 w-full bg-gray-800 rounded-full overflow-hidden mb-4">
               <div 
                 class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
                 [style.width.%]="(getSetsForExercise(ex.id).length / ex.sets) * 100"
               ></div>
             </div>
 
+            <!-- Rating Section -->
+            <div *ngIf="!session()?.completedAt" class="pt-4 border-t border-gray-700/50 mt-4">
+              <p class="text-sm text-gray-400 mb-2">How did this exercise feel? (1 = Very Easy, 10 = Max Effort)</p>
+              <div class="flex gap-1 flex-wrap">
+                <button 
+                  *ngFor="let r of [1,2,3,4,5,6,7,8,9,10]" 
+                  (click)="setRating(ex.id, r)"
+                  [class.bg-blue-600]="getRating(ex.id) === r"
+                  [class.text-white]="getRating(ex.id) === r"
+                  [class.bg-gray-800]="getRating(ex.id) !== r"
+                  [class.text-gray-400]="getRating(ex.id) !== r"
+                  class="w-8 h-8 rounded-full text-xs font-bold hover:bg-blue-500 hover:text-white transition-colors"
+                >
+                  {{ r }}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Session Notes -->
+        <div class="glass-card p-6 mt-8">
+          <h3 class="text-xl font-bold text-white mb-2">Session Notes</h3>
+          <p class="text-sm text-gray-400 mb-4">Any specific thoughts or things to remember next time?</p>
+          <textarea 
+            [formControl]="notesControl"
+            (blur)="saveNotes()"
+            placeholder="Type your notes here..."
+            class="w-full h-32 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm resize-none"
+          ></textarea>
+          <div class="flex justify-end mt-2">
+            <span *ngIf="isSavingNotes()" class="text-xs text-blue-400">Saving...</span>
+            <span *ngIf="savedNotesSuccess()" class="text-xs text-green-400">Saved!</span>
           </div>
         </div>
       </div>
@@ -156,6 +205,10 @@ export class ActiveWorkoutComponent implements OnInit {
   isLoading = signal<boolean>(true);
   isLoggingSet = signal<boolean>(false);
   isCompleting = signal<boolean>(false);
+  isSavingNotes = signal<boolean>(false);
+  savedNotesSuccess = signal<boolean>(false);
+
+  notesControl = new FormControl('');
 
   // Map of exerciseId -> FormGroup
   forms = new Map<string, FormGroup>();
@@ -178,6 +231,9 @@ export class ActiveWorkoutComponent implements OnInit {
     this.workoutService.getSession(id).subscribe({
       next: (sess) => {
         this.session.set(sess);
+        if (sess.notes) {
+          this.notesControl.setValue(sess.notes, { emitEvent: false });
+        }
         
         // Load sets
         this.workoutService.getSets(id).subscribe({
@@ -213,22 +269,40 @@ export class ActiveWorkoutComponent implements OnInit {
 
   initForms(exercises: DayExercise[]) {
     exercises.forEach(ex => {
-      // Find the last logged set for this exercise to pre-fill the form
       const setsForEx = this.getSetsForExercise(ex.id);
-      let defaultWeight = '';
-      let defaultReps = ex.reps;
+      
+      if (ex.durationMinutes != null) {
+        let defaultDuration = ex.durationMinutes;
+        let defaultIncline = ex.incline || 0;
+        let defaultResistance = ex.resistance || 0;
 
-      if (setsForEx.length > 0) {
-        // Prefill with the last set's weight and reps
-        const lastSet = setsForEx[setsForEx.length - 1];
-        defaultWeight = lastSet.weightKg.toString();
-        defaultReps = lastSet.repsCompleted;
+        if (setsForEx.length > 0) {
+          const lastSet = setsForEx[setsForEx.length - 1];
+          defaultDuration = lastSet.durationMinutes ?? defaultDuration;
+          defaultIncline = lastSet.incline ?? defaultIncline;
+          defaultResistance = lastSet.resistance ?? defaultResistance;
+        }
+
+        this.forms.set(ex.id, this.fb.group({
+          durationMinutes: [defaultDuration, [Validators.required, Validators.min(0)]],
+          incline: [defaultIncline],
+          resistance: [defaultResistance]
+        }));
+      } else {
+        let defaultWeight = '';
+        let defaultReps = ex.reps;
+
+        if (setsForEx.length > 0) {
+          const lastSet = setsForEx[setsForEx.length - 1];
+          defaultWeight = lastSet.weightKg?.toString() || '';
+          defaultReps = lastSet.repsCompleted || ex.reps;
+        }
+
+        this.forms.set(ex.id, this.fb.group({
+          weightKg: [defaultWeight, [Validators.required, Validators.min(0)]],
+          repsCompleted: [defaultReps, [Validators.required, Validators.min(0)]]
+        }));
       }
-
-      this.forms.set(ex.id, this.fb.group({
-        weightKg: [defaultWeight, [Validators.required, Validators.min(0)]],
-        repsCompleted: [defaultReps, [Validators.required, Validators.min(0)]]
-      }));
     });
   }
 
@@ -257,8 +331,11 @@ export class ActiveWorkoutComponent implements OnInit {
     const request = {
       dayExerciseId: ex.id,
       setNumber: setNumber,
-      repsCompleted: form.value.repsCompleted,
-      weightKg: form.value.weightKg
+      repsCompleted: ex.durationMinutes != null ? undefined : form.value.repsCompleted,
+      weightKg: ex.durationMinutes != null ? undefined : form.value.weightKg,
+      durationMinutes: ex.durationMinutes != null ? form.value.durationMinutes : undefined,
+      incline: ex.durationMinutes != null ? form.value.incline : undefined,
+      resistance: ex.durationMinutes != null ? form.value.resistance : undefined
     };
 
     this.workoutService.logSet(id, request).subscribe({
@@ -292,6 +369,9 @@ export class ActiveWorkoutComponent implements OnInit {
 
     if (confirm('Are you sure you are done? This will finalize the workout and update analytics.')) {
       this.isCompleting.set(true);
+      // Ensure notes are saved before completing if changed
+      this.saveNotes();
+
       this.workoutService.completeSession(id).subscribe({
         next: () => {
           this.isCompleting.set(false);
@@ -304,5 +384,51 @@ export class ActiveWorkoutComponent implements OnInit {
         }
       });
     }
+  }
+
+  saveNotes() {
+    const id = this.sessionId();
+    const notes = this.notesControl.value;
+    const currentNotes = this.session()?.notes || '';
+    
+    if (!id || this.session()?.completedAt) return;
+    if (notes === currentNotes && !this.isSavingNotes()) return; // Don't save if no change
+
+    this.isSavingNotes.set(true);
+    this.savedNotesSuccess.set(false);
+
+    this.workoutService.updateSessionNotes(id, notes || '').subscribe({
+      next: (updatedSession) => {
+        this.session.set(updatedSession);
+        this.isSavingNotes.set(false);
+        this.savedNotesSuccess.set(true);
+        setTimeout(() => this.savedNotesSuccess.set(false), 2000);
+      },
+      error: (err) => {
+        console.error('Error saving notes', err);
+        this.isSavingNotes.set(false);
+      }
+    });
+  }
+
+  getRating(dayExerciseId: string): number | null {
+    const session = this.session();
+    if (!session || !session.ratings) return null;
+    const ratingObj = session.ratings.find(r => r.dayExerciseId === dayExerciseId);
+    return ratingObj ? ratingObj.rating : null;
+  }
+
+  setRating(dayExerciseId: string, rating: number) {
+    const id = this.sessionId();
+    if (!id || this.session()?.completedAt) return;
+
+    this.workoutService.updateExerciseRating(id, dayExerciseId, rating).subscribe({
+      next: (updatedSession) => {
+        this.session.set(updatedSession);
+      },
+      error: (err) => {
+        console.error('Error saving rating', err);
+      }
+    });
   }
 }

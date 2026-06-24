@@ -8,7 +8,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -26,6 +29,7 @@ import java.util.UUID;
 public class UserIdAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String USER_ID_HEADER = "X-User-Id";
+    private static final String USER_ROLE_HEADER = "X-User-Role";
 
     /**
      * Reads the {@code X-User-Id} header and, if present, creates a
@@ -44,9 +48,16 @@ public class UserIdAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String userIdHeader = request.getHeader(USER_ID_HEADER);
+        String userRoleHeader = request.getHeader(USER_ROLE_HEADER);
+        
         if (userIdHeader != null && !userIdHeader.isBlank()) {
             UUID userId = UUID.fromString(userIdHeader);
-            UserIdAuthenticationToken authentication = new UserIdAuthenticationToken(userId);
+            String role = (userRoleHeader != null && !userRoleHeader.isBlank()) ? userRoleHeader : "ROLE_USER";
+            
+            UserIdAuthenticationToken authentication = new UserIdAuthenticationToken(
+                    userId, 
+                    List.of(new SimpleGrantedAuthority(role))
+            );
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 

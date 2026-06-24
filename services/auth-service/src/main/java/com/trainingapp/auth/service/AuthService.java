@@ -97,8 +97,8 @@ public class AuthService {
             throw new BadCredentialsException("Invalid username or password.");
         }
 
-        String accessToken = jwtService.generateAccessToken(user.getId());
-        String refreshToken = jwtService.generateRefreshToken(user.getId());
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
         AuthResponse authResponse = new AuthResponse(accessToken, "Bearer", jwtService.accessExpirySeconds());
         return new LoginResult(authResponse, refreshToken);
     }
@@ -120,7 +120,9 @@ public class AuthService {
         }
 
         UUID userId = jwtService.extractUserId(refreshToken);
-        String newAccessToken = jwtService.generateAccessToken(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new InvalidTokenException("User associated with refresh token not found."));
+        String newAccessToken = jwtService.generateAccessToken(user);
         return new AuthResponse(newAccessToken, "Bearer", jwtService.accessExpirySeconds());
     }
 
@@ -146,7 +148,7 @@ public class AuthService {
     // ----------------------------------------------------------------
 
     private UserResponse toResponse(User user) {
-        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getCreatedAt());
+        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getCreatedAt(), user.getRole().name());
     }
 
     /**

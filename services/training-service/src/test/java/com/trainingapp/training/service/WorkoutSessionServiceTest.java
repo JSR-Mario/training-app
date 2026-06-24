@@ -40,6 +40,8 @@ class WorkoutSessionServiceTest {
     @Mock private WorkoutSetRepository setRepository;
     @Mock private ExerciseBodyPartTargetRepository targetRepository;
     @Mock private AnalyticsNotificationClient analyticsClient;
+    @Mock private com.trainingapp.training.repository.SessionExerciseRatingRepository ratingRepository;
+    @Mock private com.trainingapp.training.repository.DayExerciseRepository dayExerciseRepository;
 
     @InjectMocks private WorkoutSessionService sessionService;
 
@@ -78,6 +80,7 @@ class WorkoutSessionServiceTest {
         savedSession.setWeekNumber(1);
         
         when(sessionRepository.save(any(WorkoutSession.class))).thenReturn(savedSession);
+        when(ratingRepository.findBySessionId(any())).thenReturn(Collections.emptyList());
 
         WorkoutSessionResponse response = sessionService.startSession(userId, request);
 

@@ -6,6 +6,11 @@ import com.trainingapp.auth.exception.InvalidTokenException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.trainingapp.auth.domain.Role;
+import com.trainingapp.auth.domain.User;
+
+import org.springframework.test.util.ReflectionTestUtils;
+
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,8 +38,10 @@ class JwtServiceTest {
 
     @Test
     void generateAccessToken_producesValidToken() {
-        UUID userId = UUID.randomUUID();
-        String token = jwtService.generateAccessToken(userId);
+        User user = new User();
+        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+        user.setRole(Role.ROLE_USER);
+        String token = jwtService.generateAccessToken(user);
 
         assertThat(token).isNotBlank();
         assertThat(jwtService.isValid(token)).isTrue();
@@ -42,34 +49,42 @@ class JwtServiceTest {
 
     @Test
     void generateAccessToken_subjectIsUserId() {
-        UUID userId = UUID.randomUUID();
-        String token = jwtService.generateAccessToken(userId);
+        User user = new User();
+        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+        user.setRole(Role.ROLE_USER);
+        String token = jwtService.generateAccessToken(user);
 
-        assertThat(jwtService.extractUserId(token)).isEqualTo(userId);
+        assertThat(jwtService.extractUserId(token)).isEqualTo(user.getId());
     }
 
     @Test
     void generateAccessToken_isNotRefreshToken() {
-        UUID userId = UUID.randomUUID();
-        String token = jwtService.generateAccessToken(userId);
+        User user = new User();
+        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+        user.setRole(Role.ROLE_USER);
+        String token = jwtService.generateAccessToken(user);
 
         assertThat(jwtService.isRefreshToken(token)).isFalse();
     }
 
     @Test
     void generateRefreshToken_isRefreshToken() {
-        UUID userId = UUID.randomUUID();
-        String token = jwtService.generateRefreshToken(userId);
+        User user = new User();
+        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+        user.setRole(Role.ROLE_USER);
+        String token = jwtService.generateRefreshToken(user);
 
         assertThat(jwtService.isRefreshToken(token)).isTrue();
     }
 
     @Test
     void generateRefreshToken_subjectIsUserId() {
-        UUID userId = UUID.randomUUID();
-        String token = jwtService.generateRefreshToken(userId);
+        User user = new User();
+        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+        user.setRole(Role.ROLE_USER);
+        String token = jwtService.generateRefreshToken(user);
 
-        assertThat(jwtService.extractUserId(token)).isEqualTo(userId);
+        assertThat(jwtService.extractUserId(token)).isEqualTo(user.getId());
     }
 
     @Test
@@ -90,14 +105,18 @@ class JwtServiceTest {
 
     @Test
     void differentUsers_produceDistinctTokens() {
-        UUID userA = UUID.randomUUID();
-        UUID userB = UUID.randomUUID();
+        User userA = new User();
+        ReflectionTestUtils.setField(userA, "id", UUID.randomUUID());
+        userA.setRole(Role.ROLE_USER);
+        User userB = new User();
+        ReflectionTestUtils.setField(userB, "id", UUID.randomUUID());
+        userB.setRole(Role.ROLE_USER);
 
         String tokenA = jwtService.generateAccessToken(userA);
         String tokenB = jwtService.generateAccessToken(userB);
 
         assertThat(tokenA).isNotEqualTo(tokenB);
-        assertThat(jwtService.extractUserId(tokenA)).isEqualTo(userA);
-        assertThat(jwtService.extractUserId(tokenB)).isEqualTo(userB);
+        assertThat(jwtService.extractUserId(tokenA)).isEqualTo(userA.getId());
+        assertThat(jwtService.extractUserId(tokenB)).isEqualTo(userB.getId());
     }
 }

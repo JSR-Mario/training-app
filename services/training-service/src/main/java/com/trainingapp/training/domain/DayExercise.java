@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.util.UUID;
+import java.math.BigDecimal;
 
 /**
  * An exercise assigned to a {@link DayTemplate}, with prescribed sets, reps,
@@ -37,11 +38,23 @@ public class DayExercise {
     @JoinColumn(name = "exercise_id", nullable = false)
     private Exercise exercise;
 
-    @Column(nullable = false)
-    private int sets;
+    @Column(name = "sets")
+    private Integer sets;
 
-    @Column(nullable = false)
-    private int reps;
+    @Column(name = "reps")
+    private Integer reps;
+
+    @Column(name = "reps_max")
+    private Integer repsMax;
+
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
+
+    @Column(name = "incline", precision = 5, scale = 2)
+    private BigDecimal incline;
+
+    @Column(name = "resistance", precision = 5, scale = 2)
+    private BigDecimal resistance;
 
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
@@ -51,10 +64,18 @@ public class DayExercise {
     public void setDayTemplate(DayTemplate dayTemplate) { this.dayTemplate = dayTemplate; }
     public Exercise getExercise() { return exercise; }
     public void setExercise(Exercise exercise) { this.exercise = exercise; }
-    public int getSets() { return sets; }
-    public void setSets(int sets) { this.sets = sets; }
-    public int getReps() { return reps; }
-    public void setReps(int reps) { this.reps = reps; }
+    public Integer getSets() { return sets; }
+    public void setSets(Integer sets) { this.sets = sets; }
+    public Integer getReps() { return reps; }
+    public void setReps(Integer reps) { this.reps = reps; }
+    public Integer getRepsMax() { return repsMax; }
+    public void setRepsMax(Integer repsMax) { this.repsMax = repsMax; }
+    public Integer getDurationMinutes() { return durationMinutes; }
+    public void setDurationMinutes(Integer durationMinutes) { this.durationMinutes = durationMinutes; }
+    public BigDecimal getIncline() { return incline; }
+    public void setIncline(BigDecimal incline) { this.incline = incline; }
+    public BigDecimal getResistance() { return resistance; }
+    public void setResistance(BigDecimal resistance) { this.resistance = resistance; }
     public int getSortOrder() { return sortOrder; }
     public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
 }

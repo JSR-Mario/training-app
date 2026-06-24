@@ -9,23 +9,29 @@ import reactor.core.publisher.Mono;
 
 /**
  * A Global Filter that appends security headers to all responses.
+ *
+ * <p>Headers are registered via {@code beforeCommit} to ensure they
+ * are written before the response is flushed, avoiding corruption
+ * of chunked transfer encoding.
  */
 @Component
 public class SecurityHeadersFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+        exchange.getResponse().beforeCommit(() -> {
             var headers = exchange.getResponse().getHeaders();
-            headers.add("Strict-Transport-Security", "max-age=31536000 ; includeSubDomains");
-            headers.add("X-Frame-Options", "DENY");
-            headers.add("X-Content-Type-Options", "nosniff");
-            headers.add("Referrer-Policy", "no-referrer");
-        }));
+            headers.set("Strict-Transport-Security", "max-age=31536000 ; includeSubDomains");
+            headers.set("X-Frame-Options", "DENY");
+            headers.set("X-Content-Type-Options", "nosniff");
+            headers.set("Referrer-Policy", "no-referrer");
+            return Mono.empty();
+        });
+        return chain.filter(exchange);
     }
 
     @Override
     public int getOrder() {
-        return -1; // Execute early in the response phase
+        return -1;
     }
 }
