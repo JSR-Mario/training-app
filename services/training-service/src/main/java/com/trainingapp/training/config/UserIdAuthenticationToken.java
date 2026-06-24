@@ -2,6 +2,9 @@ package com.trainingapp.training.config;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
+import org.springframework.security.core.GrantedAuthority;
+
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,20 +14,20 @@ import java.util.UUID;
  *
  * <p>This token is created by {@link UserIdAuthenticationFilter} and stored in
  * the Spring Security {@link org.springframework.security.core.context.SecurityContext}.
- * It has no granted authorities because authorization is not enforced at the
- * service level — the gateway handles JWT validation and RBAC.
+ * It supports roles passed from the gateway.
  */
 public class UserIdAuthenticationToken extends AbstractAuthenticationToken {
 
     private final UUID userId;
 
     /**
-     * Creates an authenticated token carrying the given user ID.
+     * Creates an authenticated token carrying the given user ID and authorities.
      *
-     * @param userId the UUID extracted from the {@code X-User-Id} header
+     * @param userId      the UUID extracted from the {@code X-User-Id} header
+     * @param authorities the roles extracted from the {@code X-User-Role} header
      */
-    public UserIdAuthenticationToken(UUID userId) {
-        super(List.of());
+    public UserIdAuthenticationToken(UUID userId, Collection<? extends GrantedAuthority> authorities) {
+        super(authorities);
         this.userId = userId;
         setAuthenticated(true);
     }

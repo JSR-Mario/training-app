@@ -18,12 +18,19 @@ export class ExerciseService {
     return this.http.get<Exercise>(`${this.BASE_URL}/${id}`);
   }
 
-  createExercise(name: string): Observable<Exercise> {
-    return this.http.post<Exercise>(this.BASE_URL, { name });
+  /** Returns up to 3 exercises matching the query for autocomplete. */
+  searchExercises(query: string): Observable<Exercise[]> {
+    return this.http.get<Exercise[]>(`${this.BASE_URL}/search`, {
+      params: { q: query }
+    });
   }
 
-  updateExercise(id: string, name: string): Observable<Exercise> {
-    return this.http.put<Exercise>(`${this.BASE_URL}/${id}`, { name });
+  createExercise(data: { name: string; equipmentBrand?: string; unilateral: boolean; isPublic: boolean; type?: 'STRENGTH' | 'CARDIO' }): Observable<Exercise> {
+    return this.http.post<Exercise>(this.BASE_URL, data);
+  }
+
+  updateExercise(id: string, data: { name: string; equipmentBrand?: string; unilateral: boolean; isPublic: boolean; type?: 'STRENGTH' | 'CARDIO' }): Observable<Exercise> {
+    return this.http.put<Exercise>(`${this.BASE_URL}/${id}`, data);
   }
 
   deleteExercise(id: string): Observable<void> {

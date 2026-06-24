@@ -1,5 +1,6 @@
 package com.trainingapp.auth.init;
 
+import com.trainingapp.auth.domain.Role;
 import com.trainingapp.auth.domain.User;
 import com.trainingapp.auth.repository.UserRepository;
 import org.slf4j.Logger;
@@ -64,17 +65,25 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        if (userRepository.existsByUsername(adminUsername)) {
-            log.info("Admin user '{}' already exists — skipping seed.", adminUsername);
+        User admin = userRepository.findByUsername(adminUsername).orElse(null);
+        if (admin != null) {
+            if (admin.getRole() != Role.ROLE_ADMIN) {
+                admin.setRole(Role.ROLE_ADMIN);
+                userRepository.save(admin);
+                log.info("Admin user '{}' role updated to ROLE_ADMIN.", adminUsername);
+            } else {
+                log.info("Admin user '{}' already exists and has ROLE_ADMIN — skipping seed.", adminUsername);
+            }
             return;
         }
 
-        User admin = new User();
+        admin = new User();
         admin.setUsername(adminUsername);
         admin.setEmail(adminEmail);
         admin.setPasswordHash(passwordEncoder.encode(adminPassword));
+        admin.setRole(Role.ROLE_ADMIN);
         userRepository.save(admin);
 
-        log.info("Admin user '{}' created successfully.", adminUsername);
+        log.info("Admin user '{}' created successfully with ROLE_ADMIN.", adminUsername);
     }
 }

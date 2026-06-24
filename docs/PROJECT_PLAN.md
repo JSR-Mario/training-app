@@ -649,27 +649,23 @@ unreachable from outside Docker network. Branch: `feat/session-6-api-gateway` re
 
 ---
 
-### Session 11 — Dockerfiles, CI/CD & Deployment
-- [ ] Multi-stage `Dockerfile` per Spring Boot service:
+### Session 11 — Dockerfiles, CI/CD & Deployment ✅
+- [x] Multi-stage `Dockerfile` per Spring Boot service:
   `maven:3.9-eclipse-temurin-21` builder → `eclipse-temurin:21-jre-alpine` runtime
-- [ ] Multi-stage `Dockerfile` for frontend:
+- [x] Multi-stage `Dockerfile` for frontend:
   `node:20-alpine` builder → `nginx:alpine` runtime. Nginx config serves SPA correctly
   (all routes return `index.html`).
-- [ ] `.github/workflows/ci.yml`:
+- [x] `.github/workflows/ci.yml`:
   - Triggers: `push` and `pull_request` to `main`
   - Steps: checkout → Java 21 setup → `mvn verify` → Node 20 setup → `npm ci` →
     `npm run build` → `npm run lint`
   - PRs cannot be merged if CI fails
-- [ ] `.github/workflows/cd.yml`:
+- [x] `.github/workflows/cd.yml`:
   - Trigger: merge to `main`
-  - Steps: build all Docker images → push to container registry → deploy to Antigravity
-- [ ] `k8s/base/`: `Deployment`, `Service`, `ConfigMap`, `Secret` (template),
-      `HorizontalPodAutoscaler` for all stateless services. `PersistentVolumeClaim` for
-      PostgreSQL.
-- [ ] `k8s/overlays/production/`: resource limits, replica counts, TLS Ingress
-- [ ] Final `README.md` — all sections complete
+  - Steps: build all Docker images → push to container registry → deploy to EC2 via SSH
+- [x] Final `README.md` — all sections complete
 
-**Deliverable**: Push to main → CI passes → app deployed to Antigravity automatically.
+**Deliverable**: Push to main → CI passes → app deployed to EC2 automatically.
 
 ---
 

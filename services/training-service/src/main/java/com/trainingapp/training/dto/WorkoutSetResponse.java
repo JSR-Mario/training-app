@@ -10,7 +10,10 @@ public record WorkoutSetResponse(
     UUID sessionId,
     UUID dayExerciseId,
     int setNumber,
-    int repsCompleted,
+    Integer repsCompleted,
     BigDecimal weightKg,
+    Integer durationMinutes,
+    BigDecimal incline,
+    BigDecimal resistance,
     Instant loggedAt
 ) {}

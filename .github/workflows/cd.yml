@@ -60,11 +60,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         
-      - name: Deploy Placeholder
-        run: |
-          echo "========================================================="
-          echo "Simulating deployment to Antigravity Infrastructure..."
-          echo "Images successfully pushed to GHCR."
-          echo "In a real scenario, this step would apply Kustomize manifests"
-          echo "or trigger an ArgoCD/Flux sync, or use the Antigravity CLI."
-          echo "========================================================="
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd training-app
+            git pull origin main
+            docker compose down
+            docker compose up -d --build

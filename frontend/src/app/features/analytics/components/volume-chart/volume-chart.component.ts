@@ -5,7 +5,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { AnalyticsService } from '../../services/analytics.service';
 import { ProgramService } from '../../../programs/services/program.service';
-import { TrainingProgram, WeekTemplate } from '../../../../core/types/training.types';
+import { TrainingProgram } from '../../../../core/types/training.types';
 import { finalize } from 'rxjs';
 
 @Component({
@@ -21,7 +21,7 @@ export class VolumeChartComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   programs = signal<TrainingProgram[]>([]);
-  weeks = signal<WeekTemplate[]>([]);
+  weekNumbers = signal<number[]>([]);
   isLoading = signal(false);
 
   form: FormGroup = this.fb.group({
@@ -77,9 +77,14 @@ export class VolumeChartComponent implements OnInit {
 
     this.form.get('programId')?.valueChanges.subscribe(programId => {
       if (programId) {
-        this.loadWeeks(programId);
+        const prog = this.programs().find(p => p.id === programId);
+        if (prog) {
+          const nums = Array.from({ length: prog.durationWeeks }, (_, i) => i + 1);
+          this.weekNumbers.set(nums);
+          this.form.get('weekNumber')?.setValue(1);
+        }
       } else {
-        this.weeks.set([]);
+        this.weekNumbers.set([]);
         this.form.get('weekNumber')?.setValue('');
         this.resetChart();
       }
@@ -101,18 +106,6 @@ export class VolumeChartComponent implements OnInit {
         this.programs.set(progs);
         if (progs.length > 0) {
           this.form.get('programId')?.setValue(progs[0].id);
-        }
-      }
-    });
-  }
-
-  loadWeeks(programId: string) {
-    this.programService.getWeeks(programId).subscribe({
-      next: (ws) => {
-        this.weeks.set(ws);
-        if (ws.length > 0) {
-          // If a week is available, set to the first one (week 1)
-          this.form.get('weekNumber')?.setValue(1);
         }
       }
     });
