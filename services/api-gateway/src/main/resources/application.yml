@@ -29,12 +29,26 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
             maxAge: 3600
+      default-filters:
+        - RemoveRequestHeader=X-User-Id
+        - RemoveRequestHeader=X-User-Role
       routes:
-        - id: auth-service
+        - id: auth-service-public
           uri: ${AUTH_SERVICE_URL:http://localhost:8081}
           predicates:
-            - Path=/api/v1/auth/**
+            - Path=/api/v1/auth/login, /api/v1/auth/refresh
           filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@ipKeyResolver}"
+        - id: auth-service-protected
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/auth/register, /api/v1/auth/me, /api/v1/auth/logout
+          filters:
+            - JwtValidationFilter
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 20
