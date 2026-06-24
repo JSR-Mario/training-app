@@ -33,7 +33,7 @@ class DayExerciseControllerTest {
     @BeforeEach
     void setUp() {
         testUserId = UUID.randomUUID();
-        SecurityContextHolder.getContext().setAuthentication(new UserIdAuthenticationToken(testUserId));
+        SecurityContextHolder.getContext().setAuthentication(new UserIdAuthenticationToken(testUserId, java.util.List.of()));
     }
 
     @AfterEach
@@ -56,8 +56,8 @@ class DayExerciseControllerTest {
         UUID userId = testUserId;
         UUID dayId = UUID.randomUUID();
         UUID exerciseId = UUID.randomUUID();
-        DayExerciseRequest req = new DayExerciseRequest(exerciseId, 3, 10, 1);
-        DayExerciseResponse resp = new DayExerciseResponse(UUID.randomUUID(), exerciseId, "Bench Press", 3, 10, 1);
+        DayExerciseRequest req = new DayExerciseRequest(exerciseId, 3, 10, null, null, null, null, 1);
+        DayExerciseResponse resp = new DayExerciseResponse(UUID.randomUUID(), exerciseId, "Bench Press", 3, 10, null, null, null, null, 1);
 
         Mockito.when(dayExerciseService.create(eq(userId), eq(dayId), any())).thenReturn(resp);
 

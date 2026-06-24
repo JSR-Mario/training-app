@@ -17,5 +17,6 @@ public record UserResponse(
         UUID id,
         String username,
         String email,
-        Instant createdAt
+        Instant createdAt,
+        String role
 ) {}

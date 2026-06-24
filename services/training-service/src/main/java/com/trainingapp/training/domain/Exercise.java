@@ -9,7 +9,13 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 
 /**
  * A user-defined exercise in the exercise catalog.
@@ -32,8 +38,24 @@ public class Exercise {
     @Column(nullable = false, length = 200)
     private String name;
 
+    @Column(name = "equipment_brand", length = 100)
+    private String equipmentBrand;
+
+    @Column(nullable = false)
+    private boolean unilateral;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ExerciseType type = ExerciseType.STRENGTH;
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ExerciseBodyPartTarget> targets = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -45,5 +67,20 @@ public class Exercise {
     public void setUserId(UUID userId) { this.userId = userId; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getEquipmentBrand() { return equipmentBrand; }
+    public void setEquipmentBrand(String equipmentBrand) { this.equipmentBrand = equipmentBrand; }
+    public boolean isUnilateral() { return unilateral; }
+    public void setUnilateral(boolean unilateral) { this.unilateral = unilateral; }
+    public List<ExerciseBodyPartTarget> getTargets() { return targets; }
+    public void setTargets(List<ExerciseBodyPartTarget> targets) { this.targets = targets; }
     public Instant getCreatedAt() { return createdAt; }
+
+    /** Returns whether the exercise is public and visible to everyone. */
+    public boolean getIsPublic() { return isPublic; }
+
+    /** Sets whether the exercise is public and visible to everyone. */
+    public void setIsPublic(boolean isPublic) { this.isPublic = isPublic; }
+
+    public ExerciseType getType() { return type; }
+    public void setType(ExerciseType type) { this.type = type; }
 }

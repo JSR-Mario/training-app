@@ -8,7 +8,11 @@ import java.util.UUID;
 /** Request body for adding or updating an exercise within a day template. */
 public record DayExerciseRequest(
         @NotNull UUID exerciseId,
-        @Positive int sets,
-        @Positive int reps,
+        Integer sets,
+        Integer reps,
+        @PositiveOrZero Integer repsMax,
+        @PositiveOrZero Integer durationMinutes,
+        java.math.BigDecimal incline,
+        java.math.BigDecimal resistance,
         @PositiveOrZero int sortOrder
 ) {}

@@ -47,7 +47,35 @@ import { ExerciseFormComponent } from '../../components/exercise-form/exercise-f
 
         <div *ngFor="let exercise of exercises()" class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
           <div class="flex justify-between items-start mb-4">
-            <h3 class="text-xl font-bold text-white">{{ exercise.name }}</h3>
+            <div>
+              <h3 class="text-xl font-bold text-white">{{ exercise.name }}</h3>
+              <div class="flex flex-wrap gap-2 mt-1.5">
+                <span 
+                  *ngIf="exercise.equipmentBrand" 
+                  class="px-2 py-0.5 text-xs bg-slate-700/60 text-slate-300 rounded-md border border-slate-600/50"
+                >
+                  {{ exercise.equipmentBrand }}
+                </span>
+                <span 
+                  *ngIf="exercise.unilateral" 
+                  class="px-2 py-0.5 text-xs font-semibold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30"
+                >
+                  UNILATERAL
+                </span>
+                <span 
+                  *ngIf="exercise.unilateral === false"
+                  class="px-2 py-0.5 text-xs bg-sky-500/15 text-sky-400 rounded-md border border-sky-500/30"
+                >
+                  BILATERAL
+                </span>
+                <span 
+                  *ngIf="exercise.isPublic"
+                  class="px-2 py-0.5 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30"
+                >
+                  PUBLIC
+                </span>
+              </div>
+            </div>
             <div class="flex gap-2">
               <button 
                 (click)="editExercise(exercise)"
@@ -127,15 +155,22 @@ export class ExerciseListComponent implements OnInit {
     this.selectedExercise.set(null);
   }
 
-  onSaveExercise(formData: { name: string; targets: { id?: string; bodyPart: string; targetValue: number }[] }) {
+  onSaveExercise(formData: { name: string; equipmentBrand: string; unilateral: boolean; isPublic: boolean; type: 'STRENGTH' | 'CARDIO'; targets: { id?: string; bodyPart: string; targetValue: number }[] }) {
     this.isLoading.set(true);
     const exercise = this.selectedExercise();
     
+    const exercisePayload = {
+      name: formData.name,
+      equipmentBrand: formData.equipmentBrand || undefined,
+      unilateral: formData.unilateral,
+      isPublic: formData.isPublic || false,
+      type: formData.type
+    };
+
     if (exercise) {
       // Update existing
-      this.exerciseService.updateExercise(exercise.id, formData.name).subscribe({
+      this.exerciseService.updateExercise(exercise.id, exercisePayload).subscribe({
         next: (updatedExercise) => {
-          // Now update targets
           this.syncTargets(updatedExercise.id, exercise.targets, formData.targets);
         },
         error: (err) => {
@@ -145,9 +180,8 @@ export class ExerciseListComponent implements OnInit {
       });
     } else {
       // Create new
-      this.exerciseService.createExercise(formData.name).subscribe({
+      this.exerciseService.createExercise(exercisePayload).subscribe({
         next: (newExercise) => {
-          // Create targets
           this.syncTargets(newExercise.id, [], formData.targets);
         },
         error: (err) => {
@@ -171,13 +205,8 @@ export class ExerciseListComponent implements OnInit {
 
   // Helper to sync targets (add new, update existing, delete removed)
   private syncTargets(exerciseId: string, oldTargets: { id?: string; bodyPart: string; targetValue: number }[], newTargets: { id?: string; bodyPart: string; targetValue: number }[]) {
-    // In a real app we might use forkJoin or mergeMap to wait for all to complete
-    // For simplicity, we just trigger them and reload after a short delay
-    
     const targetsToDelete = oldTargets.filter(ot => !newTargets.find(nt => nt.id === ot.id));
     const targetsToAdd = newTargets.filter(nt => !nt.id);
-    // Assuming backend targets are immutable, we just delete and recreate if changed, 
-    // but the API doesn't have an updateTarget method, only add and delete.
     
     targetsToDelete.forEach(t => {
       if (t.id) {
@@ -189,6 +218,6 @@ export class ExerciseListComponent implements OnInit {
     setTimeout(() => {
       this.loadExercises();
       this.closeForm();
-    }, 500); // Hacky wait for operations to finish
+    }, 500);
   }
 }

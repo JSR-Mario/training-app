@@ -4,4 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /** Request body for creating or updating an exercise. */
-public record ExerciseRequest(@NotBlank @Size(max = 200) String name) {}
+public record ExerciseRequest(
+        @NotBlank @Size(max = 200) String name,
+        @Size(max = 100) String equipmentBrand,
+        boolean unilateral,
+        boolean isPublic,
+        com.trainingapp.training.domain.ExerciseType type
+) {}

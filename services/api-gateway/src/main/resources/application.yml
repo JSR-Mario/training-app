@@ -11,6 +11,10 @@ spring:
       password: ${REDIS_PASSWORD}
   cloud:
     gateway:
+      httpclient:
+        pool:
+          type: disabled
+        response-timeout: 30s
       globalcors:
         cors-configurations:
           '[/**]':

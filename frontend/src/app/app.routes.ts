@@ -31,6 +31,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/programs/pages/program-detail/program-detail.component').then(m => m.ProgramDetailComponent)
       },
       {
+        path: 'programs/:programId/days/:dayId',
+        loadComponent: () => import('./features/programs/pages/day-detail/day-detail.component').then(m => m.DayDetailComponent)
+      },
+      {
         path: 'workout',
         loadComponent: () => import('./features/workout/pages/workout-dashboard/workout-dashboard.component').then(m => m.WorkoutDashboardComponent)
       },
