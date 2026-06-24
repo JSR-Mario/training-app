@@ -67,17 +67,22 @@ Swagger UI is available at: `http://localhost:8080/swagger-ui.html`
 
 ---
 
-## Deployment Guide (EC2)
+## Deployment Guide (EC2 + DuckDNS)
 
-This application is designed to be deployed using Docker Compose on any standard Linux VM.
+This application is designed to be deployed using Docker Compose on any standard Linux VM. It includes a **Caddy** web server that automatically provisions free HTTPS certificates using Let's Encrypt, and routes traffic so that both the Frontend and the Backend share the exact same domain.
 
 **Steps to deploy to a new EC2 instance:**
 1. Provision an EC2 instance (e.g., Ubuntu 22.04 LTS).
-2. Open ports `22` (SSH), `8080` (API Gateway), and `3000` (Frontend) in your AWS Security Group. Ensure ports `5432` and `6379` remain **closed** to the public.
-3. SSH into your instance and install Docker, Docker Compose, and Git.
-4. Clone this repository: `git clone https://github.com/JSR-Mario/training-app.git`
-5. Copy `.env.example` to `.env` and fill in secure passwords, a random JWT secret, and your EC2's public IP.
-6. Run `docker compose up -d --build`. The multi-stage Dockerfiles will handle compiling the Java backends and the Angular frontend directly on the server.
+2. Open ports `22` (SSH), `80` (HTTP), and `443` (HTTPS) in your AWS Security Group. Ensure ports `8080`, `3000`, `5432` and `6379` remain **closed** to the public.
+3. Register a free domain on [DuckDNS](https://www.duckdns.org) (e.g., `my-app.duckdns.org`) and point it to your EC2 Public IP.
+4. SSH into your instance and install Docker, Docker Compose, and Git.
+5. Clone this repository: `git clone https://github.com/JSR-Mario/training-app.git`
+6. Copy `.env.example` to `.env` and configure:
+   - Secure passwords and a random 256-bit hex JWT secret.
+   - `DOMAIN_NAME` to your DuckDNS domain.
+   - `ALLOWED_ORIGIN` to `https://${DOMAIN_NAME}`.
+   - `COOKIE_SECURE=true`.
+7. Run `docker compose up -d --build`. The multi-stage Dockerfiles will handle compiling the Java backends and the Angular frontend directly on the server, and Caddy will automatically secure your site with HTTPS!
 
 ---
 

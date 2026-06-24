@@ -9,7 +9,7 @@ import { BodyWeightEntry } from '../../../core/types/training.types';
 })
 export class BodyWeightService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/training/body-weight`;
+  private apiUrl = '/api/v1/training/body-weight';
 
   getWeightEntries(startDate: string, endDate: string): Observable<BodyWeightEntry[]> {
     const params = new HttpParams()

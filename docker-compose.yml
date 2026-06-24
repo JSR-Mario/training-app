@@ -109,15 +109,13 @@ services:
     # Port intentionally not published.
 
   # -----------------------------------------------------------
-  # api-gateway (port 8080) — the only public entry point
+  # api-gateway (Internal port 8080) — no longer public, routed via Caddy
   # -----------------------------------------------------------
   api-gateway:
     build:
       context: .
       dockerfile: services/api-gateway/Dockerfile
     restart: unless-stopped
-    ports:
-      - "8080:8080"
     environment:
       AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}
       TRAINING_SERVICE_URL: ${TRAINING_SERVICE_URL}
@@ -138,20 +136,42 @@ services:
         condition: service_healthy
 
   # -----------------------------------------------------------
-  # frontend — nginx serving the Angular PWA
+  # frontend — nginx serving the Angular PWA (Internal port 80)
   # -----------------------------------------------------------
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "3000:80"
     depends_on:
+      - api-gateway
+
+  # -----------------------------------------------------------
+  # Caddy — Automatic HTTPS and Reverse Proxy
+  # -----------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
       - api-gateway
 
 volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
     driver: local
