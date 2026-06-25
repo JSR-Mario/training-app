@@ -68,6 +68,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd training-app
-            git pull origin main
+            git fetch origin
+            git checkout main
+            git reset --hard origin/main
             docker compose down
             docker compose up -d --build
