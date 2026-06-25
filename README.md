@@ -94,3 +94,23 @@ The project uses GitHub Actions for continuous integration and continuous deploy
 
 - **CI (`ci.yml`)**: Runs automatically on pull requests and pushes to `main`. It checks out the code, sets up Java and Node, runs Maven verify (tests + build), and runs `npm lint` + `npm run build` for the frontend. PRs cannot be merged if these checks fail.
 - **CD (`cd.yml`)**: Runs automatically when code is merged into `main`. It connects to the configured EC2 instance via SSH and automatically pulls the latest code and rebuilds the containers (`docker compose up -d --build`). This requires `EC2_HOST`, `EC2_USERNAME`, and `EC2_SSH_KEY` to be configured in GitHub repository secrets.
+
+---
+
+## Database Backups & Restore
+
+Automated, cost-effective daily database backups to AWS S3 are configured via host-level Cron scripts.
+
+**Setup Requirements:**
+1. Create an AWS S3 Bucket (e.g., `s3://your-db-backups`).
+2. Add the bucket URI to your server's `.env` file: `S3_BUCKET="s3://your-db-backups"`.
+3. Configure `aws-cli` on the EC2 instance with an IAM user that has `s3:PutObject` and `s3:GetObject` permissions.
+4. Add the following line to `crontab -e` to run daily at 3:00 AM:
+   `0 3 * * * cd /home/ubuntu/training-app && ./scripts/backup-s3.sh >> /home/ubuntu/db-backup.log 2>&1`
+
+**Restoring from S3:**
+To restore a backup, simply pass the target date (YYYY-MM-DD) or the full S3 URI to the restore script:
+```bash
+./scripts/restore-from-s3.sh 2026-06-25
+```
+This will automatically find the correct file, download it, decompress it, and restore it into the local PostgreSQL container.
