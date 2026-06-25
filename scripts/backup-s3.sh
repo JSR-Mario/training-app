@@ -11,13 +11,6 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Configuration
-S3_BUCKET="s3://your-unique-bucket-name" # TODO: Replace with your actual bucket name
-BACKUP_DIR="/tmp"
-TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
-BACKUP_FILE="db-backup-${TIMESTAMP}.sql.gz"
-BACKUP_PATH="${BACKUP_DIR}/${BACKUP_FILE}"
-
 # Load environment variables to get DB credentials
 if [ -f .env ]; then
   export $(cat .env | grep -v '^#' | xargs)
@@ -25,6 +18,17 @@ else
   echo "Error: .env file not found. Ensure you run this from the project root."
   exit 1
 fi
+
+if [ -z "$S3_BUCKET" ]; then
+  echo "Error: S3_BUCKET is not set in .env file. Please add S3_BUCKET=s3://your-bucket-name"
+  exit 1
+fi
+
+# Configuration
+BACKUP_DIR="/tmp"
+TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+BACKUP_FILE="db-backup-${TIMESTAMP}.sql.gz"
+BACKUP_PATH="${BACKUP_DIR}/${BACKUP_FILE}"
 
 echo "[$(date)] Starting database backup..."
 
