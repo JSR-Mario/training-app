@@ -68,6 +68,11 @@ jobs:
         run: npm ci
         working-directory: frontend
 
+      - name: Test
+        if: steps.frontend-check.outputs.exists == 'true'
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+        working-directory: frontend
+
       - name: Build
         if: steps.frontend-check.outputs.exists == 'true'
         run: npm run build
