@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { AnalyticsService } from './analytics.service';
-import { environment } from '../../../../environments/environment';
+
 import { WeeklyVolumeSnapshot, ExerciseProgressEntry } from '../../../core/types/analytics.types';
 
 describe('AnalyticsService', () => {
@@ -34,7 +34,7 @@ describe('AnalyticsService', () => {
       expect(res).toEqual(mockResponse);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/api/v1/analytics/volume?programId=prog-123&weekNumber=1`);
+    const req = httpMock.expectOne(`/api/v1/analytics/volume?programId=prog-123&weekNumber=1`);
     expect(req.request.method).toBe('GET');
     req.flush(mockResponse);
   });
@@ -48,7 +48,7 @@ describe('AnalyticsService', () => {
       expect(res).toEqual(mockResponse);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/api/v1/analytics/progress/ex-123`);
+    const req = httpMock.expectOne(`/api/v1/analytics/progress/ex-123`);
     expect(req.request.method).toBe('GET');
     req.flush(mockResponse);
   });

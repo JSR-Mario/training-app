@@ -6,6 +6,8 @@ A microservices-based personal training tracker. Built to be a cloud-native, sca
 
 ## Architecture Overview
 
+![Architecture Diagram](docs/architecture.drawio.png)
+
 The system is composed of an API Gateway, three domain-specific microservices, and a frontend PWA. The backend services are backed by a single PostgreSQL instance (with isolated schemas) and Redis for rate limiting.
 
 The frontend is an Angular 18 Progressive Web App that communicates exclusively with the Spring Cloud API Gateway. The Gateway handles JWT validation, CORS, and Rate Limiting. Once authenticated, the Gateway routes requests to the appropriate microservice (Auth, Training, or Analytics). When a user completes a workout, the Training service asynchronously notifies the Analytics service to pre-calculate progress and volume metrics.
