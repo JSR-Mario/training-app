@@ -138,8 +138,7 @@ import {
 
             <!-- Rating Section -->
             <div *ngIf="!session()?.completedAt" class="pt-4 border-t border-gray-700/50 mt-4">
-              <p class="text-sm text-gray-400 mb-2">How did this exercise feel? (1 = Very Easy, 10 = Max Effort)</p>
-              <div class="flex gap-1 flex-wrap">
+              <div class="flex gap-1 sm:gap-1.5 justify-between sm:justify-start w-full">
                 <button 
                   *ngFor="let r of [1,2,3,4,5,6,7,8,9,10]" 
                   (click)="setRating(ex.id, r)"
@@ -147,7 +146,7 @@ import {
                   [class.text-white]="getRating(ex.id) === r"
                   [class.bg-gray-800]="getRating(ex.id) !== r"
                   [class.text-gray-400]="getRating(ex.id) !== r"
-                  class="w-8 h-8 rounded-full text-xs font-bold hover:bg-blue-500 hover:text-white transition-colors"
+                  class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-blue-500 hover:text-white transition-colors"
                 >
                   {{ r }}
                 </button>
