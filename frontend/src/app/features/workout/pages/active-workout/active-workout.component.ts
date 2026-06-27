@@ -48,7 +48,7 @@ import {
             <div class="flex items-start justify-between mb-4 border-b border-gray-700/50 pb-4">
               <div>
                 <h2 class="text-xl font-bold text-white"><span class="text-blue-500 mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</h2>
-                <p *ngIf="!ex.durationMinutes" class="text-gray-400 text-sm mt-1">Goal: {{ ex.sets }} sets × {{ ex.reps }} reps</p>
+                <p *ngIf="!ex.durationMinutes" class="text-gray-400 text-sm mt-1">Goal: {{ ex.sets }} sets × {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps</p>
                 <p *ngIf="ex.durationMinutes" class="text-gray-400 text-sm mt-1">
                   Goal: {{ ex.durationMinutes }} min 
                   <span *ngIf="ex.incline"> • Inc: {{ ex.incline }}</span> 
