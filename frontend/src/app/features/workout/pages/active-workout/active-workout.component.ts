@@ -58,30 +58,32 @@ import {
             </div>
 
             <!-- Last Logged Set -->
-            <div *ngIf="getLastSetForExercise(ex.id) as set" class="space-y-3 mb-4">
+            <div *ngIf="getLastSetForExercise(ex.id) as set" class="space-y-3 mb-4" [ngStyle]="{'--perf-status': getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id))}">
               <div class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border transition-colors"
-                   [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'border-red-500/50 bg-red-900/10' : 'border-gray-700'">
+                   [ngClass]="getPerfContainerClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
                 <div class="flex items-center gap-4">
                   <span *ngIf="!ex.durationMinutes" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors"
-                        [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'bg-red-600/20 text-red-400 border-red-500/30' : 'bg-blue-600/20 text-blue-400 border-blue-500/30'">
+                        [ngClass]="getPerfBadgeClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)), false)">
                     {{ set.setNumber }}
                   </span>
                   <span *ngIf="ex.durationMinutes" class="px-2 py-1 rounded text-xs font-bold border uppercase transition-colors"
-                        [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'bg-red-600/20 text-red-400 border-red-500/30' : 'bg-purple-600/20 text-purple-400 border-purple-500/30'">
+                        [ngClass]="getPerfBadgeClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)), true)">
                     Log
                   </span>
                   <div class="font-medium transition-colors"
-                       [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'text-red-300' : 'text-gray-200'">
+                       [ngClass]="getPerfTextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
                     <ng-container *ngIf="!ex.durationMinutes">
-                      {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'text-red-400/70' : 'text-gray-500'">kg</span> × 
+                      {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">kg</span> × 
                       <ng-container *ngIf="ex.exercise.unilateral">
                         {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
                       </ng-container>
                       <ng-container *ngIf="!ex.exercise.unilateral">
                         {{ set.repsCompleted }}
                       </ng-container>
-                      <span class="text-xs uppercase" [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'text-red-400/70' : 'text-gray-500'">reps</span>
-                      <span *ngIf="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id))" class="ml-2 text-[10px] uppercase font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">Perf Drop</span>
+                      <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">reps</span>
+                      
+                      <span *ngIf="getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)) === 'critical'" class="ml-2 text-[10px] uppercase font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">Perf Drop</span>
+                      <span *ngIf="getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)) === 'warning'" class="ml-2 text-[10px] uppercase font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded">Fatigue</span>
                     </ng-container>
                     <ng-container *ngIf="ex.durationMinutes">
                       {{ set.durationMinutes }} <span class="text-gray-500 text-xs uppercase">min</span>
@@ -366,11 +368,40 @@ export class ActiveWorkoutComponent implements OnInit {
     return max;
   }
 
-  isPerformanceLow(set: WorkoutSetResponse, maxPerf: number): boolean {
-    if (set.weightKg == null || set.repsCompleted == null || maxPerf === 0) return false;
+  getPerformanceStatus(set: WorkoutSetResponse, maxPerf: number): 'good' | 'warning' | 'critical' {
+    if (set.weightKg == null || set.repsCompleted == null || maxPerf === 0) return 'good';
     const reps = set.repsCompleted + (set.repsCompletedRight || 0);
     const perf = set.weightKg * reps;
-    return perf < (maxPerf * 0.75);
+    const ratio = perf / maxPerf;
+    
+    if (ratio < 0.75) return 'critical';
+    if (ratio < 0.90) return 'warning';
+    return 'good';
+  }
+
+  getPerfContainerClass(status: 'good' | 'warning' | 'critical'): string {
+    if (status === 'critical') return 'border-red-500/50 bg-red-900/20';
+    if (status === 'warning') return 'border-yellow-500/50 bg-yellow-900/20';
+    return 'border-gray-700';
+  }
+
+  getPerfBadgeClass(status: 'good' | 'warning' | 'critical', isDuration: boolean): string {
+    if (status === 'critical') return 'bg-red-600/20 text-red-400 border-red-500/30';
+    if (status === 'warning') return 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30';
+    if (isDuration) return 'bg-purple-600/20 text-purple-400 border-purple-500/30';
+    return 'bg-blue-600/20 text-blue-400 border-blue-500/30';
+  }
+
+  getPerfTextClass(status: 'good' | 'warning' | 'critical'): string {
+    if (status === 'critical') return 'text-red-300';
+    if (status === 'warning') return 'text-yellow-300';
+    return 'text-gray-200';
+  }
+
+  getPerfSubtextClass(status: 'good' | 'warning' | 'critical'): string {
+    if (status === 'critical') return 'text-red-400/70';
+    if (status === 'warning') return 'text-yellow-400/70';
+    return 'text-gray-500';
   }
 
   logSet(ex: DayExercise) {
