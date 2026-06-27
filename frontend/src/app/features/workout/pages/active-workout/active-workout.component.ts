@@ -57,9 +57,9 @@ import {
               </div>
             </div>
 
-            <!-- Logged Sets -->
-            <div class="space-y-3 mb-4">
-              <div *ngFor="let set of getSetsForExercise(ex.id)" class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border border-gray-700">
+            <!-- Last Logged Set -->
+            <div *ngIf="getLastSetForExercise(ex.id) as set" class="space-y-3 mb-4">
+              <div class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border border-gray-700">
                 <div class="flex items-center gap-4">
                   <span *ngIf="!ex.durationMinutes" class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-bold border border-blue-500/30">
                     {{ set.setNumber }}
@@ -99,6 +99,12 @@ import {
 
             <!-- Log New Set Form -->
             <div *ngIf="!session()?.completedAt" class="bg-gray-900/50 p-4 rounded-xl border border-gray-700">
+              <div class="mb-3 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-bold border border-blue-500/30">
+                  {{ getSetsForExercise(ex.id).length + 1 }}
+                </span>
+                <span class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Next Set</span>
+              </div>
               <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
                 <ng-container *ngIf="!ex.durationMinutes">
                   <div class="flex-1 min-w-[80px]">
@@ -326,6 +332,11 @@ export class ActiveWorkoutComponent implements OnInit {
     return this.loggedSets()
       .filter(s => s.dayExerciseId === exerciseId)
       .sort((a, b) => a.setNumber - b.setNumber);
+  }
+
+  getLastSetForExercise(exerciseId: string): WorkoutSetResponse | null {
+    const sets = this.getSetsForExercise(exerciseId);
+    return sets.length > 0 ? sets[sets.length - 1] : null;
   }
 
   logSet(ex: DayExercise) {
