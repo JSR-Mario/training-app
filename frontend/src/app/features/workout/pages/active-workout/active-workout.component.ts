@@ -59,24 +59,29 @@ import {
 
             <!-- Last Logged Set -->
             <div *ngIf="getLastSetForExercise(ex.id) as set" class="space-y-3 mb-4">
-              <div class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border border-gray-700">
+              <div class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border transition-colors"
+                   [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'border-red-500/50 bg-red-900/10' : 'border-gray-700'">
                 <div class="flex items-center gap-4">
-                  <span *ngIf="!ex.durationMinutes" class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-bold border border-blue-500/30">
+                  <span *ngIf="!ex.durationMinutes" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors"
+                        [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'bg-red-600/20 text-red-400 border-red-500/30' : 'bg-blue-600/20 text-blue-400 border-blue-500/30'">
                     {{ set.setNumber }}
                   </span>
-                  <span *ngIf="ex.durationMinutes" class="px-2 py-1 rounded bg-purple-600/20 text-purple-400 text-xs font-bold border border-purple-500/30 uppercase">
+                  <span *ngIf="ex.durationMinutes" class="px-2 py-1 rounded text-xs font-bold border uppercase transition-colors"
+                        [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'bg-red-600/20 text-red-400 border-red-500/30' : 'bg-purple-600/20 text-purple-400 border-purple-500/30'">
                     Log
                   </span>
-                  <div class="text-gray-200 font-medium">
+                  <div class="font-medium transition-colors"
+                       [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'text-red-300' : 'text-gray-200'">
                     <ng-container *ngIf="!ex.durationMinutes">
-                      {{ set.weightKg }} <span class="text-gray-500 text-xs uppercase">kg</span> × 
+                      {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'text-red-400/70' : 'text-gray-500'">kg</span> × 
                       <ng-container *ngIf="ex.exercise.unilateral">
                         {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
                       </ng-container>
                       <ng-container *ngIf="!ex.exercise.unilateral">
                         {{ set.repsCompleted }}
                       </ng-container>
-                      <span class="text-gray-500 text-xs uppercase">reps</span>
+                      <span class="text-xs uppercase" [ngClass]="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id)) ? 'text-red-400/70' : 'text-gray-500'">reps</span>
+                      <span *ngIf="isPerformanceLow(set, getMaxPerformanceForExercise(ex.id))" class="ml-2 text-[10px] uppercase font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">Perf Drop</span>
                     </ng-container>
                     <ng-container *ngIf="ex.durationMinutes">
                       {{ set.durationMinutes }} <span class="text-gray-500 text-xs uppercase">min</span>
@@ -346,6 +351,26 @@ export class ActiveWorkoutComponent implements OnInit {
   getLastSetForExercise(exerciseId: string): WorkoutSetResponse | null {
     const sets = this.getSetsForExercise(exerciseId);
     return sets.length > 0 ? sets[sets.length - 1] : null;
+  }
+
+  getMaxPerformanceForExercise(exerciseId: string): number {
+    const sets = this.getSetsForExercise(exerciseId);
+    let max = 0;
+    for (const set of sets) {
+      if (set.weightKg != null && set.repsCompleted != null) {
+        const reps = set.repsCompleted + (set.repsCompletedRight || 0);
+        const perf = set.weightKg * reps;
+        if (perf > max) max = perf;
+      }
+    }
+    return max;
+  }
+
+  isPerformanceLow(set: WorkoutSetResponse, maxPerf: number): boolean {
+    if (set.weightKg == null || set.repsCompleted == null || maxPerf === 0) return false;
+    const reps = set.repsCompleted + (set.repsCompletedRight || 0);
+    const perf = set.weightKg * reps;
+    return perf < (maxPerf * 0.75);
   }
 
   logSet(ex: DayExercise) {
