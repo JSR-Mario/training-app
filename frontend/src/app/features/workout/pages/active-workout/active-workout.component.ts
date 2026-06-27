@@ -55,7 +55,20 @@ import {
                   <span *ngIf="ex.resistance"> • Res: {{ ex.resistance }}</span>
                 </p>
               </div>
+              <button (click)="toggleCollapse(ex.id)" 
+                      class="ml-4 p-2 rounded-lg transition-colors border flex items-center justify-center"
+                      [ngClass]="isCollapsed(ex.id) ? 'bg-gray-800 border-gray-600 text-gray-400 hover:bg-gray-700' : 'bg-green-600/10 border-green-500/30 text-green-500 hover:bg-green-600/20'"
+                      [title]="isCollapsed(ex.id) ? 'Expand Exercise' : 'Mark as Done & Collapse'">
+                <svg *ngIf="!isCollapsed(ex.id)" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <svg *ngIf="isCollapsed(ex.id)" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             </div>
+
+            <div *ngIf="!isCollapsed(ex.id)">
 
             <!-- Last Logged Set -->
             <div *ngIf="getLastSetForExercise(ex.id) as set" class="space-y-3 mb-4" [ngStyle]="{'--perf-status': getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id))}">
@@ -159,6 +172,7 @@ import {
                 </div>
               </form>
             </div>
+            </div>
             
             <!-- Progress Bar inside Exercise Card -->
             <div class="mt-4 h-1 w-full bg-gray-800 rounded-full overflow-hidden mb-4">
@@ -243,6 +257,20 @@ export class ActiveWorkoutComponent implements OnInit {
 
   // Map of exerciseId -> FormGroup
   forms = new Map<string, FormGroup>();
+
+  collapsedExercises = new Set<string>();
+
+  toggleCollapse(exId: string) {
+    if (this.collapsedExercises.has(exId)) {
+      this.collapsedExercises.delete(exId);
+    } else {
+      this.collapsedExercises.add(exId);
+    }
+  }
+
+  isCollapsed(exId: string): boolean {
+    return this.collapsedExercises.has(exId);
+  }
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
