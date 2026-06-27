@@ -121,6 +121,7 @@ export interface WorkoutSetRequest {
   dayExerciseId: string;
   setNumber: number;
   repsCompleted?: number;
+  repsCompletedRight?: number;
   weightKg?: number;
   durationMinutes?: number;
   incline?: number;
@@ -133,6 +134,7 @@ export interface WorkoutSetResponse {
   dayExerciseId: string;
   setNumber: number;
   repsCompleted?: number;
+  repsCompletedRight?: number;
   weightKg?: number;
   durationMinutes?: number;
   incline?: number;

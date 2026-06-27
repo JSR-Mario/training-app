@@ -11,6 +11,7 @@ public record WorkoutSetResponse(
     UUID dayExerciseId,
     int setNumber,
     Integer repsCompleted,
+    Integer repsCompletedRight,
     BigDecimal weightKg,
     Integer durationMinutes,
     BigDecimal incline,

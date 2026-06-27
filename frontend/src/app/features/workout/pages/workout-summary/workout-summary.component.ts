@@ -153,7 +153,10 @@ export class WorkoutSummaryComponent implements OnInit {
 
   getVolumeForExercise(exerciseId: string): number {
     return this.getSetsForExercise(exerciseId)
-      .reduce((sum, set) => sum + (Number(set.weightKg || 0) * Number(set.repsCompleted || 0)), 0);
+      .reduce((sum, set) => {
+        const reps = Number(set.repsCompleted || 0) + Number(set.repsCompletedRight || 0);
+        return sum + (Number(set.weightKg || 0) * reps);
+      }, 0);
   }
 
   getDurationForExercise(exerciseId: string): number {
@@ -163,6 +166,9 @@ export class WorkoutSummaryComponent implements OnInit {
 
   totalVolumeKg() {
     return this.loggedSets()
-      .reduce((sum, set) => sum + (Number(set.weightKg || 0) * Number(set.repsCompleted || 0)), 0);
+      .reduce((sum, set) => {
+        const reps = Number(set.repsCompleted || 0) + Number(set.repsCompletedRight || 0);
+        return sum + (Number(set.weightKg || 0) * reps);
+      }, 0);
   }
 }

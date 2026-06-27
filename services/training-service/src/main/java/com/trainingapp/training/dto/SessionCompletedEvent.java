@@ -19,6 +19,7 @@ public record SessionCompletedEvent(
     public record SetData(
         UUID exerciseId,
         int repsCompleted,
+        Integer repsCompletedRight,
         java.math.BigDecimal weightKg,
         java.util.Map<String, java.math.BigDecimal> bodyPartMultipliers
     ) {}

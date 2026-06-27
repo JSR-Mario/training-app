@@ -69,7 +69,14 @@ import {
                   </span>
                   <div class="text-gray-200 font-medium">
                     <ng-container *ngIf="!ex.durationMinutes">
-                      {{ set.weightKg }} <span class="text-gray-500 text-xs uppercase">kg</span> × {{ set.repsCompleted }} <span class="text-gray-500 text-xs uppercase">reps</span>
+                      {{ set.weightKg }} <span class="text-gray-500 text-xs uppercase">kg</span> × 
+                      <ng-container *ngIf="ex.exercise.unilateral">
+                        {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
+                      </ng-container>
+                      <ng-container *ngIf="!ex.exercise.unilateral">
+                        {{ set.repsCompleted }}
+                      </ng-container>
+                      <span class="text-gray-500 text-xs uppercase">reps</span>
                     </ng-container>
                     <ng-container *ngIf="ex.durationMinutes">
                       {{ set.durationMinutes }} <span class="text-gray-500 text-xs uppercase">min</span>
@@ -93,15 +100,18 @@ import {
             <!-- Log New Set Form -->
             <div *ngIf="!session()?.completedAt" class="bg-gray-900/50 p-4 rounded-xl border border-gray-700">
               <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
-                
                 <ng-container *ngIf="!ex.durationMinutes">
                   <div class="flex-1 min-w-[80px]">
                     <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Weight (kg)</label>
                     <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
                   </div>
-                  <div class="flex-1 min-w-[80px]">
-                    <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps</label>
+                  <div class="flex-1 min-w-[70px]">
+                    <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.exercise.unilateral ? 'Reps (L)' : 'Reps' }}</label>
                     <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
+                  </div>
+                  <div *ngIf="ex.exercise.unilateral" class="flex-1 min-w-[70px]">
+                    <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps (R)</label>
+                    <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center" [placeholder]="getForm(ex.id).get('repsCompleted')?.value || ''">
                   </div>
                 </ng-container>
 
@@ -290,16 +300,19 @@ export class ActiveWorkoutComponent implements OnInit {
       } else {
         let defaultWeight = '';
         let defaultReps = ex.reps;
+        let defaultRepsRight = ex.reps;
 
         if (setsForEx.length > 0) {
           const lastSet = setsForEx[setsForEx.length - 1];
           defaultWeight = lastSet.weightKg?.toString() || '';
           defaultReps = lastSet.repsCompleted || ex.reps;
+          defaultRepsRight = lastSet.repsCompletedRight || lastSet.repsCompleted || ex.reps;
         }
 
         this.forms.set(ex.id, this.fb.group({
           weightKg: [defaultWeight, [Validators.required, Validators.min(0)]],
-          repsCompleted: [defaultReps, [Validators.required, Validators.min(0)]]
+          repsCompleted: [defaultReps, [Validators.required, Validators.min(0)]],
+          repsCompletedRight: [defaultRepsRight, [Validators.min(0)]]
         }));
       }
     });
@@ -331,6 +344,7 @@ export class ActiveWorkoutComponent implements OnInit {
       dayExerciseId: ex.id,
       setNumber: setNumber,
       repsCompleted: ex.durationMinutes != null ? undefined : form.value.repsCompleted,
+      repsCompletedRight: ex.durationMinutes != null ? undefined : (ex.exercise.unilateral ? (form.value.repsCompletedRight ?? form.value.repsCompleted) : undefined),
       weightKg: ex.durationMinutes != null ? undefined : form.value.weightKg,
       durationMinutes: ex.durationMinutes != null ? form.value.durationMinutes : undefined,
       incline: ex.durationMinutes != null ? form.value.incline : undefined,
