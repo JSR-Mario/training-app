@@ -99,11 +99,20 @@ import {
 
             <!-- Log New Set Form -->
             <div *ngIf="!session()?.completedAt" class="bg-gray-900/50 p-4 rounded-xl border border-gray-700">
-              <div class="mb-3 flex items-center gap-2">
-                <span class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-bold border border-blue-500/30">
-                  {{ getSetsForExercise(ex.id).length + 1 }}
-                </span>
-                <span class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Next Set</span>
+              <div class="mb-3 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-bold border border-blue-500/30">
+                    {{ getSetsForExercise(ex.id).length + 1 }}
+                  </span>
+                  <span class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Next Set</span>
+                </div>
+                
+                <div *ngIf="getSetsForExercise(ex.id).length >= ex.sets" class="px-2 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded text-yellow-500 text-xs flex items-center gap-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                  Extra set
+                </div>
               </div>
               <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
                 <ng-container *ngIf="!ex.durationMinutes">
