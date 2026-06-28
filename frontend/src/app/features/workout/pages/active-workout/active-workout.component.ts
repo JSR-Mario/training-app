@@ -7,13 +7,15 @@ import { ProgramService } from '../../../programs/services/program.service';
 import { 
   WorkoutSessionResponse, 
   WorkoutSetResponse,
-  DayExercise 
+  DayExercise,
+  Exercise
 } from '../../../../core/types/training.types';
+import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 
 @Component({
   selector: 'app-active-workout',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
   template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-32">
       
@@ -202,6 +204,65 @@ import {
           </div>
         </div>
 
+        <!-- Add Exercise Form -->
+        <div *ngIf="!session()?.completedAt" class="mt-8">
+          <button 
+            *ngIf="!showAddExercise()"
+            (click)="openAddExercise()"
+            class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-blue-400 font-semibold rounded-xl border border-gray-700 hover:border-gray-600 transition-colors border-dashed shadow-md"
+          >
+            + Add Exercise
+          </button>
+
+          <div *ngIf="showAddExercise()" class="glass-card p-6 border border-blue-500/30">
+            <h3 class="text-lg font-bold text-white mb-4">Add Exercise to Session</h3>
+            
+            <app-exercise-search *ngIf="!selectedExercise()" (select)="onExerciseSelected($event)"></app-exercise-search>
+
+            <form *ngIf="selectedExercise()" [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
+              <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
+                Selected: {{ selectedExercise()?.name }}
+                <span *ngIf="selectedExercise()?.type === 'CARDIO'" class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
+              </div>
+              
+              <div class="flex gap-4" *ngIf="selectedExercise()?.type !== 'CARDIO'">
+                <div class="flex-1">
+                  <label for="setsInput" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
+                  <input id="setsInput" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                </div>
+                <div class="flex-1">
+                  <label for="repsInput" class="block text-sm font-medium text-gray-300 mb-1">Min Reps</label>
+                  <input id="repsInput" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                </div>
+                <div class="flex-1">
+                  <label for="repsMaxInput" class="block text-sm font-medium text-gray-300 mb-1">Max Reps (Opt)</label>
+                  <input id="repsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                </div>
+              </div>
+
+              <div class="flex gap-4" *ngIf="selectedExercise()?.type === 'CARDIO'">
+                <div class="flex-1">
+                  <label for="durationInput" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
+                  <input id="durationInput" type="number" formControlName="durationMinutes" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+                </div>
+                <div class="flex-1">
+                  <label for="inclineInput" class="block text-sm font-medium text-gray-300 mb-1">Incline</label>
+                  <input id="inclineInput" type="number" formControlName="incline" step="0.1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+                </div>
+                <div class="flex-1">
+                  <label for="resistanceInput" class="block text-sm font-medium text-gray-300 mb-1">Resis.</label>
+                  <input id="resistanceInput" type="number" formControlName="resistance" step="0.1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-3 pt-2">
+                <button type="button" (click)="cancelAdd()" class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm">Cancel</button>
+                <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
         <!-- Volume Stats -->
         <div class="glass-card p-6 mt-8" *ngIf="loggedSets().length > 0">
           <h3 class="text-xl font-bold text-white mb-4">Volume Stats</h3>
@@ -272,10 +333,23 @@ export class ActiveWorkoutComponent implements OnInit {
   isSavingNotes = signal<boolean>(false);
   savedNotesSuccess = signal<boolean>(false);
 
+  showAddExercise = signal<boolean>(false);
+  selectedExercise = signal<Exercise | null>(null);
+
   notesControl = new FormControl('');
 
   // Map of exerciseId -> FormGroup
   forms = new Map<string, FormGroup>();
+
+  exerciseForm: FormGroup = this.fb.group({
+    exerciseId: ['', Validators.required],
+    sets: [3],
+    reps: [10],
+    repsMax: [null],
+    durationMinutes: [null],
+    incline: [null],
+    resistance: [null]
+  });
 
   collapsedExercises = new Set<string>();
 
@@ -449,6 +523,74 @@ export class ActiveWorkoutComponent implements OnInit {
     if (status === 'critical') return 'text-red-400/70';
     if (status === 'warning') return 'text-yellow-400/70';
     return 'text-gray-500';
+  }
+
+  openAddExercise() {
+    this.showAddExercise.set(true);
+    this.selectedExercise.set(null);
+    this.exerciseForm.reset({ sets: 3, reps: 10 });
+  }
+
+  cancelAdd() {
+    this.showAddExercise.set(false);
+    this.selectedExercise.set(null);
+  }
+
+  onExerciseSelected(ex: Exercise) {
+    this.selectedExercise.set(ex);
+    this.exerciseForm.patchValue({ exerciseId: ex.id });
+    
+    if (ex.type === 'CARDIO') {
+      this.exerciseForm.get('sets')?.clearValidators();
+      this.exerciseForm.get('reps')?.clearValidators();
+      this.exerciseForm.get('durationMinutes')?.setValidators([Validators.required, Validators.min(1)]);
+    } else {
+      this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
+      this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+      this.exerciseForm.get('durationMinutes')?.clearValidators();
+    }
+    this.exerciseForm.get('sets')?.updateValueAndValidity();
+    this.exerciseForm.get('reps')?.updateValueAndValidity();
+    this.exerciseForm.get('durationMinutes')?.updateValueAndValidity();
+  }
+
+  onSubmitExercise() {
+    const session = this.session();
+    if (this.exerciseForm.valid && session?.dayTemplateId) {
+      const type = this.selectedExercise()?.type;
+      const formVal = this.exerciseForm.value;
+      const sortOrder = this.exercises().length;
+
+      const sets = type === 'CARDIO' ? undefined : formVal.sets;
+      const reps = type === 'CARDIO' ? undefined : formVal.reps;
+      const repsMax = type === 'CARDIO' ? undefined : formVal.repsMax;
+      const duration = type === 'CARDIO' ? formVal.durationMinutes : undefined;
+      const incline = type === 'CARDIO' ? formVal.incline : undefined;
+      const resistance = type === 'CARDIO' ? formVal.resistance : undefined;
+
+      this.programService.addDayExercise(
+        session.dayTemplateId,
+        formVal.exerciseId,
+        sets,
+        reps,
+        sortOrder,
+        repsMax,
+        duration,
+        incline,
+        resistance
+      ).subscribe({
+        next: () => {
+          this.cancelAdd();
+          // Reload exercises to show the newly added one
+          this.programService.getDayExercises(session.dayTemplateId).subscribe(exercises => {
+            const sorted = exercises.sort((a, b) => a.sortOrder - b.sortOrder);
+            this.exercises.set(sorted);
+            this.initializeForms(sorted);
+          });
+        },
+        error: (err) => console.error('Error adding exercise', err)
+      });
+    }
   }
 
   getTotalVolume(): number {
