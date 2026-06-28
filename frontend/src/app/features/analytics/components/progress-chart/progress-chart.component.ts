@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
@@ -11,7 +12,7 @@ import { finalize } from 'rxjs';
 @Component({
   selector: 'app-progress-chart',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, BaseChartDirective],
+  imports: [CommonModule, ReactiveFormsModule, BaseChartDirective, ExerciseSearchComponent],
   templateUrl: './progress-chart.component.html',
   styles: ``
 })
@@ -21,6 +22,7 @@ export class ProgressChartComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   exercises = signal<Exercise[]>([]);
+  selectedExerciseName = signal<string | null>(null);
   isLoading = signal(false);
 
   form: FormGroup = this.fb.group({
@@ -107,6 +109,11 @@ export class ProgressChartComponent implements OnInit {
         }
       }
     });
+  }
+
+  onExerciseSelect(exercise: Exercise) {
+    this.selectedExerciseName.set(exercise.name);
+    this.form.get('exerciseId')?.setValue(exercise.id);
   }
 
   loadProgress(exerciseId: string) {

@@ -30,18 +30,18 @@
         </div>
       </div>
 
-      <div class="w-full sm:w-64">
-        <label for="exerciseId" class="sr-only">Exercise</label>
-        <select
-          id="exerciseId"
-          formControlName="exerciseId"
-          class="form-select bg-slate-800/50 border-slate-700 text-slate-200 rounded-lg text-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 backdrop-blur-md transition-all">
-          <option value="" disabled>Select Exercise</option>
-          <option *ngFor="let ex of exercises()" [value]="ex.id">{{ ex.name }}</option>
-        </select>
-      </div>
-
     </form>
+  </div>
+
+  <div class="mb-4">
+    <app-exercise-search (select)="onExerciseSelect($event)"></app-exercise-search>
+    
+    <div *ngIf="selectedExerciseName()" class="mt-4 px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-sm text-emerald-400 font-bold flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+      </svg>
+      Selected: {{ selectedExerciseName() }}
+    </div>
   </div>
 
   <div class="relative h-[300px] sm:h-[400px] w-full mt-4">
