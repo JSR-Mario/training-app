@@ -175,6 +175,7 @@ export class ExerciseListComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error updating exercise', err);
+          alert(err.error?.message || 'Failed to update exercise. It might be a duplicate.');
           this.isLoading.set(false);
         }
       });
@@ -186,6 +187,7 @@ export class ExerciseListComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error creating exercise', err);
+          alert(err.error?.message || 'Failed to create exercise. It might be a duplicate.');
           this.isLoading.set(false);
         }
       });

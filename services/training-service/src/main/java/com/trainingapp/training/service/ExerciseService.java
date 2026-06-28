@@ -59,6 +59,12 @@ public class ExerciseService {
     /** Creates a new exercise. Only admins can create public exercises. */
     @Transactional
     public ExerciseResponse create(UUID userId, ExerciseRequest request) {
+        boolean duplicate = exerciseRepository.findByUserIdOrIsPublic(userId).stream()
+                .anyMatch(e -> e.getName().equalsIgnoreCase(request.name()));
+        if (duplicate) {
+            throw new IllegalArgumentException("An exercise with this name already exists.");
+        }
+
         Exercise exercise = new Exercise();
         exercise.setUserId(userId);
         exercise.setName(request.name());
@@ -84,6 +90,13 @@ public class ExerciseService {
     @Transactional
     public ExerciseResponse update(UUID userId, UUID exerciseId, ExerciseRequest request) {
         Exercise exercise = findOwnedOrPublicAdmin(userId, exerciseId);
+
+        boolean duplicate = exerciseRepository.findByUserIdOrIsPublic(userId).stream()
+                .anyMatch(e -> e.getName().equalsIgnoreCase(request.name()) && !e.getId().equals(exerciseId));
+        if (duplicate) {
+            throw new IllegalArgumentException("An exercise with this name already exists.");
+        }
+
         exercise.setName(request.name());
         exercise.setEquipmentBrand(request.equipmentBrand());
         exercise.setUnilateral(request.unilateral());
