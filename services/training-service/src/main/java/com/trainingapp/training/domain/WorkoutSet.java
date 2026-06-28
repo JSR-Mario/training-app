@@ -41,6 +41,9 @@ public class WorkoutSet {
     @Column(name = "reps_completed")
     private Integer repsCompleted;
 
+    @Column(name = "reps_completed_right")
+    private Integer repsCompletedRight;
+
     @Column(name = "weight_kg")
     private BigDecimal weightKg;
 
@@ -72,6 +75,8 @@ public class WorkoutSet {
     public void setSetNumber(int setNumber) { this.setNumber = setNumber; }
     public Integer getRepsCompleted() { return repsCompleted; }
     public void setRepsCompleted(Integer repsCompleted) { this.repsCompleted = repsCompleted; }
+    public Integer getRepsCompletedRight() { return repsCompletedRight; }
+    public void setRepsCompletedRight(Integer repsCompletedRight) { this.repsCompletedRight = repsCompletedRight; }
     public BigDecimal getWeightKg() { return weightKg; }
     public void setWeightKg(BigDecimal weightKg) { this.weightKg = weightKg; }
     public Integer getDurationMinutes() { return durationMinutes; }

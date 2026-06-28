@@ -1,15 +1,17 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProgramService } from '../../services/program.service';
-import { TrainingProgram, DayTemplate } from '../../../../core/types/training.types';
+import { TrainingProgram, DayTemplate, Exercise } from '../../../../core/types/training.types';
 import { forkJoin } from 'rxjs';
+import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
+import { ExerciseService } from '../../../exercises/services/exercise.service';
 
 @Component({
   selector: 'app-program-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
   template: `
     <div class="max-w-7xl mx-auto space-y-6">
       
@@ -85,30 +87,161 @@ import { forkJoin } from 'rxjs';
               <p *ngIf="day.exercises && day.exercises.length > 0">{{ day.exercises.length }} exercises</p>
               <p *ngIf="!day.exercises || day.exercises.length === 0" class="italic">No exercises</p>
             </div>
-            <div class="mt-4 pt-4 border-t border-gray-800 text-sm text-blue-400 group-hover:text-blue-300 font-medium">
-              Edit Exercises &rarr;
+            <div class="mt-4 pt-4 border-t border-gray-800 flex justify-between items-center text-sm font-medium">
+              <span class="text-blue-400 group-hover:text-blue-300">Edit Exercises &rarr;</span>
+              <button 
+                (click)="openQuickAdd(day.id, $event)"
+                class="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-lg transition-colors z-10"
+              >
+                + Quick Add
+              </button>
             </div>
           </div>
         </div>
 
       </div>
     </div>
+
+    <!-- Quick Add Modal -->
+    <div *ngIf="addingExerciseToDayId()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
+        <button (click)="cancelQuickAdd()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
+
+        <h2 class="text-2xl font-bold text-white mb-6">Quick Add Exercise</h2>
+
+        <app-exercise-search *ngIf="!selectedExercise()" [excludeIds]="getExistingExerciseIds()" (select)="onExerciseSelected($event)"></app-exercise-search>
+
+        <form *ngIf="selectedExercise()" [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4 mt-4">
+          <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
+            Selected: {{ selectedExercise()?.name }}
+            <span *ngIf="selectedExercise()?.type === 'CARDIO'" class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
+          </div>
+          
+          <div class="flex gap-4" *ngIf="selectedExercise()?.type !== 'CARDIO'">
+            <div class="flex-1">
+              <label for="qa-sets" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
+              <input id="qa-sets" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+            </div>
+            <div class="flex-1">
+              <label for="qa-reps" class="block text-sm font-medium text-gray-300 mb-1">Min Reps</label>
+              <input id="qa-reps" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+            </div>
+            <div class="flex-1">
+              <label for="qa-repsMax" class="block text-sm font-medium text-gray-300 mb-1">Max Reps</label>
+              <input id="qa-repsMax" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+            </div>
+          </div>
+
+          <div class="flex gap-4" *ngIf="selectedExercise()?.type === 'CARDIO'">
+            <div class="flex-1">
+              <label for="qa-duration" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
+              <input id="qa-duration" type="number" formControlName="durationMinutes" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+            </div>
+            <div class="flex-1">
+              <label for="qa-incline" class="block text-sm font-medium text-gray-300 mb-1">Incline</label>
+              <input id="qa-incline" type="number" formControlName="incline" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+            </div>
+            <div class="flex-1">
+              <label for="qa-resistance" class="block text-sm font-medium text-gray-300 mb-1">Resis.</label>
+              <input id="qa-resistance" type="number" formControlName="resistance" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4">
+            <button type="button" (click)="cancelQuickAdd()" class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm">Cancel</button>
+            <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
+          </div>
+        </form>
+      </div>
+      <!-- Expected Weekly Volume Table -->
+      <div *ngIf="expectedWeeklyVolume().length > 0" class="glass-card p-6 mt-8">
+        <h2 class="text-xl font-bold text-white mb-4">Expected Weekly Volume</h2>
+        <div class="overflow-hidden rounded-xl border border-gray-800">
+          <table class="min-w-full divide-y divide-gray-800">
+            <thead class="bg-gray-900/50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Body Part</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sets per Week</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800 bg-gray-800/20">
+              <tr *ngFor="let vol of expectedWeeklyVolume()">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{{ vol.bodyPart }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400 font-bold">{{ vol.sets | number:'1.0-1' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+    </div>
   `
 })
 export class ProgramDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private programService = inject(ProgramService);
+  private exerciseService = inject(ExerciseService);
   private fb = inject(FormBuilder);
 
   programId = signal<string | null>(null);
   program = signal<TrainingProgram | null>(null);
   weekTemplateId = signal<string | null>(null);
   days = signal<DayTemplate[]>([]);
+  availableExercises = signal<Exercise[]>([]);
   isLoading = signal<boolean>(true);
   showAddDay = signal<boolean>(false);
 
+  expectedWeeklyVolume = computed(() => {
+    const allExercises = this.availableExercises();
+    const currentDays = this.days();
+    
+    if (allExercises.length === 0 || currentDays.length === 0) return [];
+    
+    const volumeMap = new Map<string, number>();
+    
+    for (const day of currentDays) {
+      for (const dayEx of day.exercises) {
+        if (!dayEx.sets) continue; 
+        
+        const catalogEx = allExercises.find(e => e.id === dayEx.exerciseId);
+        if (catalogEx && catalogEx.targets) {
+          for (const target of catalogEx.targets) {
+            const bodyPart = target.bodyPart;
+            const volume = dayEx.sets * target.targetValue;
+            volumeMap.set(bodyPart, (volumeMap.get(bodyPart) || 0) + volume);
+          }
+        }
+      }
+    }
+    
+    return Array.from(volumeMap.entries()).map(([bodyPart, sets]) => ({
+      bodyPart,
+      sets
+    })).sort((a, b) => b.sets - a.sets);
+  });
+
   dayForm: FormGroup = this.fb.group({
     dayName: ['', Validators.required]
+  });
+
+  addingExerciseToDayId = signal<string | null>(null);
+  selectedExercise = signal<Exercise | null>(null);
+  
+  getExistingExerciseIds(): string[] {
+    const dayId = this.addingExerciseToDayId();
+    if (!dayId) return [];
+    const day = this.days().find(d => d.id === dayId);
+    return day?.exercises?.map(e => e.exerciseId) || [];
+  }
+
+  exerciseForm: FormGroup = this.fb.group({
+    exerciseId: ['', Validators.required],
+    sets: [3],
+    reps: [10],
+    repsMax: [null],
+    durationMinutes: [null],
+    incline: [null],
+    resistance: [null]
   });
 
   ngOnInit() {
@@ -126,41 +259,38 @@ export class ProgramDetailComponent implements OnInit {
     
     this.isLoading.set(true);
     
-    this.programService.getProgram(id).subscribe({
-      next: (prog) => {
-        this.program.set(prog);
+    forkJoin({
+      program: this.programService.getProgram(id),
+      weeks: this.programService.getWeeks(id),
+      exercises: this.exerciseService.getExercises()
+    }).subscribe({
+      next: (data) => {
+        this.program.set(data.program);
+        this.availableExercises.set(data.exercises);
         
-        // Fetch weeks for this program
-        this.programService.getWeeks(id).subscribe({
-          next: (weeksData) => {
-            if (weeksData.length === 0) {
-              // Auto-create the single week template
-              this.programService.createWeek(id, 'Training Week').subscribe({
-                next: (newWeek) => {
-                  this.weekTemplateId.set(newWeek.id);
-                  this.days.set([]);
-                  this.isLoading.set(false);
-                },
-                error: (err) => {
-                  console.error('Failed to auto-create week template', err);
-                  this.isLoading.set(false);
-                }
-              });
-            } else {
-              // Use the first (and only) week template
-              const week = weeksData[0];
-              this.weekTemplateId.set(week.id);
-              this.loadDays(week.id);
+        const weeksData = data.weeks;
+        if (weeksData.length === 0) {
+          // Auto-create the single week template
+          this.programService.createWeek(id, 'Training Week').subscribe({
+            next: (newWeek) => {
+              this.weekTemplateId.set(newWeek.id);
+              this.days.set([]);
+              this.isLoading.set(false);
+            },
+            error: (err) => {
+              console.error('Failed to auto-create week template', err);
+              this.isLoading.set(false);
             }
-          },
-          error: (err) => {
-            console.error('Failed to load weeks', err);
-            this.isLoading.set(false);
-          }
-        });
+          });
+        } else {
+          // Use the first (and only) week template
+          const week = weeksData[0];
+          this.weekTemplateId.set(week.id);
+          this.loadDays(week.id);
+        }
       },
       error: (err) => {
-        console.error('Failed to load program', err);
+        console.error('Failed to load program data', err);
         this.isLoading.set(false);
       }
     });
@@ -229,11 +359,78 @@ export class ProgramDetailComponent implements OnInit {
 
   deleteDay(dayId: string, event: Event) {
     event.stopPropagation();
-    const weekId = this.weekTemplateId();
-    if (confirm('Delete this day and its exercises?') && weekId) {
+    if (confirm('Are you sure you want to delete this day? This cannot be undone.')) {
       this.programService.deleteDay(dayId).subscribe({
-        next: () => this.loadDays(weekId),
-        error: (err) => console.error('Error deleting day', err)
+        next: () => {
+          this.days.update(days => days.filter(d => d.id !== dayId));
+        },
+        error: (err) => console.error('Failed to delete day', err)
+      });
+    }
+  }
+
+  openQuickAdd(dayId: string, event: Event) {
+    event.stopPropagation();
+    this.addingExerciseToDayId.set(dayId);
+    this.selectedExercise.set(null);
+    this.exerciseForm.reset({ sets: 3, reps: 10 });
+  }
+
+  cancelQuickAdd() {
+    this.addingExerciseToDayId.set(null);
+    this.selectedExercise.set(null);
+  }
+
+  onExerciseSelected(ex: Exercise) {
+    this.selectedExercise.set(ex);
+    this.exerciseForm.patchValue({ exerciseId: ex.id });
+    
+    if (ex.type === 'CARDIO') {
+      this.exerciseForm.get('sets')?.clearValidators();
+      this.exerciseForm.get('reps')?.clearValidators();
+      this.exerciseForm.get('durationMinutes')?.setValidators([Validators.required, Validators.min(1)]);
+    } else {
+      this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
+      this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+      this.exerciseForm.get('durationMinutes')?.clearValidators();
+    }
+    this.exerciseForm.get('sets')?.updateValueAndValidity();
+    this.exerciseForm.get('reps')?.updateValueAndValidity();
+    this.exerciseForm.get('durationMinutes')?.updateValueAndValidity();
+  }
+
+  onSubmitExercise() {
+    const dayId = this.addingExerciseToDayId();
+    if (this.exerciseForm.valid && dayId) {
+      const type = this.selectedExercise()?.type;
+      const formVal = this.exerciseForm.value;
+      const day = this.days().find(d => d.id === dayId);
+      const sortOrder = day?.exercises?.length || 0;
+
+      const sets = type === 'CARDIO' ? undefined : formVal.sets;
+      const reps = type === 'CARDIO' ? undefined : formVal.reps;
+      const repsMax = type === 'CARDIO' ? undefined : formVal.repsMax;
+      const duration = type === 'CARDIO' ? formVal.durationMinutes : undefined;
+      const incline = type === 'CARDIO' ? formVal.incline : undefined;
+      const resistance = type === 'CARDIO' ? formVal.resistance : undefined;
+
+      this.programService.addDayExercise(
+        dayId,
+        formVal.exerciseId,
+        sets,
+        reps,
+        sortOrder,
+        repsMax,
+        duration,
+        incline,
+        resistance
+      ).subscribe({
+        next: () => {
+          this.cancelQuickAdd();
+          // Reload the program data to refresh the day's exercise count
+          this.loadProgramData();
+        },
+        error: (err) => console.error('Error adding exercise', err)
       });
     }
   }

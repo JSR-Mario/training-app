@@ -46,6 +46,13 @@ public class DayExerciseService {
     @Transactional
     public DayExerciseResponse create(UUID userId, UUID dayId, DayExerciseRequest request) {
         DayTemplate day = dayTemplateService.findOwned(userId, dayId);
+        
+        boolean alreadyExists = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayId).stream()
+                .anyMatch(de -> de.getExercise().getId().equals(request.exerciseId()));
+        if (alreadyExists) {
+            throw new IllegalArgumentException("This exercise is already added to the day.");
+        }
+
         Exercise exercise = exerciseService.findOwned(userId, request.exerciseId());
 
         DayExercise dayExercise = new DayExercise();

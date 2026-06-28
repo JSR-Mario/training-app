@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, inject, signal, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Exercise, BODY_PARTS_HIERARCHY } from '../../../../core/types/training.types';
@@ -98,8 +98,11 @@ import { debounceTime } from 'rxjs';
         <button 
           *ngFor="let ex of filteredExercises()"
           type="button"
-          class="w-full text-left p-3 bg-gray-900/80 hover:bg-gray-700/80 rounded-lg border border-gray-700 cursor-pointer transition-colors flex justify-between items-center group"
-          (click)="select.emit(ex)"
+          [disabled]="excludeIds.includes(ex.id)"
+          [class.opacity-50]="excludeIds.includes(ex.id)"
+          [class.cursor-not-allowed]="excludeIds.includes(ex.id)"
+          class="w-full text-left p-3 bg-gray-900/80 hover:bg-gray-700/80 rounded-lg border border-gray-700 transition-colors flex justify-between items-center group"
+          (click)="!excludeIds.includes(ex.id) && select.emit(ex)"
         >
           <div>
             <div class="flex items-center gap-2">
@@ -117,8 +120,11 @@ import { debounceTime } from 'rxjs';
               </span>
             </div>
           </div>
-          <div class="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center justify-center">
+          <div *ngIf="!excludeIds.includes(ex.id)" class="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center justify-center">
             +
+          </div>
+          <div *ngIf="excludeIds.includes(ex.id)" class="text-[10px] text-red-400 font-bold bg-red-900/20 px-2 py-1 rounded">
+            ADDED
           </div>
         </button>
       </div>
@@ -142,6 +148,7 @@ import { debounceTime } from 'rxjs';
   `]
 })
 export class ExerciseSearchComponent implements OnInit {
+  @Input() excludeIds: string[] = [];
   @Output() select = new EventEmitter<Exercise>();
 
   private fb = inject(FormBuilder);

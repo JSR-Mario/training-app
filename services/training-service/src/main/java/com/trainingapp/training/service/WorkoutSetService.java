@@ -56,6 +56,7 @@ public class WorkoutSetService {
         set.setDayExercise(dayExercise);
         set.setSetNumber(request.setNumber());
         set.setRepsCompleted(request.repsCompleted());
+        set.setRepsCompletedRight(request.repsCompletedRight());
         set.setWeightKg(request.weightKg());
         set.setDurationMinutes(request.durationMinutes());
         set.setIncline(request.incline());
@@ -94,6 +95,7 @@ public class WorkoutSetService {
         set.setDayExercise(dayExercise);
         set.setSetNumber(request.setNumber());
         set.setRepsCompleted(request.repsCompleted());
+        set.setRepsCompletedRight(request.repsCompletedRight());
         set.setWeightKg(request.weightKg());
         set.setDurationMinutes(request.durationMinutes());
         set.setIncline(request.incline());
@@ -122,6 +124,7 @@ public class WorkoutSetService {
             set.getDayExercise().getId(),
             set.getSetNumber(),
             set.getRepsCompleted(),
+            set.getRepsCompletedRight(),
             set.getWeightKg(),
             set.getDurationMinutes(),
             set.getIncline(),

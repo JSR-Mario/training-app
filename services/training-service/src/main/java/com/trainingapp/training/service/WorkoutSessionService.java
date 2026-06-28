@@ -154,7 +154,8 @@ public class WorkoutSessionService {
                 UUID exId = s.getDayExercise().getExercise().getId();
                 return new SessionCompletedEvent.SetData(
                     exId, 
-                    s.getRepsCompleted(), 
+                    s.getRepsCompleted(),
+                    s.getRepsCompletedRight(),
                     s.getWeightKg(),
                     targetsByExerciseId.getOrDefault(exId, Map.of())
                 );

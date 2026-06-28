@@ -39,7 +39,7 @@ import { forkJoin } from 'rxjs';
       <div *ngIf="showAddExercise() && !isLoading()" class="glass-card p-6 border border-blue-500/30">
         <h3 class="text-lg font-bold text-white mb-4">Add Exercise to {{ day()?.name }}</h3>
         
-        <app-exercise-search *ngIf="!selectedExercise()" (select)="onExerciseSelected($event)"></app-exercise-search>
+        <app-exercise-search *ngIf="!selectedExercise()" [excludeIds]="existingExerciseIds()" (select)="onExerciseSelected($event)"></app-exercise-search>
 
         <form *ngIf="selectedExercise()" [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
           <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
@@ -228,6 +228,7 @@ export class DayDetailComponent implements OnInit {
   dayId = signal<string | null>(null);
   day = signal<DayTemplate | null>(null);
   exercises = signal<DayExercise[]>([]);
+  existingExerciseIds = computed(() => this.exercises().map(e => e.exerciseId));
   availableExercises = signal<Exercise[]>([]);
   
   strengthExs = computed(() => this.exercises().filter(e => !e.durationMinutes));
