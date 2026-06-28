@@ -24,6 +24,9 @@ export class ProgressChartComponent implements OnInit {
   exercises = signal<Exercise[]>([]);
   selectedExerciseName = signal<string | null>(null);
   isLoading = signal(false);
+  
+  weightIncrease = signal<number | null>(null);
+  volumeIncrease = signal<number | null>(null);
 
   form: FormGroup = this.fb.group({
     exerciseId: [''],
@@ -127,6 +130,28 @@ export class ProgressChartComponent implements OnInit {
           const labels = data.map(d => new Date(d.sessionDate).toLocaleDateString());
           const maxWeights = data.map(d => d.maxWeightKg);
           const totalVolumes = data.map(d => d.totalVolumeKg);
+
+          if (data.length >= 2) {
+            const last = data[data.length - 1];
+            const prev = data[data.length - 2];
+            
+            if (prev.maxWeightKg > 0) {
+              const weightDiff = last.maxWeightKg - prev.maxWeightKg;
+              this.weightIncrease.set((weightDiff / prev.maxWeightKg) * 100);
+            } else {
+              this.weightIncrease.set(null);
+            }
+
+            if (prev.totalVolumeKg > 0) {
+              const volDiff = last.totalVolumeKg - prev.totalVolumeKg;
+              this.volumeIncrease.set((volDiff / prev.totalVolumeKg) * 100);
+            } else {
+              this.volumeIncrease.set(null);
+            }
+          } else {
+            this.weightIncrease.set(null);
+            this.volumeIncrease.set(null);
+          }
 
           this.lineChartData = {
             labels,

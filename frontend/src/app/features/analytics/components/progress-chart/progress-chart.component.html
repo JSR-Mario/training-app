@@ -36,11 +36,49 @@
   <div class="mb-4">
     <app-exercise-search (select)="onExerciseSelect($event)"></app-exercise-search>
     
-    <div *ngIf="selectedExerciseName()" class="mt-4 px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-sm text-emerald-400 font-bold flex items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-      </svg>
-      Selected: {{ selectedExerciseName() }}
+    <div *ngIf="selectedExerciseName()" class="mt-4 flex flex-col sm:flex-row gap-4">
+      <div class="flex-1 px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-sm text-emerald-400 font-bold flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>
+        Tracking: {{ selectedExerciseName() }}
+      </div>
+
+      <!-- Weekly Progress Stats -->
+      <div *ngIf="weightIncrease() !== null" class="flex-1 px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg flex items-center justify-between">
+        <div>
+          <span class="block text-xs text-slate-400 font-medium uppercase tracking-wider">Weight Progress</span>
+          <span class="text-sm font-bold mt-0.5 flex items-center gap-1"
+                [ngClass]="weightIncrease()! > 0 ? 'text-emerald-400' : (weightIncrease()! < 0 ? 'text-red-400' : 'text-slate-300')">
+            <svg *ngIf="weightIncrease()! > 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+            </svg>
+            <svg *ngIf="weightIncrease()! < 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1V9a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd" />
+            </svg>
+            <svg *ngIf="weightIncrease() === 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+            </svg>
+            {{ weightIncrease()! > 0 ? '+' : ''}}{{ weightIncrease()! | number:'1.0-1' }}%
+          </span>
+        </div>
+        <div *ngIf="volumeIncrease() !== null && form.get('showVolume')?.value">
+          <span class="block text-xs text-slate-400 font-medium uppercase tracking-wider text-right">Volume Progress</span>
+          <span class="text-sm font-bold mt-0.5 flex items-center justify-end gap-1"
+                [ngClass]="volumeIncrease()! > 0 ? 'text-blue-400' : (volumeIncrease()! < 0 ? 'text-red-400' : 'text-slate-300')">
+            {{ volumeIncrease()! > 0 ? '+' : ''}}{{ volumeIncrease()! | number:'1.0-1' }}%
+            <svg *ngIf="volumeIncrease()! > 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+            </svg>
+            <svg *ngIf="volumeIncrease()! < 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1V9a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd" />
+            </svg>
+            <svg *ngIf="volumeIncrease() === 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+            </svg>
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 
