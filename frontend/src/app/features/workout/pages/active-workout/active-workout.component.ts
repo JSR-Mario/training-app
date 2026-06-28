@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -586,7 +586,7 @@ export class ActiveWorkoutComponent implements OnInit {
           this.programService.getDayExercises(session.dayTemplateId).subscribe(exercises => {
             const sorted = exercises.sort((a, b) => a.sortOrder - b.sortOrder);
             this.exercises.set(sorted);
-            this.initializeForms(sorted);
+            this.initForms(sorted);
           });
         },
         error: (err) => console.error('Error adding exercise', err)
@@ -624,7 +624,7 @@ export class ActiveWorkoutComponent implements OnInit {
       dayExerciseId: ex.id,
       setNumber: setNumber,
       repsCompleted: ex.durationMinutes != null ? undefined : form.value.repsCompleted,
-      repsCompletedRight: ex.durationMinutes != null ? undefined : (ex.exercise.unilateral ? (form.value.repsCompletedRight ?? form.value.repsCompleted) : undefined),
+      repsCompletedRight: ex.durationMinutes != null ? undefined : form.value.repsCompletedRight,
       weightKg: ex.durationMinutes != null ? undefined : form.value.weightKg,
       durationMinutes: ex.durationMinutes != null ? form.value.durationMinutes : undefined,
       incline: ex.durationMinutes != null ? form.value.incline : undefined,

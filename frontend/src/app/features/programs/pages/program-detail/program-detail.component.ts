@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -6,6 +6,7 @@ import { ProgramService } from '../../services/program.service';
 import { TrainingProgram, DayTemplate, Exercise } from '../../../../core/types/training.types';
 import { forkJoin } from 'rxjs';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
+import { ExerciseService } from '../../../exercises/services/exercise.service';
 
 @Component({
   selector: 'app-program-detail',
@@ -152,20 +153,72 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
           </div>
         </form>
       </div>
+      <!-- Expected Weekly Volume Table -->
+      <div *ngIf="expectedWeeklyVolume().length > 0" class="glass-card p-6 mt-8">
+        <h2 class="text-xl font-bold text-white mb-4">Expected Weekly Volume</h2>
+        <div class="overflow-hidden rounded-xl border border-gray-800">
+          <table class="min-w-full divide-y divide-gray-800">
+            <thead class="bg-gray-900/50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Body Part</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sets per Week</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800 bg-gray-800/20">
+              <tr *ngFor="let vol of expectedWeeklyVolume()">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{{ vol.bodyPart }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400 font-bold">{{ vol.sets | number:'1.0-1' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
     </div>
   `
 })
 export class ProgramDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private programService = inject(ProgramService);
+  private exerciseService = inject(ExerciseService);
   private fb = inject(FormBuilder);
 
   programId = signal<string | null>(null);
   program = signal<TrainingProgram | null>(null);
   weekTemplateId = signal<string | null>(null);
   days = signal<DayTemplate[]>([]);
+  availableExercises = signal<Exercise[]>([]);
   isLoading = signal<boolean>(true);
   showAddDay = signal<boolean>(false);
+
+  expectedWeeklyVolume = computed(() => {
+    const allExercises = this.availableExercises();
+    const currentDays = this.days();
+    
+    if (allExercises.length === 0 || currentDays.length === 0) return [];
+    
+    const volumeMap = new Map<string, number>();
+    
+    for (const day of currentDays) {
+      for (const dayEx of day.exercises) {
+        if (!dayEx.sets) continue; 
+        
+        const catalogEx = allExercises.find(e => e.id === dayEx.exerciseId);
+        if (catalogEx && catalogEx.targets) {
+          for (const target of catalogEx.targets) {
+            const bodyPart = target.bodyPart;
+            const volume = dayEx.sets * target.targetValue;
+            volumeMap.set(bodyPart, (volumeMap.get(bodyPart) || 0) + volume);
+          }
+        }
+      }
+    }
+    
+    return Array.from(volumeMap.entries()).map(([bodyPart, sets]) => ({
+      bodyPart,
+      sets
+    })).sort((a, b) => b.sets - a.sets);
+  });
 
   dayForm: FormGroup = this.fb.group({
     dayName: ['', Validators.required]
@@ -206,41 +259,38 @@ export class ProgramDetailComponent implements OnInit {
     
     this.isLoading.set(true);
     
-    this.programService.getProgram(id).subscribe({
-      next: (prog) => {
-        this.program.set(prog);
+    forkJoin({
+      program: this.programService.getProgram(id),
+      weeks: this.programService.getWeeks(id),
+      exercises: this.exerciseService.getExercises()
+    }).subscribe({
+      next: (data) => {
+        this.program.set(data.program);
+        this.availableExercises.set(data.exercises);
         
-        // Fetch weeks for this program
-        this.programService.getWeeks(id).subscribe({
-          next: (weeksData) => {
-            if (weeksData.length === 0) {
-              // Auto-create the single week template
-              this.programService.createWeek(id, 'Training Week').subscribe({
-                next: (newWeek) => {
-                  this.weekTemplateId.set(newWeek.id);
-                  this.days.set([]);
-                  this.isLoading.set(false);
-                },
-                error: (err) => {
-                  console.error('Failed to auto-create week template', err);
-                  this.isLoading.set(false);
-                }
-              });
-            } else {
-              // Use the first (and only) week template
-              const week = weeksData[0];
-              this.weekTemplateId.set(week.id);
-              this.loadDays(week.id);
+        const weeksData = data.weeks;
+        if (weeksData.length === 0) {
+          // Auto-create the single week template
+          this.programService.createWeek(id, 'Training Week').subscribe({
+            next: (newWeek) => {
+              this.weekTemplateId.set(newWeek.id);
+              this.days.set([]);
+              this.isLoading.set(false);
+            },
+            error: (err) => {
+              console.error('Failed to auto-create week template', err);
+              this.isLoading.set(false);
             }
-          },
-          error: (err) => {
-            console.error('Failed to load weeks', err);
-            this.isLoading.set(false);
-          }
-        });
+          });
+        } else {
+          // Use the first (and only) week template
+          const week = weeksData[0];
+          this.weekTemplateId.set(week.id);
+          this.loadDays(week.id);
+        }
       },
       error: (err) => {
-        console.error('Failed to load program', err);
+        console.error('Failed to load program data', err);
         this.isLoading.set(false);
       }
     });
