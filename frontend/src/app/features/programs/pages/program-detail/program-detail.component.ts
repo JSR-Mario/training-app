@@ -108,7 +108,7 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
 
         <h2 class="text-2xl font-bold text-white mb-6">Quick Add Exercise</h2>
 
-        <app-exercise-search *ngIf="!selectedExercise()" (select)="onExerciseSelected($event)"></app-exercise-search>
+        <app-exercise-search *ngIf="!selectedExercise()" [excludeIds]="getExistingExerciseIds()" (select)="onExerciseSelected($event)"></app-exercise-search>
 
         <form *ngIf="selectedExercise()" [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4 mt-4">
           <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
@@ -173,6 +173,14 @@ export class ProgramDetailComponent implements OnInit {
 
   addingExerciseToDayId = signal<string | null>(null);
   selectedExercise = signal<Exercise | null>(null);
+  
+  getExistingExerciseIds(): string[] {
+    const dayId = this.addingExerciseToDayId();
+    if (!dayId) return [];
+    const day = this.days().find(d => d.id === dayId);
+    return day?.exercises?.map(e => e.exerciseId) || [];
+  }
+
   exerciseForm: FormGroup = this.fb.group({
     exerciseId: ['', Validators.required],
     sets: [3],
