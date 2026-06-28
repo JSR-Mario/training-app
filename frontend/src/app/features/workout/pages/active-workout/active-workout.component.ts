@@ -300,7 +300,7 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
       </div>
       
       <!-- Fixed Bottom Action Bar -->
-      <div *ngIf="!isLoading() && session() && !session()?.completedAt" class="fixed bottom-0 left-0 right-0 p-4 bg-gray-900/90 backdrop-blur-md border-t border-gray-800 shadow-2xl z-50">
+      <div *ngIf="!isLoading() && session() && !session()?.completedAt" class="fixed bottom-16 md:bottom-0 left-0 right-0 p-4 bg-gray-900/90 backdrop-blur-md border-t border-gray-800 shadow-2xl z-40">
         <div class="max-w-2xl mx-auto flex gap-4">
           <button 
             (click)="completeWorkout()"
