@@ -38,7 +38,7 @@ class AnalyticsEventHandlerControllerTest {
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
         SessionCompletedEvent.SetData set1 = new SessionCompletedEvent.SetData(
-            UUID.randomUUID(), 10, new BigDecimal("50.00"), 
+            UUID.randomUUID(), 10, null, new BigDecimal("50.00"), 
             Map.of("MID_CHEST", new BigDecimal("1.0"))
         );
 

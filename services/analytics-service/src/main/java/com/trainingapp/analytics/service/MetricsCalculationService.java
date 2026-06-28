@@ -48,8 +48,14 @@ public class MetricsCalculationService {
                         .orElse(BigDecimal.ZERO);
                 
                 BigDecimal sessionVolume = setsForExercise.stream()
-                        .map(s -> s.weightKg().multiply(BigDecimal.valueOf(s.repsCompleted())))
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .map(s -> {
+                        int totalReps = s.repsCompleted();
+                        if (s.repsCompletedRight() != null) {
+                            totalReps += s.repsCompletedRight();
+                        }
+                        return s.weightKg().multiply(BigDecimal.valueOf(totalReps));
+                    })
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
                 
                 int totalSets = setsForExercise.size();
 

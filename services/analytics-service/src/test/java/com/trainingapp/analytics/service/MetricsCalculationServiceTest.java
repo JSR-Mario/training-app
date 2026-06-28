@@ -54,11 +54,11 @@ class MetricsCalculationServiceTest {
     void processSessionCompleted_CalculatesMetricsCorrectly() {
         // Arrange
         SessionCompletedEvent.SetData set1 = new SessionCompletedEvent.SetData(
-            exerciseId, 10, new BigDecimal("50.00"), 
+            exerciseId, 10, null, new BigDecimal("50.00"), 
             Map.of("MID_CHEST", new BigDecimal("1.0"), "TRICEPS", new BigDecimal("0.5"))
         );
         SessionCompletedEvent.SetData set2 = new SessionCompletedEvent.SetData(
-            exerciseId, 8, new BigDecimal("55.00"), 
+            exerciseId, 8, null, new BigDecimal("55.00"), 
             Map.of("MID_CHEST", new BigDecimal("1.0"), "TRICEPS", new BigDecimal("0.5"))
         );
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,13 +7,15 @@ import { ProgramService } from '../../../programs/services/program.service';
 import { 
   WorkoutSessionResponse, 
   WorkoutSetResponse,
-  DayExercise 
+  DayExercise,
+  Exercise
 } from '../../../../core/types/training.types';
+import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 
 @Component({
   selector: 'app-active-workout',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
   template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-32">
       
@@ -48,28 +50,55 @@ import {
             <div class="flex items-start justify-between mb-4 border-b border-gray-700/50 pb-4">
               <div>
                 <h2 class="text-xl font-bold text-white"><span class="text-blue-500 mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</h2>
-                <p *ngIf="!ex.durationMinutes" class="text-gray-400 text-sm mt-1">Goal: {{ ex.sets }} sets × {{ ex.reps }} reps</p>
+                <p *ngIf="!ex.durationMinutes" class="text-gray-400 text-sm mt-1">Goal: {{ ex.sets }} sets × {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps</p>
                 <p *ngIf="ex.durationMinutes" class="text-gray-400 text-sm mt-1">
                   Goal: {{ ex.durationMinutes }} min 
                   <span *ngIf="ex.incline"> • Inc: {{ ex.incline }}</span> 
                   <span *ngIf="ex.resistance"> • Res: {{ ex.resistance }}</span>
                 </p>
               </div>
+              <button (click)="toggleCollapse(ex.id)" 
+                      class="ml-4 p-2 rounded-lg transition-colors border flex items-center justify-center"
+                      [ngClass]="isCollapsed(ex.id) ? 'bg-gray-800 border-gray-600 text-gray-400 hover:bg-gray-700' : 'bg-green-600/10 border-green-500/30 text-green-500 hover:bg-green-600/20'"
+                      [title]="isCollapsed(ex.id) ? 'Expand Exercise' : 'Mark as Done & Collapse'">
+                <svg *ngIf="!isCollapsed(ex.id)" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <svg *ngIf="isCollapsed(ex.id)" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             </div>
 
-            <!-- Logged Sets -->
-            <div class="space-y-3 mb-4">
-              <div *ngFor="let set of getSetsForExercise(ex.id)" class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border border-gray-700">
+            <div *ngIf="!isCollapsed(ex.id)">
+
+            <!-- Last Logged Set -->
+            <div *ngIf="getLastSetForExercise(ex.id) as set" class="space-y-3 mb-4" [ngStyle]="{'--perf-status': getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id))}">
+              <div class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border transition-colors"
+                   [ngClass]="getPerfContainerClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
                 <div class="flex items-center gap-4">
-                  <span *ngIf="!ex.durationMinutes" class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-bold border border-blue-500/30">
+                  <span *ngIf="!ex.durationMinutes" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors"
+                        [ngClass]="getPerfBadgeClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)), false)">
                     {{ set.setNumber }}
                   </span>
-                  <span *ngIf="ex.durationMinutes" class="px-2 py-1 rounded bg-purple-600/20 text-purple-400 text-xs font-bold border border-purple-500/30 uppercase">
+                  <span *ngIf="ex.durationMinutes" class="px-2 py-1 rounded text-xs font-bold border uppercase transition-colors"
+                        [ngClass]="getPerfBadgeClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)), true)">
                     Log
                   </span>
-                  <div class="text-gray-200 font-medium">
+                  <div class="font-medium transition-colors"
+                       [ngClass]="getPerfTextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
                     <ng-container *ngIf="!ex.durationMinutes">
-                      {{ set.weightKg }} <span class="text-gray-500 text-xs uppercase">kg</span> × {{ set.repsCompleted }} <span class="text-gray-500 text-xs uppercase">reps</span>
+                      {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">kg</span> × 
+                      <ng-container *ngIf="ex.exercise.unilateral">
+                        {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
+                      </ng-container>
+                      <ng-container *ngIf="!ex.exercise.unilateral">
+                        {{ set.repsCompleted }}
+                      </ng-container>
+                      <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">reps</span>
+                      
+                      <span *ngIf="getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)) === 'critical'" class="ml-2 text-[10px] uppercase font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">Perf Drop</span>
+                      <span *ngIf="getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)) === 'warning'" class="ml-2 text-[10px] uppercase font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded">Fatigue</span>
                     </ng-container>
                     <ng-container *ngIf="ex.durationMinutes">
                       {{ set.durationMinutes }} <span class="text-gray-500 text-xs uppercase">min</span>
@@ -92,16 +121,34 @@ import {
 
             <!-- Log New Set Form -->
             <div *ngIf="!session()?.completedAt" class="bg-gray-900/50 p-4 rounded-xl border border-gray-700">
-              <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
+              <div class="mb-3 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-bold border border-blue-500/30">
+                    {{ getSetsForExercise(ex.id).length + 1 }}
+                  </span>
+                  <span class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Next Set</span>
+                </div>
                 
+                <div *ngIf="getSetsForExercise(ex.id).length >= ex.sets" class="px-2 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded text-yellow-500 text-xs flex items-center gap-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                  Extra set
+                </div>
+              </div>
+              <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
                 <ng-container *ngIf="!ex.durationMinutes">
                   <div class="flex-1 min-w-[80px]">
                     <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Weight (kg)</label>
                     <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
                   </div>
-                  <div class="flex-1 min-w-[80px]">
-                    <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps</label>
+                  <div class="flex-1 min-w-[70px]">
+                    <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.exercise.unilateral ? 'Reps (L)' : 'Reps' }}</label>
                     <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
+                  </div>
+                  <div *ngIf="ex.exercise.unilateral" class="flex-1 min-w-[70px]">
+                    <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps (R)</label>
+                    <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center" [placeholder]="getForm(ex.id).get('repsCompleted')?.value || ''">
                   </div>
                 </ng-container>
 
@@ -127,6 +174,7 @@ import {
                 </div>
               </form>
             </div>
+            </div>
             
             <!-- Progress Bar inside Exercise Card -->
             <div class="mt-4 h-1 w-full bg-gray-800 rounded-full overflow-hidden mb-4">
@@ -138,8 +186,7 @@ import {
 
             <!-- Rating Section -->
             <div *ngIf="!session()?.completedAt" class="pt-4 border-t border-gray-700/50 mt-4">
-              <p class="text-sm text-gray-400 mb-2">How did this exercise feel? (1 = Very Easy, 10 = Max Effort)</p>
-              <div class="flex gap-1 flex-wrap">
+              <div class="flex gap-1 sm:gap-1.5 justify-between sm:justify-start w-full">
                 <button 
                   *ngFor="let r of [1,2,3,4,5,6,7,8,9,10]" 
                   (click)="setRating(ex.id, r)"
@@ -147,13 +194,91 @@ import {
                   [class.text-white]="getRating(ex.id) === r"
                   [class.bg-gray-800]="getRating(ex.id) !== r"
                   [class.text-gray-400]="getRating(ex.id) !== r"
-                  class="w-8 h-8 rounded-full text-xs font-bold hover:bg-blue-500 hover:text-white transition-colors"
+                  class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-blue-500 hover:text-white transition-colors"
                 >
                   {{ r }}
                 </button>
               </div>
             </div>
 
+          </div>
+        </div>
+
+        <!-- Add Exercise Form -->
+        <div *ngIf="!session()?.completedAt" class="mt-8">
+          <button 
+            *ngIf="!showAddExercise()"
+            (click)="openAddExercise()"
+            class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-blue-400 font-semibold rounded-xl border border-gray-700 hover:border-gray-600 transition-colors border-dashed shadow-md"
+          >
+            + Add Exercise
+          </button>
+
+          <div *ngIf="showAddExercise()" class="glass-card p-6 border border-blue-500/30">
+            <h3 class="text-lg font-bold text-white mb-4">Add Exercise to Session</h3>
+            
+            <app-exercise-search *ngIf="!selectedExercise()" [excludeIds]="existingExerciseIds()" (select)="onExerciseSelected($event)"></app-exercise-search>
+
+            <form *ngIf="selectedExercise()" [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
+              <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
+                Selected: {{ selectedExercise()?.name }}
+                <span *ngIf="selectedExercise()?.type === 'CARDIO'" class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
+              </div>
+              
+              <div class="flex gap-4" *ngIf="selectedExercise()?.type !== 'CARDIO'">
+                <div class="flex-1">
+                  <label for="setsInput" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
+                  <input id="setsInput" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                </div>
+                <div class="flex-1">
+                  <label for="repsInput" class="block text-sm font-medium text-gray-300 mb-1">Min Reps</label>
+                  <input id="repsInput" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                </div>
+                <div class="flex-1">
+                  <label for="repsMaxInput" class="block text-sm font-medium text-gray-300 mb-1">Max Reps (Opt)</label>
+                  <input id="repsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                </div>
+              </div>
+
+              <div class="flex gap-4" *ngIf="selectedExercise()?.type === 'CARDIO'">
+                <div class="flex-1">
+                  <label for="durationInput" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
+                  <input id="durationInput" type="number" formControlName="durationMinutes" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+                </div>
+                <div class="flex-1">
+                  <label for="inclineInput" class="block text-sm font-medium text-gray-300 mb-1">Incline</label>
+                  <input id="inclineInput" type="number" formControlName="incline" step="0.1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+                </div>
+                <div class="flex-1">
+                  <label for="resistanceInput" class="block text-sm font-medium text-gray-300 mb-1">Resis.</label>
+                  <input id="resistanceInput" type="number" formControlName="resistance" step="0.1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-3 pt-2">
+                <button type="button" (click)="cancelAdd()" class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm">Cancel</button>
+                <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Volume Stats -->
+        <div class="glass-card p-6 mt-8" *ngIf="loggedSets().length > 0">
+          <h3 class="text-xl font-bold text-white mb-4">Volume Stats</h3>
+          
+          <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-800">
+            <span class="text-gray-400 font-medium">Total Volume</span>
+            <span class="text-2xl font-bold text-blue-400">{{ getTotalVolume() | number:'1.0-1' }} kg</span>
+          </div>
+
+          <div class="space-y-3">
+            <ng-container *ngFor="let ex of exercises()">
+              <div class="flex justify-between items-center text-sm" *ngIf="getVolumeForExercise(ex.id) > 0">
+                <span class="text-gray-300">{{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</span>
+                <span class="text-gray-400 font-mono">{{ getVolumeForExercise(ex.id) | number:'1.0-1' }} kg</span>
+              </div>
+            </ng-container>
           </div>
         </div>
 
@@ -175,7 +300,7 @@ import {
       </div>
       
       <!-- Fixed Bottom Action Bar -->
-      <div *ngIf="!isLoading() && session() && !session()?.completedAt" class="fixed bottom-0 left-0 right-0 p-4 bg-gray-900/90 backdrop-blur-md border-t border-gray-800 shadow-2xl z-50">
+      <div *ngIf="!isLoading() && session() && !session()?.completedAt" class="fixed bottom-16 md:bottom-0 left-0 right-0 p-4 bg-gray-900/90 backdrop-blur-md border-t border-gray-800 shadow-2xl z-40">
         <div class="max-w-2xl mx-auto flex gap-4">
           <button 
             (click)="completeWorkout()"
@@ -200,6 +325,7 @@ export class ActiveWorkoutComponent implements OnInit {
   sessionId = signal<string | null>(null);
   session = signal<WorkoutSessionResponse | null>(null);
   exercises = signal<DayExercise[]>([]);
+  existingExerciseIds = computed(() => this.exercises().map(e => e.exerciseId));
   loggedSets = signal<WorkoutSetResponse[]>([]);
   
   isLoading = signal<boolean>(true);
@@ -208,10 +334,37 @@ export class ActiveWorkoutComponent implements OnInit {
   isSavingNotes = signal<boolean>(false);
   savedNotesSuccess = signal<boolean>(false);
 
+  showAddExercise = signal<boolean>(false);
+  selectedExercise = signal<Exercise | null>(null);
+
   notesControl = new FormControl('');
 
   // Map of exerciseId -> FormGroup
   forms = new Map<string, FormGroup>();
+
+  exerciseForm: FormGroup = this.fb.group({
+    exerciseId: ['', Validators.required],
+    sets: [3],
+    reps: [10],
+    repsMax: [null],
+    durationMinutes: [null],
+    incline: [null],
+    resistance: [null]
+  });
+
+  collapsedExercises = new Set<string>();
+
+  toggleCollapse(exId: string) {
+    if (this.collapsedExercises.has(exId)) {
+      this.collapsedExercises.delete(exId);
+    } else {
+      this.collapsedExercises.add(exId);
+    }
+  }
+
+  isCollapsed(exId: string): boolean {
+    return this.collapsedExercises.has(exId);
+  }
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
@@ -291,16 +444,19 @@ export class ActiveWorkoutComponent implements OnInit {
       } else {
         let defaultWeight = '';
         let defaultReps = ex.reps;
+        let defaultRepsRight = ex.reps;
 
         if (setsForEx.length > 0) {
           const lastSet = setsForEx[setsForEx.length - 1];
           defaultWeight = lastSet.weightKg?.toString() || '';
           defaultReps = lastSet.repsCompleted || ex.reps;
+          defaultRepsRight = lastSet.repsCompletedRight || lastSet.repsCompleted || ex.reps;
         }
 
         this.forms.set(ex.id, this.fb.group({
           weightKg: [defaultWeight, [Validators.required, Validators.min(0)]],
-          repsCompleted: [defaultReps, [Validators.required, Validators.min(0)]]
+          repsCompleted: [defaultReps, [Validators.required, Validators.min(0)]],
+          repsCompletedRight: [defaultRepsRight, [Validators.min(0)]]
         }));
       }
     });
@@ -314,6 +470,142 @@ export class ActiveWorkoutComponent implements OnInit {
     return this.loggedSets()
       .filter(s => s.dayExerciseId === exerciseId)
       .sort((a, b) => a.setNumber - b.setNumber);
+  }
+
+  getLastSetForExercise(exerciseId: string): WorkoutSetResponse | null {
+    const sets = this.getSetsForExercise(exerciseId);
+    return sets.length > 0 ? sets[sets.length - 1] : null;
+  }
+
+  getMaxPerformanceForExercise(exerciseId: string): number {
+    const sets = this.getSetsForExercise(exerciseId);
+    let max = 0;
+    for (const set of sets) {
+      if (set.weightKg != null && set.repsCompleted != null) {
+        const reps = set.repsCompleted + (set.repsCompletedRight || 0);
+        const perf = set.weightKg * reps;
+        if (perf > max) max = perf;
+      }
+    }
+    return max;
+  }
+
+  getPerformanceStatus(set: WorkoutSetResponse, maxPerf: number): 'good' | 'warning' | 'critical' {
+    if (set.weightKg == null || set.repsCompleted == null || maxPerf === 0) return 'good';
+    const reps = set.repsCompleted + (set.repsCompletedRight || 0);
+    const perf = set.weightKg * reps;
+    const ratio = perf / maxPerf;
+    
+    if (ratio < 0.75) return 'critical';
+    if (ratio < 0.90) return 'warning';
+    return 'good';
+  }
+
+  getPerfContainerClass(status: 'good' | 'warning' | 'critical'): string {
+    if (status === 'critical') return 'border-red-500/50 bg-red-900/20';
+    if (status === 'warning') return 'border-yellow-500/50 bg-yellow-900/20';
+    return 'border-gray-700';
+  }
+
+  getPerfBadgeClass(status: 'good' | 'warning' | 'critical', isDuration: boolean): string {
+    if (status === 'critical') return 'bg-red-600/20 text-red-400 border-red-500/30';
+    if (status === 'warning') return 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30';
+    if (isDuration) return 'bg-purple-600/20 text-purple-400 border-purple-500/30';
+    return 'bg-blue-600/20 text-blue-400 border-blue-500/30';
+  }
+
+  getPerfTextClass(status: 'good' | 'warning' | 'critical'): string {
+    if (status === 'critical') return 'text-red-300';
+    if (status === 'warning') return 'text-yellow-300';
+    return 'text-gray-200';
+  }
+
+  getPerfSubtextClass(status: 'good' | 'warning' | 'critical'): string {
+    if (status === 'critical') return 'text-red-400/70';
+    if (status === 'warning') return 'text-yellow-400/70';
+    return 'text-gray-500';
+  }
+
+  openAddExercise() {
+    this.showAddExercise.set(true);
+    this.selectedExercise.set(null);
+    this.exerciseForm.reset({ sets: 3, reps: 10 });
+  }
+
+  cancelAdd() {
+    this.showAddExercise.set(false);
+    this.selectedExercise.set(null);
+  }
+
+  onExerciseSelected(ex: Exercise) {
+    this.selectedExercise.set(ex);
+    this.exerciseForm.patchValue({ exerciseId: ex.id });
+    
+    if (ex.type === 'CARDIO') {
+      this.exerciseForm.get('sets')?.clearValidators();
+      this.exerciseForm.get('reps')?.clearValidators();
+      this.exerciseForm.get('durationMinutes')?.setValidators([Validators.required, Validators.min(1)]);
+    } else {
+      this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
+      this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+      this.exerciseForm.get('durationMinutes')?.clearValidators();
+    }
+    this.exerciseForm.get('sets')?.updateValueAndValidity();
+    this.exerciseForm.get('reps')?.updateValueAndValidity();
+    this.exerciseForm.get('durationMinutes')?.updateValueAndValidity();
+  }
+
+  onSubmitExercise() {
+    const session = this.session();
+    if (this.exerciseForm.valid && session?.dayTemplateId) {
+      const type = this.selectedExercise()?.type;
+      const formVal = this.exerciseForm.value;
+      const sortOrder = this.exercises().length;
+
+      const sets = type === 'CARDIO' ? undefined : formVal.sets;
+      const reps = type === 'CARDIO' ? undefined : formVal.reps;
+      const repsMax = type === 'CARDIO' ? undefined : formVal.repsMax;
+      const duration = type === 'CARDIO' ? formVal.durationMinutes : undefined;
+      const incline = type === 'CARDIO' ? formVal.incline : undefined;
+      const resistance = type === 'CARDIO' ? formVal.resistance : undefined;
+
+      this.programService.addDayExercise(
+        session.dayTemplateId,
+        formVal.exerciseId,
+        sets,
+        reps,
+        sortOrder,
+        repsMax,
+        duration,
+        incline,
+        resistance
+      ).subscribe({
+        next: () => {
+          this.cancelAdd();
+          // Reload exercises to show the newly added one
+          this.programService.getDayExercises(session.dayTemplateId).subscribe(exercises => {
+            const sorted = exercises.sort((a, b) => a.sortOrder - b.sortOrder);
+            this.exercises.set(sorted);
+            this.initForms(sorted);
+          });
+        },
+        error: (err) => console.error('Error adding exercise', err)
+      });
+    }
+  }
+
+  getTotalVolume(): number {
+    return this.loggedSets().reduce((sum, set) => {
+      const reps = Number(set.repsCompleted || 0) + Number(set.repsCompletedRight || 0);
+      return sum + (Number(set.weightKg || 0) * reps);
+    }, 0);
+  }
+
+  getVolumeForExercise(exerciseId: string): number {
+    return this.getSetsForExercise(exerciseId).reduce((sum, set) => {
+      const reps = Number(set.repsCompleted || 0) + Number(set.repsCompletedRight || 0);
+      return sum + (Number(set.weightKg || 0) * reps);
+    }, 0);
   }
 
   logSet(ex: DayExercise) {
@@ -332,6 +624,7 @@ export class ActiveWorkoutComponent implements OnInit {
       dayExerciseId: ex.id,
       setNumber: setNumber,
       repsCompleted: ex.durationMinutes != null ? undefined : form.value.repsCompleted,
+      repsCompletedRight: ex.durationMinutes != null ? undefined : form.value.repsCompletedRight,
       weightKg: ex.durationMinutes != null ? undefined : form.value.weightKg,
       durationMinutes: ex.durationMinutes != null ? form.value.durationMinutes : undefined,
       incline: ex.durationMinutes != null ? form.value.incline : undefined,
