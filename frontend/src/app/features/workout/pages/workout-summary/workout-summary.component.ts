@@ -26,12 +26,17 @@ import {
       <div *ngIf="!isLoading() && session()" class="space-y-8 animate-fade-in-up">
         
         <!-- Celebration Header -->
-        <div>
-          <div class="text-6xl mb-4">🏆</div>
-          <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
-            Workout Complete!
+        <div class="flex flex-col items-center">
+          <div class="mb-5 flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-400/10 to-blue-500/10 rounded-full border border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-500 text-center tracking-tight">
+            Workout Complete
           </h1>
-          <p class="text-gray-400 mt-2 text-lg">Great job crushing your {{ session()?.dayTemplateName }} workout.</p>
+          <p class="text-slate-400 mt-2 text-lg text-center">Great job crushing your <span class="text-slate-200 font-semibold">{{ session()?.dayTemplateName }}</span> workout.</p>
         </div>
 
         <!-- Stats Grid -->
