@@ -99,6 +99,30 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
             </div>
           </div>
         </div>
+        
+        <!-- Main Expected Weekly Volume Table -->
+        <div *ngIf="expectedWeeklyVolume().length > 0" class="glass-card p-6 mt-8">
+          <h2 class="text-xl font-bold text-white mb-4">Expected Weekly Volume</h2>
+          <div class="overflow-hidden rounded-xl border border-gray-800">
+            <table class="min-w-full divide-y divide-gray-800">
+              <thead class="bg-gray-900/50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Body Part</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sets per Week</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-800 bg-gray-800/20">
+                <tr *ngFor="let vol of expectedWeeklyVolume()">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{{ vol.bodyPart }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400 font-bold">
+                    {{ vol.sets | number:'1.0-1' }}
+                    <span *ngIf="vol.projected" class="text-xs text-green-400 ml-2">(+{{ vol.projected | number:'1.0-1' }})</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
       </div>
     </div>

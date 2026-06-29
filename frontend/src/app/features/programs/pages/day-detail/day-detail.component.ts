@@ -1,4 +1,5 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -170,6 +171,11 @@ import { forkJoin } from 'rxjs';
                   {{ ex.sets }} sets &times; 
                   {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps
                 </p>
+                <div class="flex flex-wrap gap-1 mt-2">
+                  <span *ngFor="let bp of getExerciseBodyParts(ex.exerciseId)" class="px-2 py-0.5 bg-gray-800 text-gray-300 rounded text-[10px] uppercase font-semibold border border-gray-700">
+                    {{ bp }}
+                  </span>
+                </div>
               </div>
             </div>
             
@@ -199,6 +205,11 @@ import { forkJoin } from 'rxjs';
                   <span *ngIf="ex.incline"> &bull; Inc: {{ ex.incline }}</span>
                   <span *ngIf="ex.resistance"> &bull; Spd/Res: {{ ex.resistance }}</span>
                 </p>
+                <div class="flex flex-wrap gap-1 mt-2">
+                  <span *ngFor="let bp of getExerciseBodyParts(ex.exerciseId)" class="px-2 py-0.5 bg-purple-900/40 text-purple-300 rounded text-[10px] uppercase font-semibold border border-purple-500/30">
+                    {{ bp }}
+                  </span>
+                </div>
               </div>
             </div>
             
@@ -211,6 +222,30 @@ import { forkJoin } from 'rxjs';
                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
             </button>
+          </div>
+        </div>
+
+        <!-- Expected Daily Volume Table -->
+        <div *ngIf="expectedDailyVolume().length > 0" class="glass-card p-6 mt-8">
+          <h2 class="text-xl font-bold text-white mb-4">Expected Daily Volume</h2>
+          <div class="overflow-hidden rounded-xl border border-gray-800">
+            <table class="min-w-full divide-y divide-gray-800">
+              <thead class="bg-gray-900/50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Body Part</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sets</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-800 bg-gray-800/20">
+                <tr *ngFor="let vol of expectedDailyVolume()">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{{ vol.bodyPart }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400 font-bold">
+                    {{ vol.sets | number:'1.0-1' }}
+                    <span *ngIf="vol.projected" class="text-xs text-green-400 ml-2">(+{{ vol.projected | number:'1.0-1' }})</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -247,6 +282,64 @@ export class DayDetailComponent implements OnInit {
     incline: [null],
     resistance: [null]
   });
+
+  private exerciseFormValue = toSignal(this.exerciseForm.valueChanges, { initialValue: this.exerciseForm.value });
+
+  expectedDailyVolume = computed(() => {
+    const allExercises = this.availableExercises();
+    const currentExercises = this.exercises();
+    const formValue = this.exerciseFormValue();
+    const showAdd = this.showAddExercise();
+    const selectedEx = this.selectedExercise();
+    
+    if (allExercises.length === 0) return [];
+    
+    const baseVolumeMap = new Map<string, number>();
+    const projectedVolumeMap = new Map<string, number>();
+    
+    // Base volume
+    for (const dayEx of currentExercises) {
+      if (!dayEx.sets) continue; 
+      
+      const catalogEx = allExercises.find(e => e.id === dayEx.exerciseId);
+      if (catalogEx && catalogEx.targets) {
+        for (const target of catalogEx.targets) {
+          const bodyPart = target.bodyPart;
+          const volume = dayEx.sets * target.targetValue;
+          baseVolumeMap.set(bodyPart, (baseVolumeMap.get(bodyPart) || 0) + volume);
+        }
+      }
+    }
+
+    // Projected volume
+    if (showAdd && selectedEx && formValue && formValue.sets) {
+      if (selectedEx.targets) {
+        for (const target of selectedEx.targets) {
+           const bodyPart = target.bodyPart;
+           const volume = formValue.sets * target.targetValue;
+           projectedVolumeMap.set(bodyPart, (projectedVolumeMap.get(bodyPart) || 0) + volume);
+        }
+      }
+    }
+    
+    const allBodyParts = new Set([...baseVolumeMap.keys(), ...projectedVolumeMap.keys()]);
+    
+    return Array.from(allBodyParts).map(bodyPart => {
+      const baseSets = baseVolumeMap.get(bodyPart) || 0;
+      const projectedSets = projectedVolumeMap.get(bodyPart) || 0;
+      return {
+        bodyPart,
+        sets: baseSets + projectedSets,
+        projected: projectedSets > 0 ? projectedSets : undefined
+      };
+    }).sort((a, b) => b.sets - a.sets);
+  });
+
+  getExerciseBodyParts(exerciseId: string): string[] {
+    const ex = this.availableExercises().find(e => e.id === exerciseId);
+    if (!ex || !ex.targets) return [];
+    return ex.targets.map(t => t.bodyPart);
+  }
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
