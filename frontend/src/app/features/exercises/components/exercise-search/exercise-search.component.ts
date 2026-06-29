@@ -20,8 +20,10 @@ import { debounceTime } from 'rxjs';
             placeholder="Search exercise by name..."
             class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white pl-10"
           >
-          <span class="absolute left-3 top-2.5 text-gray-400">🔍</span>
-        </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
 
         <!-- Advanced Filters Toggle -->
         <div>
