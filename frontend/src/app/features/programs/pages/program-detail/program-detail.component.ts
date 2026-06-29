@@ -122,7 +122,7 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
           <button (click)="cancelQuickAdd()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
           <h2 class="text-2xl font-bold text-white mb-6">Quick Add Exercise</h2>
           @if (!selectedExercise()) {
-            <app-exercise-search [excludeIds]="getExistingExerciseIds()" (select)="onExerciseSelected($event)"></app-exercise-search>
+            <app-exercise-search [excludeIds]="getExistingExerciseIds()" (exerciseSelected)="onExerciseSelected($event)"></app-exercise-search>
           }
           @if (selectedExercise()) {
             <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4 mt-4">

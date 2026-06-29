@@ -251,7 +251,7 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                 <div class="glass-card p-6 border border-blue-500/30">
                   <h3 class="text-lg font-bold text-white mb-4">Add Exercise to Session</h3>
                   @if (!selectedExercise()) {
-                    <app-exercise-search [excludeIds]="existingExerciseIds()" (select)="onExerciseSelected($event)"></app-exercise-search>
+                    <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onExerciseSelected($event)"></app-exercise-search>
                   }
                   @if (selectedExercise()) {
                     <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">

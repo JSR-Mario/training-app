@@ -34,7 +34,7 @@
   </div>
 
   <div class="mb-4">
-    <app-exercise-search (select)="onExerciseSelect($event)"></app-exercise-search>
+    <app-exercise-search (exerciseSelected)="onExerciseSelect($event)"></app-exercise-search>
 
     @if (selectedExerciseName()) {
       <div class="mt-4 flex flex-col sm:flex-row gap-4">

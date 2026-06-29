@@ -112,7 +112,7 @@ import { debounceTime } from 'rxjs';
             [class.opacity-50]="excludeIds.includes(ex.id)"
             [class.cursor-not-allowed]="excludeIds.includes(ex.id)"
             class="w-full text-left p-3 bg-gray-900/80 hover:bg-gray-700/80 rounded-lg border border-gray-700 transition-colors flex justify-between items-center group"
-            (click)="!excludeIds.includes(ex.id) && select.emit(ex)"
+            (click)="!excludeIds.includes(ex.id) && exerciseSelected.emit(ex)"
             >
             <div>
               <div class="flex items-center gap-2">
@@ -170,7 +170,7 @@ import { debounceTime } from 'rxjs';
 })
 export class ExerciseSearchComponent implements OnInit {
   @Input() excludeIds: string[] = [];
-  @Output() select = new EventEmitter<Exercise>();
+  @Output() exerciseSelected = new EventEmitter<Exercise>();
 
   private fb = inject(FormBuilder);
   private exerciseService = inject(ExerciseService);
