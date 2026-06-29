@@ -5,6 +5,7 @@ import { Exercise } from '../../../../core/types/training.types';
 import { ExerciseFormComponent } from '../../components/exercise-form/exercise-form.component';
 
 @Component({
+  standalone: true,
     selector: 'app-exercise-list',
     imports: [ExerciseFormComponent],
     template: `
@@ -83,6 +84,11 @@ import { ExerciseFormComponent } from '../../components/exercise-form/exercise-f
                         class="px-2 py-0.5 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30"
                         >
                         PUBLIC
+                      </span>
+                    }
+                    @if (exercise.spinalLoading) {
+                      <span class="flex items-center gap-1 bg-red-900/30 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold border border-red-800/50">
+                        SPINAL LOADING
                       </span>
                     }
                   </div>

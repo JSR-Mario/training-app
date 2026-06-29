@@ -13,6 +13,7 @@ import {
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 
 @Component({
+  standalone: true,
     selector: 'app-active-workout',
     imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
     template: `
@@ -20,7 +21,7 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
     
       <!-- Header -->
       <div class="flex items-center justify-between">
-        <a routerLink="/workout" class="text-blue-400 hover:text-blue-300 text-sm inline-block">&larr; Back</a>
+        <a [routerLink]="['/workout']" [queryParams]="{ skipRedirect: true }" class="text-blue-400 hover:text-blue-300 text-sm inline-block">&larr; Back</a>
         @if (session()?.completedAt) {
           <div class="px-3 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
             Completed
@@ -354,7 +355,7 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
               [disabled]="isCompleting()"
               class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-95"
               >
-              {{ isCompleting() ? 'Completing...' : 'Finish Workout 🎉' }}
+              {{ isCompleting() ? 'Completing...' : 'Finish Workout' }}
             </button>
           </div>
         </div>

@@ -9,6 +9,7 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
 import { ExerciseService } from '../../../exercises/services/exercise.service';
 
 @Component({
+  standalone: true,
     selector: 'app-program-detail',
     imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
     template: `

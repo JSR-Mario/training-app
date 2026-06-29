@@ -10,6 +10,7 @@ import {
 } from '../../../../core/types/training.types';
 
 @Component({
+  standalone: true,
     selector: 'app-workout-summary',
     imports: [CommonModule, RouterModule],
     template: `

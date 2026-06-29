@@ -7,6 +7,7 @@ import { ProgramService } from '../../../programs/services/program.service';
 import { TrainingProgram, WorkoutSessionResponse } from '../../../../core/types/training.types';
 
 @Component({
+  standalone: true,
     selector: 'app-workout-dashboard',
     imports: [CommonModule, RouterModule, FormsModule],
     template: `

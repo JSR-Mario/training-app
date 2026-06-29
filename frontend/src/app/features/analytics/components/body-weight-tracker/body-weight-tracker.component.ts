@@ -9,6 +9,7 @@ import { finalize } from 'rxjs';
 type TimeRange = '1M' | '3M' | '6M' | '1Y' | 'ALL';
 
 @Component({
+  standalone: true,
     selector: 'app-body-weight-tracker',
     imports: [ReactiveFormsModule, BaseChartDirective],
     templateUrl: './body-weight-tracker.component.html',

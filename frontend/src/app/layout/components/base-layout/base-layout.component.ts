@@ -3,6 +3,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
+  standalone: true,
     selector: 'app-base-layout',
     imports: [RouterOutlet, RouterLink, RouterLinkActive],
     template: `
