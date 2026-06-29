@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { WorkoutService } from '../../services/workout.service';
 import { ProgramService } from '../../../programs/services/program.service';
@@ -110,6 +110,8 @@ import { TrainingProgram, WorkoutSessionResponse } from '../../../../core/types/
 export class WorkoutDashboardComponent implements OnInit {
   private workoutService = inject(WorkoutService);
   private programService = inject(ProgramService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   programs = signal<TrainingProgram[]>([]);
   sessions = signal<WorkoutSessionResponse[]>([]);
@@ -133,6 +135,28 @@ export class WorkoutDashboardComponent implements OnInit {
 
   ngOnInit() {
     this.isLoading.set(true);
+
+    this.route.queryParams.subscribe(params => {
+      if (params['skipRedirect']) {
+        this.loadInitialData();
+      } else {
+        this.workoutService.getActiveSession().subscribe({
+          next: (session) => {
+            if (session) {
+              this.router.navigate(['/workout', session.id]);
+            } else {
+              this.loadInitialData();
+            }
+          },
+          error: () => {
+            this.loadInitialData();
+          }
+        });
+      }
+    });
+  }
+
+  private loadInitialData() {
     this.programService.getPrograms().subscribe({
       next: (data) => {
         this.programs.set(data);

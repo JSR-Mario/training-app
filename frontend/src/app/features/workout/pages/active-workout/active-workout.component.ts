@@ -21,7 +21,7 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
       
       <!-- Header -->
       <div class="flex items-center justify-between">
-        <a routerLink="/workout" class="text-blue-400 hover:text-blue-300 text-sm inline-block">&larr; Back</a>
+        <a [routerLink]="['/workout']" [queryParams]="{ skipRedirect: true }" class="text-blue-400 hover:text-blue-300 text-sm inline-block">&larr; Back</a>
         <div *ngIf="session()?.completedAt" class="px-3 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
           Completed
         </div>

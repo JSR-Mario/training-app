@@ -28,6 +28,15 @@ public class WorkoutSessionController {
         return sessionService.getSessions(UserContext.getCurrentUserId(), programId, weekNumber);
     }
 
+    @GetMapping("/active")
+    public ResponseEntity<WorkoutSessionResponse> getActiveSession() {
+        WorkoutSessionResponse active = sessionService.getActiveSession(UserContext.getCurrentUserId());
+        if (active == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(active);
+    }
+
     @PostMapping
     public ResponseEntity<WorkoutSessionResponse> startSession(@Valid @RequestBody WorkoutSessionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)

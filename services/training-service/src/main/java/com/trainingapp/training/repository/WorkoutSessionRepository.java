@@ -13,6 +13,8 @@ import java.util.UUID;
 public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, UUID> {
     
     Optional<WorkoutSession> findByIdAndUserId(UUID id, UUID userId);
+    
+    List<WorkoutSession> findByUserIdAndCompletedAtIsNull(UUID userId);
 
     @Query("SELECT ws FROM WorkoutSession ws JOIN ws.dayTemplate dt JOIN dt.weekTemplate wt JOIN wt.program p WHERE ws.userId = :userId AND p.id = :programId AND ws.weekNumber = :weekNumber")
     List<WorkoutSession> findByUserIdAndProgramIdAndWeekNumber(@Param("userId") UUID userId, @Param("programId") UUID programId, @Param("weekNumber") int weekNumber);
