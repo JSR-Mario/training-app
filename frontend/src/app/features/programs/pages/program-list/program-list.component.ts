@@ -6,119 +6,126 @@ import { ProgramService } from '../../services/program.service';
 import { TrainingProgram } from '../../../../core/types/training.types';
 
 @Component({
-  selector: 'app-program-list',
-  standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-program-list',
+    imports: [CommonModule, RouterModule, ReactiveFormsModule],
+    template: `
     <div class="max-w-7xl mx-auto space-y-6">
-      
+    
       <!-- Header -->
-      <div class="flex justify-between items-center" *ngIf="!showForm()">
-        <div>
-          <h1 class="text-3xl font-bold text-white">Programs</h1>
-          <p class="text-gray-400 mt-1">Manage your training programs</p>
+      @if (!showForm()) {
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-white">Programs</h1>
+            <p class="text-gray-400 mt-1">Manage your training programs</p>
+          </div>
+          <button
+            (click)="openForm()"
+            class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
+            >
+            + Create Program
+          </button>
         </div>
-        <button 
-          (click)="openForm()"
-          class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
-        >
-          + Create Program
-        </button>
-      </div>
-
+      }
+    
       <!-- Form View -->
-      <div *ngIf="showForm()" class="glass-card p-6 w-full max-w-xl mx-auto">
-        <h2 class="text-2xl font-bold mb-6 text-white">New Program</h2>
-        
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
-          <div>
-            <label for="nameInput" class="block text-sm font-medium text-gray-300 mb-1">Program Name</label>
-            <input 
-              id="nameInput"
-              type="text" 
-              formControlName="name"
-              class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
-              placeholder="e.g., Push Pull Legs 6 Days"
-            >
-            <div *ngIf="form.get('name')?.invalid && form.get('name')?.touched" class="text-red-400 text-xs mt-1">
-              Name is required (max 100 chars).
+      @if (showForm()) {
+        <div class="glass-card p-6 w-full max-w-xl mx-auto">
+          <h2 class="text-2xl font-bold mb-6 text-white">New Program</h2>
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+            <div>
+              <label for="nameInput" class="block text-sm font-medium text-gray-300 mb-1">Program Name</label>
+              <input
+                id="nameInput"
+                type="text"
+                formControlName="name"
+                class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                placeholder="e.g., Push Pull Legs 6 Days"
+                >
+              @if (form.get('name')?.invalid && form.get('name')?.touched) {
+                <div class="text-red-400 text-xs mt-1">
+                  Name is required (max 100 chars).
+                </div>
+              }
             </div>
-          </div>
-
-          <div>
-            <label for="durationInput" class="block text-sm font-medium text-gray-300 mb-1">Duration (Weeks)</label>
-            <input 
-              id="durationInput"
-              type="number" 
-              min="1"
-              max="52"
-              formControlName="durationWeeks"
-              class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
-            >
-          </div>
-
-          <div class="flex justify-end gap-3 pt-4 border-t border-gray-800">
-            <button 
-              type="button" 
-              (click)="closeForm()"
-              class="px-4 py-2 text-gray-300 hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              [disabled]="form.invalid || isLoading()"
-              class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl disabled:opacity-50 transition-colors"
-            >
-              Create
-            </button>
-          </div>
-        </form>
-      </div>
-
+            <div>
+              <label for="durationInput" class="block text-sm font-medium text-gray-300 mb-1">Duration (Weeks)</label>
+              <input
+                id="durationInput"
+                type="number"
+                min="1"
+                max="52"
+                formControlName="durationWeeks"
+                class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                >
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-800">
+              <button
+                type="button"
+                (click)="closeForm()"
+                class="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                [disabled]="form.invalid || isLoading()"
+                class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl disabled:opacity-50 transition-colors"
+                >
+                Create
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+    
       <!-- Loading State -->
-      <div *ngIf="isLoading() && !showForm()" class="text-center py-12">
-        <p class="text-gray-400">Loading programs...</p>
-      </div>
-
+      @if (isLoading() && !showForm()) {
+        <div class="text-center py-12">
+          <p class="text-gray-400">Loading programs...</p>
+        </div>
+      }
+    
       <!-- List View -->
-      <div *ngIf="!isLoading() && !showForm()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        <div *ngIf="programs().length === 0" class="col-span-full text-center py-12 glass-card">
-          <p class="text-gray-400">No programs found. Create your first program!</p>
+      @if (!isLoading() && !showForm()) {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @if (programs().length === 0) {
+            <div class="col-span-full text-center py-12 glass-card">
+              <p class="text-gray-400">No programs found. Create your first program!</p>
+            </div>
+          }
+          @for (program of programs(); track program) {
+            <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
+              <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-white">{{ program.name }}</h3>
+                @if (program.isActive) {
+                  <span class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded border border-green-500/30">Active</span>
+                }
+              </div>
+              <div class="flex-1 space-y-2 mb-6">
+                <p class="text-gray-400 text-sm">Duration: {{ program.durationWeeks }} weeks</p>
+                <p class="text-gray-400 text-sm">Created: {{ program.createdAt | date:'mediumDate' }}</p>
+              </div>
+              <div class="flex justify-between items-center pt-4 border-t border-gray-700/50">
+                <button
+                  (click)="deleteProgram(program.id)"
+                  class="text-red-400 hover:text-red-300 transition-colors text-sm"
+                  >
+                  Delete
+                </button>
+                <a
+                  [routerLink]="['/programs', program.id]"
+                  class="text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium"
+                  >
+                  Build & Edit &rarr;
+                </a>
+              </div>
+            </div>
+          }
         </div>
-
-        <div *ngFor="let program of programs()" class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
-          <div class="flex justify-between items-start mb-4">
-            <h3 class="text-xl font-bold text-white">{{ program.name }}</h3>
-            <span *ngIf="program.isActive" class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded border border-green-500/30">Active</span>
-          </div>
-          
-          <div class="flex-1 space-y-2 mb-6">
-            <p class="text-gray-400 text-sm">Duration: {{ program.durationWeeks }} weeks</p>
-            <p class="text-gray-400 text-sm">Created: {{ program.createdAt | date:'mediumDate' }}</p>
-          </div>
-
-          <div class="flex justify-between items-center pt-4 border-t border-gray-700/50">
-            <button 
-              (click)="deleteProgram(program.id)"
-              class="text-red-400 hover:text-red-300 transition-colors text-sm"
-            >
-              Delete
-            </button>
-            <a 
-              [routerLink]="['/programs', program.id]"
-              class="text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium"
-            >
-              Build & Edit &rarr;
-            </a>
-          </div>
-        </div>
-
-      </div>
-
+      }
+    
     </div>
-  `
+    `
 })
 export class ProgramListComponent implements OnInit {
   private programService = inject(ProgramService);

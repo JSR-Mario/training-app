@@ -60,6 +60,11 @@ spring:
             - Path=/api/v1/training/**
           filters:
             - JwtValidationFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@ipKeyResolver}"
 
         - id: analytics-service
           uri: ${ANALYTICS_SERVICE_URL:http://localhost:8083}
@@ -67,6 +72,11 @@ spring:
             - Path=/api/v1/analytics/**
           filters:
             - JwtValidationFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@ipKeyResolver}"
 
 management:
   endpoints:

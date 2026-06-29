@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, inject, signal, Input } from '@angular/core';
+import { Component, OnInit, inject, signal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Exercise, BODY_PARTS_HIERARCHY } from '../../../../core/types/training.types';
@@ -6,131 +6,152 @@ import { ExerciseService } from '../../services/exercise.service';
 import { debounceTime } from 'rxjs';
 
 @Component({
-  selector: 'app-exercise-search',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-exercise-search',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
       <form [formGroup]="searchForm" class="space-y-4">
         <!-- Text Search -->
         <div class="relative">
-          <input 
-            type="text" 
+          <input
+            type="text"
             formControlName="query"
             placeholder="Search exercise by name..."
             class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white pl-10"
-          >
+            >
           <span class="absolute left-3 top-2.5 text-gray-400">🔍</span>
         </div>
-
+    
         <!-- Advanced Filters Toggle -->
         <div>
-          <button 
-            type="button" 
+          <button
+            type="button"
             (click)="showFilters.set(!showFilters())"
             class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
-          >
+            >
             <span [class.rotate-90]="showFilters()" class="transition-transform">▶</span>
             Advanced Filters
           </button>
         </div>
-
+    
         <!-- Filters -->
-        <div *ngIf="showFilters()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 bg-gray-900/50 rounded-lg">
-          <div>
-            <label for="typeSelect" class="block text-xs text-gray-400 mb-1">Type</label>
-            <select 
-              id="typeSelect"
-              formControlName="type"
-              class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
-            >
-              <option value="">All Types</option>
-              <option value="STRENGTH">Strength</option>
-              <option value="CARDIO">Cardio</option>
-            </select>
+        @if (showFilters()) {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 bg-gray-900/50 rounded-lg">
+            <div>
+              <label for="typeSelect" class="block text-xs text-gray-400 mb-1">Type</label>
+              <select
+                id="typeSelect"
+                formControlName="type"
+                class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
+                >
+                <option value="">All Types</option>
+                <option value="STRENGTH">Strength</option>
+                <option value="CARDIO">Cardio</option>
+              </select>
+            </div>
+            @if (searchForm.get('type')?.value !== 'CARDIO') {
+              <div>
+                <label for="categorySelect" class="block text-xs text-gray-400 mb-1">Region</label>
+                <select
+                  id="categorySelect"
+                  formControlName="category"
+                  class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
+                  >
+                  <option value="">All Regions</option>
+                  @for (cat of categories; track cat) {
+                    <option [value]="cat">{{ cat }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label for="groupSelect" class="block text-xs text-gray-400 mb-1">Muscle Group</label>
+                <select
+                  id="groupSelect"
+                  formControlName="group"
+                  class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
+                  >
+                  <option value="">All Groups</option>
+                  @for (grp of availableGroups(); track grp) {
+                    <option [value]="grp">{{ grp }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label for="bodyPartSelect" class="block text-xs text-gray-400 mb-1">Specific Part</label>
+                <select
+                  id="bodyPartSelect"
+                  formControlName="bodyPart"
+                  class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
+                  >
+                  <option value="">All Parts</option>
+                  @for (part of availableParts(); track part) {
+                    <option [value]="part">{{ part }}</option>
+                  }
+                </select>
+              </div>
+            }
           </div>
-
-          <ng-container *ngIf="searchForm.get('type')?.value !== 'CARDIO'">
-            <div>
-              <label for="categorySelect" class="block text-xs text-gray-400 mb-1">Region</label>
-              <select 
-                id="categorySelect"
-                formControlName="category"
-                class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
-              >
-                <option value="">All Regions</option>
-                <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
-              </select>
-            </div>
-            <div>
-              <label for="groupSelect" class="block text-xs text-gray-400 mb-1">Muscle Group</label>
-              <select 
-                id="groupSelect"
-                formControlName="group"
-                class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
-              >
-                <option value="">All Groups</option>
-                <option *ngFor="let grp of availableGroups()" [value]="grp">{{ grp }}</option>
-              </select>
-            </div>
-            <div>
-              <label for="bodyPartSelect" class="block text-xs text-gray-400 mb-1">Specific Part</label>
-              <select 
-                id="bodyPartSelect"
-                formControlName="bodyPart"
-                class="w-full px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white"
-              >
-                <option value="">All Parts</option>
-                <option *ngFor="let part of availableParts()" [value]="part">{{ part }}</option>
-              </select>
-            </div>
-          </ng-container>
-        </div>
+        }
       </form>
-
+    
       <!-- Results -->
       <div class="mt-4 max-h-60 overflow-y-auto pr-1 space-y-2 custom-scrollbar">
-        <div *ngIf="loading()" class="text-center text-sm text-gray-400 py-4">Searching...</div>
-        <div *ngIf="!loading() && filteredExercises().length === 0" class="text-center text-sm text-gray-500 py-4">
-          No exercises found.
-        </div>
-        
-        <button 
-          *ngFor="let ex of filteredExercises()"
-          type="button"
-          [disabled]="excludeIds.includes(ex.id)"
-          [class.opacity-50]="excludeIds.includes(ex.id)"
-          [class.cursor-not-allowed]="excludeIds.includes(ex.id)"
-          class="w-full text-left p-3 bg-gray-900/80 hover:bg-gray-700/80 rounded-lg border border-gray-700 transition-colors flex justify-between items-center group"
-          (click)="!excludeIds.includes(ex.id) && select.emit(ex)"
-        >
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-medium text-white">{{ ex.name }}</span>
-              <span *ngIf="ex.type === 'CARDIO'" class="px-1.5 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 rounded font-semibold">CARDIO</span>
-              <span *ngIf="ex.unilateral" class="px-1.5 py-0.5 text-[10px] bg-amber-500/20 text-amber-400 rounded font-semibold">UNI</span>
+        @if (loading()) {
+          <div class="text-center text-sm text-gray-400 py-4">Searching...</div>
+        }
+        @if (!loading() && filteredExercises().length === 0) {
+          <div class="text-center text-sm text-gray-500 py-4">
+            No exercises found.
+          </div>
+        }
+    
+        @for (ex of filteredExercises(); track ex) {
+          <button
+            type="button"
+            [disabled]="excludeIds().includes(ex.id)"
+            [class.opacity-50]="excludeIds().includes(ex.id)"
+            [class.cursor-not-allowed]="excludeIds().includes(ex.id)"
+            class="w-full text-left p-3 bg-gray-900/80 hover:bg-gray-700/80 rounded-lg border border-gray-700 transition-colors flex justify-between items-center group"
+            (click)="!excludeIds().includes(ex.id) && exerciseSelected.emit(ex)"
+            >
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-white">{{ ex.name }}</span>
+                @if (ex.type === 'CARDIO') {
+                  <span class="px-1.5 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 rounded font-semibold">CARDIO</span>
+                }
+                @if (ex.unilateral) {
+                  <span class="px-1.5 py-0.5 text-[10px] bg-amber-500/20 text-amber-400 rounded font-semibold">UNI</span>
+                }
+              </div>
+              <div class="text-xs text-gray-400 flex items-center gap-3 mt-1">
+                @if (ex.equipmentBrand) {
+                  <span class="flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    {{ ex.equipmentBrand }}
+                  </span>
+                }
+                <span class="flex items-center gap-1 text-yellow-500">
+                  ★ {{ ex.averageRating | number:'1.1-1' }}
+                </span>
+              </div>
             </div>
-            <div class="text-xs text-gray-400 flex items-center gap-3 mt-1">
-              <span *ngIf="ex.equipmentBrand" class="flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                {{ ex.equipmentBrand }}
-              </span>
-              <span class="flex items-center gap-1 text-yellow-500">
-                ★ {{ ex.averageRating | number:'1.1-1' }}
-              </span>
-            </div>
-          </div>
-          <div *ngIf="!excludeIds.includes(ex.id)" class="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center justify-center">
-            +
-          </div>
-          <div *ngIf="excludeIds.includes(ex.id)" class="text-[10px] text-red-400 font-bold bg-red-900/20 px-2 py-1 rounded">
-            ADDED
-          </div>
-        </button>
+            @if (!excludeIds().includes(ex.id)) {
+              <div class="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center justify-center">
+                +
+              </div>
+            }
+            @if (excludeIds().includes(ex.id)) {
+              <div class="text-[10px] text-red-400 font-bold bg-red-900/20 px-2 py-1 rounded">
+                ADDED
+              </div>
+            }
+          </button>
+        }
       </div>
     </div>
-  `,
-  styles: [`
+    `,
+    styles: [`
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
     }
@@ -148,8 +169,8 @@ import { debounceTime } from 'rxjs';
   `]
 })
 export class ExerciseSearchComponent implements OnInit {
-  @Input() excludeIds: string[] = [];
-  @Output() select = new EventEmitter<Exercise>();
+  readonly excludeIds = input<string[]>([]);
+  readonly exerciseSelected = output<Exercise>();
 
   private fb = inject(FormBuilder);
   private exerciseService = inject(ExerciseService);

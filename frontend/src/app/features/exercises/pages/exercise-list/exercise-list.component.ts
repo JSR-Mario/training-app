@@ -1,117 +1,131 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ExerciseService } from '../../services/exercise.service';
 import { Exercise } from '../../../../core/types/training.types';
 import { ExerciseFormComponent } from '../../components/exercise-form/exercise-form.component';
 
 @Component({
-  selector: 'app-exercise-list',
-  standalone: true,
-  imports: [CommonModule, ExerciseFormComponent],
-  template: `
+    selector: 'app-exercise-list',
+    imports: [ExerciseFormComponent],
+    template: `
     <div class="max-w-7xl mx-auto space-y-6">
-      
+    
       <!-- Header -->
-      <div class="flex justify-between items-center" *ngIf="!showForm()">
+      @if (!showForm()) {
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-white">Exercises</h1>
+            <p class="text-gray-400 mt-1">Manage your exercise catalog and volume targets</p>
+          </div>
+          <button
+            (click)="openForm()"
+            class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
+            >
+            + Add Exercise
+          </button>
+        </div>
+      }
+    
+      @if (showForm()) {
         <div>
-          <h1 class="text-3xl font-bold text-white">Exercises</h1>
-          <p class="text-gray-400 mt-1">Manage your exercise catalog and volume targets</p>
+          <app-exercise-form
+            [exercise]="selectedExercise()"
+            (saveExercise)="onSaveExercise($event)"
+            (cancelForm)="closeForm()"
+          ></app-exercise-form>
         </div>
-        <button 
-          (click)="openForm()"
-          class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
-        >
-          + Add Exercise
-        </button>
-      </div>
-
-      <div *ngIf="showForm()">
-        <app-exercise-form 
-          [exercise]="selectedExercise()" 
-          (saveExercise)="onSaveExercise($event)" 
-          (cancelForm)="closeForm()"
-        ></app-exercise-form>
-      </div>
-
+      }
+    
       <!-- Loading State -->
-      <div *ngIf="isLoading() && !showForm()" class="text-center py-12">
-        <p class="text-gray-400">Loading exercises...</p>
-      </div>
-
-      <!-- List View -->
-      <div *ngIf="!isLoading() && !showForm()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        <div *ngIf="exercises().length === 0" class="col-span-full text-center py-12 glass-card">
-          <p class="text-gray-400">No exercises found. Add your first exercise!</p>
+      @if (isLoading() && !showForm()) {
+        <div class="text-center py-12">
+          <p class="text-gray-400">Loading exercises...</p>
         </div>
-
-        <div *ngFor="let exercise of exercises()" class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
-          <div class="flex justify-between items-start mb-4">
-            <div>
-              <h3 class="text-xl font-bold text-white">{{ exercise.name }}</h3>
-              <div class="flex flex-wrap gap-2 mt-1.5">
-                <span 
-                  *ngIf="exercise.equipmentBrand" 
-                  class="px-2 py-0.5 text-xs bg-slate-700/60 text-slate-300 rounded-md border border-slate-600/50"
-                >
-                  {{ exercise.equipmentBrand }}
-                </span>
-                <span 
-                  *ngIf="exercise.unilateral" 
-                  class="px-2 py-0.5 text-xs font-semibold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30"
-                >
-                  UNILATERAL
-                </span>
-                <span 
-                  *ngIf="exercise.unilateral === false"
-                  class="px-2 py-0.5 text-xs bg-sky-500/15 text-sky-400 rounded-md border border-sky-500/30"
-                >
-                  BILATERAL
-                </span>
-                <span 
-                  *ngIf="exercise.isPublic"
-                  class="px-2 py-0.5 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30"
-                >
-                  PUBLIC
-                </span>
+      }
+    
+      <!-- List View -->
+      @if (!isLoading() && !showForm()) {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @if (exercises().length === 0) {
+            <div class="col-span-full text-center py-12 glass-card">
+              <p class="text-gray-400">No exercises found. Add your first exercise!</p>
+            </div>
+          }
+          @for (exercise of exercises(); track exercise) {
+            <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="text-xl font-bold text-white">{{ exercise.name }}</h3>
+                  <div class="flex flex-wrap gap-2 mt-1.5">
+                    @if (exercise.equipmentBrand) {
+                      <span
+                        class="px-2 py-0.5 text-xs bg-slate-700/60 text-slate-300 rounded-md border border-slate-600/50"
+                        >
+                        {{ exercise.equipmentBrand }}
+                      </span>
+                    }
+                    @if (exercise.unilateral) {
+                      <span
+                        class="px-2 py-0.5 text-xs font-semibold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30"
+                        >
+                        UNILATERAL
+                      </span>
+                    }
+                    @if (exercise.unilateral === false) {
+                      <span
+                        class="px-2 py-0.5 text-xs bg-sky-500/15 text-sky-400 rounded-md border border-sky-500/30"
+                        >
+                        BILATERAL
+                      </span>
+                    }
+                    @if (exercise.isPublic) {
+                      <span
+                        class="px-2 py-0.5 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30"
+                        >
+                        PUBLIC
+                      </span>
+                    }
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <button
+                    (click)="editExercise(exercise)"
+                    class="text-blue-400 hover:text-blue-300 transition-colors text-sm"
+                    >
+                    Edit
+                  </button>
+                  <button
+                    (click)="deleteExercise(exercise.id)"
+                    class="text-red-400 hover:text-red-300 transition-colors text-sm"
+                    >
+                    Delete
+                  </button>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h4 class="text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">Targets</h4>
+                @if (exercise.targets.length === 0) {
+                  <div class="text-sm text-gray-600 italic">
+                    No targets set
+                  </div>
+                }
+                <div class="flex flex-wrap gap-2">
+                  @for (target of exercise.targets; track target) {
+                    <span
+                      class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300"
+                      >
+                      {{ target.bodyPart }} ({{ target.targetValue }})
+                    </span>
+                  }
+                </div>
               </div>
             </div>
-            <div class="flex gap-2">
-              <button 
-                (click)="editExercise(exercise)"
-                class="text-blue-400 hover:text-blue-300 transition-colors text-sm"
-              >
-                Edit
-              </button>
-              <button 
-                (click)="deleteExercise(exercise.id)"
-                class="text-red-400 hover:text-red-300 transition-colors text-sm"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-          
-          <div class="flex-1">
-            <h4 class="text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">Targets</h4>
-            <div *ngIf="exercise.targets.length === 0" class="text-sm text-gray-600 italic">
-              No targets set
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <span 
-                *ngFor="let target of exercise.targets" 
-                class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300"
-              >
-                {{ target.bodyPart }} ({{ target.targetValue }})
-              </span>
-            </div>
-          </div>
+          }
         </div>
-
-      </div>
-
+      }
+    
     </div>
-  `
+    `
 })
 export class ExerciseListComponent implements OnInit {
   private exerciseService = inject(ExerciseService);

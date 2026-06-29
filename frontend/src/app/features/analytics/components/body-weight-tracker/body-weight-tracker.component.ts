@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
@@ -9,11 +9,10 @@ import { finalize } from 'rxjs';
 type TimeRange = '1M' | '3M' | '6M' | '1Y' | 'ALL';
 
 @Component({
-  selector: 'app-body-weight-tracker',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, BaseChartDirective],
-  templateUrl: './body-weight-tracker.component.html',
-  styles: ``
+    selector: 'app-body-weight-tracker',
+    imports: [ReactiveFormsModule, BaseChartDirective],
+    templateUrl: './body-weight-tracker.component.html',
+    styles: ``
 })
 export class BodyWeightTrackerComponent implements OnInit {
   private bodyWeightService = inject(BodyWeightService);

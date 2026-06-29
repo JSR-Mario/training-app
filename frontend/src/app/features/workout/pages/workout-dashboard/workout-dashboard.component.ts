@@ -7,105 +7,117 @@ import { ProgramService } from '../../../programs/services/program.service';
 import { TrainingProgram, WorkoutSessionResponse } from '../../../../core/types/training.types';
 
 @Component({
-  selector: 'app-workout-dashboard',
-  standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
-  template: `
+    selector: 'app-workout-dashboard',
+    imports: [CommonModule, RouterModule, FormsModule],
+    template: `
     <div class="max-w-7xl mx-auto space-y-6 pb-24">
-      
+    
       <!-- Header -->
       <div class="flex justify-between items-center">
         <div>
           <h1 class="text-3xl font-bold text-white">Workouts</h1>
           <p class="text-gray-400 mt-1">Track your progress</p>
         </div>
-        <a 
+        <a
           [routerLink]="['/workout', 'start']"
           [queryParams]="{ programId: selectedProgramId(), week: selectedWeek() }"
           class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95"
-        >
+          >
           Start Session
         </a>
       </div>
-
+    
       <!-- Filters -->
       <div class="glass-card p-4 flex flex-col sm:flex-row gap-4 items-end">
         <div class="w-full sm:w-1/2">
           <label for="programSelect" class="block text-sm font-medium text-gray-300 mb-1">Select Program</label>
-          <select 
+          <select
             id="programSelect"
             [(ngModel)]="selectedProgramId"
             (ngModelChange)="onProgramChange()"
             class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white appearance-none"
-          >
+            >
             <option value="" disabled>Select a program</option>
-            <option *ngFor="let p of programs()" [value]="p.id">{{ p.name }} ({{ p.durationWeeks }} weeks)</option>
+            @for (p of programs(); track p) {
+              <option [value]="p.id">{{ p.name }} ({{ p.durationWeeks }} weeks)</option>
+            }
           </select>
         </div>
-
+    
         <div class="w-full sm:w-1/4">
           <label for="weekSelect" class="block text-sm font-medium text-gray-300 mb-1">Week Number</label>
-          <select 
+          <select
             id="weekSelect"
             [(ngModel)]="selectedWeek"
             (ngModelChange)="loadSessions()"
             [disabled]="!selectedProgramId()"
             class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white appearance-none disabled:opacity-50"
-          >
-            <option *ngFor="let w of availableWeeks()" [value]="w">Week {{ w }}</option>
+            >
+            @for (w of availableWeeks(); track w) {
+              <option [value]="w">Week {{ w }}</option>
+            }
           </select>
         </div>
       </div>
-
+    
       <!-- Loading State -->
-      <div *ngIf="isLoading()" class="text-center py-12">
-        <div class="animate-pulse flex flex-col items-center">
-          <div class="h-8 w-8 bg-blue-500 rounded-full mb-4"></div>
-          <p class="text-gray-400">Loading sessions...</p>
+      @if (isLoading()) {
+        <div class="text-center py-12">
+          <div class="animate-pulse flex flex-col items-center">
+            <div class="h-8 w-8 bg-blue-500 rounded-full mb-4"></div>
+            <p class="text-gray-400">Loading sessions...</p>
+          </div>
         </div>
-      </div>
-
+      }
+    
       <!-- Sessions List -->
-      <div *ngIf="!isLoading()" class="space-y-4">
-        
-        <div *ngIf="sessions().length === 0 && selectedProgramId()" class="text-center py-12 glass-card">
-          <p class="text-gray-400">No sessions logged for this week yet.</p>
-        </div>
-
-        <div *ngIf="programs().length === 0" class="text-center py-12 glass-card border border-yellow-500/30">
-          <p class="text-yellow-400">You don't have any programs. Go to the Programs tab to build one first.</p>
-        </div>
-
-        <div *ngFor="let session of sessions()" class="glass-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:border-gray-600 transition-colors">
-          <div class="mb-4 sm:mb-0">
-            <div class="flex items-center gap-3 mb-1">
-              <h3 class="text-xl font-bold text-white">{{ session.dayTemplateName }}</h3>
-              <span *ngIf="session.completedAt" class="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded border border-green-500/30">Completed</span>
-              <span *ngIf="!session.completedAt" class="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded border border-yellow-500/30">In Progress</span>
+      @if (!isLoading()) {
+        <div class="space-y-4">
+          @if (sessions().length === 0 && selectedProgramId()) {
+            <div class="text-center py-12 glass-card">
+              <p class="text-gray-400">No sessions logged for this week yet.</p>
             </div>
-            <p class="text-gray-400 text-sm">Performed on: {{ session.performedOn | date:'mediumDate' }}</p>
-          </div>
-          
-          <div class="flex gap-3 w-full sm:w-auto">
-            <button 
-              (click)="deleteSession(session.id)"
-              class="px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors text-sm font-medium w-full sm:w-auto"
-            >
-              Delete
-            </button>
-            <a 
-              [routerLink]="['/workout', session.id]"
-              class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm font-medium w-full sm:w-auto text-center"
-            >
-              {{ session.completedAt ? 'View Summary' : 'Resume Workout' }} &rarr;
-            </a>
-          </div>
+          }
+          @if (programs().length === 0) {
+            <div class="text-center py-12 glass-card border border-yellow-500/30">
+              <p class="text-yellow-400">You don't have any programs. Go to the Programs tab to build one first.</p>
+            </div>
+          }
+          @for (session of sessions(); track session) {
+            <div class="glass-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:border-gray-600 transition-colors">
+              <div class="mb-4 sm:mb-0">
+                <div class="flex items-center gap-3 mb-1">
+                  <h3 class="text-xl font-bold text-white">{{ session.dayTemplateName }}</h3>
+                  @if (session.completedAt) {
+                    <span class="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded border border-green-500/30">Completed</span>
+                  }
+                  @if (!session.completedAt) {
+                    <span class="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded border border-yellow-500/30">In Progress</span>
+                  }
+                </div>
+                <p class="text-gray-400 text-sm">Performed on: {{ session.performedOn | date:'mediumDate' }}</p>
+              </div>
+              <div class="flex gap-3 w-full sm:w-auto">
+                <button
+                  (click)="deleteSession(session.id)"
+                  class="px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors text-sm font-medium w-full sm:w-auto"
+                  >
+                  Delete
+                </button>
+                <a
+                  [routerLink]="['/workout', session.id]"
+                  class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm font-medium w-full sm:w-auto text-center"
+                  >
+                  {{ session.completedAt ? 'View Summary' : 'Resume Workout' }} &rarr;
+                </a>
+              </div>
+            </div>
+          }
         </div>
-
-      </div>
-
+      }
+    
     </div>
-  `
+    `
 })
 export class WorkoutDashboardComponent implements OnInit {
   private workoutService = inject(WorkoutService);
