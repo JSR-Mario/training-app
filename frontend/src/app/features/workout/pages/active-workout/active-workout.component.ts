@@ -47,11 +47,11 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
 
           <div *ngFor="let ex of exercises(); let i = index" class="glass-card p-4 sm:p-6 overflow-hidden relative">
             <!-- Exercise Header -->
-            <div class="flex items-start justify-between mb-4 border-b border-gray-700/50 pb-4">
+            <div class="flex items-start justify-between" [ngClass]="isCollapsed(ex.id) ? 'mb-0' : 'mb-4 border-b border-gray-700/50 pb-4'">
               <div>
                 <h2 class="text-xl font-bold text-white"><span class="text-blue-500 mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</h2>
-                <p *ngIf="!ex.durationMinutes" class="text-gray-400 text-sm mt-1">Goal: {{ ex.sets }} sets × {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps</p>
-                <p *ngIf="ex.durationMinutes" class="text-gray-400 text-sm mt-1">
+                <p *ngIf="!ex.durationMinutes && !isCollapsed(ex.id)" class="text-gray-400 text-sm mt-1">Goal: {{ ex.sets }} sets × {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps</p>
+                <p *ngIf="ex.durationMinutes && !isCollapsed(ex.id)" class="text-gray-400 text-sm mt-1">
                   Goal: {{ ex.durationMinutes }} min 
                   <span *ngIf="ex.incline"> • Inc: {{ ex.incline }}</span> 
                   <span *ngIf="ex.resistance"> • Res: {{ ex.resistance }}</span>
@@ -70,6 +70,26 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
               </button>
             </div>
 
+            <!-- Collapsed Summary: show last set info -->
+            <div *ngIf="isCollapsed(ex.id) && getLastSetForExercise(ex.id) as lastSet" class="mt-2 text-sm text-gray-400">
+              <span *ngIf="!ex.durationMinutes">
+                Last: {{ lastSet.weightKg }} kg × 
+                <ng-container *ngIf="ex.unilateral">{{ lastSet.repsCompleted }} / {{ lastSet.repsCompletedRight ?? lastSet.repsCompleted }}</ng-container>
+                <ng-container *ngIf="!ex.unilateral">{{ lastSet.repsCompleted }}</ng-container>
+                reps (Set {{ lastSet.setNumber }})
+              </span>
+              <span *ngIf="ex.durationMinutes">
+                Last: {{ lastSet.durationMinutes }} min
+                <span *ngIf="lastSet.incline"> • Inc: {{ lastSet.incline }}</span>
+                <span *ngIf="lastSet.resistance"> • Res: {{ lastSet.resistance }}</span>
+              </span>
+              <span class="ml-2 text-gray-500">• {{ getSetsForExercise(ex.id).length }}/{{ ex.sets || '∞' }} sets</span>
+            </div>
+            <div *ngIf="isCollapsed(ex.id) && !getLastSetForExercise(ex.id)" class="mt-2 text-sm text-gray-500 italic">
+              No sets logged yet
+            </div>
+
+            <!-- Expanded Content -->
             <div *ngIf="!isCollapsed(ex.id)">
 
             <!-- Last Logged Set -->
@@ -89,10 +109,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                        [ngClass]="getPerfTextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
                     <ng-container *ngIf="!ex.durationMinutes">
                       {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">kg</span> × 
-                      <ng-container *ngIf="ex.exercise.unilateral">
+                      <ng-container *ngIf="ex.unilateral">
                         {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
                       </ng-container>
-                      <ng-container *ngIf="!ex.exercise.unilateral">
+                      <ng-container *ngIf="!ex.unilateral">
                         {{ set.repsCompleted }}
                       </ng-container>
                       <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">reps</span>
@@ -143,10 +163,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                     <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
                   </div>
                   <div class="flex-1 min-w-[70px]">
-                    <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.exercise.unilateral ? 'Reps (L)' : 'Reps' }}</label>
+                    <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.unilateral ? 'Reps (L)' : 'Reps' }}</label>
                     <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
                   </div>
-                  <div *ngIf="ex.exercise.unilateral" class="flex-1 min-w-[70px]">
+                  <div *ngIf="ex.unilateral" class="flex-1 min-w-[70px]">
                     <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps (R)</label>
                     <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center" [placeholder]="getForm(ex.id).get('repsCompleted')?.value || ''">
                   </div>
@@ -176,16 +196,16 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
             </div>
             </div>
             
-            <!-- Progress Bar inside Exercise Card -->
-            <div class="mt-4 h-1 w-full bg-gray-800 rounded-full overflow-hidden mb-4">
+            <!-- Progress Bar inside Exercise Card (always visible) -->
+            <div class="mt-4 h-1 w-full bg-gray-800 rounded-full overflow-hidden">
               <div 
                 class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
-                [style.width.%]="(getSetsForExercise(ex.id).length / ex.sets) * 100"
+                [style.width.%]="(getSetsForExercise(ex.id).length / (ex.sets || 1)) * 100"
               ></div>
             </div>
 
             <!-- Rating Section -->
-            <div *ngIf="!session()?.completedAt" class="pt-4 border-t border-gray-700/50 mt-4">
+            <div *ngIf="!session()?.completedAt && !isCollapsed(ex.id)" class="pt-4 border-t border-gray-700/50 mt-4">
               <div class="flex gap-1 sm:gap-1.5 justify-between sm:justify-start w-full">
                 <button 
                   *ngFor="let r of [1,2,3,4,5,6,7,8,9,10]" 
@@ -307,7 +327,7 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
             [disabled]="isCompleting()"
             class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-95"
           >
-            {{ isCompleting() ? 'Completing...' : 'Finish Workout 🎉' }}
+            {{ isCompleting() ? 'Completing...' : 'Finish Workout' }}
           </button>
         </div>
       </div>

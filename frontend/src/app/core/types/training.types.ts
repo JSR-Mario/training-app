@@ -62,6 +62,7 @@ export interface DayExercise {
   incline?: number;
   resistance?: number;
   sortOrder: number;
+  unilateral?: boolean;
 }
 
 export interface DayTemplate {

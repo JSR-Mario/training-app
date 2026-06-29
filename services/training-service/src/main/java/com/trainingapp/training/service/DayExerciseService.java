@@ -130,7 +130,8 @@ public class DayExerciseService {
                 de.getDurationMinutes(),
                 de.getIncline(),
                 de.getResistance(),
-                de.getSortOrder()
+                de.getSortOrder(),
+                de.getExercise().isUnilateral()
         );
     }
 }
