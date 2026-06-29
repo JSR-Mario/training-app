@@ -233,8 +233,8 @@ export class ExerciseSearchComponent implements OnInit {
 
     // 1. Text Search
     if (query) {
-      result = result.filter(ex => 
-        ex.name.toLowerCase().includes(query) || 
+      result = result.filter(ex =>
+        ex.name.toLowerCase().includes(query) ||
         (ex.equipmentBrand && ex.equipmentBrand.toLowerCase().includes(query))
       );
     }
@@ -243,24 +243,24 @@ export class ExerciseSearchComponent implements OnInit {
     if (category || group || bodyPart) {
       result = result.filter(ex => {
         if (!ex.targets || ex.targets.length === 0) return false;
-        
+
         return ex.targets.some(target => {
           const bp = target.bodyPart;
-          
+
           if (bodyPart) {
             return bp === bodyPart;
           }
-          
+
           if (group && category) {
             const catData = this.hierarchy[category as keyof typeof this.hierarchy] as Record<string, readonly string[]>;
             return catData && catData[group] && catData[group].includes(bp);
           }
-          
+
           if (category) {
             const catData = this.hierarchy[category as keyof typeof this.hierarchy] as Record<string, readonly string[]>;
             return catData && Object.values(catData).some(parts => parts.includes(bp));
           }
-          
+
           return true;
         });
       });

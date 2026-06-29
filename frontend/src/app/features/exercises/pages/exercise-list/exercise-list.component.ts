@@ -119,6 +119,9 @@ import { ExerciseFormComponent } from '../../components/exercise-form/exercise-f
                       <span *ngIf="exercise.unilateral" class="px-2 py-0.5 text-[10px] font-semibold bg-amber-500/20 text-amber-400 rounded border border-amber-500/30">
                         UNILATERAL
                       </span>
+                      <span *ngIf="exercise.spinalLoading" class="px-2 py-0.5 text-[10px] font-semibold bg-orange-500/20 text-orange-400 rounded border border-orange-500/30">
+                        SPINAL LOADING
+                      </span>
                       <span *ngIf="exercise.isPublic" class="px-2 py-0.5 text-[10px] font-semibold bg-purple-500/20 text-purple-400 rounded border border-purple-500/30">
                         PUBLIC
                       </span>

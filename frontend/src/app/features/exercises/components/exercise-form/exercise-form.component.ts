@@ -10,6 +10,7 @@ export interface ExerciseFormData {
   name: string;
   equipmentBrand: string;
   unilateral: boolean;
+  spinalLoading: boolean;
   isPublic: boolean;
   type: 'STRENGTH' | 'CARDIO';
   targets: { id?: string; bodyPart: string; targetValue: number }[];
@@ -104,6 +105,23 @@ export interface ExerciseFormData {
           <label for="unilateral" class="text-sm font-medium text-gray-300 cursor-pointer">
             Unilateral exercise
             <span class="text-gray-500 text-xs ml-1">(one side at a time)</span>
+          </label>
+        </div>
+
+        <!-- Spinal Loading Checkbox -->
+        <div *ngIf="form.get('type')?.value === 'STRENGTH'" class="flex items-center gap-3">
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              formControlName="spinalLoading"
+              class="sr-only peer"
+              id="spinalLoading"
+            >
+            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+          </label>
+          <label for="spinalLoading" class="text-sm font-medium text-gray-300 cursor-pointer">
+            Spinal Loading
+            <span class="text-gray-500 text-xs ml-1">(e.g. barbell squats, deadlifts)</span>
           </label>
         </div>
 
@@ -236,6 +254,7 @@ export class ExerciseFormComponent implements OnInit {
     name: ['', [Validators.required, Validators.maxLength(200)]],
     equipmentBrand: [''],
     unilateral: [false],
+    spinalLoading: [false],
     isPublic: [false],
     type: ['STRENGTH', Validators.required],
     targets: this.fb.array([])
@@ -251,6 +270,7 @@ export class ExerciseFormComponent implements OnInit {
         name: this.exercise.name,
         equipmentBrand: this.exercise.equipmentBrand || '',
         unilateral: this.exercise.unilateral || false,
+        spinalLoading: this.exercise.spinalLoading || false,
         isPublic: this.exercise.isPublic || false,
         type: this.exercise.type || 'STRENGTH'
       });
