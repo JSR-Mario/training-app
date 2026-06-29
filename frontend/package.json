@@ -12,7 +12,7 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "20.3.25",
-    "@angular/cdk": "18.2.14",
+    "@angular/cdk": "19.2.19",
     "@angular/common": "20.3.25",
     "@angular/compiler": "20.3.25",
     "@angular/core": "20.3.25",
@@ -32,7 +32,7 @@
     "@angular/cli": "20.3.30",
     "@angular/compiler-cli": "20.3.25",
     "@types/jasmine": "5.1.0",
-    "angular-eslint": "18.4.3",
+    "angular-eslint": "19.8.1",
     "autoprefixer": "10.4.19",
     "eslint": "^9.15.0",
     "jasmine-core": "5.1.0",
