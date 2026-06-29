@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, input, output } from '@angular/core';
 
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Exercise, BODY_PARTS_HIERARCHY, getBodyPartPath } from '../../../../core/types/training.types';
@@ -20,7 +20,7 @@ export interface ExerciseFormData {
     imports: [ReactiveFormsModule],
     template: `
     <div class="glass-card p-6 w-full max-w-2xl mx-auto">
-      <h2 class="text-2xl font-bold mb-6 text-white">{{ exercise ? 'Edit Exercise' : 'New Exercise' }}</h2>
+      <h2 class="text-2xl font-bold mb-6 text-white">{{ exercise() ? 'Edit Exercise' : 'New Exercise' }}</h2>
     
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
     
@@ -237,9 +237,9 @@ export interface ExerciseFormData {
     `
 })
 export class ExerciseFormComponent implements OnInit {
-  @Input() exercise: Exercise | null = null;
-  @Output() saveExercise = new EventEmitter<ExerciseFormData>();
-  @Output() cancelForm = new EventEmitter<void>();
+  readonly exercise = input<Exercise | null>(null);
+  readonly saveExercise = output<ExerciseFormData>();
+  readonly cancelForm = output<void>();
 
   private fb = inject(FormBuilder);
   private exerciseService = inject(ExerciseService);
@@ -266,16 +266,17 @@ export class ExerciseFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (this.exercise) {
+    const exercise = this.exercise();
+    if (exercise) {
       this.form.patchValue({
-        name: this.exercise.name,
-        equipmentBrand: this.exercise.equipmentBrand || '',
-        unilateral: this.exercise.unilateral || false,
-        isPublic: this.exercise.isPublic || false,
-        type: this.exercise.type || 'STRENGTH'
+        name: exercise.name,
+        equipmentBrand: exercise.equipmentBrand || '',
+        unilateral: exercise.unilateral || false,
+        isPublic: exercise.isPublic || false,
+        type: exercise.type || 'STRENGTH'
       });
       
-      this.exercise.targets.forEach(target => {
+      exercise.targets.forEach(target => {
         const path = getBodyPartPath(target.bodyPart);
         this.targets.push(this.fb.group({
           id: [target.id],

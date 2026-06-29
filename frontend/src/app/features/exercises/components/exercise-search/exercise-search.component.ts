@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, inject, signal, Input } from '@angular/core';
+import { Component, OnInit, inject, signal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Exercise, BODY_PARTS_HIERARCHY } from '../../../../core/types/training.types';
@@ -108,11 +108,11 @@ import { debounceTime } from 'rxjs';
         @for (ex of filteredExercises(); track ex) {
           <button
             type="button"
-            [disabled]="excludeIds.includes(ex.id)"
-            [class.opacity-50]="excludeIds.includes(ex.id)"
-            [class.cursor-not-allowed]="excludeIds.includes(ex.id)"
+            [disabled]="excludeIds().includes(ex.id)"
+            [class.opacity-50]="excludeIds().includes(ex.id)"
+            [class.cursor-not-allowed]="excludeIds().includes(ex.id)"
             class="w-full text-left p-3 bg-gray-900/80 hover:bg-gray-700/80 rounded-lg border border-gray-700 transition-colors flex justify-between items-center group"
-            (click)="!excludeIds.includes(ex.id) && exerciseSelected.emit(ex)"
+            (click)="!excludeIds().includes(ex.id) && exerciseSelected.emit(ex)"
             >
             <div>
               <div class="flex items-center gap-2">
@@ -136,12 +136,12 @@ import { debounceTime } from 'rxjs';
                 </span>
               </div>
             </div>
-            @if (!excludeIds.includes(ex.id)) {
+            @if (!excludeIds().includes(ex.id)) {
               <div class="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center justify-center">
                 +
               </div>
             }
-            @if (excludeIds.includes(ex.id)) {
+            @if (excludeIds().includes(ex.id)) {
               <div class="text-[10px] text-red-400 font-bold bg-red-900/20 px-2 py-1 rounded">
                 ADDED
               </div>
@@ -169,8 +169,8 @@ import { debounceTime } from 'rxjs';
   `]
 })
 export class ExerciseSearchComponent implements OnInit {
-  @Input() excludeIds: string[] = [];
-  @Output() exerciseSelected = new EventEmitter<Exercise>();
+  readonly excludeIds = input<string[]>([]);
+  readonly exerciseSelected = output<Exercise>();
 
   private fb = inject(FormBuilder);
   private exerciseService = inject(ExerciseService);
