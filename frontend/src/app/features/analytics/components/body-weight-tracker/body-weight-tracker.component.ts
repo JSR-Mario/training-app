@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
@@ -10,7 +10,7 @@ type TimeRange = '1M' | '3M' | '6M' | '1Y' | 'ALL';
 
 @Component({
     selector: 'app-body-weight-tracker',
-    imports: [CommonModule, ReactiveFormsModule, BaseChartDirective],
+    imports: [ReactiveFormsModule, BaseChartDirective],
     templateUrl: './body-weight-tracker.component.html',
     styles: ``
 })
