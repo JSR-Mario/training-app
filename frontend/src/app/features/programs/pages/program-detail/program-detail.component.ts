@@ -1,4 +1,5 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -104,76 +105,82 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
 
     <!-- Quick Add Modal -->
     <div *ngIf="addingExerciseToDayId()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
-        <button (click)="cancelQuickAdd()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
+      <div class="flex flex-col w-full max-w-2xl max-h-[90vh] overflow-y-auto gap-6 pb-8">
+        
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full p-6 shadow-2xl relative shrink-0">
+          <button (click)="cancelQuickAdd()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
 
-        <h2 class="text-2xl font-bold text-white mb-6">Quick Add Exercise</h2>
+          <h2 class="text-2xl font-bold text-white mb-6">Quick Add Exercise</h2>
 
-        <app-exercise-search *ngIf="!selectedExercise()" [excludeIds]="getExistingExerciseIds()" (select)="onExerciseSelected($event)"></app-exercise-search>
+          <app-exercise-search *ngIf="!selectedExercise()" [excludeIds]="getExistingExerciseIds()" (select)="onExerciseSelected($event)"></app-exercise-search>
 
-        <form *ngIf="selectedExercise()" [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4 mt-4">
-          <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
-            Selected: {{ selectedExercise()?.name }}
-            <span *ngIf="selectedExercise()?.type === 'CARDIO'" class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
+          <form *ngIf="selectedExercise()" [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4 mt-4">
+            <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
+              Selected: {{ selectedExercise()?.name }}
+              <span *ngIf="selectedExercise()?.type === 'CARDIO'" class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
+            </div>
+            
+            <div class="flex gap-4" *ngIf="selectedExercise()?.type !== 'CARDIO'">
+              <div class="flex-1">
+                <label for="qa-sets" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
+                <input id="qa-sets" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+              </div>
+              <div class="flex-1">
+                <label for="qa-reps" class="block text-sm font-medium text-gray-300 mb-1">Min Reps</label>
+                <input id="qa-reps" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+              </div>
+              <div class="flex-1">
+                <label for="qa-repsMax" class="block text-sm font-medium text-gray-300 mb-1">Max Reps</label>
+                <input id="qa-repsMax" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+              </div>
+            </div>
+
+            <div class="flex gap-4" *ngIf="selectedExercise()?.type === 'CARDIO'">
+              <div class="flex-1">
+                <label for="qa-duration" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
+                <input id="qa-duration" type="number" formControlName="durationMinutes" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+              </div>
+              <div class="flex-1">
+                <label for="qa-incline" class="block text-sm font-medium text-gray-300 mb-1">Incline</label>
+                <input id="qa-incline" type="number" formControlName="incline" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+              </div>
+              <div class="flex-1">
+                <label for="qa-resistance" class="block text-sm font-medium text-gray-300 mb-1">Resis.</label>
+                <input id="qa-resistance" type="number" formControlName="resistance" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4">
+              <button type="button" (click)="cancelQuickAdd()" class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm">Cancel</button>
+              <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Expected Weekly Volume Table -->
+        <div *ngIf="expectedWeeklyVolume().length > 0" class="glass-card p-6 shrink-0 border border-gray-700/50">
+          <h2 class="text-xl font-bold text-white mb-4">Expected Weekly Volume</h2>
+          <div class="overflow-hidden rounded-xl border border-gray-800">
+            <table class="min-w-full divide-y divide-gray-800">
+              <thead class="bg-gray-900/50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Body Part</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sets per Week</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-800 bg-gray-800/20">
+                <tr *ngFor="let vol of expectedWeeklyVolume()">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{{ vol.bodyPart }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400 font-bold">
+                    {{ vol.sets | number:'1.0-1' }}
+                    <span *ngIf="vol.projected" class="text-xs text-green-400 ml-2">(+{{ vol.projected | number:'1.0-1' }})</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          
-          <div class="flex gap-4" *ngIf="selectedExercise()?.type !== 'CARDIO'">
-            <div class="flex-1">
-              <label for="qa-sets" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
-              <input id="qa-sets" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
-            </div>
-            <div class="flex-1">
-              <label for="qa-reps" class="block text-sm font-medium text-gray-300 mb-1">Min Reps</label>
-              <input id="qa-reps" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
-            </div>
-            <div class="flex-1">
-              <label for="qa-repsMax" class="block text-sm font-medium text-gray-300 mb-1">Max Reps</label>
-              <input id="qa-repsMax" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
-            </div>
-          </div>
-
-          <div class="flex gap-4" *ngIf="selectedExercise()?.type === 'CARDIO'">
-            <div class="flex-1">
-              <label for="qa-duration" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
-              <input id="qa-duration" type="number" formControlName="durationMinutes" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-            </div>
-            <div class="flex-1">
-              <label for="qa-incline" class="block text-sm font-medium text-gray-300 mb-1">Incline</label>
-              <input id="qa-incline" type="number" formControlName="incline" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-            </div>
-            <div class="flex-1">
-              <label for="qa-resistance" class="block text-sm font-medium text-gray-300 mb-1">Resis.</label>
-              <input id="qa-resistance" type="number" formControlName="resistance" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-            </div>
-          </div>
-
-          <div class="flex justify-end gap-3 pt-4">
-            <button type="button" (click)="cancelQuickAdd()" class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm">Cancel</button>
-            <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
-          </div>
-        </form>
-      </div>
-      <!-- Expected Weekly Volume Table -->
-      <div *ngIf="expectedWeeklyVolume().length > 0" class="glass-card p-6 mt-8">
-        <h2 class="text-xl font-bold text-white mb-4">Expected Weekly Volume</h2>
-        <div class="overflow-hidden rounded-xl border border-gray-800">
-          <table class="min-w-full divide-y divide-gray-800">
-            <thead class="bg-gray-900/50">
-              <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Body Part</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sets per Week</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-800 bg-gray-800/20">
-              <tr *ngFor="let vol of expectedWeeklyVolume()">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{{ vol.bodyPart }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400 font-bold">{{ vol.sets | number:'1.0-1' }}</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
-      
     </div>
   `
 })
@@ -190,35 +197,6 @@ export class ProgramDetailComponent implements OnInit {
   availableExercises = signal<Exercise[]>([]);
   isLoading = signal<boolean>(true);
   showAddDay = signal<boolean>(false);
-
-  expectedWeeklyVolume = computed(() => {
-    const allExercises = this.availableExercises();
-    const currentDays = this.days();
-    
-    if (allExercises.length === 0 || currentDays.length === 0) return [];
-    
-    const volumeMap = new Map<string, number>();
-    
-    for (const day of currentDays) {
-      for (const dayEx of day.exercises) {
-        if (!dayEx.sets) continue; 
-        
-        const catalogEx = allExercises.find(e => e.id === dayEx.exerciseId);
-        if (catalogEx && catalogEx.targets) {
-          for (const target of catalogEx.targets) {
-            const bodyPart = target.bodyPart;
-            const volume = dayEx.sets * target.targetValue;
-            volumeMap.set(bodyPart, (volumeMap.get(bodyPart) || 0) + volume);
-          }
-        }
-      }
-    }
-    
-    return Array.from(volumeMap.entries()).map(([bodyPart, sets]) => ({
-      bodyPart,
-      sets
-    })).sort((a, b) => b.sets - a.sets);
-  });
 
   dayForm: FormGroup = this.fb.group({
     dayName: ['', Validators.required]
@@ -242,6 +220,61 @@ export class ProgramDetailComponent implements OnInit {
     durationMinutes: [null],
     incline: [null],
     resistance: [null]
+  });
+
+  private exerciseFormValue = toSignal(this.exerciseForm.valueChanges, { initialValue: this.exerciseForm.value });
+
+  expectedWeeklyVolume = computed(() => {
+    const allExercises = this.availableExercises();
+    const currentDays = this.days();
+    const formValue = this.exerciseFormValue();
+    const addingExId = this.addingExerciseToDayId();
+    const selectedEx = this.selectedExercise();
+    
+    if (allExercises.length === 0 || currentDays.length === 0) return [];
+    
+    const baseVolumeMap = new Map<string, number>();
+    const projectedVolumeMap = new Map<string, number>();
+    
+    // Base volume from existing days
+    for (const day of currentDays) {
+      for (const dayEx of day.exercises) {
+        if (!dayEx.sets) continue; 
+        
+        const catalogEx = allExercises.find(e => e.id === dayEx.exerciseId);
+        if (catalogEx && catalogEx.targets) {
+          for (const target of catalogEx.targets) {
+            const bodyPart = target.bodyPart;
+            const volume = dayEx.sets * target.targetValue;
+            baseVolumeMap.set(bodyPart, (baseVolumeMap.get(bodyPart) || 0) + volume);
+          }
+        }
+      }
+    }
+
+    // Projected volume from form
+    if (addingExId && selectedEx && formValue && formValue.sets) {
+      if (selectedEx.targets) {
+        for (const target of selectedEx.targets) {
+           const bodyPart = target.bodyPart;
+           const volume = formValue.sets * target.targetValue;
+           projectedVolumeMap.set(bodyPart, (projectedVolumeMap.get(bodyPart) || 0) + volume);
+        }
+      }
+    }
+    
+    // Combine base and projected keys
+    const allBodyParts = new Set([...baseVolumeMap.keys(), ...projectedVolumeMap.keys()]);
+    
+    return Array.from(allBodyParts).map(bodyPart => {
+      const baseSets = baseVolumeMap.get(bodyPart) || 0;
+      const projectedSets = projectedVolumeMap.get(bodyPart) || 0;
+      return {
+        bodyPart,
+        sets: baseSets + projectedSets,
+        projected: projectedSets > 0 ? projectedSets : undefined
+      };
+    }).sort((a, b) => b.sets - a.sets);
   });
 
   ngOnInit() {
