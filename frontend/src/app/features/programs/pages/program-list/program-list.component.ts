@@ -6,10 +6,9 @@ import { ProgramService } from '../../services/program.service';
 import { TrainingProgram } from '../../../../core/types/training.types';
 
 @Component({
-  selector: 'app-program-list',
-  standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-program-list',
+    imports: [CommonModule, RouterModule, ReactiveFormsModule],
+    template: `
     <div class="max-w-7xl mx-auto space-y-6">
       
       <!-- Header -->

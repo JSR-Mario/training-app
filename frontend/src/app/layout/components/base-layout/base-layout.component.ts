@@ -3,10 +3,9 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
-  selector: 'app-base-layout',
-  standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
-  template: `
+    selector: 'app-base-layout',
+    imports: [RouterOutlet, RouterLink, RouterLinkActive],
+    template: `
     <div class="h-screen w-screen bg-gray-900 flex flex-col md:flex-row overflow-hidden">
       <!-- Desktop Sidebar -->
       <aside class="hidden md:flex flex-col w-64 glass border-r border-gray-700/50">

@@ -10,10 +10,9 @@ import {
 } from '../../../../core/types/training.types';
 
 @Component({
-  selector: 'app-workout-summary',
-  standalone: true,
-  imports: [CommonModule, RouterModule],
-  template: `
+    selector: 'app-workout-summary',
+    imports: [CommonModule, RouterModule],
+    template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-8 pb-24 text-center">
       
       <div *ngIf="isLoading()" class="py-12">
@@ -83,7 +82,7 @@ import {
 
     </div>
   `,
-  styles: [`
+    styles: [`
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }

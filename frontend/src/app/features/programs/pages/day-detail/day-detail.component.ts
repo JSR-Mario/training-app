@@ -9,10 +9,9 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
 import { forkJoin } from 'rxjs';
 
 @Component({
-  selector: 'app-day-detail',
-  standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
-  template: `
+    selector: 'app-day-detail',
+    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
+    template: `
     <div class="max-w-7xl mx-auto space-y-6 pb-24">
       
       <!-- Header -->

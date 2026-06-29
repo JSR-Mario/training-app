@@ -13,10 +13,9 @@ import {
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 
 @Component({
-  selector: 'app-active-workout',
-  standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
-  template: `
+    selector: 'app-active-workout',
+    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
+    template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-32">
       
       <!-- Header -->

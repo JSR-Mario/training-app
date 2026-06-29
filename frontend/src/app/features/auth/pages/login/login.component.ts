@@ -5,10 +5,9 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-login',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <div class="min-h-screen flex items-center justify-center bg-gray-900 relative overflow-hidden">
       <!-- Decorative background elements -->
       <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600/20 rounded-full blur-3xl"></div>

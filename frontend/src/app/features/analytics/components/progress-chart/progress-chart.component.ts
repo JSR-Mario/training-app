@@ -10,11 +10,10 @@ import { Exercise } from '../../../../core/types/training.types';
 import { finalize } from 'rxjs';
 
 @Component({
-  selector: 'app-progress-chart',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, BaseChartDirective, ExerciseSearchComponent],
-  templateUrl: './progress-chart.component.html',
-  styles: ``
+    selector: 'app-progress-chart',
+    imports: [CommonModule, ReactiveFormsModule, BaseChartDirective, ExerciseSearchComponent],
+    templateUrl: './progress-chart.component.html',
+    styles: ``
 })
 export class ProgressChartComponent implements OnInit {
   private analyticsService = inject(AnalyticsService);

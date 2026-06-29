@@ -16,10 +16,9 @@ export interface ExerciseFormData {
 }
 
 @Component({
-  selector: 'app-exercise-form',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-exercise-form',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <div class="glass-card p-6 w-full max-w-2xl mx-auto">
       <h2 class="text-2xl font-bold mb-6 text-white">{{ exercise ? 'Edit Exercise' : 'New Exercise' }}</h2>
       

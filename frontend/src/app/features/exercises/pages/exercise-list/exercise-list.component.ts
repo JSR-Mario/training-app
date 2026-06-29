@@ -5,10 +5,9 @@ import { Exercise } from '../../../../core/types/training.types';
 import { ExerciseFormComponent } from '../../components/exercise-form/exercise-form.component';
 
 @Component({
-  selector: 'app-exercise-list',
-  standalone: true,
-  imports: [CommonModule, ExerciseFormComponent],
-  template: `
+    selector: 'app-exercise-list',
+    imports: [CommonModule, ExerciseFormComponent],
+    template: `
     <div class="max-w-7xl mx-auto space-y-6">
       
       <!-- Header -->

@@ -6,10 +6,9 @@ import { ExerciseService } from '../../services/exercise.service';
 import { debounceTime } from 'rxjs';
 
 @Component({
-  selector: 'app-exercise-search',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-exercise-search',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
       <form [formGroup]="searchForm" class="space-y-4">
         <!-- Text Search -->
@@ -130,7 +129,7 @@ import { debounceTime } from 'rxjs';
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
     }

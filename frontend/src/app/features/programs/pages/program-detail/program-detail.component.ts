@@ -9,10 +9,9 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
 import { ExerciseService } from '../../../exercises/services/exercise.service';
 
 @Component({
-  selector: 'app-program-detail',
-  standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
-  template: `
+    selector: 'app-program-detail',
+    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
+    template: `
     <div class="max-w-7xl mx-auto space-y-6">
       
       <!-- Back Link & Header -->

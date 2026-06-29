@@ -1,4 +1,4 @@
-import { ApplicationConfig, isDevMode, APP_INITIALIZER } from '@angular/core';
+import { ApplicationConfig, isDevMode, inject, provideAppInitializer } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
@@ -26,12 +26,10 @@ export const appConfig: ApplicationConfig = {
       jwtInterceptor,
       authErrorInterceptor
     ])),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeAuth,
-      deps: [AuthService],
-      multi: true
-    },
+    provideAppInitializer(() => {
+        const initializerFn = (initializeAuth)(inject(AuthService));
+        return initializerFn();
+      }),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       // Disable caching for data APIs by making registration strategy manual or caching none.

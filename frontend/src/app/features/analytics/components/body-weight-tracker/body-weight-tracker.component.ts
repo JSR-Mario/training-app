@@ -9,11 +9,10 @@ import { finalize } from 'rxjs';
 type TimeRange = '1M' | '3M' | '6M' | '1Y' | 'ALL';
 
 @Component({
-  selector: 'app-body-weight-tracker',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, BaseChartDirective],
-  templateUrl: './body-weight-tracker.component.html',
-  styles: ``
+    selector: 'app-body-weight-tracker',
+    imports: [CommonModule, ReactiveFormsModule, BaseChartDirective],
+    templateUrl: './body-weight-tracker.component.html',
+    styles: ``
 })
 export class BodyWeightTrackerComponent implements OnInit {
   private bodyWeightService = inject(BodyWeightService);

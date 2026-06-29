@@ -7,10 +7,9 @@ import { ProgramService } from '../../../programs/services/program.service';
 import { TrainingProgram, WorkoutSessionResponse } from '../../../../core/types/training.types';
 
 @Component({
-  selector: 'app-workout-dashboard',
-  standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
-  template: `
+    selector: 'app-workout-dashboard',
+    imports: [CommonModule, RouterModule, FormsModule],
+    template: `
     <div class="max-w-7xl mx-auto space-y-6 pb-24">
       
       <!-- Header -->
