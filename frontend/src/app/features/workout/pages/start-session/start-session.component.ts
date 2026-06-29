@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { WorkoutService } from '../../services/workout.service';
@@ -8,79 +8,78 @@ import { TrainingProgram, DayTemplate } from '../../../../core/types/training.ty
 import { forkJoin } from 'rxjs';
 
 @Component({
-  selector: 'app-start-session',
-  standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-start-session',
+    imports: [RouterModule, ReactiveFormsModule],
+    template: `
     <div class="max-w-xl mx-auto space-y-6 pt-8 pb-24">
-      
+    
       <!-- Header -->
       <div class="text-center">
         <h1 class="text-3xl font-bold text-white">Start Session</h1>
         <p class="text-gray-400 mt-1">Select the workout you want to log today</p>
       </div>
-
+    
       <!-- Loading State -->
-      <div *ngIf="isLoading()" class="text-center py-12">
-        <div class="animate-pulse flex flex-col items-center">
-          <div class="h-8 w-8 bg-blue-500 rounded-full mb-4"></div>
-          <p class="text-gray-400">Loading program details...</p>
+      @if (isLoading()) {
+        <div class="text-center py-12">
+          <div class="animate-pulse flex flex-col items-center">
+            <div class="h-8 w-8 bg-blue-500 rounded-full mb-4"></div>
+            <p class="text-gray-400">Loading program details...</p>
+          </div>
         </div>
-      </div>
-
+      }
+    
       <!-- Form -->
-      <div *ngIf="!isLoading()" class="glass-card p-6">
-        
-        <div class="mb-6">
-          <h2 class="text-xl font-semibold text-white mb-1">Program Details</h2>
-          <p class="text-gray-400 text-sm">Program: <span class="text-gray-200">{{ program()?.name }}</span></p>
-          <p class="text-gray-400 text-sm">Logging for Week: <span class="text-gray-200 font-bold">{{ targetWeekNumber() }}</span></p>
-        </div>
-
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
-          
-          <div>
-            <label for="dayTemplateId" class="block text-sm font-medium text-gray-300 mb-1">Select Workout</label>
-            <select 
-              id="dayTemplateId"
-              formControlName="dayTemplateId"
-              class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white appearance-none"
-            >
-              <option value="" disabled>Choose a day to train</option>
-              <option *ngFor="let day of days()" [value]="day.id">
-                {{ day.name }} ({{ day.exercises?.length || 0 }} exercises)
-              </option>
-            </select>
+      @if (!isLoading()) {
+        <div class="glass-card p-6">
+          <div class="mb-6">
+            <h2 class="text-xl font-semibold text-white mb-1">Program Details</h2>
+            <p class="text-gray-400 text-sm">Program: <span class="text-gray-200">{{ program()?.name }}</span></p>
+            <p class="text-gray-400 text-sm">Logging for Week: <span class="text-gray-200 font-bold">{{ targetWeekNumber() }}</span></p>
           </div>
-
-          <div>
-            <label for="performedOn" class="block text-sm font-medium text-gray-300 mb-1">Date</label>
-            <input 
-              id="performedOn"
-              type="date" 
-              formControlName="performedOn"
-              class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
-            >
-          </div>
-
-          <div class="pt-6">
-            <button 
-              type="submit" 
-              [disabled]="form.invalid || isSubmitting()"
-              class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-lg rounded-xl shadow-lg disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-95"
-            >
-              {{ isSubmitting() ? 'Starting...' : 'Let\\'s Go!' }}
-            </button>
-            <div class="text-center mt-4">
-              <a routerLink="/workout" class="text-gray-400 hover:text-white text-sm transition-colors">Cancel</a>
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+            <div>
+              <label for="dayTemplateId" class="block text-sm font-medium text-gray-300 mb-1">Select Workout</label>
+              <select
+                id="dayTemplateId"
+                formControlName="dayTemplateId"
+                class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white appearance-none"
+                >
+                <option value="" disabled>Choose a day to train</option>
+                @for (day of days(); track day) {
+                  <option [value]="day.id">
+                    {{ day.name }} ({{ day.exercises?.length || 0 }} exercises)
+                  </option>
+                }
+              </select>
             </div>
-          </div>
-
-        </form>
-      </div>
-
+            <div>
+              <label for="performedOn" class="block text-sm font-medium text-gray-300 mb-1">Date</label>
+              <input
+                id="performedOn"
+                type="date"
+                formControlName="performedOn"
+                class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                >
+            </div>
+            <div class="pt-6">
+              <button
+                type="submit"
+                [disabled]="form.invalid || isSubmitting()"
+                class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-lg rounded-xl shadow-lg disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-95"
+                >
+                {{ isSubmitting() ? 'Starting...' : 'Let\\'s Go!' }}
+              </button>
+              <div class="text-center mt-4">
+                <a routerLink="/workout" class="text-gray-400 hover:text-white text-sm transition-colors">Cancel</a>
+              </div>
+            </div>
+          </form>
+        </div>
+      }
+    
     </div>
-  `
+    `
 })
 export class StartSessionComponent implements OnInit {
   private route = inject(ActivatedRoute);

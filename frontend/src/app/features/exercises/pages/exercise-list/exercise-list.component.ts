@@ -1,272 +1,140 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, OnInit, signal, inject } from '@angular/core';
+
 import { ExerciseService } from '../../services/exercise.service';
-import { Exercise, getBodyPartPath, BODY_PARTS_HIERARCHY, BodyPart } from '../../../../core/types/training.types';
+import { Exercise } from '../../../../core/types/training.types';
 import { ExerciseFormComponent } from '../../components/exercise-form/exercise-form.component';
 
 @Component({
-  selector: 'app-exercise-list',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ExerciseFormComponent],
-  template: `
+    selector: 'app-exercise-list',
+    imports: [ExerciseFormComponent],
+    template: `
     <div class="max-w-7xl mx-auto space-y-6">
-      
+    
       <!-- Header -->
-      <div class="flex justify-between items-center" *ngIf="!showForm()">
-        <div>
-          <h1 class="text-3xl font-bold text-white">Exercises</h1>
-          <p class="text-gray-400 mt-1">Manage your exercise catalog and volume targets</p>
-        </div>
-        <button 
-          (click)="openForm()"
-          class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
-        >
-          + Add Exercise
-        </button>
-      </div>
-
-      <div *ngIf="showForm()">
-        <app-exercise-form 
-          [exercise]="selectedExercise()" 
-          (saveExercise)="onSaveExercise($event)" 
-          (cancelForm)="closeForm()"
-        ></app-exercise-form>
-      </div>
-
-      <!-- Loading State -->
-      <div *ngIf="isLoading() && !showForm()" class="text-center py-12">
-        <p class="text-gray-400">Loading exercises...</p>
-      </div>
-
-      <!-- Filters & List View -->
-      <div *ngIf="!isLoading() && !showForm()" class="space-y-6">
-        
-        <!-- Search and Filters -->
-        <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-lg">
-          <form [formGroup]="filterForm" class="space-y-4">
-            <!-- Text Search -->
-            <div class="relative">
-              <input 
-                type="text" 
-                formControlName="query"
-                placeholder="Search exercise by name..."
-                class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white pl-11 shadow-inner"
-              >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-4 top-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            
-            <!-- Filter dropdowns -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <select formControlName="type" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
-                  <option value="">All Types</option>
-                  <option value="STRENGTH">Strength</option>
-                  <option value="CARDIO">Cardio</option>
-                </select>
-              </div>
-              <div *ngIf="filterForm.get('type')?.value !== 'CARDIO'">
-                <select formControlName="category" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
-                  <option value="">All Regions</option>
-                  <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
-                </select>
-              </div>
-              <div *ngIf="filterForm.get('type')?.value !== 'CARDIO'">
-                <select formControlName="group" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
-                  <option value="">All Muscle Groups</option>
-                  <option *ngFor="let grp of availableGroups()" [value]="grp">{{ grp }}</option>
-                </select>
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <!-- No Results -->
-        <div *ngIf="groupedExercises().length === 0" class="text-center py-12 glass-card">
-          <p class="text-gray-400 text-lg">No exercises match your search filters.</p>
-        </div>
-
-        <!-- Grouped Sections -->
-        <div class="space-y-4">
-          <div *ngFor="let group of groupedExercises()" class="glass-card overflow-hidden">
-            <!-- Section Header -->
-            <button 
-              (click)="toggleGroup(group.groupName)"
-              class="w-full flex justify-between items-center p-5 bg-gray-800/80 hover:bg-gray-800 transition-colors cursor-pointer border-b border-gray-700"
+      @if (!showForm()) {
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-white">Exercises</h1>
+            <p class="text-gray-400 mt-1">Manage your exercise catalog and volume targets</p>
+          </div>
+          <button
+            (click)="openForm()"
+            class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
             >
-              <h2 class="text-xl font-bold text-white flex items-center gap-3 tracking-wide">
-                {{ group.groupName }}
-                <span class="text-xs bg-gray-700 text-blue-300 py-1 px-2.5 rounded-full font-medium">{{ group.exercises.length }}</span>
-              </h2>
-              <span class="text-gray-400 transition-transform duration-300" [class.rotate-180]="expandedGroups().has(group.groupName)">▼</span>
-            </button>
-            
-            <!-- Section Content (Grid) -->
-            <div *ngIf="expandedGroups().has(group.groupName)" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-gray-900/30">
-              
-              <!-- Exercise Card -->
-              <div *ngFor="let exercise of group.exercises" class="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col h-full hover:border-blue-500/50 transition-colors shadow-lg">
-                <div class="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 class="text-lg font-bold text-white">{{ exercise.name }}</h3>
-                    <div class="flex flex-wrap gap-2 mt-2">
-                      <span *ngIf="exercise.equipmentBrand" class="px-2 py-0.5 text-[10px] bg-slate-700/60 text-slate-300 rounded border border-slate-600/50">
+            + Add Exercise
+          </button>
+        </div>
+      }
+    
+      @if (showForm()) {
+        <div>
+          <app-exercise-form
+            [exercise]="selectedExercise()"
+            (saveExercise)="onSaveExercise($event)"
+            (cancelForm)="closeForm()"
+          ></app-exercise-form>
+        </div>
+      }
+    
+      <!-- Loading State -->
+      @if (isLoading() && !showForm()) {
+        <div class="text-center py-12">
+          <p class="text-gray-400">Loading exercises...</p>
+        </div>
+      }
+    
+      <!-- List View -->
+      @if (!isLoading() && !showForm()) {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @if (exercises().length === 0) {
+            <div class="col-span-full text-center py-12 glass-card">
+              <p class="text-gray-400">No exercises found. Add your first exercise!</p>
+            </div>
+          }
+          @for (exercise of exercises(); track exercise) {
+            <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="text-xl font-bold text-white">{{ exercise.name }}</h3>
+                  <div class="flex flex-wrap gap-2 mt-1.5">
+                    @if (exercise.equipmentBrand) {
+                      <span
+                        class="px-2 py-0.5 text-xs bg-slate-700/60 text-slate-300 rounded-md border border-slate-600/50"
+                        >
                         {{ exercise.equipmentBrand }}
                       </span>
-                      <span *ngIf="exercise.unilateral" class="px-2 py-0.5 text-[10px] font-semibold bg-amber-500/20 text-amber-400 rounded border border-amber-500/30">
+                    }
+                    @if (exercise.unilateral) {
+                      <span
+                        class="px-2 py-0.5 text-xs font-semibold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30"
+                        >
                         UNILATERAL
                       </span>
-                      <span *ngIf="exercise.spinalLoading" class="px-2 py-0.5 text-[10px] font-semibold bg-orange-500/20 text-orange-400 rounded border border-orange-500/30">
-                        SPINAL LOADING
+                    }
+                    @if (exercise.unilateral === false) {
+                      <span
+                        class="px-2 py-0.5 text-xs bg-sky-500/15 text-sky-400 rounded-md border border-sky-500/30"
+                        >
+                        BILATERAL
                       </span>
-                      <span *ngIf="exercise.isPublic" class="px-2 py-0.5 text-[10px] font-semibold bg-purple-500/20 text-purple-400 rounded border border-purple-500/30">
+                    }
+                    @if (exercise.isPublic) {
+                      <span
+                        class="px-2 py-0.5 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30"
+                        >
                         PUBLIC
                       </span>
-                    </div>
-                  </div>
-                  <div class="flex flex-col gap-1 items-end shrink-0">
-                    <button (click)="editExercise(exercise)" class="text-blue-400 hover:text-blue-300 transition-colors text-[10px] uppercase font-bold tracking-wider py-1 px-2 bg-blue-500/10 rounded">Edit</button>
-                    <button (click)="deleteExercise(exercise.id)" class="text-red-400 hover:text-red-300 transition-colors text-[10px] uppercase font-bold tracking-wider py-1 px-2 bg-red-500/10 rounded mt-1">Delete</button>
+                    }
                   </div>
                 </div>
-                
-                <div class="flex-1 mt-2">
-                  <h4 class="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-2">Targets</h4>
-                  <div *ngIf="exercise.targets.length === 0" class="text-xs text-gray-600 italic">No targets set</div>
-                  <div class="flex flex-wrap gap-1.5">
-                    <span *ngFor="let target of exercise.targets" class="px-2 py-1 bg-gray-900 border border-gray-700 rounded text-[10px] font-medium text-gray-300 shadow-sm">
-                      {{ target.bodyPart }} ({{ target.targetValue }})
-                    </span>
-                  </div>
+                <div class="flex gap-2">
+                  <button
+                    (click)="editExercise(exercise)"
+                    class="text-blue-400 hover:text-blue-300 transition-colors text-sm"
+                    >
+                    Edit
+                  </button>
+                  <button
+                    (click)="deleteExercise(exercise.id)"
+                    class="text-red-400 hover:text-red-300 transition-colors text-sm"
+                    >
+                    Delete
+                  </button>
                 </div>
               </div>
-              
+              <div class="flex-1">
+                <h4 class="text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">Targets</h4>
+                @if (exercise.targets.length === 0) {
+                  <div class="text-sm text-gray-600 italic">
+                    No targets set
+                  </div>
+                }
+                <div class="flex flex-wrap gap-2">
+                  @for (target of exercise.targets; track target) {
+                    <span
+                      class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300"
+                      >
+                      {{ target.bodyPart }} ({{ target.targetValue }})
+                    </span>
+                  }
+                </div>
+              </div>
             </div>
-          </div>
+          }
         </div>
-
-      </div>
-
+      }
+    
     </div>
-  `
+    `
 })
 export class ExerciseListComponent implements OnInit {
   private exerciseService = inject(ExerciseService);
-  private fb = inject(FormBuilder);
 
   exercises = signal<Exercise[]>([]);
   isLoading = signal<boolean>(true);
   
   showForm = signal<boolean>(false);
   selectedExercise = signal<Exercise | null>(null);
-
-  filterForm = this.fb.group({
-    query: [''],
-    type: [''],
-    category: [''],
-    group: ['']
-  });
-
-  private filterValues = toSignal(this.filterForm.valueChanges, { initialValue: this.filterForm.value });
-
-  expandedGroups = signal<Set<string>>(new Set());
-
-  toggleGroup(group: string) {
-    const current = new Set(this.expandedGroups());
-    if (current.has(group)) {
-      current.delete(group);
-    } else {
-      current.add(group);
-    }
-    this.expandedGroups.set(current);
-  }
-
-  categories = Object.keys(BODY_PARTS_HIERARCHY);
-
-  availableGroups = computed(() => {
-    const filters = this.filterValues();
-    if (!filters?.category) {
-      return Object.values(BODY_PARTS_HIERARCHY).flatMap(cat => Object.keys(cat));
-    }
-    const categoryData = BODY_PARTS_HIERARCHY[filters.category as keyof typeof BODY_PARTS_HIERARCHY];
-    return categoryData ? Object.keys(categoryData) : [];
-  });
-
-  filteredExercises = computed(() => {
-    const all = this.exercises();
-    const filters = this.filterValues();
-    if (!filters) return all;
-
-    const query = filters.query?.toLowerCase() || '';
-    const type = filters.type;
-    const category = filters.category;
-    const groupFilter = filters.group;
-
-    return all.filter(ex => {
-      if (query && !ex.name.toLowerCase().includes(query)) return false;
-      if (type && ex.type !== type) return false;
-      
-      if (ex.type === 'CARDIO') {
-        if (category || groupFilter) return false;
-        return true;
-      }
-
-      if (category || groupFilter) {
-        if (!ex.targets || ex.targets.length === 0) return false;
-        
-        const matchesTarget = ex.targets.some(t => {
-          const path = getBodyPartPath(t.bodyPart as BodyPart);
-          if (!path) return false;
-          if (category && path.category !== category) return false;
-          if (groupFilter && path.group !== groupFilter) return false;
-          return true;
-        });
-        if (!matchesTarget) return false;
-      }
-
-      return true;
-    });
-  });
-
-  groupedExercises = computed(() => {
-    const filtered = this.filteredExercises();
-    const map = new Map<string, Exercise[]>();
-    
-    for (const ex of filtered) {
-      let groupName = 'Uncategorized';
-      if (ex.type === 'CARDIO') {
-        groupName = 'Cardio';
-      } else if (ex.targets && ex.targets.length > 0) {
-        // Use the first target as primary
-        const primaryTarget = ex.targets[0];
-        const path = getBodyPartPath(primaryTarget.bodyPart as BodyPart);
-        if (path) {
-          groupName = path.group;
-        }
-      }
-
-      if (!map.has(groupName)) {
-        map.set(groupName, []);
-      }
-      map.get(groupName)!.push(ex);
-    }
-
-    const sortedKeys = Array.from(map.keys()).sort((a, b) => {
-      if (a === 'Uncategorized') return 1;
-      if (b === 'Uncategorized') return -1;
-      if (a === 'Cardio') return 1;
-      if (b === 'Cardio') return -1;
-      return a.localeCompare(b);
-    });
-
-    return sortedKeys.map(key => ({
-      groupName: key,
-      exercises: map.get(key)!
-    }));
-  });
 
   ngOnInit() {
     this.loadExercises();

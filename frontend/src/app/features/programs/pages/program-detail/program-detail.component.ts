@@ -1,5 +1,4 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -10,203 +9,195 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
 import { ExerciseService } from '../../../exercises/services/exercise.service';
 
 @Component({
-  selector: 'app-program-detail',
-  standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
-  template: `
+    selector: 'app-program-detail',
+    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
+    template: `
     <div class="max-w-7xl mx-auto space-y-6">
-      
+    
       <!-- Back Link & Header -->
       <div>
         <a routerLink="/programs" class="text-blue-400 hover:text-blue-300 text-sm mb-4 inline-block">&larr; Back to Programs</a>
-        
-        <div *ngIf="isLoading()" class="text-gray-400">Loading program details...</div>
-        
-        <div *ngIf="!isLoading() && program()" class="flex justify-between items-end border-b border-gray-800 pb-4">
-          <div>
-            <h1 class="text-3xl font-bold text-white">{{ program()?.name }}</h1>
-            <p class="text-gray-400 mt-1">This template repeats for {{ program()?.durationWeeks }} weeks</p>
-          </div>
-          <button 
-            *ngIf="weekTemplateId()"
-            (click)="openAddDay()"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg"
-          >
-            + Add Day
-          </button>
-        </div>
-      </div>
-
-      <div *ngIf="!isLoading() && program()" class="space-y-6">
-        <!-- Add Day Form -->
-        <div *ngIf="showAddDay()" class="bg-gray-800/50 p-4 rounded-xl border border-gray-700">
-          <form [formGroup]="dayForm" (ngSubmit)="onSubmitDay()" class="flex gap-3">
-            <input 
-              type="text" 
-              formControlName="dayName"
-              placeholder="e.g., Push Day"
-              class="flex-1 px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm"
-            >
-            <button 
-              type="button" 
-              (click)="showAddDay.set(false)"
-              class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit"
-              [disabled]="dayForm.invalid"
-              class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors"
-            >
-              Save
-            </button>
-          </form>
-        </div>
-
-        <!-- Days Grid -->
-        <div *ngIf="days().length === 0 && !showAddDay()" class="text-center py-12 glass-card border border-dashed border-gray-700">
-          <p class="text-gray-400">No days configured for this program.</p>
-          <button (click)="openAddDay()" class="mt-4 text-blue-400 hover:text-blue-300 text-sm">Add your first day</button>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div *ngFor="let day of days()" class="glass-card p-5 group flex flex-col hover:border-gray-600 transition-all cursor-pointer" [routerLink]="['/programs', program()?.id, 'days', day.id]">
-            <div class="flex justify-between items-start mb-4">
-              <h3 class="text-xl font-bold text-gray-200 group-hover:text-blue-400 transition-colors">{{ day.name }}</h3>
-              <button 
-                (click)="deleteDay(day.id, $event)"
-                class="text-red-400 hover:text-red-300 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Delete Day"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
+    
+        @if (isLoading()) {
+          <div class="text-gray-400">Loading program details...</div>
+        }
+    
+        @if (!isLoading() && program()) {
+          <div class="flex justify-between items-end border-b border-gray-800 pb-4">
+            <div>
+              <h1 class="text-3xl font-bold text-white">{{ program()?.name }}</h1>
+              <p class="text-gray-400 mt-1">This template repeats for {{ program()?.durationWeeks }} weeks</p>
+            </div>
+            @if (weekTemplateId()) {
+              <button
+                (click)="openAddDay()"
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg"
+                >
+                + Add Day
               </button>
-            </div>
-            <div class="text-sm text-gray-400 flex-1">
-              <p *ngIf="day.exercises && day.exercises.length > 0">{{ day.exercises.length }} exercises</p>
-              <p *ngIf="!day.exercises || day.exercises.length === 0" class="italic">No exercises</p>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-800 flex justify-between items-center text-sm font-medium">
-              <span class="text-blue-400 group-hover:text-blue-300">Edit Exercises &rarr;</span>
-              <button 
-                (click)="openQuickAdd(day.id, $event)"
-                class="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-lg transition-colors z-10"
-              >
-                + Quick Add
-              </button>
-            </div>
+            }
           </div>
-        </div>
-        
-        <!-- Main Expected Weekly Volume Table -->
-        <div *ngIf="expectedWeeklyVolume().length > 0" class="glass-card p-6 mt-8">
-          <h2 class="text-xl font-bold text-white mb-4">Expected Weekly Volume</h2>
-          <div class="overflow-hidden rounded-xl border border-gray-800">
-            <table class="min-w-full divide-y divide-gray-800">
-              <thead class="bg-gray-900/50">
-                <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Body Part</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sets per Week</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-800 bg-gray-800/20">
-                <tr *ngFor="let vol of expectedWeeklyVolume()">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{{ vol.bodyPart }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400 font-bold">
-                    {{ vol.sets | number:'1.0-1' }}
-                    <span *ngIf="vol.projected" class="text-xs text-green-400 ml-2">(+{{ vol.projected | number:'1.0-1' }})</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
+        }
       </div>
+    
+      @if (!isLoading() && program()) {
+        <div class="space-y-6">
+          <!-- Add Day Form -->
+          @if (showAddDay()) {
+            <div class="bg-gray-800/50 p-4 rounded-xl border border-gray-700">
+              <form [formGroup]="dayForm" (ngSubmit)="onSubmitDay()" class="flex gap-3">
+                <input
+                  type="text"
+                  formControlName="dayName"
+                  placeholder="e.g., Push Day"
+                  class="flex-1 px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm"
+                  >
+                <button
+                  type="button"
+                  (click)="showAddDay.set(false)"
+                  class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm"
+                  >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  [disabled]="dayForm.invalid"
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors"
+                  >
+                  Save
+                </button>
+              </form>
+            </div>
+          }
+          <!-- Days Grid -->
+          @if (days().length === 0 && !showAddDay()) {
+            <div class="text-center py-12 glass-card border border-dashed border-gray-700">
+              <p class="text-gray-400">No days configured for this program.</p>
+              <button (click)="openAddDay()" class="mt-4 text-blue-400 hover:text-blue-300 text-sm">Add your first day</button>
+            </div>
+          }
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @for (day of days(); track day) {
+              <div class="glass-card p-5 group flex flex-col hover:border-gray-600 transition-all cursor-pointer" [routerLink]="['/programs', program()?.id, 'days', day.id]">
+                <div class="flex justify-between items-start mb-4">
+                  <h3 class="text-xl font-bold text-gray-200 group-hover:text-blue-400 transition-colors">{{ day.name }}</h3>
+                  <button
+                    (click)="deleteDay(day.id, $event)"
+                    class="text-red-400 hover:text-red-300 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Delete Day"
+                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="text-sm text-gray-400 flex-1">
+                  @if (day.exercises && day.exercises.length > 0) {
+                    <p>{{ day.exercises.length }} exercises</p>
+                  }
+                  @if (!day.exercises || day.exercises.length === 0) {
+                    <p class="italic">No exercises</p>
+                  }
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-800 flex justify-between items-center text-sm font-medium">
+                  <span class="text-blue-400 group-hover:text-blue-300">Edit Exercises &rarr;</span>
+                  <button
+                    (click)="openQuickAdd(day.id, $event)"
+                    class="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-lg transition-colors z-10"
+                    >
+                    + Quick Add
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
     </div>
-
+    
     <!-- Quick Add Modal -->
-    <div *ngIf="addingExerciseToDayId()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div class="flex flex-col w-full max-w-2xl max-h-[90vh] overflow-y-auto gap-6 pb-8">
-        
-        <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full p-6 shadow-2xl relative shrink-0">
+    @if (addingExerciseToDayId()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
           <button (click)="cancelQuickAdd()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
-
           <h2 class="text-2xl font-bold text-white mb-6">Quick Add Exercise</h2>
-
-          <app-exercise-search *ngIf="!selectedExercise()" [excludeIds]="getExistingExerciseIds()" (select)="onExerciseSelected($event)"></app-exercise-search>
-
-          <form *ngIf="selectedExercise()" [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4 mt-4">
-            <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
-              Selected: {{ selectedExercise()?.name }}
-              <span *ngIf="selectedExercise()?.type === 'CARDIO'" class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
-            </div>
-            
-            <div class="flex gap-4" *ngIf="selectedExercise()?.type !== 'CARDIO'">
-              <div class="flex-1">
-                <label for="qa-sets" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
-                <input id="qa-sets" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+          @if (!selectedExercise()) {
+            <app-exercise-search [excludeIds]="getExistingExerciseIds()" (exerciseSelected)="onExerciseSelected($event)"></app-exercise-search>
+          }
+          @if (selectedExercise()) {
+            <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4 mt-4">
+              <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
+                Selected: {{ selectedExercise()?.name }}
+                @if (selectedExercise()?.type === 'CARDIO') {
+                  <span class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
+                }
               </div>
-              <div class="flex-1">
-                <label for="qa-reps" class="block text-sm font-medium text-gray-300 mb-1">Min Reps</label>
-                <input id="qa-reps" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+              @if (selectedExercise()?.type !== 'CARDIO') {
+                <div class="flex gap-4">
+                  <div class="flex-1">
+                    <label for="qa-sets" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
+                    <input id="qa-sets" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                  </div>
+                  <div class="flex-1">
+                    <label for="qa-reps" class="block text-sm font-medium text-gray-300 mb-1">Min Reps</label>
+                    <input id="qa-reps" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                  </div>
+                  <div class="flex-1">
+                    <label for="qa-repsMax" class="block text-sm font-medium text-gray-300 mb-1">Max Reps</label>
+                    <input id="qa-repsMax" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                  </div>
+                </div>
+              }
+              @if (selectedExercise()?.type === 'CARDIO') {
+                <div class="flex gap-4">
+                  <div class="flex-1">
+                    <label for="qa-duration" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
+                    <input id="qa-duration" type="number" formControlName="durationMinutes" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+                  </div>
+                  <div class="flex-1">
+                    <label for="qa-incline" class="block text-sm font-medium text-gray-300 mb-1">Incline</label>
+                    <input id="qa-incline" type="number" formControlName="incline" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+                  </div>
+                  <div class="flex-1">
+                    <label for="qa-resistance" class="block text-sm font-medium text-gray-300 mb-1">Resis.</label>
+                    <input id="qa-resistance" type="number" formControlName="resistance" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
+                  </div>
+                </div>
+              }
+              <div class="flex justify-end gap-3 pt-4">
+                <button type="button" (click)="cancelQuickAdd()" class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm">Cancel</button>
+                <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
               </div>
-              <div class="flex-1">
-                <label for="qa-repsMax" class="block text-sm font-medium text-gray-300 mb-1">Max Reps</label>
-                <input id="qa-repsMax" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
-              </div>
-            </div>
-
-            <div class="flex gap-4" *ngIf="selectedExercise()?.type === 'CARDIO'">
-              <div class="flex-1">
-                <label for="qa-duration" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
-                <input id="qa-duration" type="number" formControlName="durationMinutes" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-              </div>
-              <div class="flex-1">
-                <label for="qa-incline" class="block text-sm font-medium text-gray-300 mb-1">Incline</label>
-                <input id="qa-incline" type="number" formControlName="incline" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-              </div>
-              <div class="flex-1">
-                <label for="qa-resistance" class="block text-sm font-medium text-gray-300 mb-1">Resis.</label>
-                <input id="qa-resistance" type="number" formControlName="resistance" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-              </div>
-            </div>
-
-            <div class="flex justify-end gap-3 pt-4">
-              <button type="button" (click)="cancelQuickAdd()" class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm">Cancel</button>
-              <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
-            </div>
-          </form>
+            </form>
+          }
         </div>
-
         <!-- Expected Weekly Volume Table -->
-        <div *ngIf="expectedWeeklyVolume().length > 0" class="glass-card p-6 shrink-0 border border-gray-700/50">
-          <h2 class="text-xl font-bold text-white mb-4">Expected Weekly Volume</h2>
-          <div class="overflow-hidden rounded-xl border border-gray-800">
-            <table class="min-w-full divide-y divide-gray-800">
-              <thead class="bg-gray-900/50">
-                <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Body Part</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sets per Week</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-800 bg-gray-800/20">
-                <tr *ngFor="let vol of expectedWeeklyVolume()">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{{ vol.bodyPart }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400 font-bold">
-                    {{ vol.sets | number:'1.0-1' }}
-                    <span *ngIf="vol.projected" class="text-xs text-green-400 ml-2">(+{{ vol.projected | number:'1.0-1' }})</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        @if (expectedWeeklyVolume().length > 0) {
+          <div class="glass-card p-6 mt-8">
+            <h2 class="text-xl font-bold text-white mb-4">Expected Weekly Volume</h2>
+            <div class="overflow-hidden rounded-xl border border-gray-800">
+              <table class="min-w-full divide-y divide-gray-800">
+                <thead class="bg-gray-900/50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Body Part</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sets per Week</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800 bg-gray-800/20">
+                  @for (vol of expectedWeeklyVolume(); track vol) {
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{{ vol.bodyPart }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400 font-bold">{{ vol.sets | number:'1.0-1' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        }
       </div>
-    </div>
-  `
+    }
+    `
 })
 export class ProgramDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -221,6 +212,35 @@ export class ProgramDetailComponent implements OnInit {
   availableExercises = signal<Exercise[]>([]);
   isLoading = signal<boolean>(true);
   showAddDay = signal<boolean>(false);
+
+  expectedWeeklyVolume = computed(() => {
+    const allExercises = this.availableExercises();
+    const currentDays = this.days();
+    
+    if (allExercises.length === 0 || currentDays.length === 0) return [];
+    
+    const volumeMap = new Map<string, number>();
+    
+    for (const day of currentDays) {
+      for (const dayEx of day.exercises) {
+        if (!dayEx.sets) continue; 
+        
+        const catalogEx = allExercises.find(e => e.id === dayEx.exerciseId);
+        if (catalogEx && catalogEx.targets) {
+          for (const target of catalogEx.targets) {
+            const bodyPart = target.bodyPart;
+            const volume = dayEx.sets * target.targetValue;
+            volumeMap.set(bodyPart, (volumeMap.get(bodyPart) || 0) + volume);
+          }
+        }
+      }
+    }
+    
+    return Array.from(volumeMap.entries()).map(([bodyPart, sets]) => ({
+      bodyPart,
+      sets
+    })).sort((a, b) => b.sets - a.sets);
+  });
 
   dayForm: FormGroup = this.fb.group({
     dayName: ['', Validators.required]
@@ -244,61 +264,6 @@ export class ProgramDetailComponent implements OnInit {
     durationMinutes: [null],
     incline: [null],
     resistance: [null]
-  });
-
-  private exerciseFormValue = toSignal(this.exerciseForm.valueChanges, { initialValue: this.exerciseForm.value });
-
-  expectedWeeklyVolume = computed(() => {
-    const allExercises = this.availableExercises();
-    const currentDays = this.days();
-    const formValue = this.exerciseFormValue();
-    const addingExId = this.addingExerciseToDayId();
-    const selectedEx = this.selectedExercise();
-    
-    if (allExercises.length === 0 || currentDays.length === 0) return [];
-    
-    const baseVolumeMap = new Map<string, number>();
-    const projectedVolumeMap = new Map<string, number>();
-    
-    // Base volume from existing days
-    for (const day of currentDays) {
-      for (const dayEx of day.exercises) {
-        if (!dayEx.sets) continue; 
-        
-        const catalogEx = allExercises.find(e => e.id === dayEx.exerciseId);
-        if (catalogEx && catalogEx.targets) {
-          for (const target of catalogEx.targets) {
-            const bodyPart = target.bodyPart;
-            const volume = dayEx.sets * target.targetValue;
-            baseVolumeMap.set(bodyPart, (baseVolumeMap.get(bodyPart) || 0) + volume);
-          }
-        }
-      }
-    }
-
-    // Projected volume from form
-    if (addingExId && selectedEx && formValue && formValue.sets) {
-      if (selectedEx.targets) {
-        for (const target of selectedEx.targets) {
-           const bodyPart = target.bodyPart;
-           const volume = formValue.sets * target.targetValue;
-           projectedVolumeMap.set(bodyPart, (projectedVolumeMap.get(bodyPart) || 0) + volume);
-        }
-      }
-    }
-    
-    // Combine base and projected keys
-    const allBodyParts = new Set([...baseVolumeMap.keys(), ...projectedVolumeMap.keys()]);
-    
-    return Array.from(allBodyParts).map(bodyPart => {
-      const baseSets = baseVolumeMap.get(bodyPart) || 0;
-      const projectedSets = projectedVolumeMap.get(bodyPart) || 0;
-      return {
-        bodyPart,
-        sets: baseSets + projectedSets,
-        projected: projectedSets > 0 ? projectedSets : undefined
-      };
-    }).sort((a, b) => b.sets - a.sets);
   });
 
   ngOnInit() {

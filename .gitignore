@@ -61,9 +61,10 @@ desktop.ini
 # Docker overrides (personal dev overrides go here, not in VCS)
 # ============================================================
 docker-compose.override.yml
-
-# Custom issues
-cloudflare_migration_plan.md
 .angular/
-
 frontend/.angular/
+
+# ============================================================
+# Agent Rules & Configuration
+# ============================================================
+.agents/
