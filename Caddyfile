@@ -1,4 +1,4 @@
-{$DOMAIN_NAME} {
+:80 {
     # Security Headers
     header {
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
