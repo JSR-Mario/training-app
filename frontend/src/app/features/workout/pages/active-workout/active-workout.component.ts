@@ -326,10 +326,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
         </div>
       }
     
-      <!-- Fixed Bottom Action Bar -->
+      <!-- Sticky Bottom Action Bar -->
       @if (!isLoading() && session() && !session()?.completedAt) {
-        <div class="fixed bottom-16 md:bottom-0 left-0 right-0 p-4 bg-gray-900/90 backdrop-blur-md border-t border-gray-800 shadow-2xl z-40">
-          <div class="max-w-2xl mx-auto flex gap-4">
+        <div class="sticky bottom-16 md:bottom-0 p-4 mt-8 bg-gray-900/90 backdrop-blur-md border border-gray-800 rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40">
+          <div class="flex gap-4">
             <button
               (click)="completeWorkout()"
               [disabled]="isCompleting()"
