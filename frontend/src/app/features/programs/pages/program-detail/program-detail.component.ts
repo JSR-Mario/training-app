@@ -95,6 +95,7 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
                 <div class="text-sm text-gray-400 flex-1">
                   @if (day.exercises && day.exercises.length > 0) {
                     <p>{{ day.exercises.length }} exercises</p>
+                    <p class="mt-1 text-xs font-semibold text-blue-400 uppercase tracking-wide">Expected Volume: {{ getTotalSets(day) }} sets</p>
                   }
                   @if (!day.exercises || day.exercises.length === 0) {
                     <p class="italic">No exercises</p>
@@ -365,6 +366,16 @@ export class ProgramDetailComponent implements OnInit {
     const nextDayNumber = this.days().length + 1;
     this.dayForm.patchValue({ dayName: `Day ${nextDayNumber}` });
     this.showAddDay.set(true);
+  }
+
+  cancelAddDay() {
+    this.showAddDay.set(false);
+    this.dayForm.reset();
+  }
+
+  getTotalSets(day: DayTemplate): number {
+    if (!day.exercises) return 0;
+    return day.exercises.reduce((total, ex) => total + (ex.sets || 0), 0);
   }
 
   onSubmitDay() {

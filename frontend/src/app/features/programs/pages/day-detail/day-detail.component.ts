@@ -178,7 +178,12 @@ import { forkJoin } from 'rxjs';
                       </button>
                     </div>
                     <div>
-                      <h4 class="font-semibold text-lg text-white">{{ ex.exerciseName }}</h4>
+                      <h4 class="font-semibold text-lg text-white flex items-center flex-wrap gap-2">
+                        {{ ex.exerciseName }}
+                        @for (target of getExerciseTargets(ex.exerciseId); track target) {
+                          <span class="text-[10px] bg-slate-700/60 text-slate-300 px-1.5 py-0.5 rounded border border-slate-600/50 uppercase">{{ target }}</span>
+                        }
+                      </h4>
                       <p class="text-gray-400 text-sm">
                         {{ ex.sets }} sets &times;
                         {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps
@@ -312,6 +317,11 @@ export class DayDetailComponent implements OnInit {
   cancelAdd() {
     this.showAddExercise.set(false);
     this.selectedExercise.set(null);
+  }
+
+  getExerciseTargets(exerciseId: string): string[] {
+    const ex = this.availableExercises().find(e => e.id === exerciseId);
+    return ex ? ex.targets.map(t => t.bodyPart.replace(/_/g, ' ')) : [];
   }
 
   onExerciseSelected(ex: Exercise) {
