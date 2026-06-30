@@ -304,30 +304,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
               }
             </div>
           }
-          <!-- Volume Stats -->
-          @if (loggedSets().length > 0) {
-            <div class="glass-card p-6 mt-8">
-              <h3 class="text-xl font-bold text-white mb-4">Volume Stats</h3>
-              <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-800">
-                <span class="text-gray-400 font-medium">Total Volume</span>
-                <span class="text-2xl font-bold text-blue-400">{{ getTotalVolume() | number:'1.0-1' }} kg</span>
-              </div>
-              <div class="space-y-3">
-                @for (ex of exercises(); track ex) {
-                  @if (getVolumeForExercise(ex.id) > 0) {
-                    <div class="flex justify-between items-center text-sm">
-                      <span class="text-gray-300">{{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</span>
-                      <span class="text-gray-400 font-mono">{{ getVolumeForExercise(ex.id) | number:'1.0-1' }} kg</span>
-                    </div>
-                  }
-                }
-              </div>
-            </div>
-          }
+
           <!-- Session Notes -->
           <div class="glass-card p-6 mt-8">
             <h3 class="text-xl font-bold text-white mb-2">Session Notes</h3>
-            <p class="text-sm text-gray-400 mb-4">Any specific thoughts or things to remember next time?</p>
             <textarea
               [formControl]="notesControl"
               (blur)="saveNotes()"
@@ -643,19 +623,7 @@ export class ActiveWorkoutComponent implements OnInit {
     }
   }
 
-  getTotalVolume(): number {
-    return this.loggedSets().reduce((sum, set) => {
-      const reps = Number(set.repsCompleted || 0) + Number(set.repsCompletedRight || 0);
-      return sum + (Number(set.weightKg || 0) * reps);
-    }, 0);
-  }
 
-  getVolumeForExercise(exerciseId: string): number {
-    return this.getSetsForExercise(exerciseId).reduce((sum, set) => {
-      const reps = Number(set.repsCompleted || 0) + Number(set.repsCompletedRight || 0);
-      return sum + (Number(set.weightKg || 0) * reps);
-    }, 0);
-  }
 
   logSet(ex: DayExercise) {
     const id = this.sessionId();
