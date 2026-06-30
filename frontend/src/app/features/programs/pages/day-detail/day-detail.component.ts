@@ -17,8 +17,6 @@ import { forkJoin } from 'rxjs';
     
       <!-- Header -->
       <div>
-        <a [routerLink]="['/programs', programId()]" class="text-blue-400 hover:text-blue-300 text-sm mb-4 inline-block">&larr; Back to Program</a>
-    
         @if (isLoading()) {
           <div class="text-gray-400">Loading day details...</div>
         }

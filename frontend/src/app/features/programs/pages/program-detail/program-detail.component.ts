@@ -17,8 +17,6 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
     
       <!-- Back Link & Header -->
       <div>
-        <a routerLink="/programs" class="text-blue-400 hover:text-blue-300 text-sm mb-4 inline-block">&larr; Back to Programs</a>
-    
         @if (isLoading()) {
           <div class="text-gray-400">Loading program details...</div>
         }
