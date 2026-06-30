@@ -8,52 +8,65 @@
 
   <div class="mb-4">
     <!-- Checkboxes for Program Exercises -->
-    <div *ngIf="programExercises().length > 0" class="bg-gray-900/50 p-4 rounded-xl border border-gray-800">
-      <h3 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">Program Exercises</h3>
-      <div class="flex flex-wrap gap-3">
-        <label *ngFor="let ex of programExercises()" class="flex items-center gap-2 cursor-pointer group">
-          <div class="relative flex items-center justify-center w-5 h-5 rounded border transition-colors duration-200"
-               [ngStyle]="{
-                 'border-color': ex.checked ? ex.color : '#4b5563',
-                 'background-color': ex.checked ? ex.color + '33' : 'transparent'
-               }">
-            <input type="checkbox" 
-                   class="absolute opacity-0 w-full h-full cursor-pointer"
-                   [checked]="ex.checked"
-                   (change)="toggleExercise(ex.id)" />
-            <svg *ngIf="ex.checked" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" [ngStyle]="{'color': ex.color}">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-            </svg>
-          </div>
-          <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ ex.name }}</span>
-        </label>
+    @if (programExercises().length > 0) {
+      <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">Program Exercises</h3>
+        <div class="flex flex-wrap gap-3">
+          @for (ex of programExercises(); track ex.id) {
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <div class="relative flex items-center justify-center w-5 h-5 rounded border transition-colors duration-200"
+                   [ngStyle]="{
+                     'border-color': ex.checked ? ex.color : '#4b5563',
+                     'background-color': ex.checked ? ex.color + '33' : 'transparent'
+                   }">
+                <input type="checkbox" 
+                       class="absolute opacity-0 w-full h-full cursor-pointer"
+                       [checked]="ex.checked"
+                       (change)="toggleExercise(ex.id)" />
+                @if (ex.checked) {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" [ngStyle]="{'color': ex.color}">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                }
+              </div>
+              <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ ex.name }}</span>
+            </label>
+          }
+        </div>
       </div>
-    </div>
+    }
     
-    <div *ngIf="programExercises().length === 0 && !isLoading()" class="text-sm text-gray-500 py-4">
-      No exercises found in the active program.
-    </div>
+    @if (programExercises().length === 0 && !isLoading()) {
+      <div class="text-sm text-gray-500 py-4">
+        No exercises found in the active program.
+      </div>
+    }
   </div>
 
   <div class="relative h-[500px] w-full mt-4">
     <!-- Loading overlay -->
-    <div *ngIf="isLoading()" class="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm rounded-xl transition-all">
-      <div class="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>
+    @if (isLoading()) {
+      <div class="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm rounded-xl transition-all">
+        <div class="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }
     
-    <canvas 
-      *ngIf="chartData.datasets && chartData.datasets.length > 0 && chartData.labels && chartData.labels.length > 0"
-      baseChart 
-      [data]="chartData" 
-      [options]="chartOptions" 
-      [type]="chartType">
-    </canvas>
+    @if (chartData.datasets && chartData.datasets.length > 0 && chartData.labels && chartData.labels.length > 0) {
+      <canvas 
+        baseChart 
+        [data]="chartData" 
+        [options]="chartOptions" 
+        [type]="chartType">
+      </canvas>
+    }
 
-    <div *ngIf="(!chartData.datasets || chartData.datasets.length === 0) && !isLoading()" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-      </svg>
-      <p>No volume data found for the selected exercises.</p>
-    </div>
+    @if ((!chartData.datasets || chartData.datasets.length === 0) && !isLoading()) {
+      <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+        <p>No volume data found for the selected exercises.</p>
+      </div>
+    }
   </div>
 </div>
