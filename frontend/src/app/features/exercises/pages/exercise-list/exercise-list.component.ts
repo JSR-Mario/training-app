@@ -135,6 +135,7 @@ import { ExerciseFormComponent } from '../../components/exercise-form/exercise-f
             </div>
           }
             </div>
+            </div>
           }
         </div>
       }
