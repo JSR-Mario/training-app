@@ -46,14 +46,14 @@
 ### Frontend
 | Component | Library | Version |
 |-----------|---------|---------|
-| Framework | Angular + TypeScript | 18.x |
-| Build | Angular CLI | 18.x |
-| PWA | @angular/pwa | 18.x |
-| Router | Angular Router | 18.x |
-| Data fetching | RxJS / Angular Signals | 18.x |
+| Framework | Angular + TypeScript | 21.x |
+| Build | Angular CLI | 21.x |
+| PWA | @angular/pwa | 21.x |
+| Router | Angular Router | 21.x |
+| Data fetching | RxJS / Angular Signals | 21.x |
 | Charts | ng2-charts | 6.x |
 | Styling | Tailwind CSS | 3.x |
-| HTTP client | Angular HttpClient | 18.x |
+| HTTP client | Angular HttpClient | 21.x |
 
 ### Infrastructure
 | Component | Tool |
@@ -592,7 +592,7 @@ unreachable from outside Docker network. Branch: `feat/session-6-api-gateway` re
 ---
 
 ### Session 7 — Frontend: Foundation + Auth
-- [ ] Angular CLI + Angular 18 + TypeScript + Tailwind + @angular/pwa project
+- [ ] Angular CLI + Angular 21 + TypeScript + Tailwind + @angular/pwa project
 - [ ] Angular Router: define all routes, auth guard wrapper
 - [ ] `AuthService`: stores access token in memory (not localStorage),
       handles login/logout/refresh

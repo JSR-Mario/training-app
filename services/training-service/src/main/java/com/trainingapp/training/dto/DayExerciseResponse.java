@@ -13,5 +13,6 @@ public record DayExerciseResponse(
         Integer durationMinutes,
         java.math.BigDecimal incline,
         java.math.BigDecimal resistance,
-        int sortOrder
+        int sortOrder,
+        boolean unilateral
 ) {}

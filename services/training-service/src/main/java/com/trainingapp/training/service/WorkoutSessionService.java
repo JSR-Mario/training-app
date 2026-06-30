@@ -91,6 +91,13 @@ public class WorkoutSessionService {
         return mapToResponse(session);
     }
 
+    public WorkoutSessionResponse getActiveSession(UUID userId) {
+        return sessionRepository.findByUserIdAndCompletedAtIsNull(userId).stream()
+                .findFirst()
+                .map(this::mapToResponse)
+                .orElse(null);
+    }
+
     @Transactional
     public void deleteSession(UUID id, UUID userId) {
         WorkoutSession session = getSessionEntity(id, userId);

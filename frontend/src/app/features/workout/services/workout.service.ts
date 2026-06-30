@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, of } from 'rxjs';
 import { 
   WorkoutSessionRequest, 
   WorkoutSessionResponse, 
@@ -20,6 +20,17 @@ export class WorkoutService {
       .set('programId', programId)
       .set('weekNumber', weekNumber.toString());
     return this.http.get<WorkoutSessionResponse[]>(`${this.baseUrl}/sessions`, { params });
+  }
+
+  getActiveSession(): Observable<WorkoutSessionResponse | null> {
+    return this.http.get<WorkoutSessionResponse>(`${this.baseUrl}/sessions/active`).pipe(
+      catchError(err => {
+        if (err.status === 204 || err.status === 404) {
+          return of(null);
+        }
+        throw err;
+      })
+    );
   }
 
   startSession(request: WorkoutSessionRequest): Observable<WorkoutSessionResponse> {

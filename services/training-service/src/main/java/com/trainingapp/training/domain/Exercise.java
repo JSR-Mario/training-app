@@ -54,6 +54,9 @@ public class Exercise {
     @Column(nullable = false, length = 20)
     private ExerciseType type = ExerciseType.STRENGTH;
 
+    @Column(name = "spinal_loading", nullable = false)
+    private boolean spinalLoading = false;
+
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ExerciseBodyPartTarget> targets = new ArrayList<>();
 
@@ -83,4 +86,7 @@ public class Exercise {
 
     public ExerciseType getType() { return type; }
     public void setType(ExerciseType type) { this.type = type; }
+
+    public boolean isSpinalLoading() { return spinalLoading; }
+    public void setSpinalLoading(boolean spinalLoading) { this.spinalLoading = spinalLoading; }
 }

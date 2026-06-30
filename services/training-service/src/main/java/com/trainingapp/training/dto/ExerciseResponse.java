@@ -11,6 +11,7 @@ public record ExerciseResponse(
         String equipmentBrand,
         boolean unilateral,
         boolean isPublic,
+        boolean spinalLoading,
         com.trainingapp.training.domain.ExerciseType type,
         Instant createdAt,
         List<ExerciseTargetResponse> targets,

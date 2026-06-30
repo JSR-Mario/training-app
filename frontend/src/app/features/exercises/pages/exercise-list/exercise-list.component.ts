@@ -1,117 +1,146 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
+
 import { ExerciseService } from '../../services/exercise.service';
-import { Exercise } from '../../../../core/types/training.types';
+import { Exercise, getBodyPartPath, BodyPart } from '../../../../core/types/training.types';
 import { ExerciseFormComponent } from '../../components/exercise-form/exercise-form.component';
 
 @Component({
-  selector: 'app-exercise-list',
   standalone: true,
-  imports: [CommonModule, ExerciseFormComponent],
-  template: `
+    selector: 'app-exercise-list',
+    imports: [ExerciseFormComponent],
+    template: `
     <div class="max-w-7xl mx-auto space-y-6">
-      
+    
       <!-- Header -->
-      <div class="flex justify-between items-center" *ngIf="!showForm()">
+      @if (!showForm()) {
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-white">Exercises</h1>
+            <p class="text-gray-400 mt-1">Manage your exercise catalog and volume targets</p>
+          </div>
+          <button
+            (click)="openForm()"
+            class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
+            >
+            + Add Exercise
+          </button>
+        </div>
+      }
+    
+      @if (showForm()) {
         <div>
-          <h1 class="text-3xl font-bold text-white">Exercises</h1>
-          <p class="text-gray-400 mt-1">Manage your exercise catalog and volume targets</p>
+          <app-exercise-form
+            [exercise]="selectedExercise()"
+            (saveExercise)="onSaveExercise($event)"
+            (cancelForm)="closeForm()"
+          ></app-exercise-form>
         </div>
-        <button 
-          (click)="openForm()"
-          class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
-        >
-          + Add Exercise
-        </button>
-      </div>
-
-      <div *ngIf="showForm()">
-        <app-exercise-form 
-          [exercise]="selectedExercise()" 
-          (saveExercise)="onSaveExercise($event)" 
-          (cancelForm)="closeForm()"
-        ></app-exercise-form>
-      </div>
-
+      }
+    
       <!-- Loading State -->
-      <div *ngIf="isLoading() && !showForm()" class="text-center py-12">
-        <p class="text-gray-400">Loading exercises...</p>
-      </div>
-
-      <!-- List View -->
-      <div *ngIf="!isLoading() && !showForm()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        <div *ngIf="exercises().length === 0" class="col-span-full text-center py-12 glass-card">
-          <p class="text-gray-400">No exercises found. Add your first exercise!</p>
+      @if (isLoading() && !showForm()) {
+        <div class="text-center py-12">
+          <p class="text-gray-400">Loading exercises...</p>
         </div>
-
-        <div *ngFor="let exercise of exercises()" class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
-          <div class="flex justify-between items-start mb-4">
+      }
+    
+      <!-- List View -->
+      @if (!isLoading() && !showForm()) {
+        <div class="space-y-12">
+          @if (exercises().length === 0) {
+            <div class="text-center py-12 glass-card">
+              <p class="text-gray-400">No exercises found. Add your first exercise!</p>
+            </div>
+          }
+          @for (group of groupedExercises(); track group.category) {
             <div>
-              <h3 class="text-xl font-bold text-white">{{ exercise.name }}</h3>
-              <div class="flex flex-wrap gap-2 mt-1.5">
-                <span 
-                  *ngIf="exercise.equipmentBrand" 
-                  class="px-2 py-0.5 text-xs bg-slate-700/60 text-slate-300 rounded-md border border-slate-600/50"
-                >
-                  {{ exercise.equipmentBrand }}
-                </span>
-                <span 
-                  *ngIf="exercise.unilateral" 
-                  class="px-2 py-0.5 text-xs font-semibold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30"
-                >
-                  UNILATERAL
-                </span>
-                <span 
-                  *ngIf="exercise.unilateral === false"
-                  class="px-2 py-0.5 text-xs bg-sky-500/15 text-sky-400 rounded-md border border-sky-500/30"
-                >
-                  BILATERAL
-                </span>
-                <span 
-                  *ngIf="exercise.isPublic"
-                  class="px-2 py-0.5 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30"
-                >
-                  PUBLIC
-                </span>
+              <h2 class="text-2xl font-bold text-gray-300 mb-6 border-b border-gray-800 pb-2 flex items-center gap-2">
+                {{ group.category }}
+                <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">{{ group.exercises.length }}</span>
+              </h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @for (exercise of group.exercises; track exercise) {
+                  <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
+                    <div class="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 class="text-xl font-bold text-white">{{ exercise.name }}</h3>
+                        <div class="flex flex-wrap gap-2 mt-1.5">
+                    @if (exercise.equipmentBrand) {
+                      <span
+                        class="px-2 py-0.5 text-xs bg-slate-700/60 text-slate-300 rounded-md border border-slate-600/50"
+                        >
+                        {{ exercise.equipmentBrand }}
+                      </span>
+                    }
+                    @if (exercise.unilateral) {
+                      <span
+                        class="px-2 py-0.5 text-xs font-semibold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30"
+                        >
+                        UNILATERAL
+                      </span>
+                    }
+                    @if (exercise.unilateral === false) {
+                      <span
+                        class="px-2 py-0.5 text-xs bg-sky-500/15 text-sky-400 rounded-md border border-sky-500/30"
+                        >
+                        BILATERAL
+                      </span>
+                    }
+                    @if (exercise.isPublic) {
+                      <span
+                        class="px-2 py-0.5 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30"
+                        >
+                        PUBLIC
+                      </span>
+                    }
+                    @if (exercise.spinalLoading) {
+                      <span class="flex items-center gap-1 bg-red-900/30 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold border border-red-800/50">
+                        SPINAL LOADING
+                      </span>
+                    }
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <button
+                    (click)="editExercise(exercise)"
+                    class="text-blue-400 hover:text-blue-300 transition-colors text-sm"
+                    >
+                    Edit
+                  </button>
+                  <button
+                    (click)="deleteExercise(exercise.id)"
+                    class="text-red-400 hover:text-red-300 transition-colors text-sm"
+                    >
+                    Delete
+                  </button>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h4 class="text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">Targets</h4>
+                @if (exercise.targets.length === 0) {
+                  <div class="text-sm text-gray-600 italic">
+                    No targets set
+                  </div>
+                }
+                <div class="flex flex-wrap gap-2">
+                  @for (target of exercise.targets; track target) {
+                    <span
+                      class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300"
+                      >
+                      {{ target.bodyPart }} ({{ target.targetValue }})
+                    </span>
+                  }
+                </div>
               </div>
             </div>
-            <div class="flex gap-2">
-              <button 
-                (click)="editExercise(exercise)"
-                class="text-blue-400 hover:text-blue-300 transition-colors text-sm"
-              >
-                Edit
-              </button>
-              <button 
-                (click)="deleteExercise(exercise.id)"
-                class="text-red-400 hover:text-red-300 transition-colors text-sm"
-              >
-                Delete
-              </button>
+          }
             </div>
-          </div>
-          
-          <div class="flex-1">
-            <h4 class="text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">Targets</h4>
-            <div *ngIf="exercise.targets.length === 0" class="text-sm text-gray-600 italic">
-              No targets set
             </div>
-            <div class="flex flex-wrap gap-2">
-              <span 
-                *ngFor="let target of exercise.targets" 
-                class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300"
-              >
-                {{ target.bodyPart }} ({{ target.targetValue }})
-              </span>
-            </div>
-          </div>
+          }
         </div>
-
-      </div>
-
+      }
     </div>
-  `
+    `
 })
 export class ExerciseListComponent implements OnInit {
   private exerciseService = inject(ExerciseService);
@@ -121,6 +150,33 @@ export class ExerciseListComponent implements OnInit {
   
   showForm = signal<boolean>(false);
   selectedExercise = signal<Exercise | null>(null);
+
+  groupedExercises = computed(() => {
+    const groups = new Map<string, Exercise[]>();
+    for (const ex of this.exercises()) {
+      const cat = this.getPrimaryCategory(ex);
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push(ex);
+    }
+    
+    const order = ['Chest', 'Back', 'Shoulders', 'Arms', 'Traps', 'Core', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Adductors', 'Cardio', 'Uncategorized', 'Other'];
+    return Array.from(groups.entries())
+      .map(([category, exercises]) => ({ category, exercises }))
+      .sort((a, b) => {
+        const idxA = order.indexOf(a.category);
+        const idxB = order.indexOf(b.category);
+        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+      });
+  });
+
+  getPrimaryCategory(exercise: Exercise): string {
+    if (exercise.type === 'CARDIO') return 'Cardio';
+    if (!exercise.targets || exercise.targets.length === 0) return 'Uncategorized';
+    
+    const primaryPart = exercise.targets[0].bodyPart;
+    const path = getBodyPartPath(primaryPart as BodyPart);
+    return path ? path.group : 'Other';
+  }
 
   ngOnInit() {
     this.loadExercises();

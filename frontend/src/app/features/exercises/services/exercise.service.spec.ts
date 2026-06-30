@@ -26,7 +26,7 @@ describe('ExerciseService', () => {
 
   it('should fetch exercises', () => {
     const mockExercises: Exercise[] = [
-      { id: '1', userId: 'u1', name: 'Bench Press', targets: [], type: 'STRENGTH', isPublic: false, unilateral: false, createdAt: '', updatedAt: '' }
+      { id: '1', userId: 'u1', name: 'Bench Press', targets: [], type: 'STRENGTH', isPublic: false, unilateral: false, spinalLoading: false, createdAt: '', updatedAt: '' }
     ];
 
     service.getExercises().subscribe(exercises => {

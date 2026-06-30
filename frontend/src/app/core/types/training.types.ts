@@ -8,8 +8,11 @@ export const BODY_PARTS_HIERARCHY = {
     'Core': ['CORE']
   },
   'Lower Body': {
-    'Legs': ['QUADS', 'HAMSTRINGS', 'CALVES', 'ADDUCTORS'],
-    'Glutes': ['GLUTES']
+    'Quads': ['QUADS'],
+    'Hamstrings': ['HAMSTRINGS'],
+    'Glutes': ['GLUTES'],
+    'Calves': ['CALVES'],
+    'Adductors': ['ADDUCTORS']
   }
 } as const;
 
@@ -43,6 +46,7 @@ export interface Exercise {
   name: string;
   equipmentBrand?: string;
   unilateral: boolean;
+  spinalLoading: boolean;
   isPublic: boolean;
   type: ExerciseType;
   targets: ExerciseTarget[];
@@ -62,6 +66,7 @@ export interface DayExercise {
   incline?: number;
   resistance?: number;
   sortOrder: number;
+  unilateral?: boolean;
 }
 
 export interface DayTemplate {
