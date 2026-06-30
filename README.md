@@ -69,22 +69,22 @@ Swagger UI is available at: `http://localhost:8080/swagger-ui.html`
 
 ---
 
-## Deployment Guide (EC2 + DuckDNS)
+## Deployment Guide (EC2 + Cloudflare Tunnel)
 
-This application is designed to be deployed using Docker Compose on any standard Linux VM. It includes a **Caddy** web server that automatically provisions free HTTPS certificates using Let's Encrypt, and routes traffic so that both the Frontend and the Backend share the exact same domain.
+This application is designed to be deployed using Docker Compose on any standard Linux VM. It uses **Cloudflare Tunnels** to provide secure, encrypted HTTPS access without exposing *any* public ports on your server. **Caddy** acts as an internal reverse proxy to route traffic between the frontend and the backend over a shared local Docker network.
 
 **Steps to deploy to a new EC2 instance:**
 1. Provision an EC2 instance (e.g., Ubuntu 22.04 LTS).
-2. Open ports `22` (SSH), `80` (HTTP), and `443` (HTTPS) in your AWS Security Group. Ensure ports `8080`, `3000`, `5432` and `6379` remain **closed** to the public.
-3. Register a free domain on [DuckDNS](https://www.duckdns.org) (e.g., `my-app.duckdns.org`) and point it to your EC2 Public IP.
+2. Open **only** port `22` (SSH) in your AWS Security Group. All other ports (`80`, `443`, `8080`, `3000`, `5432`, `6379`) must remain **closed** to the public. Cloudflare will handle ingress securely via outbound tunnel connections.
+3. In your Cloudflare Dashboard (Zero Trust), create a new Tunnel and configure a Public Hostname to point to `http://caddy:80`. Copy your Tunnel Token.
 4. SSH into your instance and install Docker, Docker Compose, and Git.
 5. Clone this repository: `git clone https://github.com/JSR-Mario/training-app.git`
 6. Copy `.env.example` to `.env` and configure:
    - Secure passwords and a random 256-bit hex JWT secret.
-   - `DOMAIN_NAME` to your DuckDNS domain.
-   - `ALLOWED_ORIGIN` to `https://${DOMAIN_NAME}`.
+   - `DOMAIN_NAME` and `ALLOWED_ORIGIN` to your Cloudflare Public Hostname (e.g., `app.yourdomain.com`).
+   - `CLOUDFLARE_TUNNEL_TOKEN` with the token generated in step 3.
    - `COOKIE_SECURE=true`.
-7. Run `docker compose up -d --build`. The multi-stage Dockerfiles will handle compiling the Java backends and the Angular frontend directly on the server, and Caddy will automatically secure your site with HTTPS!
+7. Run `docker compose up -d --build`. The multi-stage Dockerfiles will handle compiling the Java backends and the Angular frontend directly on the server, and Cloudflare will automatically secure your site with HTTPS!
 
 ---
 
