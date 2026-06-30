@@ -110,10 +110,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                               [ngClass]="getPerfTextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
                               @if (!ex.durationMinutes) {
                                 {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">kg</span> ×
-                                @if (ex.exercise.unilateral) {
+                                @if (ex.exercise?.unilateral) {
                                   {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
                                 }
-                                @if (!ex.exercise.unilateral) {
+                                @if (!ex.exercise?.unilateral) {
                                   {{ set.repsCompleted }}
                                 }
                                 <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">reps</span>
@@ -174,10 +174,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                               <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
                             </div>
                             <div class="flex-1 min-w-[70px]">
-                              <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.exercise.unilateral ? 'Reps (L)' : 'Reps' }}</label>
+                              <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.exercise?.unilateral ? 'Reps (L)' : 'Reps' }}</label>
                               <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
                             </div>
-                            @if (ex.exercise.unilateral) {
+                            @if (ex.exercise?.unilateral) {
                               <div class="flex-1 min-w-[70px]">
                                 <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps (R)</label>
                                 <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center" [placeholder]="getForm(ex.id).get('repsCompleted')?.value || ''">
