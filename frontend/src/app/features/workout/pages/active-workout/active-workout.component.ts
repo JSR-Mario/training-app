@@ -13,6 +13,7 @@ import {
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 
 @Component({
+  standalone: true,
     selector: 'app-active-workout',
     imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
     template: `
@@ -20,7 +21,7 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
     
       <!-- Header -->
       <div class="flex items-center justify-between">
-        <a routerLink="/workout" class="text-blue-400 hover:text-blue-300 text-sm inline-block">&larr; Back</a>
+        <div></div>
         @if (session()?.completedAt) {
           <div class="px-3 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
             Completed
@@ -109,10 +110,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                               [ngClass]="getPerfTextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
                               @if (!ex.durationMinutes) {
                                 {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">kg</span> ×
-                                @if (ex.exercise.unilateral) {
+                                @if (ex.exercise?.unilateral) {
                                   {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
                                 }
-                                @if (!ex.exercise.unilateral) {
+                                @if (!ex.exercise?.unilateral) {
                                   {{ set.repsCompleted }}
                                 }
                                 <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">reps</span>
@@ -173,10 +174,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                               <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
                             </div>
                             <div class="flex-1 min-w-[70px]">
-                              <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.exercise.unilateral ? 'Reps (L)' : 'Reps' }}</label>
+                              <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.exercise?.unilateral ? 'Reps (L)' : 'Reps' }}</label>
                               <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
                             </div>
-                            @if (ex.exercise.unilateral) {
+                            @if (ex.exercise?.unilateral) {
                               <div class="flex-1 min-w-[70px]">
                                 <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps (R)</label>
                                 <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center" [placeholder]="getForm(ex.id).get('repsCompleted')?.value || ''">
@@ -303,30 +304,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
               }
             </div>
           }
-          <!-- Volume Stats -->
-          @if (loggedSets().length > 0) {
-            <div class="glass-card p-6 mt-8">
-              <h3 class="text-xl font-bold text-white mb-4">Volume Stats</h3>
-              <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-800">
-                <span class="text-gray-400 font-medium">Total Volume</span>
-                <span class="text-2xl font-bold text-blue-400">{{ getTotalVolume() | number:'1.0-1' }} kg</span>
-              </div>
-              <div class="space-y-3">
-                @for (ex of exercises(); track ex) {
-                  @if (getVolumeForExercise(ex.id) > 0) {
-                    <div class="flex justify-between items-center text-sm">
-                      <span class="text-gray-300">{{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</span>
-                      <span class="text-gray-400 font-mono">{{ getVolumeForExercise(ex.id) | number:'1.0-1' }} kg</span>
-                    </div>
-                  }
-                }
-              </div>
-            </div>
-          }
+
           <!-- Session Notes -->
           <div class="glass-card p-6 mt-8">
             <h3 class="text-xl font-bold text-white mb-2">Session Notes</h3>
-            <p class="text-sm text-gray-400 mb-4">Any specific thoughts or things to remember next time?</p>
             <textarea
               [formControl]="notesControl"
               (blur)="saveNotes()"
@@ -345,16 +326,16 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
         </div>
       }
     
-      <!-- Fixed Bottom Action Bar -->
+      <!-- Sticky Bottom Action Bar -->
       @if (!isLoading() && session() && !session()?.completedAt) {
-        <div class="fixed bottom-16 md:bottom-0 left-0 right-0 p-4 bg-gray-900/90 backdrop-blur-md border-t border-gray-800 shadow-2xl z-40">
-          <div class="max-w-2xl mx-auto flex gap-4">
+        <div class="sticky bottom-16 md:bottom-0 p-4 mt-8 bg-gray-900/90 backdrop-blur-md border border-gray-800 rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40">
+          <div class="flex gap-4">
             <button
               (click)="completeWorkout()"
               [disabled]="isCompleting()"
               class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-95"
               >
-              {{ isCompleting() ? 'Completing...' : 'Finish Workout 🎉' }}
+              {{ isCompleting() ? 'Completing...' : 'Finish Workout' }}
             </button>
           </div>
         </div>
@@ -400,18 +381,18 @@ export class ActiveWorkoutComponent implements OnInit {
     resistance: [null]
   });
 
-  collapsedExercises = new Set<string>();
+  expandedExercises = new Set<string>();
 
   toggleCollapse(exId: string) {
-    if (this.collapsedExercises.has(exId)) {
-      this.collapsedExercises.delete(exId);
+    if (this.expandedExercises.has(exId)) {
+      this.expandedExercises.delete(exId);
     } else {
-      this.collapsedExercises.add(exId);
+      this.expandedExercises.add(exId);
     }
   }
 
   isCollapsed(exId: string): boolean {
-    return this.collapsedExercises.has(exId);
+    return !this.expandedExercises.has(exId);
   }
 
   ngOnInit() {
@@ -642,19 +623,7 @@ export class ActiveWorkoutComponent implements OnInit {
     }
   }
 
-  getTotalVolume(): number {
-    return this.loggedSets().reduce((sum, set) => {
-      const reps = Number(set.repsCompleted || 0) + Number(set.repsCompletedRight || 0);
-      return sum + (Number(set.weightKg || 0) * reps);
-    }, 0);
-  }
 
-  getVolumeForExercise(exerciseId: string): number {
-    return this.getSetsForExercise(exerciseId).reduce((sum, set) => {
-      const reps = Number(set.repsCompleted || 0) + Number(set.repsCompletedRight || 0);
-      return sum + (Number(set.weightKg || 0) * reps);
-    }, 0);
-  }
 
   logSet(ex: DayExercise) {
     const id = this.sessionId();

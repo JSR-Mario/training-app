@@ -6,6 +6,7 @@ import { ProgramService } from '../../services/program.service';
 import { TrainingProgram } from '../../../../core/types/training.types';
 
 @Component({
+  standalone: true,
     selector: 'app-program-list',
     imports: [CommonModule, RouterModule, ReactiveFormsModule],
     template: `

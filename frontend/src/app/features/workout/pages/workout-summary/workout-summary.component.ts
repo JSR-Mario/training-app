@@ -10,6 +10,7 @@ import {
 } from '../../../../core/types/training.types';
 
 @Component({
+  standalone: true,
     selector: 'app-workout-summary',
     imports: [CommonModule, RouterModule],
     template: `
@@ -81,7 +82,7 @@ import {
               routerLink="/workout"
               class="inline-block px-8 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl transition-colors border border-gray-700"
               >
-              Back to Dashboard
+              Done
             </a>
           </div>
         </div>

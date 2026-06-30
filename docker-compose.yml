@@ -147,15 +147,11 @@ services:
       - api-gateway
 
   # -----------------------------------------------------------
-  # Caddy — Automatic HTTPS and Reverse Proxy
+  # Caddy — Internal HTTP Proxy (Traffic now comes from Tunnel)
   # -----------------------------------------------------------
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME}
     volumes:
@@ -165,6 +161,18 @@ services:
     depends_on:
       - frontend
       - api-gateway
+
+  # -----------------------------------------------------------
+  # Cloudflare Tunnel — Secure ingress, no exposed ports
+  # -----------------------------------------------------------
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - caddy
 
 volumes:
   postgres_data:

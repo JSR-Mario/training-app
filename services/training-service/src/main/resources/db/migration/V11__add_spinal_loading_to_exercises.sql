@@ -1,0 +1,1 @@
+ALTER TABLE training.exercises ADD COLUMN spinal_loading BOOLEAN NOT NULL DEFAULT FALSE;

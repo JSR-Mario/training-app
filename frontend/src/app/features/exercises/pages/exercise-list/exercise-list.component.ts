@@ -1,10 +1,11 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 
 import { ExerciseService } from '../../services/exercise.service';
-import { Exercise } from '../../../../core/types/training.types';
+import { Exercise, getBodyPartPath, BodyPart } from '../../../../core/types/training.types';
 import { ExerciseFormComponent } from '../../components/exercise-form/exercise-form.component';
 
 @Component({
+  standalone: true,
     selector: 'app-exercise-list',
     imports: [ExerciseFormComponent],
     template: `
@@ -45,18 +46,25 @@ import { ExerciseFormComponent } from '../../components/exercise-form/exercise-f
     
       <!-- List View -->
       @if (!isLoading() && !showForm()) {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="space-y-12">
           @if (exercises().length === 0) {
-            <div class="col-span-full text-center py-12 glass-card">
+            <div class="text-center py-12 glass-card">
               <p class="text-gray-400">No exercises found. Add your first exercise!</p>
             </div>
           }
-          @for (exercise of exercises(); track exercise) {
-            <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
-              <div class="flex justify-between items-start mb-4">
-                <div>
-                  <h3 class="text-xl font-bold text-white">{{ exercise.name }}</h3>
-                  <div class="flex flex-wrap gap-2 mt-1.5">
+          @for (group of groupedExercises(); track group.category) {
+            <div>
+              <h2 class="text-2xl font-bold text-gray-300 mb-6 border-b border-gray-800 pb-2 flex items-center gap-2">
+                {{ group.category }}
+                <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">{{ group.exercises.length }}</span>
+              </h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @for (exercise of group.exercises; track exercise) {
+                  <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
+                    <div class="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 class="text-xl font-bold text-white">{{ exercise.name }}</h3>
+                        <div class="flex flex-wrap gap-2 mt-1.5">
                     @if (exercise.equipmentBrand) {
                       <span
                         class="px-2 py-0.5 text-xs bg-slate-700/60 text-slate-300 rounded-md border border-slate-600/50"
@@ -83,6 +91,11 @@ import { ExerciseFormComponent } from '../../components/exercise-form/exercise-f
                         class="px-2 py-0.5 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30"
                         >
                         PUBLIC
+                      </span>
+                    }
+                    @if (exercise.spinalLoading) {
+                      <span class="flex items-center gap-1 bg-red-900/30 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold border border-red-800/50">
+                        SPINAL LOADING
                       </span>
                     }
                   </div>
@@ -121,9 +134,11 @@ import { ExerciseFormComponent } from '../../components/exercise-form/exercise-f
               </div>
             </div>
           }
+            </div>
+            </div>
+          }
         </div>
       }
-    
     </div>
     `
 })
@@ -135,6 +150,33 @@ export class ExerciseListComponent implements OnInit {
   
   showForm = signal<boolean>(false);
   selectedExercise = signal<Exercise | null>(null);
+
+  groupedExercises = computed(() => {
+    const groups = new Map<string, Exercise[]>();
+    for (const ex of this.exercises()) {
+      const cat = this.getPrimaryCategory(ex);
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push(ex);
+    }
+    
+    const order = ['Chest', 'Back', 'Shoulders', 'Arms', 'Traps', 'Core', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Adductors', 'Cardio', 'Uncategorized', 'Other'];
+    return Array.from(groups.entries())
+      .map(([category, exercises]) => ({ category, exercises }))
+      .sort((a, b) => {
+        const idxA = order.indexOf(a.category);
+        const idxB = order.indexOf(b.category);
+        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+      });
+  });
+
+  getPrimaryCategory(exercise: Exercise): string {
+    if (exercise.type === 'CARDIO') return 'Cardio';
+    if (!exercise.targets || exercise.targets.length === 0) return 'Uncategorized';
+    
+    const primaryPart = exercise.targets[0].bodyPart;
+    const path = getBodyPartPath(primaryPart as BodyPart);
+    return path ? path.group : 'Other';
+  }
 
   ngOnInit() {
     this.loadExercises();

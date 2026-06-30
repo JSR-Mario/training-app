@@ -9,6 +9,7 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
 import { forkJoin } from 'rxjs';
 
 @Component({
+  standalone: true,
     selector: 'app-day-detail',
     imports: [RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
     template: `
@@ -16,8 +17,6 @@ import { forkJoin } from 'rxjs';
     
       <!-- Header -->
       <div>
-        <a [routerLink]="['/programs', programId()]" class="text-blue-400 hover:text-blue-300 text-sm mb-4 inline-block">&larr; Back to Program</a>
-    
         @if (isLoading()) {
           <div class="text-gray-400">Loading day details...</div>
         }
@@ -177,7 +176,12 @@ import { forkJoin } from 'rxjs';
                       </button>
                     </div>
                     <div>
-                      <h4 class="font-semibold text-lg text-white">{{ ex.exerciseName }}</h4>
+                      <h4 class="font-semibold text-lg text-white flex items-center flex-wrap gap-2">
+                        {{ ex.exerciseName }}
+                        @for (target of getExerciseTargets(ex.exerciseId); track target) {
+                          <span class="text-[10px] bg-slate-700/60 text-slate-300 px-1.5 py-0.5 rounded border border-slate-600/50 uppercase">{{ target }}</span>
+                        }
+                      </h4>
                       <p class="text-gray-400 text-sm">
                         {{ ex.sets }} sets &times;
                         {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps
@@ -234,6 +238,25 @@ import { forkJoin } from 'rxjs';
           }
         </div>
       }
+
+      @if (!isLoading() && volumeBreakdown().length > 0) {
+        <div class="mt-8 pt-8 border-t border-gray-800">
+          <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Volume Breakdown
+          </h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            @for (item of volumeBreakdown(); track item.part) {
+              <div class="bg-gray-800/40 rounded-xl p-4 flex flex-col items-center justify-center border border-gray-700/50 hover:bg-gray-800 transition-colors">
+                <span class="text-3xl font-black text-blue-400">{{ item.sets }}</span>
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1 text-center">{{ item.part }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
     </div>
     `
 })
@@ -252,6 +275,23 @@ export class DayDetailComponent implements OnInit {
   
   strengthExs = computed(() => this.exercises().filter(e => !e.durationMinutes));
   cardioExs = computed(() => this.exercises().filter(e => !!e.durationMinutes));
+
+  volumeBreakdown = computed(() => {
+    const breakdown = new Map<string, number>();
+    for (const ex of this.strengthExs()) {
+      if (!ex.sets) continue;
+      const fullEx = this.availableExercises().find(e => e.id === ex.exerciseId);
+      if (fullEx && fullEx.targets) {
+        for (const t of fullEx.targets) {
+          const name = t.bodyPart.replace(/_/g, ' ');
+          breakdown.set(name, (breakdown.get(name) || 0) + ex.sets);
+        }
+      }
+    }
+    return Array.from(breakdown.entries())
+      .map(([part, sets]) => ({ part, sets }))
+      .sort((a, b) => b.sets - a.sets);
+  });
 
   isLoading = signal<boolean>(true);
   showAddExercise = signal<boolean>(false);
@@ -311,6 +351,11 @@ export class DayDetailComponent implements OnInit {
   cancelAdd() {
     this.showAddExercise.set(false);
     this.selectedExercise.set(null);
+  }
+
+  getExerciseTargets(exerciseId: string): string[] {
+    const ex = this.availableExercises().find(e => e.id === exerciseId);
+    return ex ? ex.targets.map(t => t.bodyPart.replace(/_/g, ' ')) : [];
   }
 
   onExerciseSelected(ex: Exercise) {

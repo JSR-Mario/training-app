@@ -16,6 +16,7 @@ export interface ExerciseFormData {
 }
 
 @Component({
+  standalone: true,
     selector: 'app-exercise-form',
     imports: [ReactiveFormsModule],
     template: `
@@ -112,6 +113,22 @@ export interface ExerciseFormData {
             <label for="unilateral" class="text-sm font-medium text-gray-300 cursor-pointer">
               Unilateral exercise
               <span class="text-gray-500 text-xs ml-1">(one side at a time)</span>
+            </label>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                formControlName="spinalLoading"
+                class="sr-only peer"
+                id="spinalLoading"
+              >
+              <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+            <label for="spinalLoading" class="text-sm font-medium text-gray-300 cursor-pointer">
+              Spinal Loading
+              <span class="text-gray-500 text-xs ml-1">(significant axial load)</span>
             </label>
           </div>
         }
@@ -256,6 +273,7 @@ export class ExerciseFormComponent implements OnInit {
     name: ['', [Validators.required, Validators.maxLength(200)]],
     equipmentBrand: [''],
     unilateral: [false],
+    spinalLoading: [false],
     isPublic: [false],
     type: ['STRENGTH', Validators.required],
     targets: this.fb.array([])

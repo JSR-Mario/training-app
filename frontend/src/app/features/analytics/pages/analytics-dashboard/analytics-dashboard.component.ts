@@ -6,6 +6,7 @@ import { BodyWeightTrackerComponent } from '../../components/body-weight-tracker
 type Tab = 'progress' | 'weight';
 
 @Component({
+  standalone: true,
     selector: 'app-analytics-dashboard',
     imports: [ProgressChartComponent, BodyWeightTrackerComponent],
     templateUrl: './analytics-dashboard.component.html',

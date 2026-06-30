@@ -8,6 +8,7 @@ import { TrainingProgram, DayTemplate } from '../../../../core/types/training.ty
 import { forkJoin } from 'rxjs';
 
 @Component({
+  standalone: true,
     selector: 'app-start-session',
     imports: [RouterModule, ReactiveFormsModule],
     template: `
