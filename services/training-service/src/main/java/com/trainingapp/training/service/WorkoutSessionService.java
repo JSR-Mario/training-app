@@ -131,6 +131,15 @@ public class WorkoutSessionService {
     }
 
     @Transactional
+    public WorkoutSessionResponse deleteRating(UUID id, UUID userId, UUID dayExerciseId) {
+        WorkoutSession session = getSessionEntity(id, userId);
+        ratingRepository.deleteBySessionIdAndDayExerciseId(session.getId(), dayExerciseId);
+        
+        // Return updated session response so frontend gets the fresh state
+        return mapToResponse(session);
+    }
+
+    @Transactional
     public void completeSession(UUID id, UUID userId) {
         WorkoutSession session = getSessionEntity(id, userId);
         

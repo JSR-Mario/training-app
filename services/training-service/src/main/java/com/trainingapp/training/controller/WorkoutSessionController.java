@@ -58,6 +58,12 @@ public class WorkoutSessionController {
         return sessionService.updateRating(id, UserContext.getCurrentUserId(), dayExerciseId, request);
     }
 
+    @DeleteMapping("/{id}/ratings/{dayExerciseId}")
+    public WorkoutSessionResponse deleteRating(@PathVariable UUID id, @PathVariable UUID dayExerciseId) {
+        return sessionService.deleteRating(id, UserContext.getCurrentUserId(), dayExerciseId);
+    }
+
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         sessionService.deleteSession(id, UserContext.getCurrentUserId());

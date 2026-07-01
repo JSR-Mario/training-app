@@ -58,6 +58,10 @@ export class WorkoutService {
     return this.http.put<WorkoutSessionResponse>(`${this.baseUrl}/sessions/${sessionId}/ratings/${dayExerciseId}`, { rating });
   }
 
+  deleteExerciseRating(sessionId: string, dayExerciseId: string): Observable<WorkoutSessionResponse> {
+    return this.http.delete<WorkoutSessionResponse>(`${this.baseUrl}/sessions/${sessionId}/ratings/${dayExerciseId}`);
+  }
+
   getSets(sessionId: string): Observable<WorkoutSetResponse[]> {
     return this.http.get<WorkoutSetResponse[]>(`${this.baseUrl}/sessions/${sessionId}/sets`);
   }

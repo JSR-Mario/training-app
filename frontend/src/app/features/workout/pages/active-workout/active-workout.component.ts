@@ -45,6 +45,21 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
     
       @if (!isLoading() && session()) {
         <div>
+          <!-- Global Progress Bar -->
+          <div class="mb-4">
+            <div class="flex justify-between text-xs text-gray-400 font-medium mb-1">
+              <span>Workout Progress</span>
+              <span>{{ getTotalLoggedSets() }} / {{ getTotalExpectedSets() }} Sets</span>
+            </div>
+            <div class="flex gap-1 h-1.5 w-full mt-1 mb-6">
+              @for (s of [].constructor(getTotalExpectedSets()); track $index; let idx = $index) {
+                <div class="flex-1 rounded-full overflow-hidden bg-gray-800">
+                  <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
+                       [style.width.%]="getTotalLoggedSets() > idx ? 100 : 0"></div>
+                </div>
+              }
+            </div>
+          </div>
           <h1 class="text-3xl font-bold text-white mb-1">{{ session()?.dayTemplateName }}</h1>
           <p class="text-gray-400 text-sm mb-6">Week {{ session()?.weekNumber }} &bull; {{ session()?.performedOn | date:'mediumDate' }}</p>
           <!-- Exercises List -->
@@ -163,14 +178,6 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
                             </span>
                             <span class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Next Set</span>
                           </div>
-                          @if (getSetsForExercise(ex.id).length >= ex.sets) {
-                            <div class="px-2 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded text-yellow-500 text-xs flex items-center gap-1.5">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                              </svg>
-                              Extra set
-                            </div>
-                          }
                         </div>
                         <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
                           @if (!ex.durationMinutes) {
@@ -204,8 +211,9 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
                             </div>
                           }
                           <div class="w-full sm:w-auto mt-2 sm:mt-0">
-                            <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px]">
-                              Log
+                            <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px]"
+                              [ngClass]="getSetsForExercise(ex.id).length >= ex.sets ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-blue-600 hover:bg-blue-500'">
+                              {{ getSetsForExercise(ex.id).length >= ex.sets ? 'Log Extra Set' : 'Log' }}
                             </button>
                           </div>
                         </form>
@@ -214,16 +222,31 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
                   </div>
                 }
                 <!-- Progress Bar inside Exercise Card -->
-                <div class="mt-4 h-1 w-full bg-gray-800 rounded-full overflow-hidden mb-4">
-                  <div
-                    class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
-                    [style.width.%]="(getSetsForExercise(ex.id).length / ex.sets) * 100"
-                  ></div>
+                <div class="flex gap-1 h-1 w-full mt-4 mb-4">
+                  @for (s of [].constructor(ex.sets || 1); track $index; let idx = $index) {
+                    <div class="flex-1 rounded-full overflow-hidden bg-gray-800">
+                      <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
+                           [style.width.%]="getSetsForExercise(ex.id).length > idx ? 100 : 0"></div>
+                    </div>
+                  }
                 </div>
                 <!-- Rating Section -->
                 @if (!session()?.completedAt) {
                   <div class="pt-4 border-t border-gray-700/50 mt-4">
                     <div class="flex gap-1 sm:gap-1.5 justify-between sm:justify-start w-full">
+                      <button
+                        (click)="deleteRating(ex.id)"
+                        [class.bg-gray-800]="getRating(ex.id) !== null"
+                        [class.text-gray-400]="getRating(ex.id) !== null"
+                        [class.bg-blue-600]="getRating(ex.id) === null"
+                        [class.text-white]="getRating(ex.id) === null"
+                        title="Unrated"
+                        class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-blue-500 hover:text-white transition-colors"
+                        >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                       @for (r of [1,2,3,4,5,6,7,8,9,10]; track r) {
                         <button
                           (click)="setRating(ex.id, r)"
@@ -794,5 +817,36 @@ export class ActiveWorkoutComponent implements OnInit {
         console.error('Error saving rating', err);
       }
     });
+  }
+
+  deleteRating(dayExerciseId: string) {
+    const id = this.sessionId();
+    if (!id || this.session()?.completedAt) return;
+
+    this.workoutService.deleteExerciseRating(id, dayExerciseId).subscribe({
+      next: (updatedSession) => {
+        this.session.set(updatedSession);
+      },
+      error: (err) => {
+        console.error('Error deleting rating', err);
+      }
+    });
+  }
+
+  getTotalExpectedSets(): number {
+    return this.exercises().reduce((total, ex) => total + (ex.sets || 1), 0); // fallback to 1 for cardio if needed, but ex.sets should be used
+  }
+
+  getTotalLoggedSets(): number {
+    return this.exercises().reduce((total, ex) => {
+      const logged = this.getSetsForExercise(ex.id).length;
+      return total + Math.min(logged, ex.sets || 1);
+    }, 0);
+  }
+
+  getGlobalProgress(): number {
+    const expected = this.getTotalExpectedSets();
+    if (expected === 0) return 0;
+    return (this.getTotalLoggedSets() / expected) * 100;
   }
 }
