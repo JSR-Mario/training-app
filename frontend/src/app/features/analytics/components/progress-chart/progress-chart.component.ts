@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
@@ -33,6 +33,10 @@ export class ProgressChartComponent implements OnInit {
   isLoading = signal(true);
   
   programBodyParts = signal<ProgramBodyPart[]>([]);
+  allBodyPartsSelected = computed(() => {
+    const parts = this.programBodyParts();
+    return parts.length > 0 && parts.every(p => p.checked);
+  });
   
   uniqueDayNames = signal<string[]>([]);
   selectedDayFilter = signal<string>('All');
@@ -219,6 +223,12 @@ export class ProgressChartComponent implements OnInit {
       this.programBodyParts.set([...current]);
       this.updateChart();
     }
+  }
+
+  toggleAllBodyParts(event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.programBodyParts.update(parts => parts.map(p => ({ ...p, checked })));
+    this.updateChart();
   }
 
   onFilterChange(event: Event) {

@@ -25,7 +25,28 @@
     <!-- Checkboxes for Program Body Parts -->
     @if (programBodyParts().length > 0) {
       <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800">
-        <h3 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">Program Body Parts</h3>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Program Body Parts</h3>
+          
+          <label class="flex items-center gap-2 cursor-pointer group">
+            <span class="text-xs font-medium text-gray-400 group-hover:text-white transition-colors">Select All</span>
+            <div class="relative flex items-center justify-center w-5 h-5 rounded border border-gray-600 group-hover:border-emerald-500 transition-colors duration-200"
+                 [ngStyle]="{
+                   'background-color': allBodyPartsSelected() ? '#10b98133' : 'transparent',
+                   'border-color': allBodyPartsSelected() ? '#10b981' : ''
+                 }">
+              <input type="checkbox" 
+                     class="absolute opacity-0 w-full h-full cursor-pointer"
+                     [checked]="allBodyPartsSelected()"
+                     (change)="toggleAllBodyParts($event)" />
+              @if (allBodyPartsSelected()) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+              }
+            </div>
+          </label>
+        </div>
         <div class="flex flex-wrap gap-3">
           @for (bp of programBodyParts(); track bp.id) {
             <label class="flex items-center gap-2 cursor-pointer group">
