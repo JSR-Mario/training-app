@@ -83,6 +83,9 @@ class AnalyticsControllerTest {
         progress.setMaxWeightKg(new BigDecimal("100.00"));
         progress.setTotalVolumeKg(new BigDecimal("1000.00"));
         progress.setTotalSets(3);
+        progress.setWeekNumber(1);
+        UUID dayId = UUID.randomUUID();
+        progress.setDayTemplateId(dayId);
 
         when(progressRepository.findByUserIdAndExerciseIdOrderBySessionDateAsc(userId, exerciseId))
             .thenReturn(List.of(progress));
@@ -92,6 +95,8 @@ class AnalyticsControllerTest {
                 .andExpect(jsonPath("$[0].sessionDate").value("2026-06-20"))
                 .andExpect(jsonPath("$[0].maxWeightKg").value(100.00))
                 .andExpect(jsonPath("$[0].totalVolumeKg").value(1000.00))
-                .andExpect(jsonPath("$[0].totalSets").value(3));
+                .andExpect(jsonPath("$[0].totalSets").value(3))
+                .andExpect(jsonPath("$[0].weekNumber").value(1))
+                .andExpect(jsonPath("$[0].dayTemplateId").value(dayId.toString()));
     }
 }

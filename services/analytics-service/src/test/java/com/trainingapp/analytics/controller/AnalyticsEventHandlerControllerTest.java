@@ -43,7 +43,7 @@ class AnalyticsEventHandlerControllerTest {
         );
 
         SessionCompletedEvent event = new SessionCompletedEvent(
-            UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 1, LocalDate.now(), List.of(set1)
+            UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 1, UUID.randomUUID(), LocalDate.now(), List.of(set1)
         );
 
         mockMvc.perform(post("/internal/events/session-completed")

@@ -7,38 +7,38 @@
   </div>
 
   <div class="mb-4">
-    <!-- Checkboxes for Program Exercises -->
-    @if (programExercises().length > 0) {
+    <!-- Checkboxes for Program Body Parts -->
+    @if (programBodyParts().length > 0) {
       <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800">
-        <h3 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">Program Exercises</h3>
+        <h3 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">Program Body Parts</h3>
         <div class="flex flex-wrap gap-3">
-          @for (ex of programExercises(); track ex.id) {
+          @for (bp of programBodyParts(); track bp.id) {
             <label class="flex items-center gap-2 cursor-pointer group">
               <div class="relative flex items-center justify-center w-5 h-5 rounded border transition-colors duration-200"
                    [ngStyle]="{
-                     'border-color': ex.checked ? ex.color : '#4b5563',
-                     'background-color': ex.checked ? ex.color + '33' : 'transparent'
+                     'border-color': bp.checked ? bp.color : '#4b5563',
+                     'background-color': bp.checked ? bp.color + '33' : 'transparent'
                    }">
                 <input type="checkbox" 
                        class="absolute opacity-0 w-full h-full cursor-pointer"
-                       [checked]="ex.checked"
-                       (change)="toggleExercise(ex.id)" />
-                @if (ex.checked) {
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" [ngStyle]="{'color': ex.color}">
+                       [checked]="bp.checked"
+                       (change)="toggleBodyPart(bp.id)" />
+                @if (bp.checked) {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" [ngStyle]="{'color': bp.color}">
                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                   </svg>
                 }
               </div>
-              <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ ex.name }}</span>
+              <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ bp.name }}</span>
             </label>
           }
         </div>
       </div>
     }
     
-    @if (programExercises().length === 0 && !isLoading()) {
+    @if (programBodyParts().length === 0 && !isLoading()) {
       <div class="text-sm text-gray-500 py-4">
-        No exercises found in the active program.
+        No body parts found in the active program.
       </div>
     }
   </div>
@@ -65,7 +65,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
-        <p>No volume data found for the selected exercises.</p>
+        <p>No volume data found for the selected body parts.</p>
       </div>
     }
   </div>

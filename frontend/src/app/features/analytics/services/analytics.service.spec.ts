@@ -41,7 +41,7 @@ describe('AnalyticsService', () => {
 
   it('should fetch exercise progress', () => {
     const mockResponse: ExerciseProgressEntry[] = [
-      { sessionDate: '2023-01-01', maxWeightKg: 100, totalVolumeKg: 1000, totalSets: 3 }
+      { sessionDate: '2023-01-01', weekNumber: 1, dayTemplateId: 'day-1', maxWeightKg: 100, totalVolumeKg: 1000, totalSets: 3 }
     ];
 
     service.getExerciseProgress('ex-123').subscribe(res => {
