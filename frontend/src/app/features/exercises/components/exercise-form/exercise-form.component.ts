@@ -191,7 +191,7 @@ export interface ExerciseFormData {
                         }
                       </select>
                     }
-                    @if (targetForm.get('group')?.value) {
+                    @if (targetForm.get('group')?.value && getPartsFor(targetForm.get('category')?.value, targetForm.get('group')?.value).length > 1) {
                       <select
                         formControlName="bodyPart"
                         class="w-full px-3 py-2 text-sm bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white border-l-2 border-l-blue-500"
@@ -363,7 +363,15 @@ export class ExerciseFormComponent implements OnInit {
 
   onGroupChange(index: number) {
     const targetGroup = this.targets.at(index);
-    targetGroup.get('bodyPart')?.setValue('');
+    const category = targetGroup.get('category')?.value;
+    const group = targetGroup.get('group')?.value;
+    const parts = this.getPartsFor(category, group);
+    // If the group maps to exactly one body part, auto-select it (no need for a third picker)
+    if (parts.length === 1) {
+      targetGroup.get('bodyPart')?.setValue(parts[0]);
+    } else {
+      targetGroup.get('bodyPart')?.setValue('');
+    }
   }
 
   removeTarget(index: number) {
