@@ -9,7 +9,7 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
 import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
 import { finalize, forkJoin, map, switchMap, of } from 'rxjs';
 
-import { Exercise, ExerciseTarget } from '../../../../core/types/training.types';
+import { Exercise, ExerciseTarget, DayTemplate } from '../../../../core/types/training.types';
 
 interface ProgramBodyPart {
   id: string;
@@ -34,9 +34,13 @@ export class ProgressChartComponent implements OnInit {
   
   programBodyParts = signal<ProgramBodyPart[]>([]);
   
+  uniqueDayNames = signal<string[]>([]);
+  selectedDayFilter = signal<string>('All');
+  private programDays: DayTemplate[] = [];
+
   private catalogExercises: Exercise[] = [];
   // Store mapped data: map of bodyPartId -> entries
-  private bodyPartData = new Map<string, { weekNumber: number, volume: number }[]>();
+  private bodyPartData = new Map<string, { weekNumber: number, dayTemplateId: string, volume: number }[]>();
 
   public chartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -118,6 +122,11 @@ export class ProgressChartComponent implements OnInit {
       }),
       switchMap(daysArray => {
         const allDays = daysArray.flat();
+        this.programDays = allDays;
+        
+        const uniqueNames = Array.from(new Set(allDays.map(d => d.name))).sort();
+        this.uniqueDayNames.set(uniqueNames);
+
         if (allDays.length === 0) return of([]);
         // Fetch exercises for all days
         const exerciseReqs = allDays.map(d => this.programService.getDayExercises(d.id));
@@ -159,7 +168,7 @@ export class ProgressChartComponent implements OnInit {
         }
 
         const bodyPartsSet = new Set<string>();
-        const mappedData = new Map<string, { weekNumber: number, volume: number }[]>();
+        const mappedData = new Map<string, { weekNumber: number, dayTemplateId: string, volume: number }[]>();
 
         for (const res of results) {
           const catEx = this.catalogExercises.find(c => c.id === res.exerciseId);
@@ -178,7 +187,7 @@ export class ProgressChartComponent implements OnInit {
               const volumeForBp = entry.totalVolumeKg * target.targetValue;
               
               if (!mappedData.has(bp)) mappedData.set(bp, []);
-              mappedData.get(bp)!.push({ weekNumber: week, volume: volumeForBp });
+              mappedData.get(bp)!.push({ weekNumber: week, dayTemplateId: entry.dayTemplateId, volume: volumeForBp });
             });
           });
         }
@@ -212,6 +221,12 @@ export class ProgressChartComponent implements OnInit {
     }
   }
 
+  onFilterChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    this.selectedDayFilter.set(target.value);
+    this.updateChart();
+  }
+
   private updateChart() {
     const bodyParts = this.programBodyParts();
     if (bodyParts.length === 0) {
@@ -219,13 +234,22 @@ export class ProgressChartComponent implements OnInit {
       return;
     }
 
+    const filter = this.selectedDayFilter();
+    const validDayIds = new Set(
+      this.programDays.filter(d => filter === 'All' || d.name === filter).map(d => d.id)
+    );
+
     const weekSet = new Set<number>();
     
     for (const bp of bodyParts) {
       if (!bp.checked) continue;
       const data = this.bodyPartData.get(bp.id);
       if (data) {
-        data.forEach(entry => weekSet.add(entry.weekNumber));
+        data.forEach(entry => {
+          if (validDayIds.has(entry.dayTemplateId)) {
+            weekSet.add(entry.weekNumber);
+          }
+        });
       }
     }
 
@@ -244,6 +268,7 @@ export class ProgressChartComponent implements OnInit {
       const volumeByWeek = new Map<number, number>();
       
       for (const entry of raw) {
+        if (!validDayIds.has(entry.dayTemplateId)) continue;
         const current = volumeByWeek.get(entry.weekNumber) || 0;
         volumeByWeek.set(entry.weekNumber, current + entry.volume);
       }

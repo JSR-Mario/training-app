@@ -1,9 +1,24 @@
 <div class="glass-panel p-6 rounded-2xl animate-fade-in relative">
   
-  <div class="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
     <div>
       <h2 class="text-xl font-bold text-white tracking-tight">Total Volume (Week by Week)</h2>
     </div>
+    
+    @if (uniqueDayNames().length > 0) {
+      <div class="flex items-center gap-3 bg-gray-900/50 p-2 rounded-xl border border-gray-800">
+        <label for="dayFilter" class="text-sm font-semibold text-gray-400 whitespace-nowrap">Filter by Day:</label>
+        <select 
+          id="dayFilter"
+          class="bg-gray-800 text-white text-sm rounded border-gray-700 focus:ring-emerald-500 focus:border-emerald-500 p-2 min-w-[150px] transition-colors"
+          (change)="onFilterChange($event)">
+          <option value="All">All Days (Weekly Total)</option>
+          @for (name of uniqueDayNames(); track name) {
+            <option [value]="name">{{ name }}</option>
+          }
+        </select>
+      </div>
+    }
   </div>
 
   <div class="mb-4">
