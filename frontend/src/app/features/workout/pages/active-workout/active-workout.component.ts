@@ -1,19 +1,21 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { WorkoutService } from '../../services/workout.service';
 import { ProgramService } from '../../../programs/services/program.service';
+import { ExerciseService } from '../../../exercises/services/exercise.service';
 import { 
   WorkoutSessionResponse, 
+  DayExercise, 
   WorkoutSetResponse,
-  DayExercise,
-  Exercise
+  Exercise,
+  ExerciseSuggestionResponse
 } from '../../../../core/types/training.types';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/components/exercise-form/exercise-form.component';
-import { ExerciseService } from '../../../exercises/services/exercise.service';
-import { forkJoin } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -93,37 +95,37 @@ import { forkJoin } from 'rxjs';
                   <div>
                     <!-- Last Logged Set -->
                     @if (getLastSetForExercise(ex.id); as set) {
-                      <div class="space-y-3 mb-4" [ngStyle]="{'--perf-status': getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id))}">
+                      <div class="space-y-3 mb-4 transition-all duration-300" [class.scale-105]="isLoggingSet()">
                         <div class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border transition-colors"
-                          [ngClass]="getPerfContainerClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
+                          [ngClass]="getPerfContainerClass(set.performanceStatus)">
                           <div class="flex items-center gap-4">
                             @if (!ex.durationMinutes) {
                               <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors"
-                                [ngClass]="getPerfBadgeClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)), false)">
+                                [ngClass]="getPerfBadgeClass(set.performanceStatus, false)">
                                 {{ set.setNumber }}
                               </span>
                             }
                             @if (ex.durationMinutes) {
                               <span class="px-2 py-1 rounded text-xs font-bold border uppercase transition-colors"
-                                [ngClass]="getPerfBadgeClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)), true)">
+                                [ngClass]="getPerfBadgeClass(set.performanceStatus, true)">
                                 Log
                               </span>
                             }
                             <div class="font-medium transition-colors"
-                              [ngClass]="getPerfTextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
+                              [ngClass]="getPerfTextClass(set.performanceStatus)">
                               @if (!ex.durationMinutes) {
-                                {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">kg</span> ×
+                                {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(set.performanceStatus)">kg</span> ×
                                 @if (ex.unilateral) {
                                   {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
                                 }
                                 @if (!ex.unilateral) {
                                   {{ set.repsCompleted }}
                                 }
-                                <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">reps</span>
-                                @if (getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)) === 'critical') {
+                                <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(set.performanceStatus)">reps</span>
+                                @if (set.performanceStatus === 'CRITICAL') {
                                   <span class="ml-2 text-[10px] uppercase font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">Perf Drop</span>
                                 }
-                                @if (getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)) === 'warning') {
+                                @if (set.performanceStatus === 'WARNING') {
                                   <span class="ml-2 text-[10px] uppercase font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded">Fatigue</span>
                                 }
                               }
@@ -174,16 +176,16 @@ import { forkJoin } from 'rxjs';
                           @if (!ex.durationMinutes) {
                             <div class="flex-1 min-w-[80px]">
                               <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Weight (kg)</label>
-                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
+                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" [placeholder]="getSuggestion(ex.id)?.suggestedWeightKg || '0'" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center placeholder-gray-500/50">
                             </div>
                             <div class="flex-1 min-w-[70px]">
                               <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.unilateral ? 'Reps (L)' : 'Reps' }}</label>
-                              <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
+                              <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" [placeholder]="getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center placeholder-gray-500/50">
                             </div>
                             @if (ex.unilateral) {
                               <div class="flex-1 min-w-[70px]">
                                 <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps (R)</label>
-                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center" [placeholder]="getForm(ex.id).get('repsCompleted')?.value || ''">
+                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center placeholder-gray-500/50">
                               </div>
                             }
                           }
@@ -380,7 +382,7 @@ export class ActiveWorkoutComponent implements OnInit {
   exercises = signal<DayExercise[]>([]);
   existingExerciseIds = computed(() => this.exercises().map(e => e.exerciseId));
   loggedSets = signal<WorkoutSetResponse[]>([]);
-  
+  suggestions = signal<Map<string, ExerciseSuggestionResponse>>(new Map());
   isLoading = signal<boolean>(true);
   isLoggingSet = signal<boolean>(false);
   isCompleting = signal<boolean>(false);
@@ -443,27 +445,25 @@ export class ActiveWorkoutComponent implements OnInit {
           this.notesControl.setValue(sess.notes, { emitEvent: false });
         }
         
-        // Load sets
-        this.workoutService.getSets(id).subscribe({
-          next: (sets) => {
-            this.loggedSets.set(sets);
+        forkJoin({
+          sets: this.workoutService.getSets(id),
+          exercises: this.programService.getDayExercises(sess.dayTemplateId),
+          suggestions: this.workoutService.getSuggestions(id).pipe(catchError(() => of([])))
+        }).subscribe({
+          next: (res) => {
+            this.loggedSets.set(res.sets);
             
-            // Load exercises for the day template
-            this.programService.getDayExercises(sess.dayTemplateId).subscribe({
-              next: (exs) => {
-                const sorted = exs.sort((a, b) => a.sortOrder - b.sortOrder);
-                this.exercises.set(sorted);
-                this.initForms(sorted);
-                this.isLoading.set(false);
-              },
-              error: (err) => {
-                console.error('Failed to load exercises', err);
-                this.isLoading.set(false);
-              }
-            });
+            const suggMap = new Map<string, ExerciseSuggestionResponse>();
+            res.suggestions.forEach(s => suggMap.set(s.dayExerciseId, s));
+            this.suggestions.set(suggMap);
+            
+            const sorted = res.exercises.sort((a, b) => a.sortOrder - b.sortOrder);
+            this.exercises.set(sorted);
+            this.initForms(sorted);
+            this.isLoading.set(false);
           },
           error: (err) => {
-            console.error('Failed to load sets', err);
+            console.error('Failed to load workout data', err);
             this.isLoading.set(false);
           }
         });
@@ -480,15 +480,15 @@ export class ActiveWorkoutComponent implements OnInit {
       const setsForEx = this.getSetsForExercise(ex.id);
       
       if (ex.durationMinutes != null) {
-        let defaultDuration = ex.durationMinutes;
-        let defaultIncline = ex.incline || 0;
-        let defaultResistance = ex.resistance || 0;
+        let defaultDuration: number | '' = '';
+        let defaultIncline: number | '' = '';
+        let defaultResistance: number | '' = '';
 
         if (setsForEx.length > 0) {
           const lastSet = setsForEx[setsForEx.length - 1];
-          defaultDuration = lastSet.durationMinutes ?? defaultDuration;
-          defaultIncline = lastSet.incline ?? defaultIncline;
-          defaultResistance = lastSet.resistance ?? defaultResistance;
+          defaultDuration = lastSet.durationMinutes ?? '';
+          defaultIncline = lastSet.incline ?? '';
+          defaultResistance = lastSet.resistance ?? '';
         }
 
         this.forms.set(ex.id, this.fb.group({
@@ -498,14 +498,14 @@ export class ActiveWorkoutComponent implements OnInit {
         }));
       } else {
         let defaultWeight = '';
-        let defaultReps = ex.reps;
-        let defaultRepsRight = ex.reps;
+        let defaultReps: number | '' = '';
+        let defaultRepsRight: number | '' = '';
 
         if (setsForEx.length > 0) {
           const lastSet = setsForEx[setsForEx.length - 1];
           defaultWeight = lastSet.weightKg?.toString() || '';
-          defaultReps = lastSet.repsCompleted || ex.reps;
-          defaultRepsRight = lastSet.repsCompletedRight || lastSet.repsCompleted || ex.reps;
+          defaultReps = lastSet.repsCompleted || '';
+          defaultRepsRight = lastSet.repsCompletedRight || lastSet.repsCompleted || '';
         }
 
         this.forms.set(ex.id, this.fb.group({
@@ -532,52 +532,36 @@ export class ActiveWorkoutComponent implements OnInit {
     return sets.length > 0 ? sets[sets.length - 1] : null;
   }
 
-  getMaxPerformanceForExercise(exerciseId: string): number {
-    const sets = this.getSetsForExercise(exerciseId);
-    let max = 0;
-    for (const set of sets) {
-      if (set.weightKg != null && set.repsCompleted != null) {
-        const reps = set.repsCompleted + (set.repsCompletedRight || 0);
-        const perf = set.weightKg * reps;
-        if (perf > max) max = perf;
-      }
-    }
-    return max;
+  getSuggestion(dayExerciseId: string) {
+    return this.suggestions().get(dayExerciseId);
   }
 
-  getPerformanceStatus(set: WorkoutSetResponse, maxPerf: number): 'good' | 'warning' | 'critical' {
-    if (set.weightKg == null || set.repsCompleted == null || maxPerf === 0) return 'good';
-    const reps = set.repsCompleted + (set.repsCompletedRight || 0);
-    const perf = set.weightKg * reps;
-    const ratio = perf / maxPerf;
-    
-    if (ratio < 0.75) return 'critical';
-    if (ratio < 0.90) return 'warning';
-    return 'good';
-  }
-
-  getPerfContainerClass(status: 'good' | 'warning' | 'critical'): string {
-    if (status === 'critical') return 'border-red-500/50 bg-red-900/20';
-    if (status === 'warning') return 'border-yellow-500/50 bg-yellow-900/20';
+  getPerfContainerClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
+    if (status === 'CRITICAL') return 'border-red-500/50 bg-red-900/20';
+    if (status === 'WARNING') return 'border-yellow-500/50 bg-yellow-900/20';
+    if (status === 'GOOD') return 'border-emerald-500/50 bg-emerald-900/20';
     return 'border-gray-700';
   }
 
-  getPerfBadgeClass(status: 'good' | 'warning' | 'critical', isDuration: boolean): string {
-    if (status === 'critical') return 'bg-red-600/20 text-red-400 border-red-500/30';
-    if (status === 'warning') return 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30';
+  getPerfBadgeClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined, isDuration: boolean): string {
+    if (status === 'CRITICAL') return 'bg-red-600/20 text-red-400 border-red-500/30';
+    if (status === 'WARNING') return 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30';
+    if (status === 'GOOD') return 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30';
     if (isDuration) return 'bg-purple-600/20 text-purple-400 border-purple-500/30';
     return 'bg-blue-600/20 text-blue-400 border-blue-500/30';
   }
 
-  getPerfTextClass(status: 'good' | 'warning' | 'critical'): string {
-    if (status === 'critical') return 'text-red-300';
-    if (status === 'warning') return 'text-yellow-300';
+  getPerfTextClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
+    if (status === 'CRITICAL') return 'text-red-300';
+    if (status === 'WARNING') return 'text-yellow-300';
+    if (status === 'GOOD') return 'text-emerald-300';
     return 'text-gray-200';
   }
 
-  getPerfSubtextClass(status: 'good' | 'warning' | 'critical'): string {
-    if (status === 'critical') return 'text-red-400/70';
-    if (status === 'warning') return 'text-yellow-400/70';
+  getPerfSubtextClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
+    if (status === 'CRITICAL') return 'text-red-400/70';
+    if (status === 'WARNING') return 'text-yellow-400/70';
+    if (status === 'GOOD') return 'text-emerald-400/70';
     return 'text-gray-500';
   }
 

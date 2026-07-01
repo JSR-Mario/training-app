@@ -63,7 +63,10 @@ public class WorkoutSetService {
         set.setResistance(request.resistance());
 
         WorkoutSet saved = setRepository.save(set);
-        return mapToResponse(saved);
+        
+        List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId());
+        double maxPerf = calculateMaxPerf(allSets, dayExercise.getId());
+        return mapToResponse(saved, maxPerf);
     }
 
     public List<WorkoutSetResponse> getSetsForSession(UUID sessionId, UUID userId) {
@@ -71,8 +74,12 @@ public class WorkoutSetService {
         sessionRepository.findByIdAndUserId(sessionId, userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workout session not found"));
 
-        return setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId).stream()
-            .map(this::mapToResponse)
+        List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId);
+        return allSets.stream()
+            .map(set -> {
+                double maxPerf = calculateMaxPerf(allSets, set.getDayExercise().getId());
+                return mapToResponse(set, maxPerf);
+            })
             .collect(Collectors.toList());
     }
 
@@ -102,7 +109,9 @@ public class WorkoutSetService {
         set.setResistance(request.resistance());
 
         WorkoutSet saved = setRepository.save(set);
-        return mapToResponse(saved);
+        List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(set.getSession().getId());
+        double maxPerf = calculateMaxPerf(allSets, dayExercise.getId());
+        return mapToResponse(saved, maxPerf);
     }
 
     @Transactional
@@ -117,7 +126,29 @@ public class WorkoutSetService {
         setRepository.delete(set);
     }
 
-    private WorkoutSetResponse mapToResponse(WorkoutSet set) {
+    private double calculateMaxPerf(List<WorkoutSet> sets, UUID dayExerciseId) {
+        double max = 0;
+        for (WorkoutSet s : sets) {
+            if (s.getDayExercise().getId().equals(dayExerciseId) && s.getWeightKg() != null && s.getRepsCompleted() != null) {
+                int reps = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
+                double perf = s.getWeightKg().doubleValue() * reps;
+                if (perf > max) max = perf;
+            }
+        }
+        return max;
+    }
+
+    private String calculatePerformanceStatus(WorkoutSet set, double maxPerf) {
+        if (set.getWeightKg() == null || set.getRepsCompleted() == null || maxPerf == 0) return "GOOD";
+        int reps = set.getRepsCompleted() + (set.getRepsCompletedRight() != null ? set.getRepsCompletedRight() : 0);
+        double perf = set.getWeightKg().doubleValue() * reps;
+        double ratio = perf / maxPerf;
+        if (ratio < 0.75) return "CRITICAL";
+        if (ratio < 0.90) return "WARNING";
+        return "GOOD";
+    }
+
+    private WorkoutSetResponse mapToResponse(WorkoutSet set, double maxPerf) {
         return new WorkoutSetResponse(
             set.getId(),
             set.getSession().getId(),
@@ -129,7 +160,8 @@ public class WorkoutSetService {
             set.getDurationMinutes(),
             set.getIncline(),
             set.getResistance(),
-            set.getLoggedAt()
+            set.getLoggedAt(),
+            calculatePerformanceStatus(set, maxPerf)
         );
     }
 }

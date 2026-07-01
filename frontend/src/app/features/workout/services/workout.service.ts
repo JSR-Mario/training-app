@@ -5,7 +5,8 @@ import {
   WorkoutSessionRequest, 
   WorkoutSessionResponse, 
   WorkoutSetRequest, 
-  WorkoutSetResponse 
+  WorkoutSetResponse,
+  ExerciseSuggestionResponse
 } from '../../../core/types/training.types';
 
 @Injectable({
@@ -71,5 +72,9 @@ export class WorkoutService {
 
   deleteSet(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/workout-sets/${id}`);
+  }
+
+  getSuggestions(sessionId: string): Observable<ExerciseSuggestionResponse[]> {
+    return this.http.get<ExerciseSuggestionResponse[]>(`${this.baseUrl}/sessions/${sessionId}/suggestions`);
   }
 }
