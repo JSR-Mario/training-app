@@ -381,18 +381,18 @@ export class ActiveWorkoutComponent implements OnInit {
     resistance: [null]
   });
 
-  expandedExercises = new Set<string>();
+  collapsedExercises = new Set<string>();
 
   toggleCollapse(exId: string) {
-    if (this.expandedExercises.has(exId)) {
-      this.expandedExercises.delete(exId);
+    if (this.collapsedExercises.has(exId)) {
+      this.collapsedExercises.delete(exId);
     } else {
-      this.expandedExercises.add(exId);
+      this.collapsedExercises.add(exId);
     }
   }
 
   isCollapsed(exId: string): boolean {
-    return !this.expandedExercises.has(exId);
+    return this.collapsedExercises.has(exId);
   }
 
   ngOnInit() {
