@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.trainingapp.training.dto.ExerciseSuggestionResponse;
 
 import java.time.Instant;
 import java.util.List;
@@ -130,6 +131,15 @@ public class WorkoutSessionService {
     }
 
     @Transactional
+    public WorkoutSessionResponse deleteRating(UUID id, UUID userId, UUID dayExerciseId) {
+        WorkoutSession session = getSessionEntity(id, userId);
+        ratingRepository.deleteBySessionIdAndDayExerciseId(session.getId(), dayExerciseId);
+        
+        // Return updated session response so frontend gets the fresh state
+        return mapToResponse(session);
+    }
+
+    @Transactional
     public void completeSession(UUID id, UUID userId) {
         WorkoutSession session = getSessionEntity(id, userId);
         
@@ -174,11 +184,54 @@ public class WorkoutSessionService {
             session.getUserId(),
             session.getDayTemplate().getWeekTemplate().getProgram().getId(),
             session.getWeekNumber(),
+            session.getDayTemplate().getId(),
             session.getPerformedOn(),
             setDatas
         );
 
         analyticsClient.notifySessionCompleted(event);
+    }
+
+    public List<ExerciseSuggestionResponse> getExerciseSuggestions(UUID id, UUID userId) {
+        WorkoutSession session = getSessionEntity(id, userId);
+        List<DayExercise> dayExercises = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(session.getDayTemplate().getId());
+        
+        List<ExerciseSuggestionResponse> suggestions = new java.util.ArrayList<>();
+        for (DayExercise de : dayExercises) {
+            List<WorkoutSet> history = setRepository.findHistoricalSetsForExercise(
+                de.getExercise().getId(), userId, session.getPerformedOn());
+            if (!history.isEmpty()) {
+                WorkoutSession mostRecentSession = history.get(0).getSession();
+                WorkoutSet bestSet = null;
+                double maxPerf = 0;
+                for (WorkoutSet s : history) {
+                    if (!s.getSession().getId().equals(mostRecentSession.getId())) continue;
+                    if (s.getWeightKg() != null && s.getRepsCompleted() != null) {
+                        int reps = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
+                        double perf = s.getWeightKg().doubleValue() * reps;
+                        if (perf > maxPerf) {
+                            maxPerf = perf;
+                            bestSet = s;
+                        }
+                    } else if (s.getDurationMinutes() != null && bestSet == null) {
+                        bestSet = s;
+                    }
+                }
+                
+                if (bestSet != null) {
+                    suggestions.add(new ExerciseSuggestionResponse(
+                        de.getId(),
+                        de.getExercise().getId(),
+                        bestSet.getWeightKg(),
+                        bestSet.getRepsCompleted() != null ? bestSet.getRepsCompleted() : de.getReps(),
+                        bestSet.getDurationMinutes(),
+                        bestSet.getIncline(),
+                        bestSet.getResistance()
+                    ));
+                }
+            }
+        }
+        return suggestions;
     }
 
     private WorkoutSession getSessionEntity(UUID id, UUID userId) {

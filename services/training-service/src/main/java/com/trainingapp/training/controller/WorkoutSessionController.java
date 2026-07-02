@@ -58,6 +58,12 @@ public class WorkoutSessionController {
         return sessionService.updateRating(id, UserContext.getCurrentUserId(), dayExerciseId, request);
     }
 
+    @DeleteMapping("/{id}/ratings/{dayExerciseId}")
+    public WorkoutSessionResponse deleteRating(@PathVariable UUID id, @PathVariable UUID dayExerciseId) {
+        return sessionService.deleteRating(id, UserContext.getCurrentUserId(), dayExerciseId);
+    }
+
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         sessionService.deleteSession(id, UserContext.getCurrentUserId());
@@ -68,5 +74,10 @@ public class WorkoutSessionController {
     public ResponseEntity<Void> completeSession(@PathVariable UUID id) {
         sessionService.completeSession(id, UserContext.getCurrentUserId());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/suggestions")
+    public List<com.trainingapp.training.dto.ExerciseSuggestionResponse> getExerciseSuggestions(@PathVariable UUID id) {
+        return sessionService.getExerciseSuggestions(id, UserContext.getCurrentUserId());
     }
 }

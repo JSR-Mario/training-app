@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
@@ -9,7 +9,9 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
 import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
 import { finalize, forkJoin, map, switchMap, of } from 'rxjs';
 
-interface ProgramExercise {
+import { Exercise, ExerciseTarget, DayTemplate } from '../../../../core/types/training.types';
+
+interface ProgramBodyPart {
   id: string;
   name: string;
   checked: boolean;
@@ -30,10 +32,19 @@ export class ProgressChartComponent implements OnInit {
 
   isLoading = signal(true);
   
-  programExercises = signal<ProgramExercise[]>([]);
+  programBodyParts = signal<ProgramBodyPart[]>([]);
+  allBodyPartsSelected = computed(() => {
+    const parts = this.programBodyParts();
+    return parts.length > 0 && parts.every(p => p.checked);
+  });
   
-  // Store raw data: map of exerciseId -> entries
-  private rawData = new Map<string, ExerciseProgressEntry[]>();
+  uniqueDayNames = signal<string[]>([]);
+  selectedDayFilter = signal<string>('All');
+  private programDays: DayTemplate[] = [];
+
+  private catalogExercises: Exercise[] = [];
+  // Store mapped data: map of bodyPartId -> entries
+  private bodyPartData = new Map<string, { weekNumber: number, dayTemplateId: string, volume: number }[]>();
 
   public chartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -115,6 +126,11 @@ export class ProgressChartComponent implements OnInit {
       }),
       switchMap(daysArray => {
         const allDays = daysArray.flat();
+        this.programDays = allDays;
+        
+        const uniqueNames = Array.from(new Set(allDays.map(d => d.name))).sort();
+        this.uniqueDayNames.set(uniqueNames);
+
         if (allDays.length === 0) return of([]);
         // Fetch exercises for all days
         const exerciseReqs = allDays.map(d => this.programService.getDayExercises(d.id));
@@ -126,32 +142,22 @@ export class ProgressChartComponent implements OnInit {
         
         if (uniqueExIds.length === 0) return of([]);
 
-        // Fetch catalog exercises to get names
         return this.exerciseService.getExercises().pipe(
           map(catalog => {
-            return uniqueExIds.map((id, index) => {
-              const catEx = catalog.find(c => c.id === id);
-              return {
-                id,
-                name: catEx?.name || 'Unknown',
-                checked: true,
-                color: this.colorPalette[index % this.colorPalette.length]
-              };
-            });
+            this.catalogExercises = catalog;
+            return uniqueExIds;
           })
         );
       }),
-      switchMap(programExs => {
-        if (!programExs || programExs.length === 0) {
+      switchMap(uniqueExIds => {
+        if (!uniqueExIds || uniqueExIds.length === 0) {
           return of([]);
         }
         
-        this.programExercises.set(programExs);
-
         // Fetch progress for all these unique exercises
-        const progressReqs = programExs.map(ex => 
-          this.analyticsService.getExerciseProgress(ex.id).pipe(
-            map(data => ({ exerciseId: ex.id, data }))
+        const progressReqs = uniqueExIds.map(id => 
+          this.analyticsService.getExerciseProgress(id).pipe(
+            map(data => ({ exerciseId: id, data }))
           )
         );
         
@@ -165,10 +171,40 @@ export class ProgressChartComponent implements OnInit {
           return;
         }
 
-        // Store raw data
+        const bodyPartsSet = new Set<string>();
+        const mappedData = new Map<string, { weekNumber: number, dayTemplateId: string, volume: number }[]>();
+
         for (const res of results) {
-          this.rawData.set(res.exerciseId, res.data);
+          const catEx = this.catalogExercises.find(c => c.id === res.exerciseId);
+          if (!catEx || !catEx.targets) continue;
+
+          catEx.targets.forEach((target: ExerciseTarget) => {
+             bodyPartsSet.add(target.bodyPart);
+          });
+
+          res.data.forEach(entry => {
+            // fallback to 1 if weekNumber is missing for old data
+            const week = entry.weekNumber || 1; 
+
+            catEx.targets.forEach((target: ExerciseTarget) => {
+              const bp = target.bodyPart;
+              const volumeForBp = entry.totalVolumeKg * target.targetValue;
+              
+              if (!mappedData.has(bp)) mappedData.set(bp, []);
+              mappedData.get(bp)!.push({ weekNumber: week, dayTemplateId: entry.dayTemplateId, volume: volumeForBp });
+            });
+          });
         }
+
+        const bps = Array.from(bodyPartsSet).sort().map((bp, index) => ({
+          id: bp,
+          name: bp.replace(/_/g, ' '),
+          checked: true,
+          color: this.colorPalette[index % this.colorPalette.length]
+        }));
+        
+        this.programBodyParts.set(bps);
+        this.bodyPartData = mappedData;
 
         this.updateChart();
       },
@@ -179,40 +215,50 @@ export class ProgressChartComponent implements OnInit {
     });
   }
 
-  toggleExercise(exerciseId: string) {
-    const current = this.programExercises();
-    const ex = current.find(e => e.id === exerciseId);
-    if (ex) {
-      ex.checked = !ex.checked;
-      this.programExercises.set([...current]);
+  toggleBodyPart(bodyPartId: string) {
+    const current = this.programBodyParts();
+    const bp = current.find(e => e.id === bodyPartId);
+    if (bp) {
+      bp.checked = !bp.checked;
+      this.programBodyParts.set([...current]);
       this.updateChart();
     }
   }
 
-  private getWeekStart(dateStr: string): string {
-    const d = new Date(dateStr);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
-    const start = new Date(d.setDate(diff));
-    return start.toISOString().split('T')[0];
+  toggleAllBodyParts(event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.programBodyParts.update(parts => parts.map(p => ({ ...p, checked })));
+    this.updateChart();
+  }
+
+  onFilterChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    this.selectedDayFilter.set(target.value);
+    this.updateChart();
   }
 
   private updateChart() {
-    const exercises = this.programExercises();
-    if (exercises.length === 0) {
+    const bodyParts = this.programBodyParts();
+    if (bodyParts.length === 0) {
       this.resetChart();
       return;
     }
 
-    // 1. Collect all unique weeks across all checked exercises
-    const weekSet = new Set<string>();
+    const filter = this.selectedDayFilter();
+    const validDayIds = new Set(
+      this.programDays.filter(d => filter === 'All' || d.name === filter).map(d => d.id)
+    );
+
+    const weekSet = new Set<number>();
     
-    for (const ex of exercises) {
-      if (!ex.checked) continue;
-      const data = this.rawData.get(ex.id);
+    for (const bp of bodyParts) {
+      if (!bp.checked) continue;
+      const data = this.bodyPartData.get(bp.id);
       if (data) {
         data.forEach(entry => {
-          weekSet.add(this.getWeekStart(entry.sessionDate));
+          if (validDayIds.has(entry.dayTemplateId)) {
+            weekSet.add(entry.weekNumber);
+          }
         });
       }
     }
@@ -222,42 +268,36 @@ export class ProgressChartComponent implements OnInit {
       return;
     }
 
-    const sortedWeeks = Array.from(weekSet).sort();
-
-    // 2. Build datasets
+    const sortedWeeks = Array.from(weekSet).sort((a,b) => a - b);
     const datasets = [];
 
-    for (const ex of exercises) {
-      if (!ex.checked) continue;
+    for (const bp of bodyParts) {
+      if (!bp.checked) continue;
       
-      const raw = this.rawData.get(ex.id) || [];
+      const raw = this.bodyPartData.get(bp.id) || [];
+      const volumeByWeek = new Map<number, number>();
       
-      // Aggregate volume per week
-      const volumeByWeek = new Map<string, number>();
       for (const entry of raw) {
-        const week = this.getWeekStart(entry.sessionDate);
-        const current = volumeByWeek.get(week) || 0;
-        volumeByWeek.set(week, current + entry.totalVolumeKg);
+        if (!validDayIds.has(entry.dayTemplateId)) continue;
+        const current = volumeByWeek.get(entry.weekNumber) || 0;
+        volumeByWeek.set(entry.weekNumber, current + entry.volume);
       }
 
-      // Map to sorted weeks array
       const dataPoints = sortedWeeks.map(week => volumeByWeek.get(week) || 0);
 
-      // Only add dataset if it has >0 volume in at least one week
       if (dataPoints.some(v => v > 0)) {
         datasets.push({
-          label: ex.name,
+          label: bp.name,
           data: dataPoints,
-          backgroundColor: ex.color + 'CC', // 80% opacity
-          borderColor: ex.color,
+          backgroundColor: bp.color + 'CC',
+          borderColor: bp.color,
           borderWidth: 1,
           stack: 'Volume'
         });
       }
     }
 
-    // Format week labels nicely (e.g. "Week of YYYY-MM-DD")
-    const labels = sortedWeeks.map(w => 'Week of ' + w);
+    const labels = sortedWeeks.map(w => 'Week ' + w);
 
     this.chartData = {
       labels,

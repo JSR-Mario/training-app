@@ -145,4 +145,15 @@ export interface WorkoutSetResponse {
   incline?: number;
   resistance?: number;
   loggedAt: string;
+  performanceStatus?: 'GOOD' | 'WARNING' | 'CRITICAL';
+}
+
+export interface ExerciseSuggestionResponse {
+  dayExerciseId: string;
+  exerciseId: string;
+  suggestedWeightKg?: number;
+  suggestedReps?: number;
+  suggestedDurationMinutes?: number;
+  suggestedIncline?: number;
+  suggestedResistance?: number;
 }

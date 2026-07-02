@@ -67,6 +67,8 @@ public class MetricsCalculationService {
                         newProgress.setUserId(event.userId());
                         newProgress.setExerciseId(exerciseId);
                         newProgress.setSessionDate(event.performedOn());
+                        newProgress.setWeekNumber(event.weekNumber());
+                        newProgress.setDayTemplateId(event.dayTemplateId());
                         return newProgress;
                     });
 

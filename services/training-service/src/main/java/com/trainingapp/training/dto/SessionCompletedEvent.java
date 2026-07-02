@@ -12,6 +12,7 @@ public record SessionCompletedEvent(
     UUID userId,
     UUID programId,
     int weekNumber,
+    UUID dayTemplateId,
     LocalDate performedOn,
     List<SetData> sets
 ) {

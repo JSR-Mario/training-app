@@ -15,6 +15,7 @@ public record SessionCompletedEvent(
     @NotNull UUID userId,
     @NotNull UUID programId,
     @NotNull Integer weekNumber,
+    @NotNull UUID dayTemplateId,
     @NotNull LocalDate performedOn,
     @NotEmpty List<SetData> sets
 ) {
