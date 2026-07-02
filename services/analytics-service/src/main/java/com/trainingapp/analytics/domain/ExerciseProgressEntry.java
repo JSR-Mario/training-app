@@ -29,6 +29,12 @@ public class ExerciseProgressEntry {
     @Column(name = "session_date", nullable = false, updatable = false)
     private LocalDate sessionDate;
 
+    @Column(name = "week_number")
+    private Integer weekNumber;
+
+    @Column(name = "day_template_id")
+    private UUID dayTemplateId;
+
     @Column(name = "max_weight_kg", nullable = false, precision = 6, scale = 2)
     private BigDecimal maxWeightKg = BigDecimal.ZERO;
 
@@ -52,4 +58,8 @@ public class ExerciseProgressEntry {
     public void setTotalVolumeKg(BigDecimal totalVolumeKg) { this.totalVolumeKg = totalVolumeKg; }
     public int getTotalSets() { return totalSets; }
     public void setTotalSets(int totalSets) { this.totalSets = totalSets; }
+    public Integer getWeekNumber() { return weekNumber; }
+    public void setWeekNumber(Integer weekNumber) { this.weekNumber = weekNumber; }
+    public UUID getDayTemplateId() { return dayTemplateId; }
+    public void setDayTemplateId(UUID dayTemplateId) { this.dayTemplateId = dayTemplateId; }
 }

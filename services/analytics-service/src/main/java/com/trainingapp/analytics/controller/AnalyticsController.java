@@ -50,6 +50,8 @@ public class AnalyticsController {
                 .stream()
                 .map(p -> new ExerciseProgressResponse(
                         p.getSessionDate(),
+                        p.getWeekNumber(),
+                        p.getDayTemplateId(),
                         p.getMaxWeightKg(),
                         p.getTotalVolumeKg(),
                         p.getTotalSets()

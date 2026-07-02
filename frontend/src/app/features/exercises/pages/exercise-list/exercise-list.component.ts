@@ -3,11 +3,12 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { ExerciseService } from '../../services/exercise.service';
 import { Exercise, getBodyPartPath, BodyPart } from '../../../../core/types/training.types';
 import { ExerciseFormComponent } from '../../components/exercise-form/exercise-form.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   standalone: true,
     selector: 'app-exercise-list',
-    imports: [ExerciseFormComponent],
+    imports: [ExerciseFormComponent, FormsModule],
     template: `
     <div class="max-w-7xl mx-auto space-y-6">
     
@@ -46,7 +47,21 @@ import { ExerciseFormComponent } from '../../components/exercise-form/exercise-f
     
       <!-- List View -->
       @if (!isLoading() && !showForm()) {
-        <div class="space-y-12">
+        <div class="space-y-6">
+          <!-- Search Bar -->
+          <div class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-4 top-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search exercises by name..."
+              [ngModel]="searchQuery()"
+              (ngModelChange)="searchQuery.set($event)"
+              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-white pl-12 outline-none"
+            >
+          </div>
+
           @if (exercises().length === 0) {
             <div class="text-center py-12 glass-card">
               <p class="text-gray-400">No exercises found. Add your first exercise!</p>
@@ -54,12 +69,21 @@ import { ExerciseFormComponent } from '../../components/exercise-form/exercise-f
           }
           @for (group of groupedExercises(); track group.category) {
             <div>
-              <h2 class="text-2xl font-bold text-gray-300 mb-6 border-b border-gray-800 pb-2 flex items-center gap-2">
-                {{ group.category }}
-                <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">{{ group.exercises.length }}</span>
-              </h2>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @for (exercise of group.exercises; track exercise) {
+              <button 
+                (click)="toggleGroup(group.category)"
+                class="w-full text-left flex justify-between items-center mb-4 pb-2 border-b border-gray-800 hover:border-gray-600 transition-colors"
+              >
+                <h2 class="text-2xl font-bold text-gray-300 flex items-center gap-2">
+                  {{ group.category }}
+                  <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">{{ group.exercises.length }}</span>
+                </h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 transition-transform duration-200" [class.rotate-180]="expandedGroups().has(group.category)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              @if (expandedGroups().has(group.category)) {
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  @for (exercise of group.exercises; track exercise) {
                   <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
                     <div class="flex justify-between items-start mb-4">
                       <div>
@@ -131,10 +155,11 @@ import { ExerciseFormComponent } from '../../components/exercise-form/exercise-f
                     </span>
                   }
                 </div>
+                </div>
               </div>
-            </div>
-          }
-            </div>
+            }
+              </div>
+              }
             </div>
           }
         </div>
@@ -151,32 +176,64 @@ export class ExerciseListComponent implements OnInit {
   showForm = signal<boolean>(false);
   selectedExercise = signal<Exercise | null>(null);
 
+  searchQuery = signal<string>('');
+  expandedGroups = signal<Set<string>>(new Set());
+
+  toggleGroup(groupName: string) {
+    const current = new Set(this.expandedGroups());
+    if (current.has(groupName)) {
+      current.delete(groupName);
+    } else {
+      current.add(groupName);
+    }
+    this.expandedGroups.set(current);
+  }
+
   groupedExercises = computed(() => {
-    const groups = new Map<string, Exercise[]>();
-    for (const ex of this.exercises()) {
-      const cat = this.getPrimaryCategory(ex);
-      if (!groups.has(cat)) groups.set(cat, []);
-      groups.get(cat)!.push(ex);
+    const query = this.searchQuery().toLowerCase().trim();
+    const filteredExercises = this.exercises().filter(ex => 
+      !query || ex.name.toLowerCase().includes(query)
+    );
+
+    const groups = new Map<string, { exercise: Exercise, targetValue: number }[]>();
+
+    for (const ex of filteredExercises) {
+      if (ex.type === 'CARDIO') {
+        if (!groups.has('Cardio')) groups.set('Cardio', []);
+        groups.get('Cardio')!.push({ exercise: ex, targetValue: 0 });
+        continue;
+      }
+      
+      if (!ex.targets || ex.targets.length === 0) {
+        if (!groups.has('Uncategorized')) groups.set('Uncategorized', []);
+        groups.get('Uncategorized')!.push({ exercise: ex, targetValue: 0 });
+        continue;
+      }
+
+      for (const target of ex.targets) {
+        const path = getBodyPartPath(target.bodyPart as BodyPart);
+        const groupName = path ? `${path.category} > ${path.group} > ${target.bodyPart}` : `Other > ${target.bodyPart}`;
+        
+        if (!groups.has(groupName)) groups.set(groupName, []);
+        groups.get(groupName)!.push({ exercise: ex, targetValue: target.targetValue });
+      }
     }
     
-    const order = ['Chest', 'Back', 'Shoulders', 'Arms', 'Traps', 'Core', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Adductors', 'Cardio', 'Uncategorized', 'Other'];
     return Array.from(groups.entries())
-      .map(([category, exercises]) => ({ category, exercises }))
-      .sort((a, b) => {
-        const idxA = order.indexOf(a.category);
-        const idxB = order.indexOf(b.category);
-        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
-      });
+      .map(([category, items]) => {
+        const sortedExercises = items.sort((a, b) => {
+          const ratingA = a.exercise.averageRating ?? -1;
+          const ratingB = b.exercise.averageRating ?? -1;
+          if (ratingA !== ratingB) {
+            return ratingB - ratingA;
+          }
+          return b.targetValue - a.targetValue;
+        }).map(item => item.exercise);
+        
+        return { category, exercises: Array.from(new Set(sortedExercises)) };
+      })
+      .sort((a, b) => a.category.localeCompare(b.category));
   });
-
-  getPrimaryCategory(exercise: Exercise): string {
-    if (exercise.type === 'CARDIO') return 'Cardio';
-    if (!exercise.targets || exercise.targets.length === 0) return 'Uncategorized';
-    
-    const primaryPart = exercise.targets[0].bodyPart;
-    const path = getBodyPartPath(primaryPart as BodyPart);
-    return path ? path.group : 'Other';
-  }
 
   ngOnInit() {
     this.loadExercises();

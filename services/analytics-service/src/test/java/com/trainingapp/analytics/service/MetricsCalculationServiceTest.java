@@ -62,8 +62,9 @@ class MetricsCalculationServiceTest {
             Map.of("MID_CHEST", new BigDecimal("1.0"), "TRICEPS", new BigDecimal("0.5"))
         );
 
+        UUID dayTemplateId = UUID.randomUUID();
         SessionCompletedEvent event = new SessionCompletedEvent(
-            UUID.randomUUID(), userId, programId, 1, sessionDate, List.of(set1, set2)
+            UUID.randomUUID(), userId, programId, 1, dayTemplateId, sessionDate, List.of(set1, set2)
         );
 
         when(progressRepository.findByUserIdAndExerciseIdAndSessionDate(userId, exerciseId, sessionDate))
@@ -86,6 +87,8 @@ class MetricsCalculationServiceTest {
         // (10 * 50) + (8 * 55) = 500 + 440 = 940
         assertThat(progress.getTotalVolumeKg()).isEqualByComparingTo("940.00");
         assertThat(progress.getTotalSets()).isEqualTo(2);
+        assertThat(progress.getWeekNumber()).isEqualTo(1);
+        assertThat(progress.getDayTemplateId()).isEqualTo(dayTemplateId);
 
         // Assert Volume
         ArgumentCaptor<WeeklyVolumeSnapshot> volumeCaptor = ArgumentCaptor.forClass(WeeklyVolumeSnapshot.class);

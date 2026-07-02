@@ -1,21 +1,26 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { WorkoutService } from '../../services/workout.service';
 import { ProgramService } from '../../../programs/services/program.service';
+import { ExerciseService } from '../../../exercises/services/exercise.service';
 import { 
   WorkoutSessionResponse, 
+  DayExercise, 
   WorkoutSetResponse,
-  DayExercise,
-  Exercise
+  Exercise,
+  ExerciseSuggestionResponse
 } from '../../../../core/types/training.types';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
+import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/components/exercise-form/exercise-form.component';
 
 @Component({
   standalone: true,
     selector: 'app-active-workout',
-    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
+    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent],
     template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-32">
     
@@ -40,6 +45,21 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
     
       @if (!isLoading() && session()) {
         <div>
+          <!-- Global Progress Bar -->
+          <div class="mb-4">
+            <div class="flex justify-between text-xs text-gray-400 font-medium mb-1">
+              <span>Workout Progress</span>
+              <span>{{ getTotalLoggedSets() }} / {{ getTotalExpectedSets() }} Sets</span>
+            </div>
+            <div class="flex gap-1 h-1.5 w-full mt-1 mb-6">
+              @for (s of [].constructor(getTotalExpectedSets()); track $index; let idx = $index) {
+                <div class="flex-1 rounded-full overflow-hidden bg-gray-800">
+                  <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
+                       [style.width.%]="getTotalLoggedSets() > idx ? 100 : 0"></div>
+                </div>
+              }
+            </div>
+          </div>
           <h1 class="text-3xl font-bold text-white mb-1">{{ session()?.dayTemplateName }}</h1>
           <p class="text-gray-400 text-sm mb-6">Week {{ session()?.weekNumber }} &bull; {{ session()?.performedOn | date:'mediumDate' }}</p>
           <!-- Exercises List -->
@@ -90,37 +110,37 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                   <div>
                     <!-- Last Logged Set -->
                     @if (getLastSetForExercise(ex.id); as set) {
-                      <div class="space-y-3 mb-4" [ngStyle]="{'--perf-status': getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id))}">
+                      <div class="space-y-3 mb-4 transition-all duration-300" [class.scale-105]="isLoggingSet()">
                         <div class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border transition-colors"
-                          [ngClass]="getPerfContainerClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
+                          [ngClass]="getPerfContainerClass(set.performanceStatus)">
                           <div class="flex items-center gap-4">
                             @if (!ex.durationMinutes) {
                               <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors"
-                                [ngClass]="getPerfBadgeClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)), false)">
+                                [ngClass]="getPerfBadgeClass(set.performanceStatus, false)">
                                 {{ set.setNumber }}
                               </span>
                             }
                             @if (ex.durationMinutes) {
                               <span class="px-2 py-1 rounded text-xs font-bold border uppercase transition-colors"
-                                [ngClass]="getPerfBadgeClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)), true)">
+                                [ngClass]="getPerfBadgeClass(set.performanceStatus, true)">
                                 Log
                               </span>
                             }
                             <div class="font-medium transition-colors"
-                              [ngClass]="getPerfTextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
+                              [ngClass]="getPerfTextClass(set.performanceStatus)">
                               @if (!ex.durationMinutes) {
-                                {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">kg</span> ×
-                                @if (ex.exercise?.unilateral) {
+                                {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(set.performanceStatus)">kg</span> ×
+                                @if (ex.unilateral) {
                                   {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
                                 }
-                                @if (!ex.exercise?.unilateral) {
+                                @if (!ex.unilateral) {
                                   {{ set.repsCompleted }}
                                 }
-                                <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">reps</span>
-                                @if (getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)) === 'critical') {
+                                <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(set.performanceStatus)">reps</span>
+                                @if (set.performanceStatus === 'CRITICAL') {
                                   <span class="ml-2 text-[10px] uppercase font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">Perf Drop</span>
                                 }
-                                @if (getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)) === 'warning') {
+                                @if (set.performanceStatus === 'WARNING') {
                                   <span class="ml-2 text-[10px] uppercase font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded">Fatigue</span>
                                 }
                               }
@@ -158,29 +178,21 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                             </span>
                             <span class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Next Set</span>
                           </div>
-                          @if (getSetsForExercise(ex.id).length >= ex.sets) {
-                            <div class="px-2 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded text-yellow-500 text-xs flex items-center gap-1.5">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                              </svg>
-                              Extra set
-                            </div>
-                          }
                         </div>
                         <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
                           @if (!ex.durationMinutes) {
                             <div class="flex-1 min-w-[80px]">
                               <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Weight (kg)</label>
-                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
+                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" [placeholder]="getSuggestion(ex.id)?.suggestedWeightKg || '0'" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center placeholder-gray-500/50">
                             </div>
                             <div class="flex-1 min-w-[70px]">
-                              <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.exercise?.unilateral ? 'Reps (L)' : 'Reps' }}</label>
-                              <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
+                              <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.unilateral ? 'Reps (L)' : 'Reps' }}</label>
+                              <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" [placeholder]="getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center placeholder-gray-500/50">
                             </div>
-                            @if (ex.exercise?.unilateral) {
+                            @if (ex.unilateral) {
                               <div class="flex-1 min-w-[70px]">
                                 <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps (R)</label>
-                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center" [placeholder]="getForm(ex.id).get('repsCompleted')?.value || ''">
+                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center placeholder-gray-500/50">
                               </div>
                             }
                           }
@@ -199,8 +211,9 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                             </div>
                           }
                           <div class="w-full sm:w-auto mt-2 sm:mt-0">
-                            <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px]">
-                              Log
+                            <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px]"
+                              [ngClass]="getSetsForExercise(ex.id).length >= ex.sets ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-blue-600 hover:bg-blue-500'">
+                              {{ getSetsForExercise(ex.id).length >= ex.sets ? 'Log Extra Set' : 'Log' }}
                             </button>
                           </div>
                         </form>
@@ -209,16 +222,31 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                   </div>
                 }
                 <!-- Progress Bar inside Exercise Card -->
-                <div class="mt-4 h-1 w-full bg-gray-800 rounded-full overflow-hidden mb-4">
-                  <div
-                    class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
-                    [style.width.%]="(getSetsForExercise(ex.id).length / ex.sets) * 100"
-                  ></div>
+                <div class="flex gap-1 h-1 w-full mt-4 mb-4">
+                  @for (s of [].constructor(ex.sets || 1); track $index; let idx = $index) {
+                    <div class="flex-1 rounded-full overflow-hidden bg-gray-800">
+                      <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
+                           [style.width.%]="getSetsForExercise(ex.id).length > idx ? 100 : 0"></div>
+                    </div>
+                  }
                 </div>
                 <!-- Rating Section -->
                 @if (!session()?.completedAt) {
                   <div class="pt-4 border-t border-gray-700/50 mt-4">
                     <div class="flex gap-1 sm:gap-1.5 justify-between sm:justify-start w-full">
+                      <button
+                        (click)="deleteRating(ex.id)"
+                        [class.bg-gray-800]="getRating(ex.id) !== null"
+                        [class.text-gray-400]="getRating(ex.id) !== null"
+                        [class.bg-blue-600]="getRating(ex.id) === null"
+                        [class.text-white]="getRating(ex.id) === null"
+                        title="Unrated"
+                        class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-blue-500 hover:text-white transition-colors"
+                        >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                       @for (r of [1,2,3,4,5,6,7,8,9,10]; track r) {
                         <button
                           (click)="setRating(ex.id, r)"
@@ -251,11 +279,19 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
               @if (showAddExercise()) {
                 <div class="glass-card p-6 border border-blue-500/30">
                   <h3 class="text-lg font-bold text-white mb-4">Add Exercise to Session</h3>
-                  @if (!selectedExercise()) {
-                    <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onExerciseSelected($event)"></app-exercise-search>
-                  }
-                  @if (selectedExercise()) {
-                    <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
+                  
+                  @if (!isCreatingNewExercise()) {
+                    @if (!selectedExercise()) {
+                      <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onExerciseSelected($event)"></app-exercise-search>
+                      
+                      <div class="mt-4 text-center">
+                        <button type="button" (click)="isCreatingNewExercise.set(true)" class="text-sm font-medium text-blue-400 hover:text-blue-300 border border-blue-500/30 bg-blue-500/10 px-4 py-2 rounded-lg transition-colors">
+                          + Or create a new exercise
+                        </button>
+                      </div>
+                    }
+                    @if (selectedExercise()) {
+                      <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
                       <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
                         Selected: {{ selectedExercise()?.name }}
                         @if (selectedExercise()?.type === 'CARDIO') {
@@ -300,6 +336,18 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                       </div>
                     </form>
                   }
+                }
+
+                @if (isCreatingNewExercise()) {
+                  <app-exercise-form 
+                    (saveExercise)="onSaveNewExercise($event)" 
+                    (cancelForm)="isCreatingNewExercise.set(false)">
+                  </app-exercise-form>
+                  
+                  @if (isSavingNewExercise()) {
+                    <div class="text-center mt-4 text-sm text-gray-400">Saving new exercise...</div>
+                  }
+                }
                 </div>
               }
             </div>
@@ -350,13 +398,14 @@ export class ActiveWorkoutComponent implements OnInit {
   private workoutService = inject(WorkoutService);
   private programService = inject(ProgramService);
   private fb = inject(FormBuilder);
+  private exerciseService = inject(ExerciseService);
 
   sessionId = signal<string | null>(null);
   session = signal<WorkoutSessionResponse | null>(null);
   exercises = signal<DayExercise[]>([]);
   existingExerciseIds = computed(() => this.exercises().map(e => e.exerciseId));
   loggedSets = signal<WorkoutSetResponse[]>([]);
-  
+  suggestions = signal<Map<string, ExerciseSuggestionResponse>>(new Map());
   isLoading = signal<boolean>(true);
   isLoggingSet = signal<boolean>(false);
   isCompleting = signal<boolean>(false);
@@ -365,6 +414,8 @@ export class ActiveWorkoutComponent implements OnInit {
 
   showAddExercise = signal<boolean>(false);
   selectedExercise = signal<Exercise | null>(null);
+  isCreatingNewExercise = signal<boolean>(false);
+  isSavingNewExercise = signal<boolean>(false);
 
   notesControl = new FormControl('');
 
@@ -381,18 +432,18 @@ export class ActiveWorkoutComponent implements OnInit {
     resistance: [null]
   });
 
-  expandedExercises = new Set<string>();
+  collapsedExercises = new Set<string>();
 
   toggleCollapse(exId: string) {
-    if (this.expandedExercises.has(exId)) {
-      this.expandedExercises.delete(exId);
+    if (this.collapsedExercises.has(exId)) {
+      this.collapsedExercises.delete(exId);
     } else {
-      this.expandedExercises.add(exId);
+      this.collapsedExercises.add(exId);
     }
   }
 
   isCollapsed(exId: string): boolean {
-    return !this.expandedExercises.has(exId);
+    return this.collapsedExercises.has(exId);
   }
 
   ngOnInit() {
@@ -417,27 +468,25 @@ export class ActiveWorkoutComponent implements OnInit {
           this.notesControl.setValue(sess.notes, { emitEvent: false });
         }
         
-        // Load sets
-        this.workoutService.getSets(id).subscribe({
-          next: (sets) => {
-            this.loggedSets.set(sets);
+        forkJoin({
+          sets: this.workoutService.getSets(id),
+          exercises: this.programService.getDayExercises(sess.dayTemplateId),
+          suggestions: this.workoutService.getSuggestions(id).pipe(catchError(() => of([])))
+        }).subscribe({
+          next: (res) => {
+            this.loggedSets.set(res.sets);
             
-            // Load exercises for the day template
-            this.programService.getDayExercises(sess.dayTemplateId).subscribe({
-              next: (exs) => {
-                const sorted = exs.sort((a, b) => a.sortOrder - b.sortOrder);
-                this.exercises.set(sorted);
-                this.initForms(sorted);
-                this.isLoading.set(false);
-              },
-              error: (err) => {
-                console.error('Failed to load exercises', err);
-                this.isLoading.set(false);
-              }
-            });
+            const suggMap = new Map<string, ExerciseSuggestionResponse>();
+            res.suggestions.forEach(s => suggMap.set(s.dayExerciseId, s));
+            this.suggestions.set(suggMap);
+            
+            const sorted = res.exercises.sort((a, b) => a.sortOrder - b.sortOrder);
+            this.exercises.set(sorted);
+            this.initForms(sorted);
+            this.isLoading.set(false);
           },
           error: (err) => {
-            console.error('Failed to load sets', err);
+            console.error('Failed to load workout data', err);
             this.isLoading.set(false);
           }
         });
@@ -454,15 +503,15 @@ export class ActiveWorkoutComponent implements OnInit {
       const setsForEx = this.getSetsForExercise(ex.id);
       
       if (ex.durationMinutes != null) {
-        let defaultDuration = ex.durationMinutes;
-        let defaultIncline = ex.incline || 0;
-        let defaultResistance = ex.resistance || 0;
+        let defaultDuration: number | '' = '';
+        let defaultIncline: number | '' = '';
+        let defaultResistance: number | '' = '';
 
         if (setsForEx.length > 0) {
           const lastSet = setsForEx[setsForEx.length - 1];
-          defaultDuration = lastSet.durationMinutes ?? defaultDuration;
-          defaultIncline = lastSet.incline ?? defaultIncline;
-          defaultResistance = lastSet.resistance ?? defaultResistance;
+          defaultDuration = lastSet.durationMinutes ?? '';
+          defaultIncline = lastSet.incline ?? '';
+          defaultResistance = lastSet.resistance ?? '';
         }
 
         this.forms.set(ex.id, this.fb.group({
@@ -472,14 +521,14 @@ export class ActiveWorkoutComponent implements OnInit {
         }));
       } else {
         let defaultWeight = '';
-        let defaultReps = ex.reps;
-        let defaultRepsRight = ex.reps;
+        let defaultReps: number | '' = '';
+        let defaultRepsRight: number | '' = '';
 
         if (setsForEx.length > 0) {
           const lastSet = setsForEx[setsForEx.length - 1];
           defaultWeight = lastSet.weightKg?.toString() || '';
-          defaultReps = lastSet.repsCompleted || ex.reps;
-          defaultRepsRight = lastSet.repsCompletedRight || lastSet.repsCompleted || ex.reps;
+          defaultReps = lastSet.repsCompleted || '';
+          defaultRepsRight = lastSet.repsCompletedRight || lastSet.repsCompleted || '';
         }
 
         this.forms.set(ex.id, this.fb.group({
@@ -506,52 +555,36 @@ export class ActiveWorkoutComponent implements OnInit {
     return sets.length > 0 ? sets[sets.length - 1] : null;
   }
 
-  getMaxPerformanceForExercise(exerciseId: string): number {
-    const sets = this.getSetsForExercise(exerciseId);
-    let max = 0;
-    for (const set of sets) {
-      if (set.weightKg != null && set.repsCompleted != null) {
-        const reps = set.repsCompleted + (set.repsCompletedRight || 0);
-        const perf = set.weightKg * reps;
-        if (perf > max) max = perf;
-      }
-    }
-    return max;
+  getSuggestion(dayExerciseId: string) {
+    return this.suggestions().get(dayExerciseId);
   }
 
-  getPerformanceStatus(set: WorkoutSetResponse, maxPerf: number): 'good' | 'warning' | 'critical' {
-    if (set.weightKg == null || set.repsCompleted == null || maxPerf === 0) return 'good';
-    const reps = set.repsCompleted + (set.repsCompletedRight || 0);
-    const perf = set.weightKg * reps;
-    const ratio = perf / maxPerf;
-    
-    if (ratio < 0.75) return 'critical';
-    if (ratio < 0.90) return 'warning';
-    return 'good';
-  }
-
-  getPerfContainerClass(status: 'good' | 'warning' | 'critical'): string {
-    if (status === 'critical') return 'border-red-500/50 bg-red-900/20';
-    if (status === 'warning') return 'border-yellow-500/50 bg-yellow-900/20';
+  getPerfContainerClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
+    if (status === 'CRITICAL') return 'border-red-500/50 bg-red-900/20';
+    if (status === 'WARNING') return 'border-yellow-500/50 bg-yellow-900/20';
+    if (status === 'GOOD') return 'border-emerald-500/50 bg-emerald-900/20';
     return 'border-gray-700';
   }
 
-  getPerfBadgeClass(status: 'good' | 'warning' | 'critical', isDuration: boolean): string {
-    if (status === 'critical') return 'bg-red-600/20 text-red-400 border-red-500/30';
-    if (status === 'warning') return 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30';
+  getPerfBadgeClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined, isDuration: boolean): string {
+    if (status === 'CRITICAL') return 'bg-red-600/20 text-red-400 border-red-500/30';
+    if (status === 'WARNING') return 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30';
+    if (status === 'GOOD') return 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30';
     if (isDuration) return 'bg-purple-600/20 text-purple-400 border-purple-500/30';
     return 'bg-blue-600/20 text-blue-400 border-blue-500/30';
   }
 
-  getPerfTextClass(status: 'good' | 'warning' | 'critical'): string {
-    if (status === 'critical') return 'text-red-300';
-    if (status === 'warning') return 'text-yellow-300';
+  getPerfTextClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
+    if (status === 'CRITICAL') return 'text-red-300';
+    if (status === 'WARNING') return 'text-yellow-300';
+    if (status === 'GOOD') return 'text-emerald-300';
     return 'text-gray-200';
   }
 
-  getPerfSubtextClass(status: 'good' | 'warning' | 'critical'): string {
-    if (status === 'critical') return 'text-red-400/70';
-    if (status === 'warning') return 'text-yellow-400/70';
+  getPerfSubtextClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
+    if (status === 'CRITICAL') return 'text-red-400/70';
+    if (status === 'WARNING') return 'text-yellow-400/70';
+    if (status === 'GOOD') return 'text-emerald-400/70';
     return 'text-gray-500';
   }
 
@@ -624,6 +657,50 @@ export class ActiveWorkoutComponent implements OnInit {
   }
 
 
+
+  onSaveNewExercise(formData: ExerciseFormData) {
+    this.isSavingNewExercise.set(true);
+    
+    const exercisePayload = {
+      name: formData.name,
+      equipmentBrand: formData.equipmentBrand || undefined,
+      unilateral: formData.unilateral,
+      isPublic: formData.isPublic || false,
+      type: formData.type
+    };
+
+    this.exerciseService.createExercise(exercisePayload).subscribe({
+      next: (newExercise) => {
+        if (formData.targets.length > 0) {
+          const targetObservables = formData.targets.map(t => 
+            this.exerciseService.addTarget(newExercise.id, { bodyPart: t.bodyPart, targetValue: t.targetValue })
+          );
+          
+          forkJoin(targetObservables).subscribe({
+            next: () => this.handleNewExerciseCreated(newExercise),
+            error: (err) => {
+              console.error('Failed to save targets', err);
+              this.handleNewExerciseCreated(newExercise); // still select it even if targets fail
+            }
+          });
+        } else {
+          this.handleNewExerciseCreated(newExercise);
+        }
+      },
+      error: (err) => {
+        console.error('Error creating exercise', err);
+        alert(err.error?.message || 'Failed to create exercise.');
+        this.isSavingNewExercise.set(false);
+      }
+    });
+  }
+
+  handleNewExerciseCreated(exercise: Exercise) {
+    this.isSavingNewExercise.set(false);
+    this.isCreatingNewExercise.set(false);
+    // Automatically select the newly created exercise to proceed to sets/reps selection
+    this.onExerciseSelected(exercise);
+  }
 
   logSet(ex: DayExercise) {
     const id = this.sessionId();
@@ -740,5 +817,36 @@ export class ActiveWorkoutComponent implements OnInit {
         console.error('Error saving rating', err);
       }
     });
+  }
+
+  deleteRating(dayExerciseId: string) {
+    const id = this.sessionId();
+    if (!id || this.session()?.completedAt) return;
+
+    this.workoutService.deleteExerciseRating(id, dayExerciseId).subscribe({
+      next: (updatedSession) => {
+        this.session.set(updatedSession);
+      },
+      error: (err) => {
+        console.error('Error deleting rating', err);
+      }
+    });
+  }
+
+  getTotalExpectedSets(): number {
+    return this.exercises().reduce((total, ex) => total + (ex.sets || 1), 0); // fallback to 1 for cardio if needed, but ex.sets should be used
+  }
+
+  getTotalLoggedSets(): number {
+    return this.exercises().reduce((total, ex) => {
+      const logged = this.getSetsForExercise(ex.id).length;
+      return total + Math.min(logged, ex.sets || 1);
+    }, 0);
+  }
+
+  getGlobalProgress(): number {
+    const expected = this.getTotalExpectedSets();
+    if (expected === 0) return 0;
+    return (this.getTotalLoggedSets() / expected) * 100;
   }
 }

@@ -16,5 +16,6 @@ public record WorkoutSetResponse(
     Integer durationMinutes,
     BigDecimal incline,
     BigDecimal resistance,
-    Instant loggedAt
+    Instant loggedAt,
+    String performanceStatus
 ) {}
