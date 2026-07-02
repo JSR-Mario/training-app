@@ -11,11 +11,14 @@ import {
   Exercise
 } from '../../../../core/types/training.types';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
+import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/components/exercise-form/exercise-form.component';
+import { ExerciseService } from '../../../exercises/services/exercise.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   standalone: true,
     selector: 'app-active-workout',
-    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
+    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent],
     template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-32">
     
@@ -110,10 +113,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                               [ngClass]="getPerfTextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">
                               @if (!ex.durationMinutes) {
                                 {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">kg</span> ×
-                                @if (ex.exercise?.unilateral) {
+                                @if (ex.unilateral) {
                                   {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
                                 }
-                                @if (!ex.exercise?.unilateral) {
+                                @if (!ex.unilateral) {
                                   {{ set.repsCompleted }}
                                 }
                                 <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(getPerformanceStatus(set, getMaxPerformanceForExercise(ex.id)))">reps</span>
@@ -174,10 +177,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                               <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
                             </div>
                             <div class="flex-1 min-w-[70px]">
-                              <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.exercise?.unilateral ? 'Reps (L)' : 'Reps' }}</label>
+                              <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.unilateral ? 'Reps (L)' : 'Reps' }}</label>
                               <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center">
                             </div>
-                            @if (ex.exercise?.unilateral) {
+                            @if (ex.unilateral) {
                               <div class="flex-1 min-w-[70px]">
                                 <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps (R)</label>
                                 <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center" [placeholder]="getForm(ex.id).get('repsCompleted')?.value || ''">
@@ -251,11 +254,19 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
               @if (showAddExercise()) {
                 <div class="glass-card p-6 border border-blue-500/30">
                   <h3 class="text-lg font-bold text-white mb-4">Add Exercise to Session</h3>
-                  @if (!selectedExercise()) {
-                    <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onExerciseSelected($event)"></app-exercise-search>
-                  }
-                  @if (selectedExercise()) {
-                    <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
+                  
+                  @if (!isCreatingNewExercise()) {
+                    @if (!selectedExercise()) {
+                      <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onExerciseSelected($event)"></app-exercise-search>
+                      
+                      <div class="mt-4 text-center">
+                        <button type="button" (click)="isCreatingNewExercise.set(true)" class="text-sm font-medium text-blue-400 hover:text-blue-300 border border-blue-500/30 bg-blue-500/10 px-4 py-2 rounded-lg transition-colors">
+                          + Or create a new exercise
+                        </button>
+                      </div>
+                    }
+                    @if (selectedExercise()) {
+                      <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
                       <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
                         Selected: {{ selectedExercise()?.name }}
                         @if (selectedExercise()?.type === 'CARDIO') {
@@ -300,6 +311,18 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
                       </div>
                     </form>
                   }
+                }
+
+                @if (isCreatingNewExercise()) {
+                  <app-exercise-form 
+                    (saveExercise)="onSaveNewExercise($event)" 
+                    (cancelForm)="isCreatingNewExercise.set(false)">
+                  </app-exercise-form>
+                  
+                  @if (isSavingNewExercise()) {
+                    <div class="text-center mt-4 text-sm text-gray-400">Saving new exercise...</div>
+                  }
+                }
                 </div>
               }
             </div>
@@ -350,6 +373,7 @@ export class ActiveWorkoutComponent implements OnInit {
   private workoutService = inject(WorkoutService);
   private programService = inject(ProgramService);
   private fb = inject(FormBuilder);
+  private exerciseService = inject(ExerciseService);
 
   sessionId = signal<string | null>(null);
   session = signal<WorkoutSessionResponse | null>(null);
@@ -365,6 +389,8 @@ export class ActiveWorkoutComponent implements OnInit {
 
   showAddExercise = signal<boolean>(false);
   selectedExercise = signal<Exercise | null>(null);
+  isCreatingNewExercise = signal<boolean>(false);
+  isSavingNewExercise = signal<boolean>(false);
 
   notesControl = new FormControl('');
 
@@ -381,18 +407,18 @@ export class ActiveWorkoutComponent implements OnInit {
     resistance: [null]
   });
 
-  expandedExercises = new Set<string>();
+  collapsedExercises = new Set<string>();
 
   toggleCollapse(exId: string) {
-    if (this.expandedExercises.has(exId)) {
-      this.expandedExercises.delete(exId);
+    if (this.collapsedExercises.has(exId)) {
+      this.collapsedExercises.delete(exId);
     } else {
-      this.expandedExercises.add(exId);
+      this.collapsedExercises.add(exId);
     }
   }
 
   isCollapsed(exId: string): boolean {
-    return !this.expandedExercises.has(exId);
+    return this.collapsedExercises.has(exId);
   }
 
   ngOnInit() {
@@ -624,6 +650,50 @@ export class ActiveWorkoutComponent implements OnInit {
   }
 
 
+
+  onSaveNewExercise(formData: ExerciseFormData) {
+    this.isSavingNewExercise.set(true);
+    
+    const exercisePayload = {
+      name: formData.name,
+      equipmentBrand: formData.equipmentBrand || undefined,
+      unilateral: formData.unilateral,
+      isPublic: formData.isPublic || false,
+      type: formData.type
+    };
+
+    this.exerciseService.createExercise(exercisePayload).subscribe({
+      next: (newExercise) => {
+        if (formData.targets.length > 0) {
+          const targetObservables = formData.targets.map(t => 
+            this.exerciseService.addTarget(newExercise.id, { bodyPart: t.bodyPart, targetValue: t.targetValue })
+          );
+          
+          forkJoin(targetObservables).subscribe({
+            next: () => this.handleNewExerciseCreated(newExercise),
+            error: (err) => {
+              console.error('Failed to save targets', err);
+              this.handleNewExerciseCreated(newExercise); // still select it even if targets fail
+            }
+          });
+        } else {
+          this.handleNewExerciseCreated(newExercise);
+        }
+      },
+      error: (err) => {
+        console.error('Error creating exercise', err);
+        alert(err.error?.message || 'Failed to create exercise.');
+        this.isSavingNewExercise.set(false);
+      }
+    });
+  }
+
+  handleNewExerciseCreated(exercise: Exercise) {
+    this.isSavingNewExercise.set(false);
+    this.isCreatingNewExercise.set(false);
+    // Automatically select the newly created exercise to proceed to sets/reps selection
+    this.onExerciseSelected(exercise);
+  }
 
   logSet(ex: DayExercise) {
     const id = this.sessionId();
