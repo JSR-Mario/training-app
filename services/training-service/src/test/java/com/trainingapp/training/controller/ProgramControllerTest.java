@@ -55,8 +55,8 @@ class ProgramControllerTest {
     @Test
     void createProgram_Success() throws Exception {
         UUID userId = testUserId;
-        ProgramRequest req = new ProgramRequest("Hypertrophy", 8, LocalDate.now());
-        ProgramResponse resp = new ProgramResponse(UUID.randomUUID(), "Hypertrophy", 8, LocalDate.now(), java.time.Instant.now());
+        ProgramRequest req = new ProgramRequest("Hypertrophy", 8, LocalDate.now(), false);
+        ProgramResponse resp = new ProgramResponse(UUID.randomUUID(), "Hypertrophy", 8, LocalDate.now(), false, java.time.Instant.now());
 
         Mockito.when(programService.create(eq(userId), any())).thenReturn(resp);
 
