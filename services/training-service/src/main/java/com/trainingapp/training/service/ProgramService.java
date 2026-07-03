@@ -43,7 +43,15 @@ public class ProgramService {
         program.setName(request.name());
         program.setDurationWeeks(request.durationWeeks());
         program.setStartDate(request.startDate());
-        return toResponse(programRepository.save(program));
+        program.setActive(request.isActive());
+        
+        TrainingProgram saved = programRepository.save(program);
+        
+        if (saved.isActive()) {
+            programRepository.deactivateAllOtherUserPrograms(userId, saved.getId());
+        }
+        
+        return toResponse(saved);
     }
 
     @Transactional
@@ -52,7 +60,15 @@ public class ProgramService {
         program.setName(request.name());
         program.setDurationWeeks(request.durationWeeks());
         program.setStartDate(request.startDate());
-        return toResponse(programRepository.save(program));
+        program.setActive(request.isActive());
+        
+        TrainingProgram saved = programRepository.save(program);
+        
+        if (saved.isActive()) {
+            programRepository.deactivateAllOtherUserPrograms(userId, saved.getId());
+        }
+        
+        return toResponse(saved);
     }
 
     @Transactional
@@ -68,6 +84,6 @@ public class ProgramService {
     }
 
     private ProgramResponse toResponse(TrainingProgram p) {
-        return new ProgramResponse(p.getId(), p.getName(), p.getDurationWeeks(), p.getStartDate(), p.getCreatedAt());
+        return new ProgramResponse(p.getId(), p.getName(), p.getDurationWeeks(), p.getStartDate(), p.isActive(), p.getCreatedAt());
     }
 }

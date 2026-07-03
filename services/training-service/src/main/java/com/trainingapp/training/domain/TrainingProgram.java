@@ -39,6 +39,9 @@ public class TrainingProgram {
     @Column(name = "start_date")
     private LocalDate startDate;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -56,5 +59,7 @@ public class TrainingProgram {
     public void setDurationWeeks(int durationWeeks) { this.durationWeeks = durationWeeks; }
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
     public Instant getCreatedAt() { return createdAt; }
 }
