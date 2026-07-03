@@ -1,24 +1,54 @@
 <div class="glass-panel p-6 rounded-2xl animate-fade-in relative">
   
   <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-    <div>
-      <h2 class="text-xl font-bold text-white tracking-tight">Total Volume (Week by Week)</h2>
-    </div>
+    <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      Total Volume (Week by Week)
+    </h2>
     
-    @if (uniqueDayNames().length > 0) {
-      <div class="flex items-center gap-3 bg-gray-900/50 p-2 rounded-xl border border-gray-800">
-        <label for="dayFilter" class="text-sm font-semibold text-gray-400 whitespace-nowrap">Filter by Day:</label>
-        <select 
-          id="dayFilter"
-          class="bg-gray-800 text-white text-sm rounded border-gray-700 focus:ring-emerald-500 focus:border-emerald-500 p-2 min-w-[150px] transition-colors"
-          (change)="onFilterChange($event)">
-          <option value="All">All Days (Weekly Total)</option>
-          @for (name of uniqueDayNames(); track name) {
-            <option [value]="name">{{ name }}</option>
-          }
-        </select>
-      </div>
-    }
+    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+      <!-- Program Selector -->
+      @if (programs().length > 0) {
+        <div class="flex items-center gap-3 bg-gray-900/50 p-2 rounded-xl border border-gray-800">
+          <label for="programFilter" class="text-sm font-medium text-gray-400 whitespace-nowrap pl-2">Program:</label>
+          <div class="relative">
+            <select
+              id="programFilter"
+              [ngModel]="selectedProgramId()"
+              (ngModelChange)="selectedProgramId.set($event)"
+              class="appearance-none bg-gray-800 text-white text-sm rounded-lg pl-3 pr-8 py-1.5 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer hover:bg-gray-750"
+            >
+              @for (prog of programs(); track prog.id) {
+                <option [value]="prog.id">{{ prog.name }}</option>
+              }
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Day Filter -->
+      @if (uniqueDayNames().length > 0) {
+        <div class="flex items-center gap-3 bg-gray-900/50 p-2 rounded-xl border border-gray-800">
+          <label for="dayFilter" class="text-sm font-semibold text-gray-400 whitespace-nowrap">Filter by Day:</label>
+          <select 
+            id="dayFilter"
+            class="bg-gray-800 text-white text-sm rounded border-gray-700 focus:ring-emerald-500 focus:border-emerald-500 p-2 min-w-[150px] transition-colors"
+            (change)="onFilterChange($event)">
+            <option value="All">All Days (Weekly Total)</option>
+            @for (name of uniqueDayNames(); track name) {
+              <option [value]="name">{{ name }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
   </div>
 
   <div class="mb-4">

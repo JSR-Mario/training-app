@@ -89,12 +89,12 @@ import { TrainingProgram } from '../../../../core/types/training.types';
       <!-- List View -->
       @if (!isLoading() && !showForm()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          @if (programs().length === 0) {
+          @if (sortedPrograms().length === 0) {
             <div class="col-span-full text-center py-12 glass-card">
               <p class="text-gray-400">No programs found. Create your first program!</p>
             </div>
           }
-          @for (program of sortedPrograms(); track program) {
+          @for (program of sortedPrograms(); track program.id) {
             <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
               <div class="flex justify-between items-start mb-4">
                 <h3 class="text-xl font-bold text-white">{{ program.name }}</h3>
