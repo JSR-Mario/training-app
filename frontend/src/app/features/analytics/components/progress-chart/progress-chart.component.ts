@@ -213,7 +213,6 @@ export class ProgressChartComponent implements OnInit {
       finalize(() => this.isLoading.set(false))
     ).subscribe({
       next: (results: { exerciseId: string; data: ExerciseProgressEntry[] }[]) => {
-        console.log('DEBUG loadProgramData results:', results);
         if (!results || results.length === 0) {
           this.resetChart();
           return;
@@ -225,7 +224,6 @@ export class ProgressChartComponent implements OnInit {
         for (const res of results) {
           const catEx = this.catalogExercises.find(c => c.id === res.exerciseId);
           if (!catEx || !catEx.targets) {
-            console.log('DEBUG missing catalog/targets for ex:', res.exerciseId, catEx);
             continue;
           }
 
@@ -246,9 +244,6 @@ export class ProgressChartComponent implements OnInit {
             });
           });
         }
-
-        console.log('DEBUG bodyPartsSet:', Array.from(bodyPartsSet));
-        console.log('DEBUG mappedData:', mappedData);
 
         const bps = Array.from(bodyPartsSet).sort().map((bp, index) => ({
           id: bp,
@@ -303,9 +298,6 @@ export class ProgressChartComponent implements OnInit {
       this.programDays.filter(d => filter === 'All' || d.name === filter).map(d => d.id)
     );
 
-    console.log('DEBUG updateChart filter:', filter);
-    console.log('DEBUG updateChart validDayIds:', Array.from(validDayIds));
-
     const weekSet = new Set<number>();
     
     for (const bp of bodyParts) {
@@ -320,10 +312,7 @@ export class ProgressChartComponent implements OnInit {
       }
     }
 
-    console.log('DEBUG updateChart weekSet:', Array.from(weekSet));
-
     if (weekSet.size === 0) {
-      console.log('DEBUG updateChart: weekSet size is 0, resetting chart');
       this.resetChart();
       return;
     }
