@@ -768,7 +768,7 @@ export class ActiveWorkoutComponent implements OnInit {
       this.isCompleting.set(true);
       this.workoutService.uncompleteSession(id).subscribe({
         next: () => {
-          this.session.update(s => s ? { ...s, completedAt: undefined } : s);
+          this.session.update(s => s ? { ...s, completedAt: null } : s);
           this.isCompleting.set(false);
         },
         error: (err) => {
