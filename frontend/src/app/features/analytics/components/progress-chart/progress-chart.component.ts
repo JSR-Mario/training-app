@@ -303,7 +303,7 @@ export class ProgressChartComponent implements OnInit {
       const data = this.bodyPartData.get(bp.id);
       if (data) {
         data.forEach(entry => {
-          if (validDayIds.has(entry.dayTemplateId)) {
+          if (validDayIds.has(entry.dayTemplateId) || (!entry.dayTemplateId && filter === 'All')) {
             weekSet.add(entry.weekNumber);
           }
         });
@@ -325,7 +325,7 @@ export class ProgressChartComponent implements OnInit {
       const volumeByWeek = new Map<number, number>();
       
       for (const entry of raw) {
-        if (!validDayIds.has(entry.dayTemplateId)) continue;
+        if (!validDayIds.has(entry.dayTemplateId) && !(!entry.dayTemplateId && filter === 'All')) continue;
         const current = volumeByWeek.get(entry.weekNumber) || 0;
         volumeByWeek.set(entry.weekNumber, current + entry.volume);
       }
