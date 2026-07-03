@@ -33,13 +33,16 @@ public class ExerciseService {
     private final ExerciseRepository exerciseRepository;
     private final ExerciseBodyPartTargetRepository targetRepository;
     private final SessionExerciseRatingRepository ratingRepository;
+    private final com.trainingapp.training.repository.WorkoutSetRepository setRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository,
                            ExerciseBodyPartTargetRepository targetRepository,
-                           SessionExerciseRatingRepository ratingRepository) {
+                           SessionExerciseRatingRepository ratingRepository,
+                           com.trainingapp.training.repository.WorkoutSetRepository setRepository) {
         this.exerciseRepository = exerciseRepository;
         this.targetRepository = targetRepository;
         this.ratingRepository = ratingRepository;
+        this.setRepository = setRepository;
     }
 
     /** Returns all exercises belonging to the given user or public exercises. */
@@ -186,6 +189,24 @@ public class ExerciseService {
             throw new AccessDeniedException("You do not have permission to modify this exercise.");
         }
         return exercise;
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.trainingapp.training.dto.ExerciseHistoryResponse> getExerciseHistory(UUID userId, UUID exerciseId) {
+        findOwnedOrPublicAdmin(userId, exerciseId); // Ensure they have access to it
+        List<com.trainingapp.training.domain.WorkoutSet> sets = setRepository.findHistoricalSetsForExerciseAll(exerciseId, userId);
+        
+        return sets.stream()
+            .map(s -> new com.trainingapp.training.dto.ExerciseHistoryResponse(
+                s.getId(),
+                s.getSession().getPerformedOn(),
+                s.getDurationMinutes(),
+                s.getIncline(),
+                s.getResistance(),
+                s.getRepsCompleted(),
+                s.getWeightKg()
+            ))
+            .collect(Collectors.toList());
     }
 
     private boolean isAdmin() {
