@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -89,18 +89,28 @@ import { TrainingProgram } from '../../../../core/types/training.types';
       <!-- List View -->
       @if (!isLoading() && !showForm()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          @if (programs().length === 0) {
+          @if (sortedPrograms().length === 0) {
             <div class="col-span-full text-center py-12 glass-card">
               <p class="text-gray-400">No programs found. Create your first program!</p>
             </div>
           }
-          @for (program of programs(); track program) {
+          @for (program of sortedPrograms(); track program.id) {
             <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
               <div class="flex justify-between items-start mb-4">
                 <h3 class="text-xl font-bold text-white">{{ program.name }}</h3>
-                @if (program.isActive) {
-                  <span class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded border border-green-500/30">Active</span>
-                }
+                <div class="flex items-center gap-2">
+                  @if (program.isActive) {
+                    <span class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded border border-green-500/30">Active</span>
+                  }
+                  @if (!program.isActive) {
+                    <button 
+                      (click)="setProgramActive(program)"
+                      class="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded border border-gray-600 transition-colors"
+                    >
+                      Set Active
+                    </button>
+                  }
+                </div>
               </div>
               <div class="flex-1 space-y-2 mb-6">
                 <p class="text-gray-400 text-sm">Duration: {{ program.durationWeeks }} weeks</p>
@@ -133,6 +143,16 @@ export class ProgramListComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   programs = signal<TrainingProgram[]>([]);
+  
+  sortedPrograms = computed(() => {
+    return [...this.programs()].sort((a, b) => {
+      // Sort by active first, then by date descending
+      if (a.isActive && !b.isActive) return -1;
+      if (!a.isActive && b.isActive) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  });
+
   isLoading = signal<boolean>(true);
   showForm = signal<boolean>(false);
 
@@ -192,6 +212,17 @@ export class ProgramListComponent implements OnInit {
           this.loadPrograms();
         },
         error: (err) => console.error('Error deleting program', err)
+      });
+    }
+  }
+
+  setProgramActive(program: TrainingProgram) {
+    if (confirm(`Set "${program.name}" as the active program?`)) {
+      this.programService.updateProgram(program.id, program.name, program.durationWeeks, true).subscribe({
+        next: () => {
+          this.loadPrograms();
+        },
+        error: (err) => console.error('Error setting program as active', err)
       });
     }
   }

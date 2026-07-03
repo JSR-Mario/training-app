@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
@@ -7,7 +7,7 @@ import { AnalyticsService } from '../../services/analytics.service';
 import { ProgramService } from '../../../programs/services/program.service';
 import { ExerciseService } from '../../../exercises/services/exercise.service';
 import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
-import { finalize, forkJoin, map, switchMap, of } from 'rxjs';
+import { finalize, forkJoin, map, switchMap, of, Subject } from 'rxjs';
 
 import { Exercise, ExerciseTarget, DayTemplate } from '../../../../core/types/training.types';
 
@@ -105,19 +105,66 @@ export class ProgressChartComponent implements OnInit {
     '#84cc16'  // lime
   ];
 
-  ngOnInit() {
-    this.loadProgramData();
+  programs = signal<{id: string, name: string}[]>([]);
+  selectedProgramId = signal<string>('');
+
+  private destroy$ = new Subject<void>();
+
+  constructor() {
+    // When selected filters change, recalculate the chart data
+    effect(() => {
+      this.updateChart();
+    });
+    
+    // When selected program changes, reload analytics
+    effect(() => {
+      const pid = this.selectedProgramId();
+      if (pid) {
+        this.loadProgramData(pid);
+      }
+    });
   }
 
-  loadProgramData() {
+  ngOnInit() {
+    this.loadPrograms();
+  }
+
+  private loadPrograms() {
     this.isLoading.set(true);
-    // 1. Get programs to find the active one
-    this.programService.getPrograms().pipe(
-      switchMap(programs => {
-        const active = programs.find(p => p.isActive) || programs[0];
-        if (!active) return of([]); // No programs
-        return this.programService.getWeeks(active.id);
-      }),
+    this.programService.getPrograms().subscribe({
+      next: (programs) => {
+        if (!programs || programs.length === 0) {
+          this.isLoading.set(false);
+          return;
+        }
+        
+        // Sort active first, then by date desc
+        const sorted = [...programs].sort((a, b) => {
+          if (a.isActive && !b.isActive) return -1;
+          if (!a.isActive && b.isActive) return 1;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        
+        this.programs.set(sorted.map(p => ({ id: p.id, name: p.name })));
+        
+        // Default to first (which is active if one exists)
+        this.selectedProgramId.set(sorted[0].id);
+      },
+      error: (err) => {
+        console.error('Error loading programs', err);
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  private loadProgramData(programId: string) {
+    this.isLoading.set(true);
+    this.programBodyParts.set([]);
+    this.uniqueDayNames.set([]);
+    this.bodyPartData.clear();
+    this.resetChart();
+
+    this.programService.getWeeks(programId).pipe(
       switchMap(weeks => {
         if (!weeks || weeks.length === 0) return of([]);
         // Fetch all days for all weeks
