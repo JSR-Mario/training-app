@@ -1,35 +1,36 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 import { ExerciseService } from '../../services/exercise.service';
-import { Exercise, getBodyPartPath, BodyPart } from '../../../../core/types/training.types';
+import { Exercise, BODY_PARTS_HIERARCHY } from '../../../../core/types/training.types';
 import { ExerciseFormComponent } from '../../components/exercise-form/exercise-form.component';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   standalone: true,
     selector: 'app-exercise-list',
-    imports: [ExerciseFormComponent, FormsModule],
+    imports: [CommonModule, ExerciseFormComponent, FormsModule],
     template: `
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto space-y-8">
     
       <!-- Header -->
       @if (!showForm()) {
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-end">
           <div>
-            <h1 class="text-3xl font-bold text-white">Exercises</h1>
-            <p class="text-gray-400 mt-1">Manage your exercise catalog and volume targets</p>
+            <h1 class="text-4xl font-black bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Exercises</h1>
+            <p class="text-slate-400 mt-2 font-medium">Manage your exercise catalog and volume targets</p>
           </div>
           <button
             (click)="openForm()"
-            class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
+            class="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all transform hover:-translate-y-0.5"
             >
-            + Add Exercise
+            <span class="mr-2">+</span> Add Exercise
           </button>
         </div>
       }
     
       @if (showForm()) {
-        <div>
+        <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <app-exercise-form
             [exercise]="selectedExercise()"
             (saveExercise)="onSaveExercise($event)"
@@ -40,128 +41,219 @@ import { FormsModule } from '@angular/forms';
     
       <!-- Loading State -->
       @if (isLoading() && !showForm()) {
-        <div class="text-center py-12">
-          <p class="text-gray-400">Loading exercises...</p>
+        <div class="flex flex-col items-center justify-center py-20 space-y-4">
+          <div class="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+          <p class="text-slate-400 font-medium">Loading exercises...</p>
         </div>
       }
     
       <!-- List View -->
       @if (!isLoading() && !showForm()) {
-        <div class="space-y-6">
+        <div class="space-y-6 animate-in fade-in duration-500">
           <!-- Search Bar -->
-          <div class="relative">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-4 top-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
             <input
               type="text"
-              placeholder="Search exercises by name..."
+              placeholder="Search exercises by name or brand..."
               [ngModel]="searchQuery()"
-              (ngModelChange)="searchQuery.set($event)"
-              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-white pl-12 outline-none"
+              (ngModelChange)="onSearchChange($event)"
+              class="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-slate-700/50 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-white placeholder-slate-500 outline-none shadow-inner backdrop-blur-sm transition-all"
             >
           </div>
 
           @if (exercises().length === 0) {
-            <div class="text-center py-12 glass-card">
-              <p class="text-gray-400">No exercises found. Add your first exercise!</p>
+            <div class="flex flex-col items-center justify-center py-16 px-4 bg-slate-900/30 border border-slate-800 rounded-2xl border-dashed">
+              <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-2">No exercises found</h3>
+              <p class="text-slate-400 text-center max-w-md">Get started by adding your first exercise to the catalog. You can organize them by body part targets.</p>
             </div>
           }
-          @for (group of groupedExercises(); track group.category) {
-            <div>
-              <button 
-                (click)="toggleGroup(group.category)"
-                class="w-full text-left flex justify-between items-center mb-4 pb-2 border-b border-gray-800 hover:border-gray-600 transition-colors"
-              >
-                <h2 class="text-2xl font-bold text-gray-300 flex items-center gap-2">
-                  {{ group.category }}
-                  <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">{{ group.exercises.length }}</span>
-                </h2>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 transition-transform duration-200" [class.rotate-180]="expandedGroups().has(group.category)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              @if (expandedGroups().has(group.category)) {
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                  @for (exercise of group.exercises; track exercise) {
-                  <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
-                    <div class="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 class="text-xl font-bold text-white">{{ exercise.name }}</h3>
-                        <div class="flex flex-wrap gap-2 mt-1.5">
-                    @if (exercise.equipmentBrand) {
-                      <span
-                        class="px-2 py-0.5 text-xs bg-slate-700/60 text-slate-300 rounded-md border border-slate-600/50"
+          
+          <!-- Tree view for List -->
+          <div class="space-y-4">
+            <!-- STRENGTH CATEGORIES -->
+            @for (cat of tree().categories; track cat.name) {
+              <div class="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-700/50 overflow-hidden shadow-lg">
+                <button 
+                  type="button" 
+                  (click)="toggleCategory(cat.name)"
+                  class="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors group"
+                >
+                  <h2 class="text-2xl font-black bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent tracking-wide drop-shadow-sm group-hover:from-blue-300 group-hover:to-indigo-300 transition-all">{{ cat.name }}</h2>
+                  <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 group-hover:border-indigo-500/50 transition-colors">
+                    <svg class="w-4 h-4 text-slate-400 transition-transform duration-300" [class.rotate-180]="expandedCategories().has(cat.name)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </button>
+                
+                @if (expandedCategories().has(cat.name)) {
+                  <div class="px-6 pb-6 space-y-6 animate-in slide-in-from-top-2 fade-in duration-300">
+                    @for (grp of cat.groups; track grp.name) {
+                      <div class="pl-4 border-l-2 border-indigo-500/30 pt-2">
+                        <button 
+                          type="button" 
+                          (click)="toggleGroup(grp.name)"
+                          class="w-full flex items-center justify-between py-2 text-left group"
                         >
+                          <span class="text-xl font-bold text-slate-200 group-hover:text-indigo-400 transition-colors">{{ grp.name }}</span>
+                          <svg class="w-4 h-4 text-slate-500 transition-transform duration-300" [class.rotate-180]="expandedGroups().has(grp.name)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+
+                        @if (expandedGroups().has(grp.name)) {
+                          <div class="mt-4 animate-in slide-in-from-top-1 fade-in duration-300">
+                            
+                            @if (!grp.hasSubparts) {
+                              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                @for (ex of grp.directExercises; track ex.id) {
+                                  <ng-container *ngTemplateOutlet="exerciseCard; context: { $implicit: ex }"></ng-container>
+                                }
+                              </div>
+                            } 
+                            @else {
+                              <div class="space-y-6">
+                                @for (part of grp.parts; track part.name) {
+                                  <div class="pl-4 border-l-2 border-slate-700/60">
+                                    <button 
+                                      type="button" 
+                                      (click)="togglePart(part.name)"
+                                      class="w-full flex items-center justify-between py-1.5 text-left group"
+                                    >
+                                      <span class="text-sm font-bold tracking-widest uppercase text-slate-400 group-hover:text-slate-200 transition-colors">{{ formatPartName(part.name) }}</span>
+                                      <svg class="w-3.5 h-3.5 text-slate-600 transition-transform duration-300" [class.rotate-180]="expandedParts().has(part.name)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+
+                                    @if (expandedParts().has(part.name)) {
+                                      <div class="mt-3 animate-in fade-in duration-300">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                          @for (ex of part.exercises; track ex.id) {
+                                            <ng-container *ngTemplateOutlet="exerciseCard; context: { $implicit: ex }"></ng-container>
+                                          }
+                                        </div>
+                                      </div>
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- CARDIO CATEGORY -->
+            @if (tree().cardio.length > 0) {
+              <div class="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-700/50 overflow-hidden shadow-lg">
+                <button 
+                  type="button" 
+                  (click)="toggleCategory('Cardio')"
+                  class="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors group"
+                >
+                  <h2 class="text-2xl font-black bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent tracking-wide drop-shadow-sm group-hover:from-teal-300 group-hover:to-emerald-300 transition-all">Cardio</h2>
+                  <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 group-hover:border-teal-500/50 transition-colors">
+                    <svg class="w-4 h-4 text-slate-400 transition-transform duration-300" [class.rotate-180]="expandedCategories().has('Cardio')" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </button>
+                
+                @if (expandedCategories().has('Cardio')) {
+                  <div class="p-6 pt-2 animate-in slide-in-from-top-2 fade-in duration-300">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      @for (ex of tree().cardio; track ex.id) {
+                        <ng-container *ngTemplateOutlet="exerciseCard; context: { $implicit: ex }"></ng-container>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- UNCATEGORIZED CATEGORY -->
+            @if (tree().uncategorized.length > 0) {
+              <div class="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-700/50 overflow-hidden shadow-lg">
+                <button 
+                  type="button" 
+                  (click)="toggleCategory('Uncategorized')"
+                  class="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors group"
+                >
+                  <h2 class="text-2xl font-black text-slate-500 tracking-wide drop-shadow-sm group-hover:text-slate-400 transition-all">Uncategorized</h2>
+                  <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 transition-colors">
+                    <svg class="w-4 h-4 text-slate-400 transition-transform duration-300" [class.rotate-180]="expandedCategories().has('Uncategorized')" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </button>
+                
+                @if (expandedCategories().has('Uncategorized')) {
+                  <div class="p-6 pt-2 animate-in slide-in-from-top-2 fade-in duration-300">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      @for (ex of tree().uncategorized; track ex.id) {
+                        <ng-container *ngTemplateOutlet="exerciseCard; context: { $implicit: ex }"></ng-container>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Reusable Exercise Card for List View -->
+          <ng-template #exerciseCard let-exercise>
+            <div class="bg-slate-800/60 backdrop-blur border border-slate-700 rounded-xl p-5 flex flex-col h-full hover:border-indigo-500/50 hover:shadow-[0_0_15px_rgba(99,102,241,0.15)] transition-all duration-300 group">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="text-lg font-bold text-slate-100 group-hover:text-white transition-colors">{{ exercise.name }}</h3>
+                  <div class="flex flex-wrap gap-1.5 mt-2.5">
+                    @if (exercise.equipmentBrand) {
+                      <span class="px-2 py-0.5 text-[10px] font-semibold bg-slate-700 text-slate-300 rounded border border-slate-600">
                         {{ exercise.equipmentBrand }}
                       </span>
                     }
                     @if (exercise.unilateral) {
-                      <span
-                        class="px-2 py-0.5 text-xs font-semibold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30"
-                        >
-                        UNILATERAL
-                      </span>
-                    }
-                    @if (exercise.unilateral === false) {
-                      <span
-                        class="px-2 py-0.5 text-xs bg-sky-500/15 text-sky-400 rounded-md border border-sky-500/30"
-                        >
-                        BILATERAL
+                      <span class="px-2 py-0.5 text-[10px] font-bold tracking-wide bg-amber-500/20 text-amber-400 rounded border border-amber-500/30">
+                        UNI
                       </span>
                     }
                     @if (exercise.isPublic) {
-                      <span
-                        class="px-2 py-0.5 text-xs font-semibold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30"
-                        >
+                      <span class="px-2 py-0.5 text-[10px] font-bold tracking-wide bg-purple-500/20 text-purple-400 rounded border border-purple-500/30">
                         PUBLIC
                       </span>
                     }
                     @if (exercise.spinalLoading) {
-                      <span class="flex items-center gap-1 bg-red-900/30 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold border border-red-800/50">
-                        SPINAL LOADING
+                      <span class="px-2 py-0.5 text-[10px] font-bold tracking-wide bg-red-500/20 text-red-400 rounded border border-red-500/30">
+                        SPINAL
                       </span>
                     }
                   </div>
                 </div>
-                <div class="flex gap-2">
-                  <button
-                    (click)="editExercise(exercise)"
-                    class="text-blue-400 hover:text-blue-300 transition-colors text-sm"
-                    >
-                    Edit
-                  </button>
-                  <button
-                    (click)="deleteExercise(exercise.id)"
-                    class="text-red-400 hover:text-red-300 transition-colors text-sm"
-                    >
-                    Delete
-                  </button>
-                </div>
               </div>
-              <div class="flex-1">
-                <h4 class="text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">Targets</h4>
-                @if (exercise.targets.length === 0) {
-                  <div class="text-sm text-gray-600 italic">
-                    No targets set
-                  </div>
-                }
-                <div class="flex flex-wrap gap-2">
-                  @for (target of exercise.targets; track target) {
-                    <span
-                      class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300"
-                      >
-                      {{ target.bodyPart }} ({{ target.targetValue }})
-                    </span>
-                  }
-                </div>
-                </div>
+              <div class="flex gap-4 mt-auto pt-4 border-t border-slate-700/50">
+                <button
+                  (click)="editExercise(exercise)"
+                  class="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 transition-colors text-sm font-semibold"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                  Edit
+                </button>
+                <button
+                  (click)="deleteExercise(exercise.id)"
+                  class="flex items-center gap-1.5 text-red-400 hover:text-red-300 transition-colors text-sm font-semibold"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  Delete
+                </button>
               </div>
-            }
-              </div>
-              }
             </div>
-          }
+          </ng-template>
+
         </div>
       }
     </div>
@@ -177,62 +269,118 @@ export class ExerciseListComponent implements OnInit {
   selectedExercise = signal<Exercise | null>(null);
 
   searchQuery = signal<string>('');
-  expandedGroups = signal<Set<string>>(new Set());
+  hierarchy = BODY_PARTS_HIERARCHY;
 
-  toggleGroup(groupName: string) {
+  // Accordion state (Collapsed by default!)
+  expandedCategories = signal<Set<string>>(new Set());
+  expandedGroups = signal<Set<string>>(new Set());
+  expandedParts = signal<Set<string>>(new Set());
+
+  toggleCategory(cat: string) {
+    const current = new Set(this.expandedCategories());
+    if (current.has(cat)) current.delete(cat);
+    else current.add(cat);
+    this.expandedCategories.set(current);
+  }
+  
+  toggleGroup(grp: string) {
     const current = new Set(this.expandedGroups());
-    if (current.has(groupName)) {
-      current.delete(groupName);
-    } else {
-      current.add(groupName);
-    }
+    if (current.has(grp)) current.delete(grp);
+    else current.add(grp);
     this.expandedGroups.set(current);
   }
+  
+  togglePart(part: string) {
+    const current = new Set(this.expandedParts());
+    if (current.has(part)) current.delete(part);
+    else current.add(part);
+    this.expandedParts.set(current);
+  }
 
-  groupedExercises = computed(() => {
+  formatPartName(partCode: string): string {
+    return partCode.replace(/_/g, ' ')
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
+  onSearchChange(query: string) {
+    this.searchQuery.set(query);
+    if (query.trim()) {
+      // Auto expand all when searching
+      const allGroups = new Set<string>();
+      const allParts = new Set<string>();
+      for (const cat of ['Upper Body', 'Lower Body']) {
+        const catData = this.hierarchy[cat as keyof typeof this.hierarchy] as Record<string, readonly string[]>;
+        for (const [groupName, partsArr] of Object.entries(catData)) {
+          allGroups.add(groupName);
+          for (const part of partsArr) allParts.add(part);
+        }
+      }
+      this.expandedCategories.set(new Set(['Upper Body', 'Lower Body', 'Cardio', 'Uncategorized']));
+      this.expandedGroups.set(allGroups);
+      this.expandedParts.set(allParts);
+    } else {
+      // Collapse all when search is cleared
+      this.expandedCategories.set(new Set());
+      this.expandedGroups.set(new Set());
+      this.expandedParts.set(new Set());
+    }
+  }
+
+  tree = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const filteredExercises = this.exercises().filter(ex => 
-      !query || ex.name.toLowerCase().includes(query)
+      !query || ex.name.toLowerCase().includes(query) || (ex.equipmentBrand && ex.equipmentBrand.toLowerCase().includes(query))
     );
 
-    const groups = new Map<string, { exercise: Exercise, targetValue: number }[]>();
+    const cardio = filteredExercises.filter(e => e.type === 'CARDIO');
+    const uncategorized = filteredExercises.filter(e => e.type === 'STRENGTH' && (!e.targets || e.targets.length === 0));
 
-    for (const ex of filteredExercises) {
-      if (ex.type === 'CARDIO') {
-        if (!groups.has('Cardio')) groups.set('Cardio', []);
-        groups.get('Cardio')!.push({ exercise: ex, targetValue: 0 });
-        continue;
+    const categories = [];
+
+    for (const cat of ['Upper Body', 'Lower Body']) {
+      const catData = this.hierarchy[cat as keyof typeof this.hierarchy] as Record<string, readonly string[]>;
+      const groups = [];
+      
+      for (const [groupName, partsArr] of Object.entries(catData)) {
+         const hasSubparts = partsArr.length > 1 || partsArr[0] !== groupName.toUpperCase();
+         const parts = [];
+         let directExercises: Exercise[] = [];
+         
+         if (hasSubparts) {
+            for (const partName of partsArr) {
+               const exForPart = filteredExercises.filter(ex => 
+                 ex.type === 'STRENGTH' && ex.targets?.some(t => t.bodyPart === partName)
+               );
+               if (exForPart.length > 0) {
+                 parts.push({ name: partName, exercises: exForPart });
+               }
+            }
+         } else {
+            const partName = partsArr[0];
+            directExercises = filteredExercises.filter(ex => 
+               ex.type === 'STRENGTH' && ex.targets?.some(t => t.bodyPart === partName)
+            );
+         }
+         
+         if (parts.length > 0 || directExercises.length > 0) {
+            groups.push({
+               name: groupName,
+               hasSubparts,
+               parts,
+               directExercises
+            });
+         }
       }
       
-      if (!ex.targets || ex.targets.length === 0) {
-        if (!groups.has('Uncategorized')) groups.set('Uncategorized', []);
-        groups.get('Uncategorized')!.push({ exercise: ex, targetValue: 0 });
-        continue;
-      }
-
-      for (const target of ex.targets) {
-        const path = getBodyPartPath(target.bodyPart as BodyPart);
-        const groupName = path ? `${path.category} > ${path.group} > ${target.bodyPart}` : `Other > ${target.bodyPart}`;
-        
-        if (!groups.has(groupName)) groups.set(groupName, []);
-        groups.get(groupName)!.push({ exercise: ex, targetValue: target.targetValue });
+      if (groups.length > 0) {
+         categories.push({ name: cat, groups });
       }
     }
-    
-    return Array.from(groups.entries())
-      .map(([category, items]) => {
-        const sortedExercises = items.sort((a, b) => {
-          const ratingA = a.exercise.averageRating ?? -1;
-          const ratingB = b.exercise.averageRating ?? -1;
-          if (ratingA !== ratingB) {
-            return ratingB - ratingA;
-          }
-          return b.targetValue - a.targetValue;
-        }).map(item => item.exercise);
-        
-        return { category, exercises: Array.from(new Set(sortedExercises)) };
-      })
-      .sort((a, b) => a.category.localeCompare(b.category));
+
+    return { categories, cardio, uncategorized };
   });
 
   ngOnInit() {
