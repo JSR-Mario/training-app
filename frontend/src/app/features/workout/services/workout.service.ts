@@ -50,6 +50,10 @@ export class WorkoutService {
     return this.http.post<void>(`${this.baseUrl}/sessions/${id}/complete`, {});
   }
 
+  uncompleteSession(id: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/sessions/${id}/uncomplete`, {});
+  }
+
   updateSessionNotes(id: string, notes: string): Observable<WorkoutSessionResponse> {
     return this.http.patch<WorkoutSessionResponse>(`${this.baseUrl}/sessions/${id}/notes`, { notes });
   }

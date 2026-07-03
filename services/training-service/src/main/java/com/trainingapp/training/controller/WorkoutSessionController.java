@@ -76,6 +76,12 @@ public class WorkoutSessionController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{id}/uncomplete")
+    public ResponseEntity<Void> uncompleteSession(@PathVariable UUID id) {
+        sessionService.uncompleteSession(id, UserContext.getCurrentUserId());
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/{id}/suggestions")
     public List<com.trainingapp.training.dto.ExerciseSuggestionResponse> getExerciseSuggestions(@PathVariable UUID id) {
         return sessionService.getExerciseSuggestions(id, UserContext.getCurrentUserId());

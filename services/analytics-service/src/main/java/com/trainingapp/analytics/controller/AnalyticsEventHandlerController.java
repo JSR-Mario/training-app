@@ -29,4 +29,10 @@ public class AnalyticsEventHandlerController {
         metricsCalculationService.processSessionCompleted(event);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/session-uncompleted")
+    public ResponseEntity<Void> handleSessionUncompleted(@Valid @RequestBody com.trainingapp.analytics.dto.SessionUncompletedEvent event) {
+        metricsCalculationService.processSessionUncompleted(event);
+        return ResponseEntity.ok().build();
+    }
 }

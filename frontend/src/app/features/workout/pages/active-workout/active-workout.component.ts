@@ -375,16 +375,26 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
       }
     
       <!-- Sticky Bottom Action Bar -->
-      @if (!isLoading() && session() && !session()?.completedAt) {
+      @if (!isLoading() && session()) {
         <div class="sticky bottom-16 md:bottom-0 p-4 mt-8 bg-gray-900/90 backdrop-blur-md border border-gray-800 rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40">
           <div class="flex gap-4">
-            <button
-              (click)="completeWorkout()"
-              [disabled]="isCompleting()"
-              class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-95"
-              >
-              {{ isCompleting() ? 'Completing...' : 'Finish Workout' }}
-            </button>
+            @if (!session()?.completedAt) {
+              <button
+                (click)="completeWorkout()"
+                [disabled]="isCompleting()"
+                class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-95"
+                >
+                {{ isCompleting() ? 'Completing...' : 'Finish Workout' }}
+              </button>
+            } @else {
+              <button
+                (click)="uncompleteWorkout()"
+                [disabled]="isCompleting()"
+                class="flex-1 py-4 bg-gray-800 border border-gray-600 hover:bg-gray-700 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95"
+                >
+                {{ isCompleting() ? 'Reopening...' : 'Uncomplete & Edit' }}
+              </button>
+            }
           </div>
         </div>
       }
@@ -746,6 +756,26 @@ export class ActiveWorkoutComponent implements OnInit {
           this.loggedSets.update(sets => sets.filter(s => s.id !== setId));
         },
         error: (err) => console.error('Error deleting set', err)
+      });
+    }
+  }
+
+  uncompleteWorkout() {
+    const id = this.sessionId();
+    if (!id) return;
+
+    if (confirm('Are you sure you want to reopen this session? This will temporarily remove it from your analytics until you complete it again.')) {
+      this.isCompleting.set(true);
+      this.workoutService.uncompleteSession(id).subscribe({
+        next: () => {
+          this.session.update(s => s ? { ...s, completedAt: undefined } : s);
+          this.isCompleting.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to uncomplete session', err);
+          this.isCompleting.set(false);
+          alert('Failed to reopen workout. Please try again.');
+        }
       });
     }
   }
