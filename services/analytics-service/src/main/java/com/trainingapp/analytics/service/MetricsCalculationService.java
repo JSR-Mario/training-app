@@ -43,7 +43,7 @@ public class MetricsCalculationService {
             .forEach((exerciseId, setsForExercise) -> {
                 
                 BigDecimal maxWeight = setsForExercise.stream()
-                        .map(SessionCompletedEvent.SetData::weightKg)
+                        .map(s -> s.weightKg() != null ? s.weightKg() : BigDecimal.ZERO)
                         .max(BigDecimal::compareTo)
                         .orElse(BigDecimal.ZERO);
                 
