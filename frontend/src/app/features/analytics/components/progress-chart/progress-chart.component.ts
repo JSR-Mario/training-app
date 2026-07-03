@@ -332,7 +332,8 @@ export class ProgressChartComponent implements OnInit {
 
       const dataPoints = sortedWeeks.map(week => volumeByWeek.get(week) || 0);
 
-      if (dataPoints.some(v => v > 0)) {
+      // Plot even if the volume is 0 (e.g. bodyweight exercises)
+      if (dataPoints.some(v => v >= 0)) {
         datasets.push({
           label: bp.name,
           data: dataPoints,
