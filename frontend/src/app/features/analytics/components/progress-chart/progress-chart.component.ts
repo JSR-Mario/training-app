@@ -303,7 +303,7 @@ export class ProgressChartComponent implements OnInit {
       const data = this.bodyPartData.get(bp.id);
       if (data) {
         data.forEach(entry => {
-          if (validDayIds.has(entry.dayTemplateId) || (!entry.dayTemplateId && filter === 'All')) {
+          if (filter === 'All' || validDayIds.has(entry.dayTemplateId)) {
             weekSet.add(entry.weekNumber);
           }
         });
@@ -325,23 +325,21 @@ export class ProgressChartComponent implements OnInit {
       const volumeByWeek = new Map<number, number>();
       
       for (const entry of raw) {
-        if (!validDayIds.has(entry.dayTemplateId) && !(!entry.dayTemplateId && filter === 'All')) continue;
+        if (filter !== 'All' && !validDayIds.has(entry.dayTemplateId)) continue;
         const current = volumeByWeek.get(entry.weekNumber) || 0;
         volumeByWeek.set(entry.weekNumber, current + entry.volume);
       }
 
       const dataPoints = sortedWeeks.map(week => volumeByWeek.get(week) || 0);
 
-      if (dataPoints.some(v => v > 0)) {
-        datasets.push({
-          label: bp.name,
-          data: dataPoints,
-          backgroundColor: bp.color + 'CC',
-          borderColor: bp.color,
-          borderWidth: 1,
-          stack: 'Volume'
-        });
-      }
+      datasets.push({
+        label: bp.name,
+        data: dataPoints,
+        backgroundColor: bp.color + 'CC',
+        borderColor: bp.color,
+        borderWidth: 1,
+        stack: 'Volume'
+      });
     }
 
     const labels = sortedWeeks.map(w => 'Week ' + w);
