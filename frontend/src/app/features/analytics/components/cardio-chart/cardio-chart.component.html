@@ -8,7 +8,7 @@
         (ngModelChange)="selectedExerciseId.set($event)"
         class="w-full bg-slate-800/80 border border-slate-700/50 text-white text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2.5 appearance-none backdrop-blur-sm cursor-pointer shadow-sm hover:border-emerald-500/30 transition-colors"
       >
-        <option value="" disabled selected>Select Cardio Exercise</option>
+        <option value="ALL">All Cardio</option>
         @for (ex of exercises(); track ex.id) {
           <option [value]="ex.id">{{ ex.name }}</option>
         }

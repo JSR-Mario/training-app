@@ -89,7 +89,7 @@ export class CardioChartComponent implements OnInit {
         this.exercises.set(cardio);
         
         if (cardio.length > 0) {
-          this.selectedExerciseId.set(cardio[0].id);
+          this.selectedExerciseId.set('ALL');
         } else {
           this.isLoading.set(false);
         }
@@ -103,17 +103,45 @@ export class CardioChartComponent implements OnInit {
 
   private loadHistory(exerciseId: string) {
     this.isLoading.set(true);
-    this.exerciseService.getExerciseHistory(exerciseId).subscribe({
-      next: (history) => {
-        this.historyData.set(history);
+
+    if (exerciseId === 'ALL') {
+      const cardioExercises = this.exercises();
+      if (cardioExercises.length === 0) {
+        this.historyData.set([]);
         this.updateChart();
         this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to load exercise history', err);
-        this.isLoading.set(false);
+        return;
       }
-    });
+
+      import('rxjs').then(({ forkJoin }) => {
+        const observables = cardioExercises.map(ex => this.exerciseService.getExerciseHistory(ex.id));
+        forkJoin(observables).subscribe({
+          next: (histories) => {
+            // Flatten the array of histories
+            const allHistory = histories.flat();
+            this.historyData.set(allHistory);
+            this.updateChart();
+            this.isLoading.set(false);
+          },
+          error: (err) => {
+            console.error('Failed to load all exercise histories', err);
+            this.isLoading.set(false);
+          }
+        });
+      });
+    } else {
+      this.exerciseService.getExerciseHistory(exerciseId).subscribe({
+        next: (history) => {
+          this.historyData.set(history);
+          this.updateChart();
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to load exercise history', err);
+          this.isLoading.set(false);
+        }
+      });
+    }
   }
 
   private updateChart() {
