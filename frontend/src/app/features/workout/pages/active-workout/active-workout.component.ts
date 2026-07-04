@@ -500,6 +500,15 @@ export class ActiveWorkoutComponent implements OnInit {
             const sorted = res.exercises.sort((a, b) => a.sortOrder - b.sortOrder);
             this.exercises.set(sorted);
             this.initForms(sorted);
+            
+            // Auto-collapse completed exercises on load
+            sorted.forEach(ex => {
+              const setsLogged = this.getSetsForExercise(ex.id).length;
+              if (setsLogged >= (ex.sets || 1)) {
+                this.collapsedExercises.add(ex.id);
+              }
+            });
+
             this.isLoading.set(false);
           },
           error: (err) => {
