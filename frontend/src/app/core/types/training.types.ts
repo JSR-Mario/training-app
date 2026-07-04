@@ -47,6 +47,7 @@ export interface Exercise {
   equipmentBrand?: string;
   unilateral: boolean;
   spinalLoading: boolean;
+  isBodyweight: boolean;
   isPublic: boolean;
   type: ExerciseType;
   targets: ExerciseTarget[];
@@ -66,6 +67,7 @@ export interface DayExercise {
   incline?: number;
   resistance?: number;
   sortOrder: number;
+  isAmrap?: boolean;
   unilateral?: boolean;
 }
 
