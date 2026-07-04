@@ -76,4 +76,9 @@ public class ExerciseController {
         exerciseService.deleteTarget(UserContext.getCurrentUserId(), id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/exercises/{id}/history")
+    public List<com.trainingapp.training.dto.ExerciseHistoryResponse> getExerciseHistory(@PathVariable UUID id) {
+        return exerciseService.getExerciseHistory(UserContext.getCurrentUserId(), id);
+    }
 }

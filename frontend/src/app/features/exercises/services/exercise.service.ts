@@ -49,4 +49,8 @@ export class ExerciseService {
     // Note: the backend route is actually /api/v1/training/exercise-targets/{id}
     return this.http.delete<void>(`/api/v1/training/exercise-targets/${targetId}`);
   }
+
+  getExerciseHistory(exerciseId: string): Observable<import('../../../core/types/training.types').ExerciseHistoryResponse[]> {
+    return this.http.get<import('../../../core/types/training.types').ExerciseHistoryResponse[]>(`${this.BASE_URL}/${exerciseId}/history`);
+  }
 }

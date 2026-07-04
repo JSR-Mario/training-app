@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
     
     @Query("SELECT ws FROM WorkoutSet ws JOIN ws.dayExercise de JOIN ws.session s " +
-           "WHERE de.exercise.id = :exerciseId AND s.userId = :userId AND s.performedOn < :currentDate " +
+           "WHERE de.exercise.id = :exerciseId AND s.userId = :userId AND s.completedAt IS NOT NULL AND s.performedOn < :currentDate " +
            "ORDER BY s.performedOn DESC")
     List<WorkoutSet> findHistoricalSetsForExercise(
         @Param("exerciseId") UUID exerciseId, 
@@ -22,6 +22,14 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
         @Param("currentDate") LocalDate currentDate
     );
     
+    @Query("SELECT ws FROM WorkoutSet ws JOIN ws.dayExercise de JOIN ws.session s " +
+           "WHERE de.exercise.id = :exerciseId AND s.userId = :userId AND s.completedAt IS NOT NULL " +
+           "ORDER BY s.performedOn ASC")
+    List<WorkoutSet> findHistoricalSetsForExerciseAll(
+        @Param("exerciseId") UUID exerciseId, 
+        @Param("userId") UUID userId
+    );
+
     @Query("SELECT ws FROM WorkoutSet ws JOIN ws.session s WHERE ws.id = :id AND s.userId = :userId")
     Optional<WorkoutSet> findByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
 
