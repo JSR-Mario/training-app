@@ -56,7 +56,7 @@ public class JwtService {
     public String generateAccessToken(User user) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(jwtProperties.accessExpiryMinutes() * 60);
-        return buildToken(user.getId(), user.getRole().name(), AuthConstants.TOKEN_TYPE_ACCESS, now, expiry);
+        return buildToken(user.getId(), user.getRole().name(), user.getUsername(), AuthConstants.TOKEN_TYPE_ACCESS, now, expiry);
     }
 
 
@@ -69,7 +69,7 @@ public class JwtService {
     public String generateRefreshToken(User user) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(jwtProperties.refreshExpiryDays() * 86400);
-        return buildToken(user.getId(), user.getRole().name(), AuthConstants.TOKEN_TYPE_REFRESH, now, expiry);
+        return buildToken(user.getId(), user.getRole().name(), user.getUsername(), AuthConstants.TOKEN_TYPE_REFRESH, now, expiry);
     }
 
     /**
@@ -124,11 +124,12 @@ public class JwtService {
     // Private helpers
     // ----------------------------------------------------------------
 
-    private String buildToken(UUID userId, String role, String type, Instant issuedAt, Instant expiry) {
+    private String buildToken(UUID userId, String role, String username, String type, Instant issuedAt, Instant expiry) {
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim(AuthConstants.TOKEN_TYPE_CLAIM, type)
                 .claim("role", role)
+                .claim("username", username)
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(expiry))
                 .signWith(signingKey)

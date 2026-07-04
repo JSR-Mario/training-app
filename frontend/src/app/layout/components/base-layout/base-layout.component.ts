@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 
@@ -38,20 +38,20 @@ import { AuthService } from '../../../core/auth/auth.service';
           <a routerLink="/analytics" routerLinkActive="bg-gray-700/50 text-white" class="flex items-center px-4 py-3 text-gray-300 rounded-xl hover:bg-gray-700/30 transition-colors">
             <span class="font-medium">Analytics</span>
           </a>
+          <a routerLink="/body-weight" routerLinkActive="bg-gray-700/50 text-white" class="flex items-center px-4 py-3 text-gray-300 rounded-xl hover:bg-gray-700/30 transition-colors">
+            <span class="font-medium">Body Weight</span>
+          </a>
+          <a routerLink="/cardio" routerLinkActive="bg-gray-700/50 text-white" class="flex items-center px-4 py-3 text-gray-300 rounded-xl hover:bg-gray-700/30 transition-colors">
+            <span class="font-medium">Cardio</span>
+          </a>
         </nav>
-
-        <div class="p-4 border-t border-gray-700/50">
-          <button (click)="logout()" class="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-red-400 bg-red-400/10 rounded-lg hover:bg-red-400/20 transition-colors whitespace-nowrap">
-            Sign Out
-          </button>
-        </div>
       </aside>
 
       <!-- Main Content Area -->
       <main class="flex-1 relative flex flex-col overflow-y-auto bg-gray-900 pb-16 md:pb-0">
         
-        <!-- Top Bar with Hamburger -->
-        <header class="hidden md:flex items-center px-6 py-4 bg-gray-900/50 backdrop-blur-md border-b border-gray-800 sticky top-0 z-30">
+        <!-- Top Bar with Hamburger and User Dropdown -->
+        <header class="hidden md:flex items-center justify-between px-6 py-4 bg-gray-900/50 backdrop-blur-md border-b border-gray-800 sticky top-0 z-30">
           <button 
             (click)="toggleSidebar()" 
             class="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800 focus:outline-none"
@@ -61,6 +61,26 @@ import { AuthService } from '../../../core/auth/auth.service';
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
+          
+          <div class="relative">
+            <button (click)="dropdownOpen.set(!dropdownOpen())" class="flex items-center space-x-2 text-gray-300 hover:text-white focus:outline-none p-2 rounded-lg hover:bg-gray-800 transition-colors">
+              <span class="font-medium">{{ username() }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            @if (dropdownOpen()) {
+              <div class="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-50">
+                <button (click)="logout()" class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-gray-700/50 transition-colors flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Sign Out
+                </button>
+              </div>
+            }
+          </div>
         </header>
 
         <div class="container mx-auto p-4 md:p-8">
@@ -97,6 +117,9 @@ import { AuthService } from '../../../core/auth/auth.service';
 export class BaseLayoutComponent {
   private authService = inject(AuthService);
   isSidebarOpen = signal<boolean>(true);
+  dropdownOpen = signal<boolean>(false);
+
+  username = computed(() => this.authService.username);
 
   toggleSidebar() {
     this.isSidebarOpen.set(!this.isSidebarOpen());
