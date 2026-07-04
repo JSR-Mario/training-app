@@ -54,7 +54,7 @@ All external requests must go through the API Gateway at port `8080`.
 Swagger UI is available at: `http://localhost:8080/swagger-ui.html`
 
 - **Auth Service**: `/api/v1/auth/**` (Register, Login, Refresh, Me)
-- **Training Service**: `/api/v1/training/**` (Programs, Weeks, Days, Exercises, Sessions, Dashboard, Body Weight)
+- **Training Service**: `/api/v1/training/**` (Programs, Weeks, Days, Exercises, Sessions, Dashboard, Body Weight, Cardio Logs)
 - **Analytics Service**: `/api/v1/analytics/**` (Volume, Progress)
 
 ---
