@@ -1,25 +1,22 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
-import { ExerciseService } from '../../../exercises/services/exercise.service';
-import { Exercise, ExerciseHistoryResponse } from '../../../../core/types/training.types';
+import { CardioLogService } from '../../services/cardio-log.service';
+import { CardioLogResponse } from '../../../../core/types/training.types';
 
 @Component({
   selector: 'app-cardio-chart',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective],
+  imports: [CommonModule, BaseChartDirective],
   templateUrl: './cardio-chart.component.html',
   styles: ``
 })
 export class CardioChartComponent implements OnInit {
-  private exerciseService = inject(ExerciseService);
+  private cardioService = inject(CardioLogService);
 
   isLoading = signal(true);
-  exercises = signal<Exercise[]>([]);
-  selectedExerciseId = signal<string>('');
-  historyData = signal<ExerciseHistoryResponse[]>([]);
+  logs = signal<CardioLogResponse[]>([]);
 
   public chartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -64,95 +61,37 @@ export class CardioChartComponent implements OnInit {
     datasets: []
   };
 
-  constructor() {
-    effect(() => {
-      const exId = this.selectedExerciseId();
-      if (exId) {
-        this.loadHistory(exId);
-      } else {
-        this.historyData.set([]);
-        this.updateChart();
-      }
-    });
-  }
-
   ngOnInit() {
-    this.loadExercises();
+    this.loadLogs();
   }
 
-  private loadExercises() {
+  // Allow external components to trigger a reload
+  reload() {
+    this.loadLogs();
+  }
+
+  private loadLogs() {
     this.isLoading.set(true);
-    this.exerciseService.getExercises().subscribe({
-      next: (allExercises) => {
-        // Filter only CARDIO exercises
-        const cardio = allExercises.filter(ex => ex.type === 'CARDIO');
-        this.exercises.set(cardio);
-        
-        if (cardio.length > 0) {
-          this.selectedExerciseId.set('ALL');
-        } else {
-          this.isLoading.set(false);
-        }
+    this.cardioService.getLogs().subscribe({
+      next: (logs) => {
+        this.logs.set(logs);
+        this.updateChart();
+        this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Failed to load exercises', err);
+        console.error('Failed to load cardio logs', err);
         this.isLoading.set(false);
       }
     });
-  }
-
-  private loadHistory(exerciseId: string) {
-    this.isLoading.set(true);
-
-    if (exerciseId === 'ALL') {
-      const cardioExercises = this.exercises();
-      if (cardioExercises.length === 0) {
-        this.historyData.set([]);
-        this.updateChart();
-        this.isLoading.set(false);
-        return;
-      }
-
-      import('rxjs').then(({ forkJoin }) => {
-        const observables = cardioExercises.map(ex => this.exerciseService.getExerciseHistory(ex.id));
-        forkJoin(observables).subscribe({
-          next: (histories) => {
-            // Flatten the array of histories
-            const allHistory = histories.flat();
-            this.historyData.set(allHistory);
-            this.updateChart();
-            this.isLoading.set(false);
-          },
-          error: (err) => {
-            console.error('Failed to load all exercise histories', err);
-            this.isLoading.set(false);
-          }
-        });
-      });
-    } else {
-      this.exerciseService.getExerciseHistory(exerciseId).subscribe({
-        next: (history) => {
-          this.historyData.set(history);
-          this.updateChart();
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          console.error('Failed to load exercise history', err);
-          this.isLoading.set(false);
-        }
-      });
-    }
   }
 
   private updateChart() {
-    const data = this.historyData();
+    const data = this.logs();
     if (!data || data.length === 0) {
       this.chartData = { labels: [], datasets: [] };
       return;
     }
 
-    // Group by performedOn just in case there are multiple sets on the same day.
-    // For cardio, we typically sum the duration minutes.
     const aggregated = new Map<string, number>();
     
     data.forEach(entry => {
@@ -161,7 +100,6 @@ export class CardioChartComponent implements OnInit {
       aggregated.set(date, (aggregated.get(date) || 0) + duration);
     });
 
-    // Sort dates ascending
     const sortedDates = Array.from(aggregated.keys()).sort();
     
     this.chartData = {

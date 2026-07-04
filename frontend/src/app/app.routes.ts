@@ -55,6 +55,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/analytics/pages/analytics-dashboard/analytics-dashboard.component').then(m => m.AnalyticsDashboardComponent)
       },
       {
+        path: 'body-weight',
+        loadComponent: () => import('./features/analytics/pages/body-weight-dashboard/body-weight-dashboard.component').then(m => m.BodyWeightDashboardComponent)
+      },
+      {
+        path: 'cardio',
+        loadComponent: () => import('./features/analytics/pages/cardio-dashboard/cardio-dashboard.component').then(m => m.CardioDashboardComponent)
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'

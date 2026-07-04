@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
@@ -29,6 +29,9 @@ export class ProgressChartComponent implements OnInit {
   private analyticsService = inject(AnalyticsService);
   private programService = inject(ProgramService);
   private exerciseService = inject(ExerciseService);
+
+  // Use Angular 17.1+ input signal for miniMode
+  miniMode = input<boolean>(false);
 
   isLoading = signal(true);
   
@@ -126,6 +129,20 @@ export class ProgressChartComponent implements OnInit {
   }
 
   ngOnInit() {
+    if (this.miniMode()) {
+      this.chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        scales: {
+          x: { display: false },
+          y: { display: false }
+        }
+      };
+    }
     this.loadPrograms();
   }
 
@@ -320,30 +337,58 @@ export class ProgressChartComponent implements OnInit {
     const sortedWeeks = Array.from(weekSet).sort((a,b) => a - b);
     const datasets = [];
 
-    for (const bp of bodyParts) {
-      if (!bp.checked) continue;
-      
-      const raw = this.bodyPartData.get(bp.id) || [];
-      const volumeByWeek = new Map<number, number>();
-      
-      for (const entry of raw) {
-        if (!validDayIds.has(entry.dayTemplateId) && !(!entry.dayTemplateId && filter === 'All')) continue;
-        const current = volumeByWeek.get(entry.weekNumber) || 0;
-        volumeByWeek.set(entry.weekNumber, current + entry.volume);
-      }
+    if (this.miniMode()) {
+      const dataPoints = sortedWeeks.map(week => {
+        let sum = 0;
+        for (const bp of bodyParts) {
+          if (!bp.checked) continue;
+          const raw = this.bodyPartData.get(bp.id) || [];
+          for (const entry of raw) {
+            if (!validDayIds.has(entry.dayTemplateId) && !(!entry.dayTemplateId && filter === 'All')) continue;
+            if (entry.weekNumber === week) {
+              sum += entry.volume;
+            }
+          }
+        }
+        return sum;
+      });
 
-      const dataPoints = sortedWeeks.map(week => volumeByWeek.get(week) || 0);
-
-      // Plot even if the volume is 0 (e.g. bodyweight exercises)
       if (dataPoints.some(v => v >= 0)) {
         datasets.push({
-          label: bp.name,
+          label: 'Total Volume',
           data: dataPoints,
-          backgroundColor: bp.color + 'CC',
-          borderColor: bp.color,
+          backgroundColor: '#3b82f6', // blue-500
+          borderColor: '#2563eb', // blue-600
           borderWidth: 1,
-          stack: 'Volume'
+          barPercentage: 1.0,
+          categoryPercentage: 1.0
         });
+      }
+    } else {
+      for (const bp of bodyParts) {
+        if (!bp.checked) continue;
+        
+        const raw = this.bodyPartData.get(bp.id) || [];
+        const volumeByWeek = new Map<number, number>();
+        
+        for (const entry of raw) {
+          if (!validDayIds.has(entry.dayTemplateId) && !(!entry.dayTemplateId && filter === 'All')) continue;
+          const current = volumeByWeek.get(entry.weekNumber) || 0;
+          volumeByWeek.set(entry.weekNumber, current + entry.volume);
+        }
+
+        const dataPoints = sortedWeeks.map(week => volumeByWeek.get(week) || 0);
+
+        if (dataPoints.some(v => v >= 0)) {
+          datasets.push({
+            label: bp.name,
+            data: dataPoints,
+            backgroundColor: bp.color + 'CC',
+            borderColor: bp.color,
+            borderWidth: 1,
+            stack: 'Volume'
+          });
+        }
       }
     }
 

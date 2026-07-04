@@ -167,3 +167,17 @@ export interface ExerciseHistoryResponse {
   repsCompleted?: number;
   weightKg?: number;
 }
+
+export interface CardioLogRequest {
+  durationMinutes: number;
+  cardioType?: string;
+  performedOn: string;
+}
+
+export interface CardioLogResponse {
+  id: string;
+  durationMinutes: number;
+  cardioType?: string;
+  performedOn: string;
+  createdAt: string;
+}
