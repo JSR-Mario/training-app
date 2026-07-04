@@ -15,14 +15,11 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
       </div>
       
       <!-- CSS Grid for cards -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         
-        <!-- Left Column for Stats -->
-        <div class="md:col-span-12 lg:col-span-3 flex flex-col gap-6">
-          
-          <!-- Weights Sessions This Week -->
-          <div 
-            class="glass-card p-6 flex flex-col justify-between hover:bg-gray-800/80 cursor-pointer transition-colors"
+        <!-- Weights Sessions This Week -->
+        <div 
+          class="glass-card p-6 flex flex-col justify-between md:col-span-6 lg:col-span-3 hover:bg-gray-800/80 cursor-pointer transition-colors"
           (click)="goToRoute('/workout')"
           (keyup.enter)="goToRoute('/workout')"
           tabindex="0"
@@ -67,7 +64,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
 
         <!-- Cardio Sessions This Week -->
         <div 
-          class="glass-card p-6 flex flex-col justify-between hover:bg-gray-800/80 cursor-pointer transition-colors"
+          class="glass-card p-6 flex flex-col justify-between md:col-span-6 lg:col-span-3 hover:bg-gray-800/80 cursor-pointer transition-colors"
           (click)="goToRoute('/cardio')"
           (keyup.enter)="goToRoute('/cardio')"
           tabindex="0"
@@ -112,7 +109,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
 
         <!-- Body Weight This Week -->
         <div 
-          class="glass-card p-6 flex flex-col justify-between hover:bg-gray-800/80 cursor-pointer transition-colors"
+          class="glass-card p-6 flex flex-col justify-between md:col-span-6 lg:col-span-3 hover:bg-gray-800/80 cursor-pointer transition-colors"
           (click)="goToRoute('/body-weight')"
           (keyup.enter)="goToRoute('/body-weight')"
           tabindex="0"
@@ -157,11 +154,9 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
             }
           </div>
         </div>
-        </div>
-
         <!-- Volume Progress Mini Chart Card -->
         <div 
-          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 lg:col-span-9 flex flex-col"
+          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 lg:col-span-3 flex flex-col"
           (click)="goToAnalytics()"
           (keyup.enter)="goToAnalytics()"
           tabindex="0"
