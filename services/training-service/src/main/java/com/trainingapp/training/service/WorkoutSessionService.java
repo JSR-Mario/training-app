@@ -128,6 +128,7 @@ public class WorkoutSessionService {
                 session.getUserId(),
                 session.getDayTemplate().getWeekTemplate().getProgram().getId(),
                 session.getWeekNumber(),
+                session.getDayTemplate().getId(),
                 session.getPerformedOn(),
                 setDatas
             ));
