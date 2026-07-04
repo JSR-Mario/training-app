@@ -15,13 +15,10 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
       </div>
       
       <!-- CSS Grid for cards -->
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
         
-        <!-- Left Column for Stats -->
-        <div class="lg:col-span-1 flex flex-col gap-6">
-          
-          <!-- Weights Sessions This Week -->
-          <div class="glass-card p-6 flex flex-col justify-between flex-1">
+        <!-- Weights Sessions This Week -->
+        <div class="glass-card p-6 flex flex-col justify-between md:col-span-6 lg:col-span-3">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-base font-medium text-gray-400">Weight Sessions (This Week)</h3>
             <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
@@ -59,7 +56,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
         </div>
 
         <!-- Cardio Sessions This Week -->
-        <div class="glass-card p-6 flex flex-col justify-between flex-1">
+        <div class="glass-card p-6 flex flex-col justify-between md:col-span-6 lg:col-span-3">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-base font-medium text-gray-400">Cardio Sessions (This Week)</h3>
             <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
@@ -95,11 +92,9 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
             }
           </div>
         </div>
-        </div>
-        
         <!-- Volume Progress Mini Chart Card -->
         <div 
-          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 lg:col-span-3 flex flex-col"
+          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 lg:col-span-4 flex flex-col"
           (click)="goToAnalytics()"
           (keyup.enter)="goToAnalytics()"
           tabindex="0"
