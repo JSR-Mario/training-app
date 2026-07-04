@@ -14,9 +14,15 @@ export interface WeightsSummary {
   volumePercentageChange: number;
 }
 
+export interface BodyWeightSummary {
+  currentWeekAvgKg: number;
+  percentageChange: number;
+}
+
 export interface DashboardSummaryResponse {
   cardio: CardioSummary;
   weights: WeightsSummary;
+  bodyWeight: BodyWeightSummary;
 }
 
 @Injectable({

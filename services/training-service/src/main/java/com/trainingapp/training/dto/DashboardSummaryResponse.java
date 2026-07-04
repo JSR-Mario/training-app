@@ -4,12 +4,14 @@ public class DashboardSummaryResponse {
 
     private CardioSummary cardio;
     private WeightsSummary weights;
+    private BodyWeightSummary bodyWeight;
 
     public DashboardSummaryResponse() {}
 
-    public DashboardSummaryResponse(CardioSummary cardio, WeightsSummary weights) {
+    public DashboardSummaryResponse(CardioSummary cardio, WeightsSummary weights, BodyWeightSummary bodyWeight) {
         this.cardio = cardio;
         this.weights = weights;
+        this.bodyWeight = bodyWeight;
     }
 
     public CardioSummary getCardio() { return cardio; }
@@ -17,6 +19,9 @@ public class DashboardSummaryResponse {
 
     public WeightsSummary getWeights() { return weights; }
     public void setWeights(WeightsSummary weights) { this.weights = weights; }
+
+    public BodyWeightSummary getBodyWeight() { return bodyWeight; }
+    public void setBodyWeight(BodyWeightSummary bodyWeight) { this.bodyWeight = bodyWeight; }
 
     public static class CardioSummary {
         private int sessionsThisWeek;
@@ -62,5 +67,23 @@ public class DashboardSummaryResponse {
 
         public double getVolumePercentageChange() { return volumePercentageChange; }
         public void setVolumePercentageChange(double volumePercentageChange) { this.volumePercentageChange = volumePercentageChange; }
+    }
+
+    public static class BodyWeightSummary {
+        private double currentWeekAvgKg;
+        private double percentageChange;
+
+        public BodyWeightSummary() {}
+
+        public BodyWeightSummary(double currentWeekAvgKg, double percentageChange) {
+            this.currentWeekAvgKg = currentWeekAvgKg;
+            this.percentageChange = percentageChange;
+        }
+
+        public double getCurrentWeekAvgKg() { return currentWeekAvgKg; }
+        public void setCurrentWeekAvgKg(double currentWeekAvgKg) { this.currentWeekAvgKg = currentWeekAvgKg; }
+
+        public double getPercentageChange() { return percentageChange; }
+        public void setPercentageChange(double percentageChange) { this.percentageChange = percentageChange; }
     }
 }

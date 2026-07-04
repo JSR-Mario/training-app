@@ -7,6 +7,8 @@ import com.trainingapp.training.dto.DashboardSummaryResponse;
 import com.trainingapp.training.repository.CardioLogRepository;
 import com.trainingapp.training.repository.WorkoutSessionRepository;
 import com.trainingapp.training.repository.WorkoutSetRepository;
+import com.trainingapp.training.repository.BodyWeightRepository;
+import com.trainingapp.training.domain.BodyWeightEntry;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
@@ -22,13 +24,16 @@ public class DashboardService {
     private final CardioLogRepository cardioLogRepository;
     private final WorkoutSessionRepository sessionRepository;
     private final WorkoutSetRepository setRepository;
+    private final BodyWeightRepository bodyWeightRepository;
 
     public DashboardService(CardioLogRepository cardioLogRepository,
                             WorkoutSessionRepository sessionRepository,
-                            WorkoutSetRepository setRepository) {
+                            WorkoutSetRepository setRepository,
+                            BodyWeightRepository bodyWeightRepository) {
         this.cardioLogRepository = cardioLogRepository;
         this.sessionRepository = sessionRepository;
         this.setRepository = setRepository;
+        this.bodyWeightRepository = bodyWeightRepository;
     }
 
     public DashboardSummaryResponse getSummary(UUID userId) {
@@ -71,7 +76,18 @@ public class DashboardService {
         DashboardSummaryResponse.WeightsSummary weightsSummary = new DashboardSummaryResponse.WeightsSummary(
                 weightSessionsThisWeek, volumeThisWeek, volumePercentageChange);
 
-        return new DashboardSummaryResponse(cardioSummary, weightsSummary);
+        // Body Weight
+        List<BodyWeightEntry> weightsThisWeek = bodyWeightRepository.findAllByUserIdAndDateBetweenOrderByDateAsc(userId, startOfThisWeek, endOfThisWeek);
+        List<BodyWeightEntry> weightsLastWeek = bodyWeightRepository.findAllByUserIdAndDateBetweenOrderByDateAsc(userId, startOfLastWeek, endOfLastWeek);
+
+        double avgWeightThisWeek = weightsThisWeek.stream().mapToDouble(e -> e.getWeightKg().doubleValue()).average().orElse(0.0);
+        double avgWeightLastWeek = weightsLastWeek.stream().mapToDouble(e -> e.getWeightKg().doubleValue()).average().orElse(0.0);
+        double bodyWeightPercentageChange = calculatePercentageChange(avgWeightLastWeek, avgWeightThisWeek);
+
+        DashboardSummaryResponse.BodyWeightSummary bodyWeightSummary = new DashboardSummaryResponse.BodyWeightSummary(
+                avgWeightThisWeek, bodyWeightPercentageChange);
+
+        return new DashboardSummaryResponse(cardioSummary, weightsSummary, bodyWeightSummary);
     }
 
     private double calculatePercentageChange(double oldVal, double newVal) {

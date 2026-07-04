@@ -17,8 +17,18 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
       <!-- CSS Grid for cards -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
         
-        <!-- Weights Sessions This Week -->
-        <div class="glass-card p-6 flex flex-col justify-between md:col-span-6 lg:col-span-3">
+        <!-- Left Column for Stats -->
+        <div class="md:col-span-12 lg:col-span-3 flex flex-col gap-6">
+          
+          <!-- Weights Sessions This Week -->
+          <div 
+            class="glass-card p-6 flex flex-col justify-between hover:bg-gray-800/80 cursor-pointer transition-colors"
+          (click)="goToRoute('/workout')"
+          (keyup.enter)="goToRoute('/workout')"
+          tabindex="0"
+          role="button"
+          title="Go to Workout Sessions"
+        >
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-base font-medium text-gray-400">Weight Sessions (This Week)</h3>
             <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
@@ -56,7 +66,14 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
         </div>
 
         <!-- Cardio Sessions This Week -->
-        <div class="glass-card p-6 flex flex-col justify-between md:col-span-6 lg:col-span-3">
+        <div 
+          class="glass-card p-6 flex flex-col justify-between hover:bg-gray-800/80 cursor-pointer transition-colors"
+          (click)="goToRoute('/cardio')"
+          (keyup.enter)="goToRoute('/cardio')"
+          tabindex="0"
+          role="button"
+          title="Go to Cardio"
+        >
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-base font-medium text-gray-400">Cardio Sessions (This Week)</h3>
             <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
@@ -92,9 +109,59 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
             }
           </div>
         </div>
+
+        <!-- Body Weight This Week -->
+        <div 
+          class="glass-card p-6 flex flex-col justify-between hover:bg-gray-800/80 cursor-pointer transition-colors"
+          (click)="goToRoute('/body-weight')"
+          (keyup.enter)="goToRoute('/body-weight')"
+          tabindex="0"
+          role="button"
+          title="Go to Body Weight"
+        >
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-medium text-gray-400">Body Weight (Avg)</h3>
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            @if (isLoading()) {
+              <div class="h-8 w-16 bg-gray-700 rounded animate-pulse mb-2"></div>
+              <div class="h-4 w-32 bg-gray-700 rounded animate-pulse"></div>
+            } @else {
+              <p class="text-5xl font-bold text-white mb-4 mt-2">{{ (summary()?.bodyWeight?.currentWeekAvgKg || 0) | number:'1.0-1' }} <span class="text-xl text-gray-400 font-normal">kg</span></p>
+              <div class="flex items-center text-sm">
+                @if ((summary()?.bodyWeight?.percentageChange || 0) === 0) {
+                  <span class="text-gray-400 flex items-center bg-gray-700/50 px-1.5 py-0.5 rounded text-xs font-medium">
+                    No change
+                  </span>
+                } @else if ((summary()?.bodyWeight?.percentageChange || 0) < 0) {
+                  <span class="text-emerald-400 flex items-center bg-emerald-400/10 px-1.5 py-0.5 rounded text-xs font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                    {{ math.abs(summary()?.bodyWeight?.percentageChange || 0) | number:'1.0-1' }}%
+                  </span>
+                } @else {
+                  <span class="text-red-400 flex items-center bg-red-400/10 px-1.5 py-0.5 rounded text-xs font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                    {{ summary()?.bodyWeight?.percentageChange | number:'1.0-1' }}%
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+        </div>
+
         <!-- Volume Progress Mini Chart Card -->
         <div 
-          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 lg:col-span-4 flex flex-col"
+          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 lg:col-span-9 flex flex-col"
           (click)="goToAnalytics()"
           (keyup.enter)="goToAnalytics()"
           tabindex="0"
@@ -139,5 +206,9 @@ export class DashboardComponent implements OnInit {
 
   goToAnalytics() {
     this.router.navigate(['/analytics']);
+  }
+
+  goToRoute(route: string) {
+    this.router.navigate([route]);
   }
 }
