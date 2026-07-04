@@ -102,6 +102,37 @@ public class WorkoutSessionService {
     @Transactional
     public void deleteSession(UUID id, UUID userId) {
         WorkoutSession session = getSessionEntity(id, userId);
+        
+        // If the session was completed, we must notify analytics to revert its data
+        if (session.getCompletedAt() != null) {
+            List<WorkoutSet> sets = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId());
+            List<com.trainingapp.training.dto.SessionUncompletedEvent.SetData> setDatas = sets.stream()
+                .map(s -> {
+                    UUID exId = s.getDayExercise().getExercise().getId();
+                    return new com.trainingapp.training.dto.SessionUncompletedEvent.SetData(
+                        exId, 
+                        s.getRepsCompleted() != null ? s.getRepsCompleted() : 0,
+                        s.getRepsCompletedRight(),
+                        s.getWeightKg() != null ? s.getWeightKg() : java.math.BigDecimal.ZERO,
+                        targetRepository.findByExerciseId(exId).stream()
+                            .collect(Collectors.toMap(
+                                t -> t.getBodyPart().name(),
+                                t -> t.getTargetValue()
+                            ))
+                    );
+                })
+                .collect(Collectors.toList());
+
+            analyticsClient.notifySessionUncompleted(new com.trainingapp.training.dto.SessionUncompletedEvent(
+                session.getId(),
+                session.getUserId(),
+                session.getDayTemplate().getWeekTemplate().getProgram().getId(),
+                session.getWeekNumber(),
+                session.getPerformedOn(),
+                setDatas
+            ));
+        }
+        
         sessionRepository.delete(session);
     }
 
