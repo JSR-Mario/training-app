@@ -1,6 +1,7 @@
 package com.trainingapp.training.client;
 
 import com.trainingapp.training.dto.SessionCompletedEvent;
+import com.trainingapp.training.dto.SessionUncompletedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +41,25 @@ public class AnalyticsNotificationClient {
             .toBodilessEntity()
             .doOnSuccess(res -> log.info("Successfully notified analytics service for session: {}", event.sessionId()))
             .doOnError(e -> log.error("Failed to notify analytics service for session: {}. Error: {}", event.sessionId(), e.getMessage()))
+            .subscribe(); // Fire and forget
+    }
+
+    /**
+     * Sends the uncompleted session payload to the analytics service.
+     * Errors are caught and logged.
+     *
+     * @param event The session uncompleted event payload
+     */
+    public void notifySessionUncompleted(SessionUncompletedEvent event) {
+        String url = analyticsServiceUrl + "/internal/events/session-uncompleted";
+        
+        webClient.post()
+            .uri(url)
+            .bodyValue(event)
+            .retrieve()
+            .toBodilessEntity()
+            .doOnSuccess(res -> log.info("Successfully notified analytics service for uncompleted session: {}", event.sessionId()))
+            .doOnError(e -> log.error("Failed to notify analytics service for uncompleted session: {}. Error: {}", event.sessionId(), e.getMessage()))
             .subscribe(); // Fire and forget
     }
 }

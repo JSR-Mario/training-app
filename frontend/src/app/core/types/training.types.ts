@@ -47,6 +47,7 @@ export interface Exercise {
   equipmentBrand?: string;
   unilateral: boolean;
   spinalLoading: boolean;
+  isBodyweight: boolean;
   isPublic: boolean;
   type: ExerciseType;
   targets: ExerciseTarget[];
@@ -66,6 +67,7 @@ export interface DayExercise {
   incline?: number;
   resistance?: number;
   sortOrder: number;
+  isAmrap?: boolean;
   unilateral?: boolean;
 }
 
@@ -156,4 +158,28 @@ export interface ExerciseSuggestionResponse {
   suggestedDurationMinutes?: number;
   suggestedIncline?: number;
   suggestedResistance?: number;
+}
+
+export interface ExerciseHistoryResponse {
+  setId: string;
+  performedOn: string;
+  durationMinutes?: number;
+  incline?: number;
+  resistance?: number;
+  repsCompleted?: number;
+  weightKg?: number;
+}
+
+export interface CardioLogRequest {
+  durationMinutes: number;
+  cardioType?: string;
+  performedOn: string;
+}
+
+export interface CardioLogResponse {
+  id: string;
+  durationMinutes: number;
+  cardioType?: string;
+  performedOn: string;
+  createdAt: string;
 }

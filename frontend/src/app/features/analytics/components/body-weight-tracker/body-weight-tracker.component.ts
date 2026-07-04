@@ -23,6 +23,10 @@ export class BodyWeightTrackerComponent implements OnInit {
   isSaving = signal(false);
   activeRange = signal<TimeRange>('1M');
 
+  periodChangeKg = signal<number>(0);
+  periodChangePercent = signal<number>(0);
+  math = Math;
+
   form: FormGroup = this.fb.group({
     date: [this.getTodayString(), Validators.required],
     weightKg: ['', [Validators.required, Validators.min(20), Validators.max(500)]]
@@ -88,8 +92,42 @@ export class BodyWeightTrackerComponent implements OnInit {
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: (data) => {
-          const labels = data.map(d => new Date(d.date).toLocaleDateString());
+          const dates = data.map(d => new Date(d.date));
+          const labels = dates.map(d => d.toLocaleDateString());
           const weights = data.map(d => d.weightKg);
+
+          // Linear Regression for Trendline
+          let trendData: number[] = [];
+          if (weights.length > 1) {
+            const xs = dates.map(d => d.getTime());
+            const ys = weights;
+            const n = xs.length;
+            
+            const sumX = xs.reduce((a, b) => a + b, 0);
+            const sumY = ys.reduce((a, b) => a + b, 0);
+            const sumXY = xs.reduce((sum, x, i) => sum + x * ys[i], 0);
+            const sumXX = xs.reduce((sum, x) => sum + x * x, 0);
+            
+            // Protect against division by zero if all x are the same
+            const denominator = (n * sumXX - sumX * sumX);
+            if (denominator !== 0) {
+              const slope = (n * sumXY - sumX * sumY) / denominator;
+              const intercept = (sumY - slope * sumX) / n;
+              trendData = xs.map(x => slope * x + intercept);
+            } else {
+              trendData = weights.map(() => weights[0]);
+            }
+
+            this.periodChangeKg.set(weights[weights.length - 1] - weights[0]);
+            this.periodChangePercent.set((weights[weights.length - 1] - weights[0]) / weights[0] * 100);
+          } else if (weights.length === 1) {
+            trendData = [weights[0]];
+            this.periodChangeKg.set(0);
+            this.periodChangePercent.set(0);
+          } else {
+            this.periodChangeKg.set(0);
+            this.periodChangePercent.set(0);
+          }
 
           this.lineChartData = {
             labels,
@@ -104,7 +142,20 @@ export class BodyWeightTrackerComponent implements OnInit {
                 pointHoverBackgroundColor: '#fff',
                 pointHoverBorderColor: '#3b82f6',
                 fill: 'origin',
-                tension: 0.4
+                tension: 0.4,
+                order: 1
+              },
+              {
+                data: trendData,
+                label: 'Trend',
+                type: 'line',
+                borderColor: '#ffffff',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0,
+                pointRadius: 0,
+                order: 0
               }
             ]
           };

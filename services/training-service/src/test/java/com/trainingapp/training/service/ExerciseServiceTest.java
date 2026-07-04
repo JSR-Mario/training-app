@@ -67,7 +67,7 @@ class ExerciseServiceTest {
     void create_savesWithAllFields() {
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
         ExerciseResponse result = exerciseService.create(userId,
-                new ExerciseRequest("Bench Press", "Hammer Strength", false, false, false, com.trainingapp.training.domain.ExerciseType.STRENGTH));
+                new ExerciseRequest("Bench Press", "Hammer Strength", false, false, false, false, com.trainingapp.training.domain.ExerciseType.STRENGTH));
         assertThat(result.name()).isEqualTo("Bench Press");
         assertThat(result.equipmentBrand()).isEqualTo("Hammer Strength");
         verify(exerciseRepository).save(any());
@@ -78,8 +78,8 @@ class ExerciseServiceTest {
         when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
         when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
-        exerciseService.update(userId, exerciseId,
-                new ExerciseRequest("Incline Press", "Rogue", true, false, false, com.trainingapp.training.domain.ExerciseType.STRENGTH));
+        ExerciseResponse result = exerciseService.update(userId, exerciseId,
+                new ExerciseRequest("Incline Press", "Rogue", true, false, false, false, com.trainingapp.training.domain.ExerciseType.STRENGTH));
         assertThat(sampleExercise.getName()).isEqualTo("Incline Press");
         assertThat(sampleExercise.getEquipmentBrand()).isEqualTo("Rogue");
         assertThat(sampleExercise.isUnilateral()).isTrue();
@@ -89,7 +89,7 @@ class ExerciseServiceTest {
     void update_notFound_throwsResourceNotFound() {
         when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> exerciseService.update(userId, exerciseId,
-                new ExerciseRequest("X", null, false, false, false, com.trainingapp.training.domain.ExerciseType.STRENGTH)))
+                new ExerciseRequest("X", null, false, false, false, false, com.trainingapp.training.domain.ExerciseType.STRENGTH)))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

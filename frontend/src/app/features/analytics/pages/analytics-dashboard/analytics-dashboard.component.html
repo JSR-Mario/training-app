@@ -6,53 +6,8 @@
     </h1>
   </header>
 
-  <!-- Custom CSS-animated Tabs -->
-  <div class="glass-panel p-1.5 rounded-xl inline-flex w-full sm:w-auto overflow-hidden relative">
-    <div 
-      class="absolute top-1.5 left-1.5 bottom-1.5 w-[calc(50%-0.375rem)] sm:w-32 bg-slate-700/50 rounded-lg shadow-sm backdrop-blur-md transition-transform duration-300 ease-out border border-slate-600/50"
-      [class.translate-x-0]="activeTab() === 'progress'"
-      [class.translate-x-full]="activeTab() === 'weight'"
-      [style.transform]="activeTab() === 'weight' ? 'translateX(100%)' : 'translateX(0)'">
-    </div>
-    
-    <button 
-      (click)="setTab('progress')"
-      class="relative z-10 w-1/2 sm:w-32 py-2 text-sm font-medium transition-colors duration-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-      [class.text-white]="activeTab() === 'progress'"
-      [class.text-slate-400]="activeTab() !== 'progress'"
-      [class.hover:text-slate-200]="activeTab() !== 'progress'">
-      Progress
-    </button>
-
-    <button 
-      (click)="setTab('weight')"
-      class="relative z-10 w-1/2 sm:w-32 py-2 text-sm font-medium transition-colors duration-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-      [class.text-white]="activeTab() === 'weight'"
-      [class.text-slate-400]="activeTab() !== 'weight'"
-      [class.hover:text-slate-200]="activeTab() !== 'weight'">
-      Weight
-    </button>
-  </div>
-
-  <!-- Tab Content -->
-  <div class="mt-6 relative">
-    
-
-
-    <div 
-      [class.block]="activeTab() === 'progress'" 
-      [class.hidden]="activeTab() !== 'progress'"
-      class="animate-fade-in-up">
-      <app-progress-chart></app-progress-chart>
-    </div>
-
-    <div 
-      [class.block]="activeTab() === 'weight'" 
-      [class.hidden]="activeTab() !== 'weight'"
-      class="animate-fade-in-up">
-      <app-body-weight-tracker></app-body-weight-tracker>
-    </div>
-
+  <div class="mt-6">
+    <app-progress-chart></app-progress-chart>
   </div>
 
 </div>

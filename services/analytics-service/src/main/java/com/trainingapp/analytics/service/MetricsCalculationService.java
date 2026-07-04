@@ -43,7 +43,7 @@ public class MetricsCalculationService {
             .forEach((exerciseId, setsForExercise) -> {
                 
                 BigDecimal maxWeight = setsForExercise.stream()
-                        .map(SessionCompletedEvent.SetData::weightKg)
+                        .map(s -> s.weightKg() != null ? s.weightKg() : BigDecimal.ZERO)
                         .max(BigDecimal::compareTo)
                         .orElse(BigDecimal.ZERO);
                 
@@ -121,6 +121,50 @@ public class MetricsCalculationService {
             // For now, we just add.
             snapshot.setTotalSets(snapshot.getTotalSets().add(addedVolume));
             volumeRepository.save(snapshot);
+        });
+    }
+
+    /**
+     * Processes a session uncompleted event.
+     * Deletes the exercise progress entries and subtracts volume from the weekly snapshots.
+     * 
+     * @param event the uncompleted session payload from the training service
+     */
+    @Transactional
+    public void processSessionUncompleted(com.trainingapp.analytics.dto.SessionUncompletedEvent event) {
+        // 1. Delete Exercise Progress for this session
+        event.sets().stream()
+            .map(com.trainingapp.analytics.dto.SessionUncompletedEvent.SetData::exerciseId)
+            .distinct()
+            .forEach(exerciseId -> {
+                progressRepository.findByUserIdAndExerciseIdAndSessionDate(event.userId(), exerciseId, event.performedOn())
+                    .ifPresent(progressRepository::delete);
+            });
+
+        // 2. Subtract Volume from Weekly Volume Snapshot
+        Map<String, BigDecimal> volumePerBodyPart = new java.util.HashMap<>();
+        for (com.trainingapp.analytics.dto.SessionUncompletedEvent.SetData set : event.sets()) {
+            Map<String, BigDecimal> multipliers = set.bodyPartMultipliers();
+            if (multipliers != null) {
+                for (Map.Entry<String, BigDecimal> entry : multipliers.entrySet()) {
+                    String bodyPart = entry.getKey();
+                    BigDecimal multiplier = entry.getValue();
+                    volumePerBodyPart.merge(bodyPart, multiplier, BigDecimal::add);
+                }
+            }
+        }
+
+        volumePerBodyPart.forEach((bodyPart, removedVolume) -> {
+            volumeRepository.findByUserIdAndProgramIdAndWeekNumberAndBodyPart(
+                    event.userId(), event.programId(), event.weekNumber(), bodyPart)
+                .ifPresent(snapshot -> {
+                    BigDecimal newVolume = snapshot.getTotalSets().subtract(removedVolume);
+                    if (newVolume.compareTo(BigDecimal.ZERO) < 0) {
+                        newVolume = BigDecimal.ZERO;
+                    }
+                    snapshot.setTotalSets(newVolume);
+                    volumeRepository.save(snapshot);
+                });
         });
     }
 }

@@ -64,27 +64,48 @@ import { forkJoin } from 'rxjs';
                       class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm"
                       >
                   </div>
-                  <div class="flex-1">
-                    <label for="repsInput" class="block text-sm font-medium text-gray-300 mb-1">Min Reps</label>
-                    <input
-                      id="repsInput"
-                      type="number"
-                      formControlName="reps"
-                      min="1"
-                      class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm"
-                      >
-                  </div>
-                  <div class="flex-1">
-                    <label for="repsMaxInput" class="block text-sm font-medium text-gray-300 mb-1">Max Reps (Optional)</label>
-                    <input
-                      id="repsMaxInput"
-                      type="number"
-                      formControlName="repsMax"
-                      min="1"
-                      class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm"
-                      >
-                  </div>
                 </div>
+                
+                <div class="mt-4 flex items-center gap-3">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      formControlName="isAmrap"
+                      class="sr-only peer"
+                      id="isAmrap"
+                    >
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                  <label for="isAmrap" class="text-sm font-medium text-gray-300 cursor-pointer">
+                    AMRAP
+                    <span class="text-gray-500 text-xs ml-1">(As Many Reps As Possible)</span>
+                  </label>
+                </div>
+
+                @if (!exerciseForm.get('isAmrap')?.value) {
+                  <div class="flex gap-4 mt-4">
+                    <div class="flex-1">
+                      <label for="repsInput" class="block text-sm font-medium text-gray-300 mb-1">Min Reps</label>
+                      <input
+                        id="repsInput"
+                        type="number"
+                        formControlName="reps"
+                        min="1"
+                        class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm"
+                        >
+                    </div>
+                    <div class="flex-1">
+                      <label for="repsMaxInput" class="block text-sm font-medium text-gray-300 mb-1">Max Reps (Optional)</label>
+                      <input
+                        id="repsMaxInput"
+                        type="number"
+                        formControlName="repsMax"
+                        min="1"
+                        class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm"
+                        >
+                    </div>
+                  </div>
+                }
               }
               @if (selectedExercise()?.type === 'CARDIO') {
                 <div class="flex gap-4">
@@ -184,7 +205,11 @@ import { forkJoin } from 'rxjs';
                       </h4>
                       <p class="text-gray-400 text-sm">
                         {{ ex.sets }} sets &times;
-                        {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps
+                        @if (ex.isAmrap) {
+                          AMRAP
+                        } @else {
+                          {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps
+                        }
                       </p>
                     </div>
                   </div>
@@ -302,6 +327,7 @@ export class DayDetailComponent implements OnInit {
     sets: [3],
     reps: [10],
     repsMax: [null],
+    isAmrap: [false],
     durationMinutes: [null],
     incline: [null],
     resistance: [null]
@@ -385,8 +411,9 @@ export class DayDetailComponent implements OnInit {
       const sortOrder = this.exercises().length;
 
       const sets = type === 'CARDIO' ? undefined : formVal.sets;
-      const reps = type === 'CARDIO' ? undefined : formVal.reps;
-      const repsMax = type === 'CARDIO' ? undefined : formVal.repsMax;
+      const reps = (type === 'CARDIO' || formVal.isAmrap) ? undefined : formVal.reps;
+      const repsMax = (type === 'CARDIO' || formVal.isAmrap) ? undefined : formVal.repsMax;
+      const isAmrap = type === 'CARDIO' ? false : formVal.isAmrap;
       const duration = type === 'CARDIO' ? formVal.durationMinutes : undefined;
       const incline = type === 'CARDIO' ? formVal.incline : undefined;
       const resistance = type === 'CARDIO' ? formVal.resistance : undefined;
@@ -400,7 +427,8 @@ export class DayDetailComponent implements OnInit {
         repsMax, 
         duration, 
         incline, 
-        resistance
+        resistance,
+        isAmrap
       ).subscribe({
         next: () => {
           this.cancelAdd();

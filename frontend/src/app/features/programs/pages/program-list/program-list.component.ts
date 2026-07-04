@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -89,17 +89,19 @@ import { TrainingProgram } from '../../../../core/types/training.types';
       <!-- List View -->
       @if (!isLoading() && !showForm()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          @if (programs().length === 0) {
+          @if (sortedPrograms().length === 0) {
             <div class="col-span-full text-center py-12 glass-card">
               <p class="text-gray-400">No programs found. Create your first program!</p>
             </div>
           }
-          @for (program of programs(); track program) {
+          @for (program of sortedPrograms(); track program.id) {
             <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
               <div class="flex justify-between items-start mb-4">
                 <h3 class="text-xl font-bold text-white">{{ program.name }}</h3>
                 @if (program.isActive) {
-                  <span class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded border border-green-500/30">Active</span>
+                  <span class="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded border border-emerald-500/30 font-semibold tracking-wide">
+                    ✓ Active
+                  </span>
                 }
               </div>
               <div class="flex-1 space-y-2 mb-6">
@@ -113,6 +115,24 @@ import { TrainingProgram } from '../../../../core/types/training.types';
                   >
                   Delete
                 </button>
+                @if (!program.isActive) {
+                  <button
+                    (click)="setProgramActive(program)"
+                    [disabled]="activatingProgramId() === program.id"
+                    class="text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-1"
+                  >
+                    @if (activatingProgramId() === program.id) {
+                      <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Setting Active...
+                    } @else {
+                      Set Active
+                    }
+                  </button>
+                }
+                
                 <a
                   [routerLink]="['/programs', program.id]"
                   class="text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium"
@@ -133,12 +153,24 @@ export class ProgramListComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   programs = signal<TrainingProgram[]>([]);
+  
+  sortedPrograms = computed(() => {
+    return [...this.programs()].sort((a, b) => {
+      // Active program always first
+      if (a.isActive && !b.isActive) return -1;
+      if (!a.isActive && b.isActive) return 1;
+      // Then sort by newest created
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  });
+
   isLoading = signal<boolean>(true);
   showForm = signal<boolean>(false);
+  activatingProgramId = signal<string | null>(null);
 
   form: FormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
-    durationWeeks: [4, [Validators.required, Validators.min(1), Validators.max(52)]]
+    durationWeeks: [12, [Validators.required, Validators.min(1), Validators.max(52)]]
   });
 
   ngOnInit() {
@@ -153,14 +185,14 @@ export class ProgramListComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Failed to load programs', err);
+        console.error('Error loading programs', err);
         this.isLoading.set(false);
       }
     });
   }
 
   openForm() {
-    this.form.reset({ durationWeeks: 4 });
+    this.form.reset({ durationWeeks: 12 });
     this.showForm.set(true);
   }
 
@@ -174,8 +206,8 @@ export class ProgramListComponent implements OnInit {
       const { name, durationWeeks } = this.form.value;
       this.programService.createProgram(name, durationWeeks).subscribe({
         next: () => {
-          this.closeForm();
           this.loadPrograms();
+          this.closeForm();
         },
         error: (err) => {
           console.error('Error creating program', err);
@@ -192,6 +224,22 @@ export class ProgramListComponent implements OnInit {
           this.loadPrograms();
         },
         error: (err) => console.error('Error deleting program', err)
+      });
+    }
+  }
+
+  setProgramActive(program: TrainingProgram) {
+    if (confirm(`Set "${program.name}" as the active program?`)) {
+      this.activatingProgramId.set(program.id);
+      this.programService.updateProgram(program.id, program.name, program.durationWeeks, true).subscribe({
+        next: () => {
+          this.loadPrograms();
+          this.activatingProgramId.set(null);
+        },
+        error: (err) => {
+          console.error('Error setting program as active', err);
+          this.activatingProgramId.set(null);
+        }
       });
     }
   }

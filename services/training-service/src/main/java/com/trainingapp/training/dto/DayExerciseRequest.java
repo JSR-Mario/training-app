@@ -14,5 +14,6 @@ public record DayExerciseRequest(
         @PositiveOrZero Integer durationMinutes,
         java.math.BigDecimal incline,
         java.math.BigDecimal resistance,
+        boolean isAmrap,
         @PositiveOrZero int sortOrder
 ) {}

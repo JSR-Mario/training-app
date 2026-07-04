@@ -18,4 +18,6 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
 
     @Query("SELECT ws FROM WorkoutSession ws JOIN ws.dayTemplate dt JOIN dt.weekTemplate wt JOIN wt.program p WHERE ws.userId = :userId AND p.id = :programId AND ws.weekNumber = :weekNumber")
     List<WorkoutSession> findByUserIdAndProgramIdAndWeekNumber(@Param("userId") UUID userId, @Param("programId") UUID programId, @Param("weekNumber") int weekNumber);
+
+    List<WorkoutSession> findByUserIdAndPerformedOnBetween(UUID userId, java.time.LocalDate startDate, java.time.LocalDate endDate);
 }
