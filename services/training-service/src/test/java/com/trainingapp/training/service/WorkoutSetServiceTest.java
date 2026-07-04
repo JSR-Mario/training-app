@@ -63,7 +63,7 @@ class WorkoutSetServiceTest {
 
     @Test
     void logSet_Success() {
-        WorkoutSetRequest request = new WorkoutSetRequest(dayExerciseId, 1, 10, null, BigDecimal.valueOf(50.0), null, null, null);
+        WorkoutSetRequest request = new WorkoutSetRequest(dayExerciseId, 1, 10, null, BigDecimal.valueOf(50.0));
 
         when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
         when(dayExerciseRepository.findById(dayExerciseId)).thenReturn(Optional.of(dayExercise));
@@ -91,7 +91,7 @@ class WorkoutSetServiceTest {
         session.setCompletedAt(java.time.Instant.now());
         when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
 
-        WorkoutSetRequest request = new WorkoutSetRequest(dayExerciseId, 1, 10, null, BigDecimal.TEN, null, null, null);
+        WorkoutSetRequest request = new WorkoutSetRequest(dayExerciseId, 1, 10, null, BigDecimal.TEN);
 
         assertThatThrownBy(() -> setService.logSet(sessionId, userId, request))
                 .isInstanceOf(ResponseStatusException.class)
@@ -105,7 +105,7 @@ class WorkoutSetServiceTest {
         ReflectionTestUtils.setField(otherTemplate, "id", UUID.randomUUID());
         dayExercise.setDayTemplate(otherTemplate);
 
-        WorkoutSetRequest request = new WorkoutSetRequest(dayExerciseId, 1, 10, null, BigDecimal.TEN, null, null, null);
+        WorkoutSetRequest request = new WorkoutSetRequest(dayExerciseId, 1, 10, null, BigDecimal.TEN);
 
         when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
         when(dayExerciseRepository.findById(dayExerciseId)).thenReturn(Optional.of(dayExercise));

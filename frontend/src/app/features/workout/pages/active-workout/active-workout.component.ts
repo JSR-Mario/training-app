@@ -75,20 +75,7 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
                 <div class="flex items-start justify-between mb-4 border-b border-gray-700/50 pb-4">
                   <div>
                     <h2 class="text-xl font-bold text-white"><span class="text-blue-500 mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</h2>
-                    @if (!ex.durationMinutes) {
-                      <p class="text-gray-400 text-sm mt-1">Goal: {{ ex.sets }} sets × {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps</p>
-                    }
-                    @if (ex.durationMinutes) {
-                      <p class="text-gray-400 text-sm mt-1">
-                        Goal: {{ ex.durationMinutes }} min
-                        @if (ex.incline) {
-                          <span> • Inc: {{ ex.incline }}</span>
-                        }
-                        @if (ex.resistance) {
-                          <span> • Res: {{ ex.resistance }}</span>
-                        }
-                      </p>
-                    }
+                    <p class="text-gray-400 text-sm mt-1">Goal: {{ ex.sets }} sets × {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps</p>
                   </div>
                   <button (click)="toggleCollapse(ex.id)"
                     class="ml-4 p-2 rounded-lg transition-colors border flex items-center justify-center"
@@ -114,21 +101,12 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
                         <div class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border transition-colors"
                           [ngClass]="getPerfContainerClass(set.performanceStatus)">
                           <div class="flex items-center gap-4">
-                            @if (!ex.durationMinutes) {
                               <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors"
-                                [ngClass]="getPerfBadgeClass(set.performanceStatus, false)">
+                                [ngClass]="getPerfBadgeClass(set.performanceStatus)">
                                 {{ set.setNumber }}
                               </span>
-                            }
-                            @if (ex.durationMinutes) {
-                              <span class="px-2 py-1 rounded text-xs font-bold border uppercase transition-colors"
-                                [ngClass]="getPerfBadgeClass(set.performanceStatus, true)">
-                                Log
-                              </span>
-                            }
                             <div class="font-medium transition-colors"
                               [ngClass]="getPerfTextClass(set.performanceStatus)">
-                              @if (!ex.durationMinutes) {
                                 {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(set.performanceStatus)">kg</span> ×
                                 @if (ex.unilateral) {
                                   {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
@@ -143,16 +121,6 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
                                 @if (set.performanceStatus === 'WARNING') {
                                   <span class="ml-2 text-[10px] uppercase font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded">Fatigue</span>
                                 }
-                              }
-                              @if (ex.durationMinutes) {
-                                {{ set.durationMinutes }} <span class="text-gray-500 text-xs uppercase">min</span>
-                                @if (set.incline) {
-                                  <span class="ml-2 text-gray-400 text-xs">Inc: {{ set.incline }}</span>
-                                }
-                                @if (set.resistance) {
-                                  <span class="ml-2 text-gray-400 text-xs">Res: {{ set.resistance }}</span>
-                                }
-                              }
                             </div>
                           </div>
                           @if (!session()?.completedAt) {
@@ -180,7 +148,6 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
                           </div>
                         </div>
                         <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
-                          @if (!ex.durationMinutes) {
                             <div class="flex-1 min-w-[80px]">
                               <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Weight (kg)</label>
                               <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" [placeholder]="getSuggestion(ex.id)?.suggestedWeightKg || '0'" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center placeholder-gray-500/50">
@@ -195,21 +162,6 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
                                 <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center placeholder-gray-500/50">
                               </div>
                             }
-                          }
-                          @if (ex.durationMinutes) {
-                            <div class="flex-1 min-w-[70px]">
-                              <label [for]="'dur-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Time(m)</label>
-                              <input [id]="'dur-' + ex.id" type="number" min="0" formControlName="durationMinutes" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-base font-bold text-center">
-                            </div>
-                            <div class="flex-1 min-w-[70px]">
-                              <label [for]="'inc-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Incline</label>
-                              <input [id]="'inc-' + ex.id" type="number" step="0.1" formControlName="incline" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-base font-bold text-center">
-                            </div>
-                            <div class="flex-1 min-w-[70px]">
-                              <label [for]="'res-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Resis.</label>
-                              <input [id]="'res-' + ex.id" type="number" step="0.1" formControlName="resistance" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-base font-bold text-center">
-                            </div>
-                          }
                           <div class="w-full sm:w-auto mt-2 sm:mt-0">
                             <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px]"
                               [ngClass]="getSetsForExercise(ex.id).length >= ex.sets ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-blue-600 hover:bg-blue-500'">
@@ -292,13 +244,7 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
                     }
                     @if (selectedExercise()) {
                       <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
-                      <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
                         Selected: {{ selectedExercise()?.name }}
-                        @if (selectedExercise()?.type === 'CARDIO') {
-                          <span class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
-                        }
-                      </div>
-                      @if (selectedExercise()?.type !== 'CARDIO') {
                         <div class="flex gap-4">
                           <div class="flex-1">
                             <label for="setsInput" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
@@ -313,23 +259,7 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
                             <input id="repsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
                           </div>
                         </div>
-                      }
-                      @if (selectedExercise()?.type === 'CARDIO') {
-                        <div class="flex gap-4">
-                          <div class="flex-1">
-                            <label for="durationInput" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
-                            <input id="durationInput" type="number" formControlName="durationMinutes" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-                          </div>
-                          <div class="flex-1">
-                            <label for="inclineInput" class="block text-sm font-medium text-gray-300 mb-1">Incline</label>
-                            <input id="inclineInput" type="number" formControlName="incline" step="0.1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-                          </div>
-                          <div class="flex-1">
-                            <label for="resistanceInput" class="block text-sm font-medium text-gray-300 mb-1">Resis.</label>
-                            <input id="resistanceInput" type="number" formControlName="resistance" step="0.1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-                          </div>
-                        </div>
-                      }
+
                       <div class="flex justify-end gap-3 pt-2">
                         <button type="button" (click)="cancelAdd()" class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm">Cancel</button>
                         <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
@@ -436,10 +366,7 @@ export class ActiveWorkoutComponent implements OnInit {
     exerciseId: ['', Validators.required],
     sets: [3],
     reps: [10],
-    repsMax: [null],
-    durationMinutes: [null],
-    incline: [null],
-    resistance: [null]
+    repsMax: [null]
   });
 
   collapsedExercises = new Set<string>();
@@ -512,41 +439,22 @@ export class ActiveWorkoutComponent implements OnInit {
     exercises.forEach(ex => {
       const setsForEx = this.getSetsForExercise(ex.id);
       
-      if (ex.durationMinutes != null) {
-        let defaultDuration: number | '' = '';
-        let defaultIncline: number | '' = '';
-        let defaultResistance: number | '' = '';
+      let defaultWeight = '';
+      let defaultReps: number | '' = '';
+      let defaultRepsRight: number | '' = '';
 
-        if (setsForEx.length > 0) {
-          const lastSet = setsForEx[setsForEx.length - 1];
-          defaultDuration = lastSet.durationMinutes ?? '';
-          defaultIncline = lastSet.incline ?? '';
-          defaultResistance = lastSet.resistance ?? '';
-        }
-
-        this.forms.set(ex.id, this.fb.group({
-          durationMinutes: [defaultDuration, [Validators.required, Validators.min(0)]],
-          incline: [defaultIncline],
-          resistance: [defaultResistance]
-        }));
-      } else {
-        let defaultWeight = '';
-        let defaultReps: number | '' = '';
-        let defaultRepsRight: number | '' = '';
-
-        if (setsForEx.length > 0) {
-          const lastSet = setsForEx[setsForEx.length - 1];
-          defaultWeight = lastSet.weightKg?.toString() || '';
-          defaultReps = lastSet.repsCompleted || '';
-          defaultRepsRight = lastSet.repsCompletedRight || lastSet.repsCompleted || '';
-        }
-
-        this.forms.set(ex.id, this.fb.group({
-          weightKg: [defaultWeight, [Validators.required, Validators.min(0)]],
-          repsCompleted: [defaultReps, [Validators.required, Validators.min(0)]],
-          repsCompletedRight: [defaultRepsRight, [Validators.min(0)]]
-        }));
+      if (setsForEx.length > 0) {
+        const lastSet = setsForEx[setsForEx.length - 1];
+        defaultWeight = lastSet.weightKg?.toString() || '';
+        defaultReps = lastSet.repsCompleted || '';
+        defaultRepsRight = lastSet.repsCompletedRight || lastSet.repsCompleted || '';
       }
+
+      this.forms.set(ex.id, this.fb.group({
+        weightKg: [defaultWeight, [Validators.required, Validators.min(0)]],
+        repsCompleted: [defaultReps, [Validators.required, Validators.min(0)]],
+        repsCompletedRight: [defaultRepsRight, [Validators.min(0)]]
+      }));
     });
   }
 
@@ -576,11 +484,10 @@ export class ActiveWorkoutComponent implements OnInit {
     return 'border-gray-700';
   }
 
-  getPerfBadgeClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined, isDuration: boolean): string {
+  getPerfBadgeClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
     if (status === 'CRITICAL') return 'bg-red-600/20 text-red-400 border-red-500/30';
     if (status === 'WARNING') return 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30';
     if (status === 'GOOD') return 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30';
-    if (isDuration) return 'bg-purple-600/20 text-purple-400 border-purple-500/30';
     return 'bg-blue-600/20 text-blue-400 border-blue-500/30';
   }
 
@@ -613,33 +520,22 @@ export class ActiveWorkoutComponent implements OnInit {
     this.selectedExercise.set(ex);
     this.exerciseForm.patchValue({ exerciseId: ex.id });
     
-    if (ex.type === 'CARDIO') {
-      this.exerciseForm.get('sets')?.clearValidators();
-      this.exerciseForm.get('reps')?.clearValidators();
-      this.exerciseForm.get('durationMinutes')?.setValidators([Validators.required, Validators.min(1)]);
-    } else {
-      this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
-      this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
-      this.exerciseForm.get('durationMinutes')?.clearValidators();
-    }
+    this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
+    this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+    
     this.exerciseForm.get('sets')?.updateValueAndValidity();
     this.exerciseForm.get('reps')?.updateValueAndValidity();
-    this.exerciseForm.get('durationMinutes')?.updateValueAndValidity();
   }
 
   onSubmitExercise() {
     const session = this.session();
     if (this.exerciseForm.valid && session?.dayTemplateId) {
-      const type = this.selectedExercise()?.type;
       const formVal = this.exerciseForm.value;
       const sortOrder = this.exercises().length;
 
-      const sets = type === 'CARDIO' ? undefined : formVal.sets;
-      const reps = type === 'CARDIO' ? undefined : formVal.reps;
-      const repsMax = type === 'CARDIO' ? undefined : formVal.repsMax;
-      const duration = type === 'CARDIO' ? formVal.durationMinutes : undefined;
-      const incline = type === 'CARDIO' ? formVal.incline : undefined;
-      const resistance = type === 'CARDIO' ? formVal.resistance : undefined;
+      const sets = formVal.sets;
+      const reps = formVal.reps;
+      const repsMax = formVal.repsMax;
 
       this.programService.addDayExercise(
         session.dayTemplateId,
@@ -647,10 +543,7 @@ export class ActiveWorkoutComponent implements OnInit {
         sets,
         reps,
         sortOrder,
-        repsMax,
-        duration,
-        incline,
-        resistance
+        repsMax
       ).subscribe({
         next: () => {
           this.cancelAdd();
@@ -675,8 +568,7 @@ export class ActiveWorkoutComponent implements OnInit {
       name: formData.name,
       equipmentBrand: formData.equipmentBrand || undefined,
       unilateral: formData.unilateral,
-      isPublic: formData.isPublic || false,
-      type: formData.type
+      isPublic: formData.isPublic || false
     };
 
     this.exerciseService.createExercise(exercisePayload).subscribe({
@@ -727,12 +619,9 @@ export class ActiveWorkoutComponent implements OnInit {
     const request = {
       dayExerciseId: ex.id,
       setNumber: setNumber,
-      repsCompleted: ex.durationMinutes != null ? undefined : form.value.repsCompleted,
-      repsCompletedRight: ex.durationMinutes != null ? undefined : form.value.repsCompletedRight,
-      weightKg: ex.durationMinutes != null ? undefined : form.value.weightKg,
-      durationMinutes: ex.durationMinutes != null ? form.value.durationMinutes : undefined,
-      incline: ex.durationMinutes != null ? form.value.incline : undefined,
-      resistance: ex.durationMinutes != null ? form.value.resistance : undefined
+      repsCompleted: form.value.repsCompleted,
+      repsCompletedRight: form.value.repsCompletedRight,
+      weightKg: form.value.weightKg
     };
 
     this.workoutService.logSet(id, request).subscribe({

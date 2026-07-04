@@ -10,9 +10,6 @@ public record DayExerciseResponse(
         Integer sets,
         Integer reps,
         Integer repsMax,
-        Integer durationMinutes,
-        java.math.BigDecimal incline,
-        java.math.BigDecimal resistance,
         int sortOrder,
         boolean unilateral
 ) {}

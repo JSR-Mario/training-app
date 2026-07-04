@@ -9,6 +9,5 @@ public record ExerciseRequest(
         @Size(max = 100) String equipmentBrand,
         boolean unilateral,
         boolean isPublic,
-        boolean spinalLoading,
-        com.trainingapp.training.domain.ExerciseType type
+        boolean spinalLoading
 ) {}

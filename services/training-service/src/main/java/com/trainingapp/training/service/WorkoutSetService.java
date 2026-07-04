@@ -58,9 +58,7 @@ public class WorkoutSetService {
         set.setRepsCompleted(request.repsCompleted());
         set.setRepsCompletedRight(request.repsCompletedRight());
         set.setWeightKg(request.weightKg());
-        set.setDurationMinutes(request.durationMinutes());
-        set.setIncline(request.incline());
-        set.setResistance(request.resistance());
+
 
         WorkoutSet saved = setRepository.save(set);
         
@@ -104,10 +102,6 @@ public class WorkoutSetService {
         set.setRepsCompleted(request.repsCompleted());
         set.setRepsCompletedRight(request.repsCompletedRight());
         set.setWeightKg(request.weightKg());
-        set.setDurationMinutes(request.durationMinutes());
-        set.setIncline(request.incline());
-        set.setResistance(request.resistance());
-
         WorkoutSet saved = setRepository.save(set);
         List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(set.getSession().getId());
         double maxPerf = calculateMaxPerf(allSets, dayExercise.getId());
@@ -157,9 +151,6 @@ public class WorkoutSetService {
             set.getRepsCompleted(),
             set.getRepsCompletedRight(),
             set.getWeightKg(),
-            set.getDurationMinutes(),
-            set.getIncline(),
-            set.getResistance(),
             set.getLoggedAt(),
             calculatePerformanceStatus(set, maxPerf)
         );

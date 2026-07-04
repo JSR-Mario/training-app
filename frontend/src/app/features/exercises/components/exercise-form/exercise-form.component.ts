@@ -11,7 +11,6 @@ export interface ExerciseFormData {
   equipmentBrand: string;
   unilateral: boolean;
   isPublic: boolean;
-  type: 'STRENGTH' | 'CARDIO';
   targets: { id?: string; bodyPart: string; targetValue: number }[];
 }
 
@@ -68,21 +67,7 @@ export interface ExerciseFormData {
           }
         </div>
     
-        <!-- Exercise Type -->
-        <fieldset>
-          <legend class="block text-sm font-medium text-gray-300 mb-2">Exercise Type</legend>
-          <div class="flex gap-4">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" formControlName="type" value="STRENGTH" class="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 focus:ring-blue-600 focus:ring-2">
-              <span class="text-white text-sm">Strength</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" formControlName="type" value="CARDIO" class="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 focus:ring-purple-600 focus:ring-2">
-              <span class="text-white text-sm">Cardio</span>
-            </label>
-          </div>
-        </fieldset>
-    
+
         <!-- Equipment Brand (optional) -->
         <div>
           <label for="equipmentBrand" class="block text-sm font-medium text-gray-300 mb-1">
@@ -99,7 +84,6 @@ export interface ExerciseFormData {
         </div>
     
         <!-- Unilateral Checkbox -->
-        @if (form.get('type')?.value === 'STRENGTH') {
           <div class="flex items-center gap-3">
             <label class="relative inline-flex items-center cursor-pointer">
               <input
@@ -131,8 +115,7 @@ export interface ExerciseFormData {
               <span class="text-gray-500 text-xs ml-1">(significant axial load)</span>
             </label>
           </div>
-        }
-    
+
         <!-- Public Checkbox (Admins Only) -->
         @if (authService.isAdmin) {
           <div class="flex items-center gap-3">
@@ -153,7 +136,6 @@ export interface ExerciseFormData {
         }
     
         <!-- Body Part Targets -->
-        @if (form.get('type')?.value === 'STRENGTH') {
           <div>
             <div class="flex justify-between items-center mb-2">
               <h3 class="block text-sm font-medium text-gray-300">Body Part Targets</h3>
@@ -231,8 +213,7 @@ export interface ExerciseFormData {
               }
             </div>
           </div>
-        }
-    
+
         <div class="flex justify-end gap-3 pt-4 border-t border-gray-800">
           <button
             type="button"
@@ -275,7 +256,6 @@ export class ExerciseFormComponent implements OnInit {
     unilateral: [false],
     spinalLoading: [false],
     isPublic: [false],
-    type: ['STRENGTH', Validators.required],
     targets: this.fb.array([])
   });
 
@@ -290,8 +270,7 @@ export class ExerciseFormComponent implements OnInit {
         name: exercise.name,
         equipmentBrand: exercise.equipmentBrand || '',
         unilateral: exercise.unilateral || false,
-        isPublic: exercise.isPublic || false,
-        type: exercise.type || 'STRENGTH'
+        isPublic: exercise.isPublic || false
       });
       
       exercise.targets.forEach(target => {
@@ -381,9 +360,6 @@ export class ExerciseFormComponent implements OnInit {
   onSubmit() {
     if (this.form.valid) {
       const formValue = this.form.value;
-      if (formValue.type === 'CARDIO') {
-        formValue.targets = []; // Cardio exercises don't use body part targets
-      }
       this.saveExercise.emit(formValue);
     }
   }

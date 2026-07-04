@@ -74,9 +74,6 @@ public class ExerciseService {
         exercise.setEquipmentBrand(request.equipmentBrand());
         exercise.setUnilateral(request.unilateral());
         exercise.setSpinalLoading(request.spinalLoading());
-        if (request.type() != null) {
-            exercise.setType(request.type());
-        }
         
         if (request.isPublic()) {
             if (!isAdmin()) {
@@ -105,9 +102,6 @@ public class ExerciseService {
         exercise.setEquipmentBrand(request.equipmentBrand());
         exercise.setUnilateral(request.unilateral());
         exercise.setSpinalLoading(request.spinalLoading());
-        if (request.type() != null) {
-            exercise.setType(request.type());
-        }
         
         if (request.isPublic() != exercise.getIsPublic()) {
             if (!isAdmin()) {
@@ -200,9 +194,7 @@ public class ExerciseService {
             .map(s -> new com.trainingapp.training.dto.ExerciseHistoryResponse(
                 s.getId(),
                 s.getSession().getPerformedOn(),
-                s.getDurationMinutes(),
-                s.getIncline(),
-                s.getResistance(),
+
                 s.getRepsCompleted(),
                 s.getWeightKg()
             ))
@@ -236,7 +228,7 @@ public class ExerciseService {
         List<ExerciseTargetResponse> targetResponses = e.getTargets().stream()
                 .map(this::toTargetResponse)
                 .toList();
-        return new ExerciseResponse(e.getId(), e.getName(), e.getEquipmentBrand(), e.isUnilateral(), e.getIsPublic(), e.isSpinalLoading(), e.getType(), e.getCreatedAt(), targetResponses, averageRating);
+        return new ExerciseResponse(e.getId(), e.getName(), e.getEquipmentBrand(), e.isUnilateral(), e.getIsPublic(), e.isSpinalLoading(), e.getCreatedAt(), targetResponses, averageRating);
     }
 
     private ExerciseTargetResponse toTargetResponse(ExerciseBodyPartTarget t) {

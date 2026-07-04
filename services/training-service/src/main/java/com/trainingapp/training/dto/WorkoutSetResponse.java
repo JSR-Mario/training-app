@@ -13,9 +13,6 @@ public record WorkoutSetResponse(
     Integer repsCompleted,
     Integer repsCompletedRight,
     BigDecimal weightKg,
-    Integer durationMinutes,
-    BigDecimal incline,
-    BigDecimal resistance,
     Instant loggedAt,
     String performanceStatus
 ) {}

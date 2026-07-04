@@ -58,8 +58,8 @@ class WorkoutSetControllerTest {
     void logSet() throws Exception {
         UUID sessionId = UUID.randomUUID();
         UUID dayExerciseId = UUID.randomUUID();
-        WorkoutSetRequest request = new WorkoutSetRequest(dayExerciseId, 1, 10, null, BigDecimal.valueOf(50.5), null, null, null);
-        WorkoutSetResponse response = new WorkoutSetResponse(UUID.randomUUID(), sessionId, dayExerciseId, 1, 10, null, BigDecimal.valueOf(50.5), null, null, null, Instant.now(), "GOOD");
+        WorkoutSetRequest request = new WorkoutSetRequest(dayExerciseId, 1, 10, null, BigDecimal.valueOf(50.5));
+        WorkoutSetResponse response = new WorkoutSetResponse(UUID.randomUUID(), sessionId, dayExerciseId, 1, 10, null, BigDecimal.valueOf(50.5), Instant.now(), "GOOD");
 
         when(setService.logSet(eq(sessionId), eq(userId), any(WorkoutSetRequest.class))).thenReturn(response);
 

@@ -24,7 +24,6 @@ interface TreeCategory {
 
 interface FullTree {
   categories: TreeCategory[];
-  cardio: Exercise[];
 }
 
 @Component({
@@ -53,7 +52,7 @@ interface FullTree {
             <div class="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
           </div>
         }
-        @if (!loading() && tree().categories.length === 0 && tree().cardio.length === 0) {
+        @if (!loading() && tree().categories.length === 0) {
           <div class="text-center text-sm text-slate-500 py-6">
             No exercises found.
           </div>
@@ -129,27 +128,6 @@ interface FullTree {
           </div>
         }
 
-        <!-- CARDIO CATEGORY -->
-        @if (tree().cardio.length > 0) {
-          <div class="bg-slate-900/40 rounded-xl border border-slate-700/50 overflow-hidden">
-            <button 
-              type="button" 
-              (click)="toggleCategory('Cardio')"
-              class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors group"
-            >
-              <span class="font-bold text-teal-400 group-hover:text-teal-300 transition-colors">Cardio</span>
-              <svg class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300" [class.rotate-180]="expandedCategories().has('Cardio')" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </button>
-            
-            @if (expandedCategories().has('Cardio')) {
-              <div class="px-4 pb-4 pt-1 space-y-1 animate-in slide-in-from-top-1 fade-in duration-200">
-                @for (ex of tree().cardio; track ex.id) {
-                  <ng-container *ngTemplateOutlet="exerciseCard; context: { $implicit: ex }"></ng-container>
-                }
-              </div>
-            }
-          </div>
-        }
       </div>
     </div>
 
@@ -238,7 +216,6 @@ export class ExerciseSearchComponent implements OnInit {
   tree = computed<FullTree>(() => {
     const exercises = this.filteredExercises();
     
-    const cardio = exercises.filter(e => e.type === 'CARDIO');
     const categories: TreeCategory[] = [];
     
     for (const cat of ['Upper Body', 'Lower Body']) {
@@ -255,7 +232,7 @@ export class ExerciseSearchComponent implements OnInit {
          if (hasSubparts) {
             for (const partName of partsArr) {
                const exForPart = exercises.filter(ex => 
-                 ex.type === 'STRENGTH' && ex.targets?.some(t => t.bodyPart === partName)
+                 ex.targets?.some(t => t.bodyPart === partName)
                );
                if (exForPart.length > 0) {
                  parts.push({ name: partName, exercises: exForPart });
@@ -264,7 +241,7 @@ export class ExerciseSearchComponent implements OnInit {
          } else {
             const partName = partsArr[0];
             directExercises = exercises.filter(ex => 
-               ex.type === 'STRENGTH' && ex.targets?.some(t => t.bodyPart === partName)
+               ex.targets?.some(t => t.bodyPart === partName)
             );
          }
          
@@ -283,7 +260,7 @@ export class ExerciseSearchComponent implements OnInit {
       }
     }
     
-    return { categories, cardio };
+    return { categories };
   });
 
   ngOnInit() {
@@ -350,12 +327,12 @@ export class ExerciseSearchComponent implements OnInit {
           for (const part of partsArr) allParts.add(part);
         }
       }
-      this.expandedCategories.set(new Set(['Upper Body', 'Lower Body', 'Cardio']));
+      this.expandedCategories.set(new Set(['Upper Body', 'Lower Body']));
       this.expandedGroups.set(allGroups);
       this.expandedParts.set(allParts);
     } else {
       // Reset expansions to only top level when search is cleared
-      this.expandedCategories.set(new Set(['Upper Body', 'Lower Body', 'Cardio']));
+      this.expandedCategories.set(new Set(['Upper Body', 'Lower Body']));
       this.expandedGroups.set(new Set());
       this.expandedParts.set(new Set());
     }

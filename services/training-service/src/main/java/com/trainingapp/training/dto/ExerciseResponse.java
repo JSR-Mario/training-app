@@ -12,7 +12,6 @@ public record ExerciseResponse(
         boolean unilateral,
         boolean isPublic,
         boolean spinalLoading,
-        com.trainingapp.training.domain.ExerciseType type,
         Instant createdAt,
         List<ExerciseTargetResponse> targets,
         Double averageRating
