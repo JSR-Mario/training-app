@@ -370,7 +370,8 @@ export class ProgressChartComponent implements OnInit {
           borderColor: '#2563eb', // blue-600
           borderWidth: 1,
           barPercentage: 1.0,
-          categoryPercentage: 1.0
+          categoryPercentage: 1.0,
+          order: 1
         });
         datasets.push({
           type: 'line' as const,
@@ -380,7 +381,8 @@ export class ProgressChartComponent implements OnInit {
           borderWidth: 2,
           fill: false,
           tension: 0,
-          pointRadius: 0
+          pointRadius: 0,
+          order: 0
         });
       }
     } else {
@@ -407,7 +409,8 @@ export class ProgressChartComponent implements OnInit {
             backgroundColor: bp.color + 'CC',
             borderColor: bp.color,
             borderWidth: 1,
-            stack: 'Volume'
+            stack: 'Volume',
+            order: 1
           });
           
           dataPoints.forEach((val, i) => totalDataPoints[i] += val);
@@ -425,7 +428,8 @@ export class ProgressChartComponent implements OnInit {
           tension: 0,
           pointBackgroundColor: '#ffffff',
           pointRadius: 4,
-          pointHoverRadius: 6
+          pointHoverRadius: 6,
+          order: 0
         });
       }
     }

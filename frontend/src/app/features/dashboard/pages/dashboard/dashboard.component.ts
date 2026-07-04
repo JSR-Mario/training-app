@@ -15,10 +15,13 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
       </div>
       
       <!-- CSS Grid for cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
         
-        <!-- Weights Sessions This Week -->
-        <div class="glass-card p-6 flex flex-col justify-between">
+        <!-- Left Column for Stats -->
+        <div class="lg:col-span-1 flex flex-col gap-6">
+          
+          <!-- Weights Sessions This Week -->
+          <div class="glass-card p-6 flex flex-col justify-between flex-1">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-base font-medium text-gray-400">Weight Sessions (This Week)</h3>
             <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
@@ -56,7 +59,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
         </div>
 
         <!-- Cardio Sessions This Week -->
-        <div class="glass-card p-6 flex flex-col justify-between">
+        <div class="glass-card p-6 flex flex-col justify-between flex-1">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-base font-medium text-gray-400">Cardio Sessions (This Week)</h3>
             <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
@@ -92,10 +95,11 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
             }
           </div>
         </div>
+        </div>
         
         <!-- Volume Progress Mini Chart Card -->
         <div 
-          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4"
+          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 lg:col-span-3 flex flex-col"
           (click)="goToAnalytics()"
           (keyup.enter)="goToAnalytics()"
           tabindex="0"
@@ -108,8 +112,8 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </div>
-          <div class="pointer-events-none mt-2">
-            <app-progress-chart [miniMode]="true"></app-progress-chart>
+          <div class="pointer-events-none mt-2 flex-1 flex flex-col justify-center">
+            <app-progress-chart [miniMode]="true" class="w-full"></app-progress-chart>
           </div>
         </div>
 
