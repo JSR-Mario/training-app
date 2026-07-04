@@ -372,8 +372,20 @@ export class ProgressChartComponent implements OnInit {
           barPercentage: 1.0,
           categoryPercentage: 1.0
         });
+        datasets.push({
+          type: 'line' as const,
+          label: 'Trend',
+          data: dataPoints,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          fill: false,
+          tension: 0,
+          pointRadius: 0
+        });
       }
     } else {
+      const totalDataPoints = sortedWeeks.map(() => 0);
+
       for (const bp of bodyParts) {
         if (!bp.checked) continue;
         
@@ -397,7 +409,24 @@ export class ProgressChartComponent implements OnInit {
             borderWidth: 1,
             stack: 'Volume'
           });
+          
+          dataPoints.forEach((val, i) => totalDataPoints[i] += val);
         }
+      }
+
+      if (totalDataPoints.some(v => v > 0)) {
+        datasets.push({
+          type: 'line' as const,
+          label: 'Total Trend',
+          data: totalDataPoints,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          fill: false,
+          tension: 0,
+          pointBackgroundColor: '#ffffff',
+          pointRadius: 4,
+          pointHoverRadius: 6
+        });
       }
     }
 
