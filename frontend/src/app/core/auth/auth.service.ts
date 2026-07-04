@@ -52,7 +52,7 @@ export class AuthService {
           return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
       const payload = JSON.parse(jsonPayload);
-      return payload.sub || 'User';
+      return payload.username || 'User';
     } catch {
       return 'User';
     }

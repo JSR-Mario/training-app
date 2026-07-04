@@ -34,4 +34,12 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
     Optional<WorkoutSet> findByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
 
     List<WorkoutSet> findBySessionIdOrderByLoggedAtAsc(UUID sessionId);
+
+    @Query("SELECT ws FROM WorkoutSet ws JOIN ws.session s " +
+           "WHERE s.userId = :userId AND s.completedAt IS NOT NULL AND s.performedOn BETWEEN :startDate AND :endDate")
+    List<WorkoutSet> findByUserIdAndPerformedOnBetween(
+        @Param("userId") UUID userId, 
+        @Param("startDate") LocalDate startDate, 
+        @Param("endDate") LocalDate endDate
+    );
 }

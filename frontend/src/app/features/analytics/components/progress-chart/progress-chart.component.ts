@@ -138,8 +138,17 @@ export class ProgressChartComponent implements OnInit {
           tooltip: { enabled: false }
         },
         scales: {
-          x: { display: false },
-          y: { display: false }
+          x: { 
+            display: true,
+            grid: { display: false },
+            ticks: { color: '#94a3b8', font: { size: 10 } }
+          },
+          y: { 
+            display: true,
+            position: 'right',
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#94a3b8', font: { size: 10 }, maxTicksLimit: 5 }
+          }
         }
       };
     }

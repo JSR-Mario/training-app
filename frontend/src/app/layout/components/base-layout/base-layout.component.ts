@@ -64,9 +64,6 @@ import { AuthService } from '../../../core/auth/auth.service';
           
           <div class="relative">
             <button (click)="dropdownOpen.set(!dropdownOpen())" class="flex items-center space-x-2 text-gray-300 hover:text-white focus:outline-none p-2 rounded-lg hover:bg-gray-800 transition-colors">
-              <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold border border-blue-500/30">
-                {{ username().charAt(0).toUpperCase() }}
-              </div>
               <span class="font-medium">{{ username() }}</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
