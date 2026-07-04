@@ -57,6 +57,9 @@ public class Exercise {
     @Column(name = "spinal_loading", nullable = false)
     private boolean spinalLoading = false;
 
+    @Column(name = "is_bodyweight", nullable = false)
+    private boolean isBodyweight = false;
+
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ExerciseBodyPartTarget> targets = new ArrayList<>();
 
@@ -89,4 +92,7 @@ public class Exercise {
 
     public boolean isSpinalLoading() { return spinalLoading; }
     public void setSpinalLoading(boolean spinalLoading) { this.spinalLoading = spinalLoading; }
+
+    public boolean isBodyweight() { return isBodyweight; }
+    public void setBodyweight(boolean bodyweight) { isBodyweight = bodyweight; }
 }

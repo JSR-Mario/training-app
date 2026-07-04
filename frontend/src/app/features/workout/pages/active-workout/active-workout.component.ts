@@ -76,7 +76,14 @@ import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/comp
                   <div>
                     <h2 class="text-xl font-bold text-white"><span class="text-blue-500 mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</h2>
                     @if (!ex.durationMinutes) {
-                      <p class="text-gray-400 text-sm mt-1">Goal: {{ ex.sets }} sets × {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps</p>
+                      <p class="text-gray-400 text-sm mt-1">
+                        Goal: {{ ex.sets }} sets × 
+                        @if (ex.isAmrap) {
+                          AMRAP
+                        } @else {
+                          {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps
+                        }
+                      </p>
                     }
                     @if (ex.durationMinutes) {
                       <p class="text-gray-400 text-sm mt-1">
@@ -493,6 +500,15 @@ export class ActiveWorkoutComponent implements OnInit {
             const sorted = res.exercises.sort((a, b) => a.sortOrder - b.sortOrder);
             this.exercises.set(sorted);
             this.initForms(sorted);
+            
+            // Auto-collapse completed exercises on load
+            sorted.forEach(ex => {
+              const setsLogged = this.getSetsForExercise(ex.id).length;
+              if (setsLogged >= (ex.sets || 1)) {
+                this.collapsedExercises.add(ex.id);
+              }
+            });
+
             this.isLoading.set(false);
           },
           error: (err) => {

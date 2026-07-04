@@ -14,5 +14,6 @@ public record DayExerciseResponse(
         java.math.BigDecimal incline,
         java.math.BigDecimal resistance,
         int sortOrder,
+        boolean isAmrap,
         boolean unilateral
 ) {}

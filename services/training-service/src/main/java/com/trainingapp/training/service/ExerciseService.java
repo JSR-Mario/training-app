@@ -73,6 +73,7 @@ public class ExerciseService {
         exercise.setName(request.name());
         exercise.setEquipmentBrand(request.equipmentBrand());
         exercise.setUnilateral(request.unilateral());
+        exercise.setBodyweight(request.isBodyweight());
         exercise.setSpinalLoading(request.spinalLoading());
         if (request.type() != null) {
             exercise.setType(request.type());
@@ -104,6 +105,7 @@ public class ExerciseService {
         exercise.setName(request.name());
         exercise.setEquipmentBrand(request.equipmentBrand());
         exercise.setUnilateral(request.unilateral());
+        exercise.setBodyweight(request.isBodyweight());
         exercise.setSpinalLoading(request.spinalLoading());
         if (request.type() != null) {
             exercise.setType(request.type());
@@ -236,7 +238,7 @@ public class ExerciseService {
         List<ExerciseTargetResponse> targetResponses = e.getTargets().stream()
                 .map(this::toTargetResponse)
                 .toList();
-        return new ExerciseResponse(e.getId(), e.getName(), e.getEquipmentBrand(), e.isUnilateral(), e.getIsPublic(), e.isSpinalLoading(), e.getType(), e.getCreatedAt(), targetResponses, averageRating);
+        return new ExerciseResponse(e.getId(), e.getName(), e.getEquipmentBrand(), e.isUnilateral(), e.isBodyweight(), e.getIsPublic(), e.isSpinalLoading(), e.getType(), e.getCreatedAt(), targetResponses, averageRating);
     }
 
     private ExerciseTargetResponse toTargetResponse(ExerciseBodyPartTarget t) {
