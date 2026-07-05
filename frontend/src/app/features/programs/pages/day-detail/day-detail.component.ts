@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProgramService } from '../../services/program.service';
 import { ExerciseService } from '../../../exercises/services/exercise.service';
-import { DayTemplate, DayExercise, Exercise } from '../../../../core/types/training.types';
+import { DayTemplate, DayExercise, Exercise, getBodyPartPath, BodyPart } from '../../../../core/types/training.types';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { forkJoin } from 'rxjs';
 
@@ -229,7 +229,8 @@ export class DayDetailComponent implements OnInit {
       const fullEx = this.availableExercises().find(e => e.id === ex.exerciseId);
       if (fullEx && fullEx.targets) {
         for (const t of fullEx.targets) {
-          const name = t.bodyPart.replace(/_/g, ' ');
+          const path = getBodyPartPath(t.bodyPart as BodyPart);
+          const name = path ? path.group : t.bodyPart.replace(/_/g, ' ');
           breakdown.set(name, (breakdown.get(name) || 0) + ex.sets);
         }
       }

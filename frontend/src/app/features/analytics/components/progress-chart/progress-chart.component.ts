@@ -9,7 +9,7 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
 import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
 import { finalize, forkJoin, map, switchMap, of, Subject } from 'rxjs';
 
-import { Exercise, ExerciseTarget, DayTemplate } from '../../../../core/types/training.types';
+import { Exercise, ExerciseTarget, DayTemplate, getBodyPartPath } from '../../../../core/types/training.types';
 
 interface ProgramBodyPart {
   id: string;
@@ -254,7 +254,9 @@ export class ProgressChartComponent implements OnInit {
           }
 
           catEx.targets.forEach((target: ExerciseTarget) => {
-             bodyPartsSet.add(target.bodyPart);
+             const path = getBodyPartPath(target.bodyPart);
+             const bp = path ? path.group : target.bodyPart;
+             bodyPartsSet.add(bp);
           });
 
           res.data.forEach(entry => {
@@ -262,7 +264,8 @@ export class ProgressChartComponent implements OnInit {
             const week = entry.weekNumber || 1; 
 
             catEx.targets.forEach((target: ExerciseTarget) => {
-              const bp = target.bodyPart;
+              const path = getBodyPartPath(target.bodyPart);
+              const bp = path ? path.group : target.bodyPart;
               const volumeForBp = entry.totalVolumeKg * target.targetValue;
               
               if (!mappedData.has(bp)) mappedData.set(bp, []);
