@@ -93,6 +93,7 @@ export interface TrainingProgram {
   name: string;
   durationWeeks: number;
   isActive: boolean;
+  currentWeek: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -166,4 +167,12 @@ export interface CardioLogResponse {
   cardioType?: string;
   performedOn: string;
   createdAt: string;
+}
+
+export interface ProgramRequest {
+  name: string;
+  durationWeeks: number;
+  startDate: string | null;
+  isActive: boolean;
+  currentWeek?: number;
 }
