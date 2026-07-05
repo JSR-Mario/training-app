@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProgramService } from '../../services/program.service';
-import { TrainingProgram, DayTemplate, Exercise } from '../../../../core/types/training.types';
+import { TrainingProgram, DayTemplate, Exercise, getBodyPartPath, BodyPart } from '../../../../core/types/training.types';
 import { forkJoin } from 'rxjs';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { ExerciseService } from '../../../exercises/services/exercise.service';
@@ -229,7 +229,8 @@ export class ProgramDetailComponent implements OnInit {
         const catalogEx = allExercises.find(e => e.id === dayEx.exerciseId);
         if (catalogEx && catalogEx.targets) {
           for (const target of catalogEx.targets) {
-            const bodyPart = target.bodyPart;
+            const path = getBodyPartPath(target.bodyPart as BodyPart);
+            const bodyPart = path ? path.group : target.bodyPart.replace(/_/g, ' ');
             const volume = dayEx.sets * target.targetValue;
             volumeMap.set(bodyPart, (volumeMap.get(bodyPart) || 0) + volume);
           }
@@ -259,7 +260,8 @@ export class ProgramDetailComponent implements OnInit {
         const fullEx = this.availableExercises().find(e => e.id === ex.exerciseId);
         if (fullEx && fullEx.targets) {
           for (const t of fullEx.targets) {
-            const name = t.bodyPart.replace(/_/g, ' ');
+            const path = getBodyPartPath(t.bodyPart as BodyPart);
+            const name = path ? path.group : t.bodyPart.replace(/_/g, ' ');
             breakdown.set(name, (breakdown.get(name) || 0) + ex.sets);
           }
         }
