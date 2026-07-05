@@ -51,7 +51,7 @@ class ProgramServiceTest {
     @Test
     void create_savesAndReturns() {
         when(programRepository.save(any())).thenReturn(sampleProgram);
-        ProgramResponse result = programService.create(userId, new ProgramRequest("PPL", 8, null, false));
+        ProgramResponse result = programService.create(userId, new ProgramRequest("PPL", 8, null, false, 1));
         assertThat(result.name()).isEqualTo("PPL");
     }
 

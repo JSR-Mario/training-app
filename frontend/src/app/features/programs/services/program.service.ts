@@ -35,6 +35,10 @@ export class ProgramService {
     return this.http.delete<void>(`/api/v1/training/programs/${id}`);
   }
 
+  advanceWeek(id: string): Observable<TrainingProgram> {
+    return this.http.post<TrainingProgram>(`/api/v1/training/programs/${id}/advance-week`, {});
+  }
+
   // Weeks
   getWeeks(programId: string): Observable<WeekTemplate[]> {
     return this.http.get<WeekTemplate[]>(`/api/v1/training/programs/${programId}/weeks`);

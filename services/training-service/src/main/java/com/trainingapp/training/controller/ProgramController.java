@@ -49,4 +49,9 @@ public class ProgramController {
         programService.delete(UserContext.getCurrentUserId(), id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/advance-week")
+    public ProgramResponse advanceWeek(@PathVariable UUID id) {
+        return programService.advanceWeek(UserContext.getCurrentUserId(), id);
+    }
 }
