@@ -26,7 +26,7 @@ describe('ProgramService', () => {
 
   it('should create a program', () => {
     const mockProg: TrainingProgram = {
-      id: 'p1', userId: 'u1', name: 'PPL', durationWeeks: 4, isActive: false, createdAt: '', updatedAt: ''
+      id: 'p1', userId: 'u1', name: 'PPL', durationWeeks: 4, isActive: false, currentWeek: 1, createdAt: '', updatedAt: ''
     };
 
     service.createProgram('PPL', 4).subscribe(p => {
