@@ -13,13 +13,7 @@ import { switchMap, of } from 'rxjs';
   template: `
   <div class="max-w-7xl mx-auto space-y-6 pb-24">
   
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-      <div>
-        <h1 class="text-3xl font-bold text-white">Workouts</h1>
-        <p class="text-gray-400 mt-1">Track your progress</p>
-      </div>
-    </div>
+    <!-- Header Removed by User Request -->
   
     <!-- Loading State -->
     @if (isLoading()) {
@@ -63,8 +57,10 @@ import { switchMap, of } from 'rxjs';
               <p class="text-xl font-bold text-white w-24">Week {{ displayedWeek() }}</p>
               @if (displayedWeek() === program.currentWeek) {
                 <span class="text-xs text-blue-400 font-medium tracking-wider uppercase">Current</span>
-              } @else {
+              } @else if (displayedWeek() < program.currentWeek) {
                 <span class="text-xs text-gray-500 font-medium tracking-wider uppercase">Past</span>
+              } @else {
+                <span class="text-xs text-purple-400 font-medium tracking-wider uppercase">Upcoming</span>
               }
             </div>
             
