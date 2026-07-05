@@ -4,7 +4,7 @@ import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { WorkoutService } from '../../services/workout.service';
 import { ProgramService } from '../../../programs/services/program.service';
 import { TrainingProgram, WorkoutSessionResponse, DayTemplate } from '../../../../core/types/training.types';
-import { forkJoin, switchMap, of, map } from 'rxjs';
+import { switchMap, of } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -77,13 +77,14 @@ import { forkJoin, switchMap, of, map } from 'rxjs';
           </div>
           
           <div class="mt-4 sm:mt-0">
-            <button 
-              *ngIf="displayedWeek() === program.currentWeek"
-              (click)="finishWeek()"
-              class="px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95"
-            >
-              {{ displayedWeek() === program.durationWeeks ? 'Finish Program' : 'Finish Week' }}
-            </button>
+            @if (displayedWeek() === program.currentWeek) {
+              <button 
+                (click)="finishWeek()"
+                class="px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95"
+              >
+                {{ displayedWeek() === program.durationWeeks ? 'Finish Program' : 'Finish Week' }}
+              </button>
+            }
           </div>
         </div>
 
