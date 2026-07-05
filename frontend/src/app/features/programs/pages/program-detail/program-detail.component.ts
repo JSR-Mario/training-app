@@ -174,7 +174,7 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
         </div>
         <!-- Expected Weekly Volume Table -->
         @if (expectedWeeklyVolume().length > 0) {
-          <div class="glass-card p-6 mt-8">
+          <div class="hidden lg:block glass-card p-6 ml-6 max-h-[90vh] overflow-y-auto">
             <h2 class="text-xl font-bold text-white mb-4">Expected Weekly Volume</h2>
             <div class="overflow-hidden rounded-xl border border-gray-800">
               <table class="min-w-full divide-y divide-gray-800">
