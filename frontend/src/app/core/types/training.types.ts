@@ -38,7 +38,7 @@ export interface ExerciseTarget {
   targetValue: number;
 }
 
-export type ExerciseType = 'STRENGTH' | 'CARDIO';
+
 
 export interface Exercise {
   id: string;
@@ -49,7 +49,6 @@ export interface Exercise {
   spinalLoading: boolean;
   isBodyweight: boolean;
   isPublic: boolean;
-  type: ExerciseType;
   targets: ExerciseTarget[];
   averageRating?: number;
   createdAt: string;
@@ -63,9 +62,6 @@ export interface DayExercise {
   sets?: number;
   reps?: number;
   repsMax?: number;
-  durationMinutes?: number;
-  incline?: number;
-  resistance?: number;
   sortOrder: number;
   isAmrap?: boolean;
   unilateral?: boolean;
@@ -130,9 +126,6 @@ export interface WorkoutSetRequest {
   repsCompleted?: number;
   repsCompletedRight?: number;
   weightKg?: number;
-  durationMinutes?: number;
-  incline?: number;
-  resistance?: number;
 }
 
 export interface WorkoutSetResponse {
@@ -143,9 +136,6 @@ export interface WorkoutSetResponse {
   repsCompleted?: number;
   repsCompletedRight?: number;
   weightKg?: number;
-  durationMinutes?: number;
-  incline?: number;
-  resistance?: number;
   loggedAt: string;
   performanceStatus?: 'GOOD' | 'WARNING' | 'CRITICAL';
 }
@@ -155,17 +145,11 @@ export interface ExerciseSuggestionResponse {
   exerciseId: string;
   suggestedWeightKg?: number;
   suggestedReps?: number;
-  suggestedDurationMinutes?: number;
-  suggestedIncline?: number;
-  suggestedResistance?: number;
 }
 
 export interface ExerciseHistoryResponse {
   setId: string;
   performedOn: string;
-  durationMinutes?: number;
-  incline?: number;
-  resistance?: number;
   repsCompleted?: number;
   weightKg?: number;
 }

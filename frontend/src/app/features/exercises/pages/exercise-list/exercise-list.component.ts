@@ -152,31 +152,6 @@ import { FormsModule } from '@angular/forms';
               </div>
             }
 
-            <!-- CARDIO CATEGORY -->
-            @if (tree().cardio.length > 0) {
-              <div class="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-700/50 overflow-hidden shadow-lg">
-                <button 
-                  type="button" 
-                  (click)="toggleCategory('Cardio')"
-                  class="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors group"
-                >
-                  <h2 class="text-2xl font-black bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent tracking-wide drop-shadow-sm group-hover:from-teal-300 group-hover:to-emerald-300 transition-all">Cardio</h2>
-                  <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 group-hover:border-teal-500/50 transition-colors">
-                    <svg class="w-4 h-4 text-slate-400 transition-transform duration-300" [class.rotate-180]="expandedCategories().has('Cardio')" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                  </div>
-                </button>
-                
-                @if (expandedCategories().has('Cardio')) {
-                  <div class="p-6 pt-2 animate-in slide-in-from-top-2 fade-in duration-300">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      @for (ex of tree().cardio; track ex.id) {
-                        <ng-container *ngTemplateOutlet="exerciseCard; context: { $implicit: ex }"></ng-container>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            }
 
             <!-- UNCATEGORIZED CATEGORY -->
             @if (tree().uncategorized.length > 0) {
@@ -318,7 +293,7 @@ export class ExerciseListComponent implements OnInit {
           for (const part of partsArr) allParts.add(part);
         }
       }
-      this.expandedCategories.set(new Set(['Upper Body', 'Lower Body', 'Cardio', 'Uncategorized']));
+      this.expandedCategories.set(new Set(['Upper Body', 'Lower Body', 'Uncategorized']));
       this.expandedGroups.set(allGroups);
       this.expandedParts.set(allParts);
     } else {
@@ -335,8 +310,7 @@ export class ExerciseListComponent implements OnInit {
       !query || ex.name.toLowerCase().includes(query) || (ex.equipmentBrand && ex.equipmentBrand.toLowerCase().includes(query))
     );
 
-    const cardio = filteredExercises.filter(e => e.type === 'CARDIO');
-    const uncategorized = filteredExercises.filter(e => e.type === 'STRENGTH' && (!e.targets || e.targets.length === 0));
+    const uncategorized = filteredExercises.filter(e => (!e.targets || e.targets.length === 0));
 
     const categories = [];
 
@@ -352,7 +326,7 @@ export class ExerciseListComponent implements OnInit {
          if (hasSubparts) {
             for (const partName of partsArr) {
                const exForPart = filteredExercises.filter(ex => 
-                 ex.type === 'STRENGTH' && ex.targets?.some(t => t.bodyPart === partName)
+                 ex.targets?.some(t => t.bodyPart === partName)
                );
                if (exForPart.length > 0) {
                  parts.push({ name: partName, exercises: exForPart });
@@ -361,7 +335,7 @@ export class ExerciseListComponent implements OnInit {
          } else {
             const partName = partsArr[0];
             directExercises = filteredExercises.filter(ex => 
-               ex.type === 'STRENGTH' && ex.targets?.some(t => t.bodyPart === partName)
+               ex.targets?.some(t => t.bodyPart === partName)
             );
          }
          
@@ -380,7 +354,7 @@ export class ExerciseListComponent implements OnInit {
       }
     }
 
-    return { categories, cardio, uncategorized };
+    return { categories, uncategorized };
   });
 
   ngOnInit() {
@@ -416,7 +390,7 @@ export class ExerciseListComponent implements OnInit {
     this.selectedExercise.set(null);
   }
 
-  onSaveExercise(formData: { name: string; equipmentBrand: string; unilateral: boolean; isPublic: boolean; type: 'STRENGTH' | 'CARDIO'; targets: { id?: string; bodyPart: string; targetValue: number }[] }) {
+  onSaveExercise(formData: { name: string; equipmentBrand: string; unilateral: boolean; isPublic: boolean; targets: { id?: string; bodyPart: string; targetValue: number }[] }) {
     this.isLoading.set(true);
     const exercise = this.selectedExercise();
     
@@ -424,8 +398,7 @@ export class ExerciseListComponent implements OnInit {
       name: formData.name,
       equipmentBrand: formData.equipmentBrand || undefined,
       unilateral: formData.unilateral,
-      isPublic: formData.isPublic || false,
-      type: formData.type
+      isPublic: formData.isPublic || false
     };
 
     if (exercise) {

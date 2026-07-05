@@ -298,8 +298,6 @@ public class WorkoutSessionService {
                             maxPerf = perf;
                             bestSet = s;
                         }
-                    } else if (s.getDurationMinutes() != null && bestSet == null) {
-                        bestSet = s;
                     }
                 }
                 
@@ -308,10 +306,7 @@ public class WorkoutSessionService {
                         de.getId(),
                         de.getExercise().getId(),
                         bestSet.getWeightKg(),
-                        bestSet.getRepsCompleted() != null ? bestSet.getRepsCompleted() : de.getReps(),
-                        bestSet.getDurationMinutes(),
-                        bestSet.getIncline(),
-                        bestSet.getResistance()
+                        bestSet.getRepsCompleted() != null ? bestSet.getRepsCompleted() : de.getReps()
                     ));
                 }
             }

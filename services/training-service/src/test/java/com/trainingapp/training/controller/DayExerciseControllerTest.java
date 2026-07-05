@@ -57,8 +57,8 @@ class DayExerciseControllerTest {
         UUID dayId = UUID.randomUUID();
         UUID exerciseId = UUID.randomUUID();
         UUID dayExerciseId = UUID.randomUUID();
-        DayExerciseRequest req = new DayExerciseRequest(exerciseId, 3, 10, null, null, null, null, false, 1);
-        DayExerciseResponse resp = new DayExerciseResponse(dayExerciseId, exerciseId, "Bench Press", 3, 10, null, null, null, null, 1, false, false);
+        DayExerciseRequest req = new DayExerciseRequest(exerciseId, 3, 10, null, false, 1);
+        DayExerciseResponse resp = new DayExerciseResponse(dayExerciseId, exerciseId, "Bench Press", 3, 10, null, 1, false, false);
 
         Mockito.when(dayExerciseService.create(eq(userId), eq(dayId), any())).thenReturn(resp);
 

@@ -7,8 +7,5 @@ public record ExerciseSuggestionResponse(
     UUID dayExerciseId,
     UUID exerciseId,
     BigDecimal suggestedWeightKg,
-    Integer suggestedReps,
-    Integer suggestedDurationMinutes,
-    BigDecimal suggestedIncline,
-    BigDecimal suggestedResistance
+    Integer suggestedReps
 ) {}

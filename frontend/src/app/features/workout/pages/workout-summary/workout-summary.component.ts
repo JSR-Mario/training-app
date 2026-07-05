@@ -58,20 +58,10 @@ import {
               <div class="flex justify-between items-center py-2 border-b border-gray-800 last:border-0">
                 <div>
                   <p class="text-gray-200 font-medium">{{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</p>
-                  @if (!ex.durationMinutes) {
-                    <p class="text-gray-500 text-sm">{{ getSetsForExercise(ex.id).length }} sets completed</p>
-                  }
-                  @if (ex.durationMinutes) {
-                    <p class="text-gray-500 text-sm">Cardio logged</p>
-                  }
+                  <p class="text-gray-500 text-sm">{{ getSetsForExercise(ex.id).length }} sets completed</p>
                 </div>
                 <div class="text-right">
-                  @if (!ex.durationMinutes) {
-                    <p class="text-blue-400 font-bold">{{ getVolumeForExercise(ex.id) | number:'1.0-1' }} kg</p>
-                  }
-                  @if (ex.durationMinutes) {
-                    <p class="text-purple-400 font-bold">{{ getDurationForExercise(ex.id) }} min</p>
-                  }
+                  <p class="text-blue-400 font-bold">{{ getVolumeForExercise(ex.id) | number:'1.0-1' }} kg</p>
                 </div>
               </div>
             }
@@ -171,10 +161,7 @@ export class WorkoutSummaryComponent implements OnInit {
       }, 0);
   }
 
-  getDurationForExercise(exerciseId: string): number {
-    return this.getSetsForExercise(exerciseId)
-      .reduce((sum, set) => sum + Number(set.durationMinutes || 0), 0);
-  }
+
 
   totalVolumeKg() {
     return this.loggedSets()

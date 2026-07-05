@@ -48,11 +48,7 @@ import { forkJoin } from 'rxjs';
             <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
               <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
                 Selected: {{ selectedExercise()?.name }}
-                @if (selectedExercise()?.type === 'CARDIO') {
-                  <span class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
-                }
               </div>
-              @if (selectedExercise()?.type !== 'CARDIO') {
                 <div class="flex gap-4">
                   <div class="flex-1">
                     <label for="setsInput" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
@@ -65,7 +61,6 @@ import { forkJoin } from 'rxjs';
                       >
                   </div>
                 </div>
-                
                 <div class="mt-4 flex items-center gap-3">
                   <label class="relative inline-flex items-center cursor-pointer">
                     <input
@@ -106,41 +101,6 @@ import { forkJoin } from 'rxjs';
                     </div>
                   </div>
                 }
-              }
-              @if (selectedExercise()?.type === 'CARDIO') {
-                <div class="flex gap-4">
-                  <div class="flex-1">
-                    <label for="durationInput" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
-                    <input
-                      id="durationInput"
-                      type="number"
-                      formControlName="durationMinutes"
-                      min="1"
-                      class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm"
-                      >
-                  </div>
-                  <div class="flex-1">
-                    <label for="inclineInput" class="block text-sm font-medium text-gray-300 mb-1">Incline <span class="text-xs text-gray-500">(Optional)</span></label>
-                    <input
-                      id="inclineInput"
-                      type="number"
-                      formControlName="incline"
-                      step="0.1"
-                      class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm"
-                      >
-                  </div>
-                  <div class="flex-1">
-                    <label for="resistanceInput" class="block text-sm font-medium text-gray-300 mb-1">Speed / Resistance <span class="text-xs text-gray-500">(Optional)</span></label>
-                    <input
-                      id="resistanceInput"
-                      type="number"
-                      formControlName="resistance"
-                      step="0.1"
-                      class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm"
-                      >
-                  </div>
-                </div>
-              }
               <div class="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -171,10 +131,10 @@ import { forkJoin } from 'rxjs';
               <button (click)="openAddExercise()" class="mt-4 text-blue-400 hover:text-blue-300 text-sm">Add your first exercise</button>
             </div>
           }
-          @if (strengthExs().length > 0) {
+          @if (exercises().length > 0) {
             <div class="space-y-3">
               <h4 class="text-gray-300 font-semibold mb-2">Strength Exercises</h4>
-              @for (ex of strengthExs(); track ex; let i = $index) {
+              @for (ex of exercises(); track ex; let i = $index) {
                 <div class="glass-card p-4 flex items-center justify-between group hover:border-gray-600 transition-colors">
                   <div class="flex items-center gap-4">
                     <!-- Reorder handles -->
@@ -189,7 +149,7 @@ import { forkJoin } from 'rxjs';
                       </button>
                       <button
                         (click)="moveStrengthExercise(ex.id, 1)"
-                        [disabled]="i === strengthExs().length - 1"
+                        [disabled]="i === exercises().length - 1"
                         class="text-gray-400 hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
                         title="Move Down"
                         >
@@ -209,41 +169,6 @@ import { forkJoin } from 'rxjs';
                           AMRAP
                         } @else {
                           {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps
-                        }
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    (click)="deleteExercise(ex.id)"
-                    class="text-red-400 hover:text-red-300 p-2 opacity-50 group-hover:opacity-100 transition-opacity"
-                    title="Remove"
-                    >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-              }
-            </div>
-          }
-          @if (cardioExs().length > 0) {
-            <div class="space-y-3">
-              <h4 class="text-purple-400 font-semibold mb-2 mt-6">Cardio</h4>
-              @for (ex of cardioExs(); track ex) {
-                <div class="glass-card p-4 flex items-center justify-between group border border-purple-500/20 bg-purple-900/10">
-                  <div class="flex items-center gap-4 pl-8"> <!-- Pl-8 to align with strength exercises text which have move buttons -->
-                    <div>
-                      <h4 class="font-semibold text-lg text-white flex items-center gap-2">
-                        {{ ex.exerciseName }}
-                        <span class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
-                      </h4>
-                      <p class="text-gray-400 text-sm">
-                        {{ ex.durationMinutes }} min
-                        @if (ex.incline) {
-                          <span> &bull; Inc: {{ ex.incline }}</span>
-                        }
-                        @if (ex.resistance) {
-                          <span> &bull; Spd/Res: {{ ex.resistance }}</span>
                         }
                       </p>
                     </div>
@@ -297,13 +222,9 @@ export class DayDetailComponent implements OnInit {
   exercises = signal<DayExercise[]>([]);
   existingExerciseIds = computed(() => this.exercises().map(e => e.exerciseId));
   availableExercises = signal<Exercise[]>([]);
-  
-  strengthExs = computed(() => this.exercises().filter(e => !e.durationMinutes));
-  cardioExs = computed(() => this.exercises().filter(e => !!e.durationMinutes));
-
   volumeBreakdown = computed(() => {
     const breakdown = new Map<string, number>();
-    for (const ex of this.strengthExs()) {
+    for (const ex of this.exercises()) {
       if (!ex.sets) continue;
       const fullEx = this.availableExercises().find(e => e.id === ex.exerciseId);
       if (fullEx && fullEx.targets) {
@@ -388,35 +309,23 @@ export class DayDetailComponent implements OnInit {
     this.selectedExercise.set(ex);
     this.exerciseForm.patchValue({ exerciseId: ex.id });
 
-    if (ex.type === 'CARDIO') {
-      this.exerciseForm.get('sets')?.clearValidators();
-      this.exerciseForm.get('reps')?.clearValidators();
-      this.exerciseForm.get('durationMinutes')?.setValidators([Validators.required, Validators.min(1)]);
-    } else {
-      this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
-      this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
-      this.exerciseForm.get('durationMinutes')?.clearValidators();
-    }
+    this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
+    this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
     
     this.exerciseForm.get('sets')?.updateValueAndValidity();
     this.exerciseForm.get('reps')?.updateValueAndValidity();
-    this.exerciseForm.get('durationMinutes')?.updateValueAndValidity();
   }
 
   onSubmitExercise() {
     const dayId = this.dayId();
     if (this.exerciseForm.valid && dayId) {
-      const type = this.selectedExercise()?.type;
       const formVal = this.exerciseForm.value;
       const sortOrder = this.exercises().length;
 
-      const sets = type === 'CARDIO' ? undefined : formVal.sets;
-      const reps = (type === 'CARDIO' || formVal.isAmrap) ? undefined : formVal.reps;
-      const repsMax = (type === 'CARDIO' || formVal.isAmrap) ? undefined : formVal.repsMax;
-      const isAmrap = type === 'CARDIO' ? false : formVal.isAmrap;
-      const duration = type === 'CARDIO' ? formVal.durationMinutes : undefined;
-      const incline = type === 'CARDIO' ? formVal.incline : undefined;
-      const resistance = type === 'CARDIO' ? formVal.resistance : undefined;
+      const sets = formVal.sets;
+      const reps = formVal.isAmrap ? undefined : formVal.reps;
+      const repsMax = formVal.isAmrap ? undefined : formVal.repsMax;
+      const isAmrap = formVal.isAmrap;
 
       this.programService.addDayExercise(
         dayId, 
@@ -424,10 +333,7 @@ export class DayDetailComponent implements OnInit {
         sets, 
         reps, 
         sortOrder, 
-        repsMax, 
-        duration, 
-        incline, 
-        resistance,
+        repsMax,
         isAmrap
       ).subscribe({
         next: () => {
@@ -452,9 +358,7 @@ export class DayDetailComponent implements OnInit {
     const dayId = this.dayId();
     if (!dayId) return;
 
-    const currentEx = this.exercises();
-    const strengthExs = currentEx.filter(e => !e.durationMinutes);
-    const cardioExs = currentEx.filter(e => !!e.durationMinutes);
+    const strengthExs = this.exercises();
 
     const index = strengthExs.findIndex(e => e.id === id);
     if (index === -1) return;
@@ -465,9 +369,7 @@ export class DayDetailComponent implements OnInit {
     strengthExs[index] = strengthExs[index + direction];
     strengthExs[index + direction] = temp;
 
-    // Recombine keeping cardio at the bottom
-    const combined = [...strengthExs, ...cardioExs];
-    const orderedItems = combined.map((ex, idx) => ({ id: ex.id, sortOrder: idx }));
+    const orderedItems = strengthExs.map((ex, idx) => ({ id: ex.id, sortOrder: idx }));
 
     this.programService.reorderDayExercises(dayId, orderedItems).subscribe({
       next: () => this.loadData(),

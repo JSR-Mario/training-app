@@ -192,12 +192,19 @@ export class BodyWeightTrackerComponent implements OnInit {
     }
 
     return {
-      startDate: start.toISOString().split('T')[0],
-      endDate: end.toISOString().split('T')[0]
+      startDate: this.formatDateLocal(start),
+      endDate: this.formatDateLocal(end)
     };
   }
 
+  private formatDateLocal(date: Date): string {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   private getTodayString(): string {
-    return new Date().toISOString().split('T')[0];
+    return this.formatDateLocal(new Date());
   }
 }

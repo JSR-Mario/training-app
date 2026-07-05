@@ -73,7 +73,7 @@ class DayExerciseServiceTest {
         when(dayExerciseRepository.save(any())).thenReturn(sampleDayExercise);
 
         DayExerciseResponse result = dayExerciseService.create(userId, dayId,
-                new DayExerciseRequest(exerciseId, 3, 10, null, null, null, null, false, 1));
+                new DayExerciseRequest(exerciseId, 3, 10, null, false, 1));
         assertThat(result.sets()).isEqualTo(3);
     }
 
