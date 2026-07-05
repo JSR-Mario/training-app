@@ -11,5 +11,6 @@ public record DayExerciseRequest(
         Integer sets,
         Integer reps,
         @PositiveOrZero Integer repsMax,
+        boolean isAmrap,
         @PositiveOrZero int sortOrder
 ) {}

@@ -61,6 +61,7 @@ public class DayExerciseService {
         dayExercise.setSets(request.sets());
         dayExercise.setReps(request.reps());
         dayExercise.setRepsMax(request.repsMax());
+        dayExercise.setAmrap(request.isAmrap());
         dayExercise.setSortOrder(request.sortOrder());
         return toResponse(dayExerciseRepository.save(dayExercise));
     }
@@ -74,6 +75,7 @@ public class DayExerciseService {
         dayExercise.setSets(request.sets());
         dayExercise.setReps(request.reps());
         dayExercise.setRepsMax(request.repsMax());
+        dayExercise.setAmrap(request.isAmrap());
         dayExercise.setSortOrder(request.sortOrder());
         return toResponse(dayExerciseRepository.save(dayExercise));
     }
@@ -122,6 +124,7 @@ public class DayExerciseService {
                 de.getReps(),
                 de.getRepsMax(),
                 de.getSortOrder(),
+                de.isAmrap(),
                 de.getExercise().isUnilateral()
         );
     }

@@ -67,7 +67,7 @@ class ExerciseServiceTest {
     void create_savesWithAllFields() {
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
         ExerciseResponse result = exerciseService.create(userId,
-                new ExerciseRequest("Bench Press", "Hammer Strength", false, false, false));
+                new ExerciseRequest("Bench Press", "Hammer Strength", false, false, false, false));
         assertThat(result.name()).isEqualTo("Bench Press");
         assertThat(result.equipmentBrand()).isEqualTo("Hammer Strength");
         verify(exerciseRepository).save(any());
@@ -78,8 +78,8 @@ class ExerciseServiceTest {
         when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
         when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
-        exerciseService.update(userId, exerciseId,
-                new ExerciseRequest("Incline Press", "Rogue", true, false, false));
+        ExerciseResponse result = exerciseService.update(userId, exerciseId,
+                new ExerciseRequest("Incline Press", "Rogue", true, false, false, false));
         assertThat(sampleExercise.getName()).isEqualTo("Incline Press");
         assertThat(sampleExercise.getEquipmentBrand()).isEqualTo("Rogue");
         assertThat(sampleExercise.isUnilateral()).isTrue();
@@ -89,7 +89,7 @@ class ExerciseServiceTest {
     void update_notFound_throwsResourceNotFound() {
         when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> exerciseService.update(userId, exerciseId,
-                new ExerciseRequest("X", null, false, false, false)))
+                new ExerciseRequest("X", null, false, false, false, false)))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

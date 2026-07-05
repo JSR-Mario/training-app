@@ -10,6 +10,7 @@ public record ExerciseResponse(
         String name,
         String equipmentBrand,
         boolean unilateral,
+        boolean isBodyweight,
         boolean isPublic,
         boolean spinalLoading,
         Instant createdAt,

@@ -49,6 +49,9 @@ public class DayExercise {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    @Column(name = "is_amrap", nullable = false)
+    private boolean isAmrap = false;
+
     public UUID getId() { return id; }
     public DayTemplate getDayTemplate() { return dayTemplate; }
     public void setDayTemplate(DayTemplate dayTemplate) { this.dayTemplate = dayTemplate; }
@@ -62,4 +65,6 @@ public class DayExercise {
     public void setRepsMax(Integer repsMax) { this.repsMax = repsMax; }
     public int getSortOrder() { return sortOrder; }
     public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
+    public boolean isAmrap() { return isAmrap; }
+    public void setAmrap(boolean amrap) { isAmrap = amrap; }
 }

@@ -47,6 +47,7 @@ export interface Exercise {
   equipmentBrand?: string;
   unilateral: boolean;
   spinalLoading: boolean;
+  isBodyweight: boolean;
   isPublic: boolean;
   targets: ExerciseTarget[];
   averageRating?: number;
@@ -62,6 +63,7 @@ export interface DayExercise {
   reps?: number;
   repsMax?: number;
   sortOrder: number;
+  isAmrap?: boolean;
   unilateral?: boolean;
 }
 

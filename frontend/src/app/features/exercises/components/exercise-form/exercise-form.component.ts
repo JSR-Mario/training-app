@@ -116,6 +116,21 @@ export interface ExerciseFormData {
             </label>
           </div>
 
+          <div class="flex items-center gap-3">
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                formControlName="isBodyweight"
+                class="sr-only peer"
+                id="isBodyweight"
+              >
+              <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+            <label for="isBodyweight" class="text-sm font-medium text-gray-300 cursor-pointer">
+              Bodyweight exercise
+              <span class="text-gray-500 text-xs ml-1">(e.g., Pull-ups, Push-ups)</span>
+            </label>
+          </div>
         <!-- Public Checkbox (Admins Only) -->
         @if (authService.isAdmin) {
           <div class="flex items-center gap-3">
@@ -255,6 +270,7 @@ export class ExerciseFormComponent implements OnInit {
     equipmentBrand: [''],
     unilateral: [false],
     spinalLoading: [false],
+    isBodyweight: [false],
     isPublic: [false],
     targets: this.fb.array([])
   });
@@ -270,7 +286,9 @@ export class ExerciseFormComponent implements OnInit {
         name: exercise.name,
         equipmentBrand: exercise.equipmentBrand || '',
         unilateral: exercise.unilateral || false,
-        isPublic: exercise.isPublic || false
+        isPublic: exercise.isPublic || false,
+        spinalLoading: exercise.spinalLoading || false,
+        isBodyweight: exercise.isBodyweight || false
       });
       
       exercise.targets.forEach(target => {

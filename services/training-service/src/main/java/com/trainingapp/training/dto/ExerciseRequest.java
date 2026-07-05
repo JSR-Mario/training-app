@@ -8,6 +8,7 @@ public record ExerciseRequest(
         @NotBlank @Size(max = 200) String name,
         @Size(max = 100) String equipmentBrand,
         boolean unilateral,
+        boolean isBodyweight,
         boolean isPublic,
         boolean spinalLoading
 ) {}
