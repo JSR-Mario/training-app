@@ -44,6 +44,9 @@ public class ProgramService {
         program.setDurationWeeks(request.durationWeeks());
         program.setStartDate(request.startDate());
         program.setActive(request.isActive());
+        if (request.currentWeek() != null) {
+            program.setCurrentWeek(request.currentWeek());
+        }
         
         TrainingProgram saved = programRepository.save(program);
         
@@ -61,6 +64,9 @@ public class ProgramService {
         program.setDurationWeeks(request.durationWeeks());
         program.setStartDate(request.startDate());
         program.setActive(request.isActive());
+        if (request.currentWeek() != null) {
+            program.setCurrentWeek(request.currentWeek());
+        }
         
         TrainingProgram saved = programRepository.save(program);
         
@@ -77,13 +83,28 @@ public class ProgramService {
         programRepository.delete(program);
     }
 
+    @Transactional
+    public ProgramResponse advanceWeek(UUID userId, UUID programId) {
+        TrainingProgram program = findOwned(userId, programId);
+        program.setCurrentWeek(program.getCurrentWeek() + 1);
+        if (program.getCurrentWeek() > program.getDurationWeeks()) {
+            program.setActive(false);
+            // Optionally, we could reset currentWeek to 1 or leave it at durationWeeks
+            program.setCurrentWeek(program.getDurationWeeks()); 
+        }
+        
+        TrainingProgram saved = programRepository.save(program);
+        return toResponse(saved);
+    }
+
     /** Package-private: validates program belongs to user and returns entity. */
-    TrainingProgram findOwned(UUID userId, UUID programId) {
+    @Transactional(readOnly = true)
+    public TrainingProgram findOwned(UUID userId, UUID programId) {
         return programRepository.findByIdAndUserId(programId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Program not found."));
     }
 
     private ProgramResponse toResponse(TrainingProgram p) {
-        return new ProgramResponse(p.getId(), p.getName(), p.getDurationWeeks(), p.getStartDate(), p.isActive(), p.getCreatedAt());
+        return new ProgramResponse(p.getId(), p.getName(), p.getDurationWeeks(), p.getStartDate(), p.isActive(), p.getCurrentWeek(), p.getCreatedAt());
     }
 }

@@ -1,124 +1,141 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { WorkoutService } from '../../services/workout.service';
 import { ProgramService } from '../../../programs/services/program.service';
-import { TrainingProgram, WorkoutSessionResponse } from '../../../../core/types/training.types';
+import { TrainingProgram, WorkoutSessionResponse, DayTemplate } from '../../../../core/types/training.types';
+import { switchMap, of } from 'rxjs';
 
 @Component({
   standalone: true,
-    selector: 'app-workout-dashboard',
-    imports: [CommonModule, RouterModule, FormsModule],
-    template: `
-    <div class="max-w-7xl mx-auto space-y-6 pb-24">
-    
-      <!-- Header -->
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold text-white">Workouts</h1>
-          <p class="text-gray-400 mt-1">Track your progress</p>
-        </div>
-        <a
-          [routerLink]="['/workout', 'start']"
-          [queryParams]="{ programId: selectedProgramId(), week: selectedWeek() }"
-          class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95"
-          >
-          Start Session
-        </a>
-      </div>
-    
-      <!-- Filters -->
-      <div class="glass-card p-4 flex flex-col sm:flex-row gap-4 items-end">
-        <div class="w-full sm:w-1/2">
-          <label for="programSelect" class="block text-sm font-medium text-gray-300 mb-1">Select Program</label>
-          <select
-            id="programSelect"
-            [(ngModel)]="selectedProgramId"
-            (ngModelChange)="onProgramChange()"
-            class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white appearance-none"
-            >
-            <option value="" disabled>Select a program</option>
-            @for (p of programs(); track p) {
-              <option [value]="p.id">{{ p.name }} ({{ p.durationWeeks }} weeks)</option>
-            }
-          </select>
-        </div>
-    
-        <div class="w-full sm:w-1/4">
-          <label for="weekSelect" class="block text-sm font-medium text-gray-300 mb-1">Week Number</label>
-          <select
-            id="weekSelect"
-            [(ngModel)]="selectedWeek"
-            (ngModelChange)="loadSessions()"
-            [disabled]="!selectedProgramId()"
-            class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white appearance-none disabled:opacity-50"
-            >
-            @for (w of availableWeeks(); track w) {
-              <option [value]="w">Week {{ w }}</option>
-            }
-          </select>
+  selector: 'app-workout-dashboard',
+  imports: [CommonModule, RouterModule],
+  template: `
+  <div class="max-w-7xl mx-auto space-y-6 pb-24">
+  
+    <!-- Header Removed by User Request -->
+  
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="text-center py-12">
+        <div class="animate-pulse flex flex-col items-center">
+          <div class="h-8 w-8 bg-blue-500 rounded-full mb-4"></div>
+          <p class="text-gray-400">Loading your workout data...</p>
         </div>
       </div>
-    
-      <!-- Loading State -->
-      @if (isLoading()) {
-        <div class="text-center py-12">
-          <div class="animate-pulse flex flex-col items-center">
-            <div class="h-8 w-8 bg-blue-500 rounded-full mb-4"></div>
-            <p class="text-gray-400">Loading sessions...</p>
-          </div>
+    }
+  
+    @if (!isLoading()) {
+      <!-- No Active Program -->
+      @if (!activeProgram()) {
+        <div class="text-center py-12 glass-card border border-yellow-500/30">
+          <p class="text-yellow-400 font-medium text-lg mb-2">You don't have an active program.</p>
+          <p class="text-gray-400 mb-6">Go to the Programs tab to build one and set it as active to start working out.</p>
+          <a routerLink="/programs" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl transition-all hover:scale-105 inline-block">
+            Go to Programs
+          </a>
         </div>
       }
-    
-      <!-- Sessions List -->
-      @if (!isLoading()) {
+      
+      <!-- Active Program Dashboard -->
+      @if (activeProgram(); as program) {
+        <div class="glass-card p-6 flex flex-col sm:flex-row justify-between items-center border border-gray-700 mb-6">
+          <div class="mb-4 sm:mb-0 text-center sm:text-left">
+            <h2 class="text-2xl font-bold text-white">{{ program.name }}</h2>
+            <p class="text-gray-400">Duration: {{ program.durationWeeks }} weeks</p>
+          </div>
+          
+          <div class="flex items-center gap-4">
+            <button 
+              (click)="prevWeek()" 
+              [disabled]="displayedWeek() <= 1"
+              class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white disabled:opacity-50 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+            </button>
+            
+            <div class="text-center">
+              <p class="text-xl font-bold text-white w-24">Week {{ displayedWeek() }}</p>
+              @if (displayedWeek() === program.currentWeek) {
+                <span class="text-xs text-blue-400 font-medium tracking-wider uppercase">Current</span>
+              } @else if (displayedWeek() < program.currentWeek) {
+                <span class="text-xs text-gray-500 font-medium tracking-wider uppercase">Past</span>
+              } @else {
+                <span class="text-xs text-purple-400 font-medium tracking-wider uppercase">Upcoming</span>
+              }
+            </div>
+            
+            <button 
+              (click)="nextWeek()" 
+              [disabled]="displayedWeek() >= program.durationWeeks"
+              class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white disabled:opacity-50 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+            </button>
+          </div>
+          
+          <div class="mt-4 sm:mt-0">
+            @if (displayedWeek() === program.currentWeek) {
+              <button 
+                (click)="finishWeek()"
+                class="px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95"
+              >
+                {{ displayedWeek() === program.durationWeeks ? 'Finish Program' : 'Finish Week' }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Days Grid -->
         <div class="space-y-4">
-          @if (sessions().length === 0 && selectedProgramId()) {
-            <div class="text-center py-12 glass-card">
-              <p class="text-gray-400">No sessions logged for this week yet.</p>
-            </div>
-          }
-          @if (programs().length === 0) {
-            <div class="text-center py-12 glass-card border border-yellow-500/30">
-              <p class="text-yellow-400">You don't have any programs. Go to the Programs tab to build one first.</p>
-            </div>
-          }
-          @for (session of sessions(); track session) {
+          @for (day of combinedDays(); track day.template.id) {
             <div class="glass-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:border-gray-600 transition-colors">
               <div class="mb-4 sm:mb-0">
                 <div class="flex items-center gap-3 mb-1">
-                  <h3 class="text-xl font-bold text-white">{{ session.dayTemplateName }}</h3>
-                  @if (session.completedAt) {
+                  <h3 class="text-xl font-bold text-white">{{ day.template.name }}</h3>
+                  
+                  @if (day.session?.completedAt) {
                     <span class="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded border border-green-500/30">Completed</span>
-                  }
-                  @if (!session.completedAt) {
+                  } @else if (day.session) {
                     <span class="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded border border-yellow-500/30">In Progress</span>
+                  } @else {
+                    <span class="px-2 py-0.5 bg-gray-500/20 text-gray-400 text-xs rounded border border-gray-500/30">Not Started</span>
                   }
                 </div>
-                <p class="text-gray-400 text-sm">Performed on: {{ session.performedOn | date:'mediumDate' }}</p>
+                @if (day.session?.performedOn) {
+                  <p class="text-gray-400 text-sm">Performed on: {{ day.session?.performedOn | date:'mediumDate' }}</p>
+                }
               </div>
+              
               <div class="flex gap-3 w-full sm:w-auto">
-                <button
-                  (click)="deleteSession(session.id)"
-                  class="px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors text-sm font-medium w-full sm:w-auto"
-                  >
-                  Delete
-                </button>
-                <a
-                  [routerLink]="['/workout', session.id]"
-                  class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm font-medium w-full sm:w-auto text-center"
-                  >
-                  {{ session.completedAt ? 'View Summary' : 'Resume Workout' }} &rarr;
-                </a>
+                @if (day.session) {
+                  <button
+                    (click)="deleteSession(day.session.id)"
+                    class="px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors text-sm font-medium w-full sm:w-auto"
+                    >
+                    Delete
+                  </button>
+                  <a
+                    [routerLink]="['/workout', day.session.id]"
+                    class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm font-medium w-full sm:w-auto text-center"
+                    >
+                    {{ day.session.completedAt ? 'View Summary' : 'Resume Workout' }} &rarr;
+                  </a>
+                } @else {
+                  <button
+                    (click)="startDaySession(day.template.id)"
+                    class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors font-medium w-full sm:w-auto text-center"
+                    >
+                    Start Session
+                  </button>
+                }
               </div>
             </div>
           }
         </div>
       }
-    
-    </div>
-    `
+    }
+  
+  </div>
+  `
 })
 export class WorkoutDashboardComponent implements OnInit {
   private workoutService = inject(WorkoutService);
@@ -126,24 +143,23 @@ export class WorkoutDashboardComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
-  programs = signal<TrainingProgram[]>([]);
+  activeProgram = signal<TrainingProgram | null>(null);
+  displayedWeek = signal<number>(1);
+  dayTemplates = signal<DayTemplate[]>([]);
   sessions = signal<WorkoutSessionResponse[]>([]);
   isLoading = signal<boolean>(false);
   
-  selectedProgramId = signal<string>('');
-  selectedWeek = signal<number>(1);
-
-  availableWeeks = computed(() => {
-    const progId = this.selectedProgramId();
-    if (!progId) return [];
-    const program = this.programs().find(p => p.id === progId);
-    if (!program) return [];
+  combinedDays = computed(() => {
+    const templates = this.dayTemplates();
+    const sess = this.sessions();
     
-    const weeks = [];
-    for (let i = 1; i <= program.durationWeeks; i++) {
-      weeks.push(i);
-    }
-    return weeks;
+    return templates.map(t => {
+      const match = sess.find(s => s.dayTemplateId === t.id);
+      return {
+        template: t,
+        session: match
+      };
+    });
   });
 
   ngOnInit() {
@@ -171,17 +187,12 @@ export class WorkoutDashboardComponent implements OnInit {
 
   private loadInitialData() {
     this.programService.getPrograms().subscribe({
-      next: (data) => {
-        this.programs.set(data);
-        const active = data.find(p => p.isActive);
+      next: (programs) => {
+        const active = programs.find(p => p.isActive);
         if (active) {
-          this.selectedProgramId.set(active.id);
-          this.selectedWeek.set(1);
-          this.loadSessions();
-        } else if (data.length > 0) {
-          this.selectedProgramId.set(data[0].id);
-          this.selectedWeek.set(1);
-          this.loadSessions();
+          this.activeProgram.set(active);
+          this.displayedWeek.set(active.currentWeek || 1);
+          this.loadDaysAndSessions(active.id);
         } else {
           this.isLoading.set(false);
         }
@@ -193,18 +204,32 @@ export class WorkoutDashboardComponent implements OnInit {
     });
   }
 
-  onProgramChange() {
-    this.selectedWeek.set(1);
-    this.loadSessions();
+  private loadDaysAndSessions(programId: string) {
+    this.isLoading.set(true);
+    
+    // To get DayTemplates, we need the first WeekTemplate of the program
+    this.programService.getWeeks(programId).pipe(
+      switchMap(weeks => {
+        if (weeks.length === 0) return of([]);
+        return this.programService.getDays(weeks[0].id);
+      })
+    ).subscribe({
+      next: (days) => {
+        this.dayTemplates.set(days);
+        this.loadSessionsOnly();
+      },
+      error: (err) => {
+        console.error('Failed to load days', err);
+        this.isLoading.set(false);
+      }
+    });
   }
 
-  loadSessions() {
-    const progId = this.selectedProgramId();
-    const week = this.selectedWeek();
-    if (!progId || !week) return;
-
-    this.isLoading.set(true);
-    this.workoutService.getSessions(progId, week).subscribe({
+  private loadSessionsOnly() {
+    const prog = this.activeProgram();
+    if (!prog) return;
+    
+    this.workoutService.getSessions(prog.id, this.displayedWeek()).subscribe({
       next: (data) => {
         this.sessions.set(data);
         this.isLoading.set(false);
@@ -216,11 +241,74 @@ export class WorkoutDashboardComponent implements OnInit {
     });
   }
 
+  prevWeek() {
+    if (this.displayedWeek() > 1) {
+      this.displayedWeek.update(w => w - 1);
+      this.isLoading.set(true);
+      this.loadSessionsOnly();
+    }
+  }
+
+  nextWeek() {
+    const prog = this.activeProgram();
+    if (prog && this.displayedWeek() < prog.durationWeeks) {
+      this.displayedWeek.update(w => w + 1);
+      this.isLoading.set(true);
+      this.loadSessionsOnly();
+    }
+  }
+
+  finishWeek() {
+    const prog = this.activeProgram();
+    if (!prog) return;
+    
+    const isLastWeek = prog.currentWeek === prog.durationWeeks;
+    const msg = isLastWeek 
+      ? 'Are you sure you want to finish this program? It will be marked as inactive.'
+      : 'Are you sure you want to finish this week and advance to the next?';
+      
+    if (confirm(msg)) {
+      this.programService.advanceWeek(prog.id).subscribe({
+        next: (updatedProgram) => {
+          if (!updatedProgram.isActive) {
+            // Program finished
+            this.activeProgram.set(null);
+            this.sessions.set([]);
+            this.dayTemplates.set([]);
+            alert('Congratulations on finishing the program!');
+          } else {
+            this.activeProgram.set(updatedProgram);
+            this.displayedWeek.set(updatedProgram.currentWeek);
+            this.isLoading.set(true);
+            this.loadSessionsOnly();
+          }
+        },
+        error: (err) => console.error('Failed to advance week', err)
+      });
+    }
+  }
+
+  startDaySession(dayTemplateId: string) {
+    const prog = this.activeProgram();
+    if (!prog) return;
+    
+    this.workoutService.startSession({
+      weekNumber: this.displayedWeek(),
+      dayTemplateId: dayTemplateId,
+      performedOn: new Date().toISOString().split('T')[0]
+    }).subscribe({
+      next: (session) => {
+        this.router.navigate(['/workout', session.id]);
+      },
+      error: (err) => console.error('Error starting session', err)
+    });
+  }
+
   deleteSession(id: string) {
     if (confirm('Are you sure you want to delete this session? All logged sets will be lost.')) {
       this.workoutService.deleteSession(id).subscribe({
         next: () => {
-          this.loadSessions();
+          this.loadSessionsOnly();
         },
         error: (err) => console.error('Error deleting session', err)
       });

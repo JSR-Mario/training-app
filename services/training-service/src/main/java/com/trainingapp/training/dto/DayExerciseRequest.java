@@ -11,9 +11,6 @@ public record DayExerciseRequest(
         Integer sets,
         Integer reps,
         @PositiveOrZero Integer repsMax,
-        @PositiveOrZero Integer durationMinutes,
-        java.math.BigDecimal incline,
-        java.math.BigDecimal resistance,
         boolean isAmrap,
         @PositiveOrZero int sortOrder
 ) {}

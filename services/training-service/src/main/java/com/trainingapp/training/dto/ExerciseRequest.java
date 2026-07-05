@@ -10,6 +10,5 @@ public record ExerciseRequest(
         boolean unilateral,
         boolean isBodyweight,
         boolean isPublic,
-        boolean spinalLoading,
-        com.trainingapp.training.domain.ExerciseType type
+        boolean spinalLoading
 ) {}

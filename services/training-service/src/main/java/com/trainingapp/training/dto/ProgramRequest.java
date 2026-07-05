@@ -11,5 +11,6 @@ public record ProgramRequest(
         @NotBlank @Size(max = 200) String name,
         @Min(1) @Max(52) int durationWeeks,
         LocalDate startDate,
-        boolean isActive
+        boolean isActive,
+        @Min(1) @Max(52) Integer currentWeek
 ) {}

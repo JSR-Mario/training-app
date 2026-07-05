@@ -61,12 +61,20 @@ export class CardioDashboardComponent {
   private fb = inject(FormBuilder);
   private cardioService = inject(CardioLogService);
 
+  private getLocalDateString(): string {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   @ViewChild(CardioChartComponent) chartComponent!: CardioChartComponent;
 
   isSubmitting = signal(false);
 
   cardioForm: FormGroup = this.fb.group({
-    performedOn: [new Date().toISOString().split('T')[0], Validators.required],
+    performedOn: [this.getLocalDateString(), Validators.required],
     durationMinutes: [null, [Validators.required, Validators.min(1)]],
     cardioType: ['']
   });

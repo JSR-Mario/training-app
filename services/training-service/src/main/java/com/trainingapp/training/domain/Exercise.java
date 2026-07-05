@@ -12,8 +12,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
 
@@ -50,10 +48,6 @@ public class Exercise {
     @Column(name = "is_public", nullable = false)
     private boolean isPublic = false;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private ExerciseType type = ExerciseType.STRENGTH;
-
     @Column(name = "spinal_loading", nullable = false)
     private boolean spinalLoading = false;
 
@@ -86,9 +80,6 @@ public class Exercise {
 
     /** Sets whether the exercise is public and visible to everyone. */
     public void setIsPublic(boolean isPublic) { this.isPublic = isPublic; }
-
-    public ExerciseType getType() { return type; }
-    public void setType(ExerciseType type) { this.type = type; }
 
     public boolean isSpinalLoading() { return spinalLoading; }
     public void setSpinalLoading(boolean spinalLoading) { this.spinalLoading = spinalLoading; }

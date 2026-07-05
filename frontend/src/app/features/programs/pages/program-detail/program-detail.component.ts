@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProgramService } from '../../services/program.service';
-import { TrainingProgram, DayTemplate, Exercise } from '../../../../core/types/training.types';
+import { TrainingProgram, DayTemplate, Exercise, getBodyPartPath, BodyPart } from '../../../../core/types/training.types';
 import { forkJoin } from 'rxjs';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { ExerciseService } from '../../../exercises/services/exercise.service';
@@ -149,11 +149,7 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
             <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4 mt-4">
               <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
                 Selected: {{ selectedExercise()?.name }}
-                @if (selectedExercise()?.type === 'CARDIO') {
-                  <span class="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">Cardio</span>
-                }
               </div>
-              @if (selectedExercise()?.type !== 'CARDIO') {
                 <div class="flex gap-4">
                   <div class="flex-1">
                     <label for="qa-sets" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
@@ -168,23 +164,7 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
                     <input id="qa-repsMax" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
                   </div>
                 </div>
-              }
-              @if (selectedExercise()?.type === 'CARDIO') {
-                <div class="flex gap-4">
-                  <div class="flex-1">
-                    <label for="qa-duration" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
-                    <input id="qa-duration" type="number" formControlName="durationMinutes" min="1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-                  </div>
-                  <div class="flex-1">
-                    <label for="qa-incline" class="block text-sm font-medium text-gray-300 mb-1">Incline</label>
-                    <input id="qa-incline" type="number" formControlName="incline" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-                  </div>
-                  <div class="flex-1">
-                    <label for="qa-resistance" class="block text-sm font-medium text-gray-300 mb-1">Resis.</label>
-                    <input id="qa-resistance" type="number" formControlName="resistance" step="0.1" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 outline-none text-white text-sm">
-                  </div>
-                </div>
-              }
+
               <div class="flex justify-end gap-3 pt-4">
                 <button type="button" (click)="cancelQuickAdd()" class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm">Cancel</button>
                 <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
@@ -194,7 +174,7 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
         </div>
         <!-- Expected Weekly Volume Table -->
         @if (expectedWeeklyVolume().length > 0) {
-          <div class="glass-card p-6 mt-8">
+          <div class="hidden lg:block glass-card p-6 ml-6 max-h-[90vh] overflow-y-auto">
             <h2 class="text-xl font-bold text-white mb-4">Expected Weekly Volume</h2>
             <div class="overflow-hidden rounded-xl border border-gray-800">
               <table class="min-w-full divide-y divide-gray-800">
@@ -249,7 +229,8 @@ export class ProgramDetailComponent implements OnInit {
         const catalogEx = allExercises.find(e => e.id === dayEx.exerciseId);
         if (catalogEx && catalogEx.targets) {
           for (const target of catalogEx.targets) {
-            const bodyPart = target.bodyPart;
+            const path = getBodyPartPath(target.bodyPart as BodyPart);
+            const bodyPart = path ? path.group : target.bodyPart.replace(/_/g, ' ');
             const volume = dayEx.sets * target.targetValue;
             volumeMap.set(bodyPart, (volumeMap.get(bodyPart) || 0) + volume);
           }
@@ -279,7 +260,8 @@ export class ProgramDetailComponent implements OnInit {
         const fullEx = this.availableExercises().find(e => e.id === ex.exerciseId);
         if (fullEx && fullEx.targets) {
           for (const t of fullEx.targets) {
-            const name = t.bodyPart.replace(/_/g, ' ');
+            const path = getBodyPartPath(t.bodyPart as BodyPart);
+            const name = path ? path.group : t.bodyPart.replace(/_/g, ' ');
             breakdown.set(name, (breakdown.get(name) || 0) + ex.sets);
           }
         }
@@ -458,34 +440,23 @@ export class ProgramDetailComponent implements OnInit {
     this.selectedExercise.set(ex);
     this.exerciseForm.patchValue({ exerciseId: ex.id });
     
-    if (ex.type === 'CARDIO') {
-      this.exerciseForm.get('sets')?.clearValidators();
-      this.exerciseForm.get('reps')?.clearValidators();
-      this.exerciseForm.get('durationMinutes')?.setValidators([Validators.required, Validators.min(1)]);
-    } else {
-      this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
-      this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
-      this.exerciseForm.get('durationMinutes')?.clearValidators();
-    }
+    this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
+    this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+    
     this.exerciseForm.get('sets')?.updateValueAndValidity();
     this.exerciseForm.get('reps')?.updateValueAndValidity();
-    this.exerciseForm.get('durationMinutes')?.updateValueAndValidity();
   }
 
   onSubmitExercise() {
     const dayId = this.addingExerciseToDayId();
     if (this.exerciseForm.valid && dayId) {
-      const type = this.selectedExercise()?.type;
       const formVal = this.exerciseForm.value;
       const day = this.days().find(d => d.id === dayId);
       const sortOrder = day?.exercises?.length || 0;
 
-      const sets = type === 'CARDIO' ? undefined : formVal.sets;
-      const reps = type === 'CARDIO' ? undefined : formVal.reps;
-      const repsMax = type === 'CARDIO' ? undefined : formVal.repsMax;
-      const duration = type === 'CARDIO' ? formVal.durationMinutes : undefined;
-      const incline = type === 'CARDIO' ? formVal.incline : undefined;
-      const resistance = type === 'CARDIO' ? formVal.resistance : undefined;
+      const sets = formVal.sets;
+      const reps = formVal.reps;
+      const repsMax = formVal.repsMax;
 
       this.programService.addDayExercise(
         dayId,
@@ -493,10 +464,7 @@ export class ProgramDetailComponent implements OnInit {
         sets,
         reps,
         sortOrder,
-        repsMax,
-        duration,
-        incline,
-        resistance
+        repsMax
       ).subscribe({
         next: () => {
           this.cancelQuickAdd();

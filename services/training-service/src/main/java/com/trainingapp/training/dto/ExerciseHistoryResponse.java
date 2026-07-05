@@ -7,9 +7,6 @@ import java.util.UUID;
 public record ExerciseHistoryResponse(
     UUID setId,
     LocalDate performedOn,
-    Integer durationMinutes,
-    BigDecimal incline,
-    BigDecimal resistance,
     Integer repsCompleted,
     BigDecimal weightKg
 ) {}

@@ -39,6 +39,9 @@ public class TrainingProgram {
     @Column(name = "start_date")
     private LocalDate startDate;
 
+    @Column(name = "current_week", nullable = false)
+    private int currentWeek = 1;
+
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
@@ -59,6 +62,8 @@ public class TrainingProgram {
     public void setDurationWeeks(int durationWeeks) { this.durationWeeks = durationWeeks; }
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+    public int getCurrentWeek() { return currentWeek; }
+    public void setCurrentWeek(int currentWeek) { this.currentWeek = currentWeek; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
     public Instant getCreatedAt() { return createdAt; }
