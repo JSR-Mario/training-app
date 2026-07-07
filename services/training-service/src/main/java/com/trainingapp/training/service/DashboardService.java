@@ -99,7 +99,37 @@ public class DashboardService {
         DashboardSummaryResponse.BodyWeightSummary bodyWeightSummary = new DashboardSummaryResponse.BodyWeightSummary(
                 avgWeightThisWeek, bodyWeightPercentageChange);
 
-        return new DashboardSummaryResponse(cardioSummary, weightsSummary, bodyWeightSummary);
+        // Activity Calendar (Last 365 days)
+        LocalDate oneYearAgo = today.minusDays(364);
+        List<WorkoutSession> yearSessions = sessionRepository.findByUserIdAndPerformedOnBetween(userId, oneYearAgo, today);
+        List<CardioLog> yearCardio = cardioLogRepository.findByUserIdAndPerformedOnBetween(userId, oneYearAgo, today);
+        List<BodyWeightEntry> yearWeights = bodyWeightRepository.findAllByUserIdAndDateBetweenOrderByDateAsc(userId, oneYearAgo, today);
+
+        java.util.Map<LocalDate, Boolean> hasWorkout = new java.util.HashMap<>();
+        for (WorkoutSession s : yearSessions) {
+            hasWorkout.put(s.getPerformedOn(), true);
+        }
+
+        java.util.Map<LocalDate, Boolean> hasCardio = new java.util.HashMap<>();
+        for (CardioLog c : yearCardio) {
+            hasCardio.put(c.getPerformedOn(), true);
+        }
+
+        java.util.Map<LocalDate, Boolean> hasWeight = new java.util.HashMap<>();
+        for (BodyWeightEntry b : yearWeights) {
+            hasWeight.put(b.getDate(), true);
+        }
+
+        List<DashboardSummaryResponse.ActivitySummary> activityCalendar = new java.util.ArrayList<>();
+        for (LocalDate d = oneYearAgo; !d.isAfter(today); d = d.plusDays(1)) {
+            int intensity = 0;
+            if (hasWorkout.getOrDefault(d, false)) intensity++;
+            if (hasWeight.getOrDefault(d, false)) intensity++;
+            if (hasCardio.getOrDefault(d, false)) intensity++;
+            activityCalendar.add(new DashboardSummaryResponse.ActivitySummary(d.toString(), intensity));
+        }
+
+        return new DashboardSummaryResponse(cardioSummary, weightsSummary, bodyWeightSummary, activityCalendar);
     }
 
     private double calculatePercentageChange(double oldVal, double newVal) {

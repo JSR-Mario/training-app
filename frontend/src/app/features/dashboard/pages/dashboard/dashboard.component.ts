@@ -2,12 +2,13 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ProgressChartComponent } from '../../../analytics/components/progress-chart/progress-chart.component';
+import { ActivityCalendarComponent } from '../../components/activity-calendar/activity-calendar.component';
 import { DashboardService, DashboardSummaryResponse } from '../../services/dashboard.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ProgressChartComponent],
+  imports: [CommonModule, ProgressChartComponent, ActivityCalendarComponent],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -17,6 +18,17 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
       <!-- CSS Grid for cards -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         
+        <!-- Activity Calendar -->
+        <div class="md:col-span-12">
+          @if (!isLoading() && summary()?.activityCalendar) {
+            <app-activity-calendar [data]="summary()!.activityCalendar"></app-activity-calendar>
+          } @else {
+            <div class="glass-card p-6 w-full h-48 animate-pulse flex items-center justify-center">
+              <span class="text-gray-500">Loading calendar...</span>
+            </div>
+          }
+        </div>
+
         <!-- Weights Sessions This Week -->
         <div 
           class="glass-card p-6 flex flex-col justify-between md:col-span-6 lg:col-span-3 hover:bg-gray-800/80 cursor-pointer transition-colors"
@@ -156,7 +168,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
         </div>
         <!-- Volume Progress Mini Chart Card -->
         <div 
-          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 lg:col-span-6 flex flex-col"
+          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 flex flex-col h-40"
           (click)="goToAnalytics()"
           (keyup.enter)="goToAnalytics()"
           tabindex="0"
