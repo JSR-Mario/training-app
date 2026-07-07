@@ -95,12 +95,14 @@ public class DashboardSummaryResponse {
     public static class BodyWeightSummary {
         private double currentWeekAvgKg;
         private double percentageChange;
+        private double absoluteChangeKg;
 
         public BodyWeightSummary() {}
 
-        public BodyWeightSummary(double currentWeekAvgKg, double percentageChange) {
+        public BodyWeightSummary(double currentWeekAvgKg, double percentageChange, double absoluteChangeKg) {
             this.currentWeekAvgKg = currentWeekAvgKg;
             this.percentageChange = percentageChange;
+            this.absoluteChangeKg = absoluteChangeKg;
         }
 
         public double getCurrentWeekAvgKg() { return currentWeekAvgKg; }
@@ -108,5 +110,8 @@ public class DashboardSummaryResponse {
 
         public double getPercentageChange() { return percentageChange; }
         public void setPercentageChange(double percentageChange) { this.percentageChange = percentageChange; }
+
+        public double getAbsoluteChangeKg() { return absoluteChangeKg; }
+        public void setAbsoluteChangeKg(double absoluteChangeKg) { this.absoluteChangeKg = absoluteChangeKg; }
     }
 }

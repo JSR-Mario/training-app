@@ -95,9 +95,14 @@ public class DashboardService {
         double avgWeightThisWeek = weightsThisWeek.stream().mapToDouble(e -> e.getWeightKg().doubleValue()).average().orElse(0.0);
         double avgWeightLastWeek = weightsLastWeek.stream().mapToDouble(e -> e.getWeightKg().doubleValue()).average().orElse(0.0);
         double bodyWeightPercentageChange = calculatePercentageChange(avgWeightLastWeek, avgWeightThisWeek);
+        
+        double absoluteChangeKg = 0.0;
+        if (avgWeightLastWeek > 0 && avgWeightThisWeek > 0) {
+            absoluteChangeKg = avgWeightThisWeek - avgWeightLastWeek;
+        }
 
         DashboardSummaryResponse.BodyWeightSummary bodyWeightSummary = new DashboardSummaryResponse.BodyWeightSummary(
-                avgWeightThisWeek, bodyWeightPercentageChange);
+                avgWeightThisWeek, bodyWeightPercentageChange, absoluteChangeKg);
 
         // Activity Calendar (Last 365 days)
         LocalDate oneYearAgo = today.minusDays(364);

@@ -165,6 +165,7 @@ export interface DashboardSummaryResponse {
   bodyWeight: {
     currentWeekAvgKg: number;
     percentageChange: number;
+    absoluteChangeKg: number;
   };
   activityCalendar: ActivitySummary[];
 }
