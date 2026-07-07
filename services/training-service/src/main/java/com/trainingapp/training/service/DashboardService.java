@@ -38,11 +38,11 @@ public class DashboardService {
 
     public DashboardSummaryResponse getSummary(UUID userId) {
         LocalDate today = LocalDate.now(ZoneId.of("UTC"));
-        LocalDate startOfThisWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        LocalDate endOfThisWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        LocalDate endOfThisWeek = today;
+        LocalDate startOfThisWeek = today.minusDays(6);
         
-        LocalDate startOfLastWeek = startOfThisWeek.minusWeeks(1);
-        LocalDate endOfLastWeek = endOfThisWeek.minusWeeks(1);
+        LocalDate endOfLastWeek = today.minusDays(7);
+        LocalDate startOfLastWeek = today.minusDays(13);
 
         // Cardio
         List<CardioLog> cardioThisWeek = cardioLogRepository.findByUserIdAndPerformedOnBetween(userId, startOfThisWeek, endOfThisWeek);
@@ -64,11 +64,23 @@ public class DashboardService {
         int weightSessionsThisWeek = sessionsThisWeek.size();
         double volumeThisWeek = setsThisWeek.stream()
                 .filter(s -> s.getWeightKg() != null && s.getRepsCompleted() != null)
-                .mapToDouble(s -> s.getWeightKg().multiply(java.math.BigDecimal.valueOf(s.getRepsCompleted())).doubleValue())
+                .mapToDouble(s -> {
+                    int totalReps = s.getRepsCompleted();
+                    if (s.getRepsCompletedRight() != null) {
+                        totalReps += s.getRepsCompletedRight();
+                    }
+                    return s.getWeightKg().multiply(java.math.BigDecimal.valueOf(totalReps)).doubleValue();
+                })
                 .sum();
         double volumeLastWeek = setsLastWeek.stream()
                 .filter(s -> s.getWeightKg() != null && s.getRepsCompleted() != null)
-                .mapToDouble(s -> s.getWeightKg().multiply(java.math.BigDecimal.valueOf(s.getRepsCompleted())).doubleValue())
+                .mapToDouble(s -> {
+                    int totalReps = s.getRepsCompleted();
+                    if (s.getRepsCompletedRight() != null) {
+                        totalReps += s.getRepsCompletedRight();
+                    }
+                    return s.getWeightKg().multiply(java.math.BigDecimal.valueOf(totalReps)).doubleValue();
+                })
                 .sum();
         
         double volumePercentageChange = calculatePercentageChange(volumeLastWeek, volumeThisWeek);
