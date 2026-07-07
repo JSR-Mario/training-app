@@ -19,7 +19,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
       <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         
         <!-- Activity Calendar -->
-        <div class="md:col-span-12">
+        <div class="md:col-span-12 lg:col-span-9">
           @if (!isLoading() && summary()?.activityCalendar) {
             <app-activity-calendar [data]="summary()!.activityCalendar"></app-activity-calendar>
           } @else {
@@ -168,7 +168,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
         </div>
         <!-- Volume Progress Mini Chart Card -->
         <div 
-          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 flex flex-col h-40"
+          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 flex flex-col h-64"
           (click)="goToAnalytics()"
           (keyup.enter)="goToAnalytics()"
           tabindex="0"
@@ -181,8 +181,8 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </div>
-          <div class="pointer-events-none mt-2 flex-1 flex flex-col justify-center">
-            <app-progress-chart [miniMode]="true" class="w-full"></app-progress-chart>
+          <div class="pointer-events-none mt-2 flex-1 flex flex-col justify-center h-full min-h-0">
+            <app-progress-chart [miniMode]="true" class="w-full h-full block"></app-progress-chart>
           </div>
         </div>
 
