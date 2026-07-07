@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, signal } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, signal, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivitySummary } from '../../../../core/types/training.types';
 
@@ -6,6 +6,11 @@ interface CalendarCell {
   date: string;
   intensity: number;
   label: string;
+}
+
+interface MonthLabel {
+  label: string;
+  colIndex: number;
 }
 
 @Component({
@@ -16,31 +21,42 @@ interface CalendarCell {
     <div class="glass-card p-6 w-full overflow-x-auto">
       <h3 class="text-base font-medium text-gray-400 mb-4">Activity (Last 365 Days)</h3>
       
-      <div class="flex">
-        <!-- Day labels (Mon, Wed, Fri) -->
-        <div class="flex flex-col text-xs text-gray-500 mr-2 justify-between" style="height: 112px; padding-top: 16px; padding-bottom: 16px;">
-          <span style="line-height: 14px;">Mon</span>
-          <span style="line-height: 14px;">Wed</span>
-          <span style="line-height: 14px;">Fri</span>
-        </div>
+      <div class="flex items-start w-full overflow-x-auto pb-2">
+        <div class="flex min-w-max">
+          <!-- Day labels (Mon, Wed, Fri) -->
+          <div class="flex flex-col text-xs text-gray-500 mr-2 justify-between" style="height: 112px; padding-top: 16px; padding-bottom: 16px; margin-top: 20px;">
+            <span style="line-height: 14px;">Mon</span>
+            <span style="line-height: 14px;">Wed</span>
+            <span style="line-height: 14px;">Fri</span>
+          </div>
 
-        <!-- Grid of weeks and days -->
-        <div class="flex gap-1" style="height: 112px;">
-          @for (week of weeks(); track $index) {
-            <div class="flex flex-col gap-1">
-              @for (day of week; track day?.date || $index) {
-                @if (day) {
-                  <div 
-                    class="w-3.5 h-3.5 rounded-sm transition-colors duration-200"
-                    [ngClass]="getColorClass(day.intensity)"
-                    [title]="day.label">
-                  </div>
-                } @else {
-                  <div class="w-3.5 h-3.5 rounded-sm bg-transparent"></div>
-                }
+          <div class="flex flex-col">
+            <!-- Month labels row -->
+            <div class="relative w-full h-4 mb-1 text-xs text-gray-500">
+              @for (month of monthLabels(); track $index) {
+                <span class="absolute" [style.left.px]="month.colIndex * 18">{{ month.label }}</span>
               }
             </div>
-          }
+
+            <!-- Grid of weeks and days -->
+            <div class="flex gap-1" style="height: 112px;">
+              @for (week of weeks(); track $index) {
+                <div class="flex flex-col gap-1">
+                  @for (day of week; track day?.date || $index) {
+                    @if (day) {
+                      <div 
+                        class="w-3.5 h-3.5 rounded-sm transition-colors duration-200"
+                        [ngClass]="getColorClass(day.intensity)"
+                        [title]="day.label">
+                      </div>
+                    } @else {
+                      <div class="w-3.5 h-3.5 rounded-sm bg-transparent"></div>
+                    }
+                  }
+                </div>
+              }
+            </div>
+          </div>
         </div>
       </div>
       
@@ -77,10 +93,31 @@ interface CalendarCell {
     }
   `]
 })
-export class ActivityCalendarComponent implements OnChanges {
+export class ActivityCalendarComponent implements OnChanges, OnInit {
   @Input() data: ActivitySummary[] = [];
 
   weeks = signal<(CalendarCell | null)[][]>([]);
+  monthLabels = signal<MonthLabel[]>([]);
+  isMobile = signal<boolean>(false);
+
+  ngOnInit() {
+    this.checkScreenSize();
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.checkScreenSize();
+  }
+
+  private checkScreenSize() {
+    const mobile = window.innerWidth < 768;
+    if (this.isMobile() !== mobile) {
+      this.isMobile.set(mobile);
+      if (this.data && this.data.length > 0) {
+        this.buildCalendar(this.data);
+      }
+    }
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['data'] && this.data) {
@@ -91,10 +128,11 @@ export class ActivityCalendarComponent implements OnChanges {
   private buildCalendar(data: ActivitySummary[]) {
     if (!data || data.length === 0) {
       this.weeks.set([]);
+      this.monthLabels.set([]);
       return;
     }
 
-    const result: (CalendarCell | null)[][] = [];
+    let result: (CalendarCell | null)[][] = [];
     let currentWeek: (CalendarCell | null)[] = new Array(7).fill(null);
 
     const parts = data[0].date.split('-');
@@ -127,7 +165,34 @@ export class ActivityCalendarComponent implements OnChanges {
       result.push(currentWeek);
     }
 
+    // Truncate to last 16 weeks if mobile
+    if (this.isMobile() && result.length > 16) {
+      result = result.slice(result.length - 16);
+    }
+
+    // Build month labels based on the final weeks array
+    const labels: MonthLabel[] = [];
+    let lastMonth = -1;
+
+    result.forEach((week, index) => {
+      // Find the first non-null day in this week to determine its month
+      const firstDayInWeek = week.find(d => d !== null);
+      if (firstDayInWeek) {
+        const p = firstDayInWeek.date.split('-');
+        const monthNum = parseInt(p[1]) - 1; // 0-indexed
+        
+        if (monthNum !== lastMonth) {
+          const dateObj = new Date(parseInt(p[0]), monthNum, parseInt(p[2]));
+          const monthName = dateObj.toLocaleDateString('en-US', { month: 'short' });
+          
+          labels.push({ label: monthName, colIndex: index });
+          lastMonth = monthNum;
+        }
+      }
+    });
+
     this.weeks.set(result);
+    this.monthLabels.set(labels);
   }
 
   getColorClass(intensity: number): string {
