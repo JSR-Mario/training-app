@@ -42,4 +42,20 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
         @Param("startDate") LocalDate startDate, 
         @Param("endDate") LocalDate endDate
     );
+
+    @Query(value = """
+        SELECT DISTINCT ON (e.id)
+            e.id AS exerciseId,
+            ws.weight_kg AS prWeight,
+            (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) AS prReps
+        FROM training.workout_sets ws
+        JOIN training.day_exercises de ON ws.day_exercise_id = de.id
+        JOIN training.exercises e ON de.exercise_id = e.id
+        JOIN training.workout_sessions sess ON ws.session_id = sess.id
+        WHERE sess.user_id = :userId
+          AND sess.completed_at IS NOT NULL
+          AND ws.weight_kg IS NOT NULL
+        ORDER BY e.id, (ws.weight_kg * (ws.reps_completed + COALESCE(ws.reps_completed_right, 0))) DESC
+        """, nativeQuery = true)
+    List<com.trainingapp.training.dto.ExercisePrProjection> findPersonalRecordsByUserId(@Param("userId") UUID userId);
 }

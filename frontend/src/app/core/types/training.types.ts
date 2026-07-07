@@ -51,6 +51,10 @@ export interface Exercise {
   isPublic: boolean;
   targets: ExerciseTarget[];
   averageRating?: number;
+  personalRecord?: {
+    weightKg: number;
+    reps: number;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -65,6 +69,7 @@ export interface DayExercise {
   sortOrder: number;
   isAmrap?: boolean;
   unilateral?: boolean;
+  isBodyweight?: boolean;
 }
 
 export interface DayTemplate {

@@ -41,6 +41,7 @@ class WorkoutSetServiceTest {
     private UUID dayExerciseId;
     private WorkoutSession session;
     private DayExercise dayExercise;
+    private com.trainingapp.training.domain.Exercise exercise;
 
     @BeforeEach
     void setUp() {
@@ -59,6 +60,11 @@ class WorkoutSetServiceTest {
         dayExercise = new DayExercise();
         ReflectionTestUtils.setField(dayExercise, "id", dayExerciseId);
         dayExercise.setDayTemplate(template);
+
+        exercise = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(exercise, "id", UUID.randomUUID());
+        exercise.setUnilateral(false);
+        dayExercise.setExercise(exercise);
     }
 
     @Test

@@ -56,7 +56,7 @@ public class WorkoutSetService {
         set.setDayExercise(dayExercise);
         set.setSetNumber(request.setNumber());
         set.setRepsCompleted(request.repsCompleted());
-        set.setRepsCompletedRight(request.repsCompletedRight());
+        set.setRepsCompletedRight(dayExercise.getExercise().isUnilateral() ? request.repsCompletedRight() : null);
         set.setWeightKg(request.weightKg());
 
 
@@ -100,7 +100,7 @@ public class WorkoutSetService {
         set.setDayExercise(dayExercise);
         set.setSetNumber(request.setNumber());
         set.setRepsCompleted(request.repsCompleted());
-        set.setRepsCompletedRight(request.repsCompletedRight());
+        set.setRepsCompletedRight(dayExercise.getExercise().isUnilateral() ? request.repsCompletedRight() : null);
         set.setWeightKg(request.weightKg());
         WorkoutSet saved = setRepository.save(set);
         List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(set.getSession().getId());

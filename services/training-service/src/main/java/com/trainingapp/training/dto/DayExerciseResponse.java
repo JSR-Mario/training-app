@@ -12,5 +12,6 @@ public record DayExerciseResponse(
         Integer repsMax,
         int sortOrder,
         boolean isAmrap,
-        boolean unilateral
+        boolean unilateral,
+        boolean isBodyweight
 ) {}
