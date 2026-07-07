@@ -185,7 +185,14 @@ import { FormsModule } from '@angular/forms';
             <div class="bg-slate-800/60 backdrop-blur border border-slate-700 rounded-xl p-5 flex flex-col h-full hover:border-indigo-500/50 hover:shadow-[0_0_15px_rgba(99,102,241,0.15)] transition-all duration-300 group">
               <div class="flex justify-between items-start mb-4">
                 <div>
-                  <h3 class="text-lg font-bold text-slate-100 group-hover:text-white transition-colors">{{ exercise.name }}</h3>
+                  <div class="flex items-center gap-3">
+                    <h3 class="text-lg font-bold text-slate-100 group-hover:text-white transition-colors">{{ exercise.name }}</h3>
+                    @if (exercise.personalRecord) {
+                      <span class="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-md border border-yellow-500/20 shadow-sm">
+                        PR: {{ exercise.personalRecord.weightKg }}kg x {{ exercise.personalRecord.reps }}
+                      </span>
+                    }
+                  </div>
                   <div class="flex flex-wrap gap-1.5 mt-2.5">
                     @if (exercise.equipmentBrand) {
                       <span class="px-2 py-0.5 text-[10px] font-semibold bg-slate-700 text-slate-300 rounded border border-slate-600">

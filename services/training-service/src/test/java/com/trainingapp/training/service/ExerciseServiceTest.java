@@ -35,6 +35,7 @@ class ExerciseServiceTest {
     @Mock private ExerciseRepository exerciseRepository;
     @Mock private ExerciseBodyPartTargetRepository targetRepository;
     @Mock private SessionExerciseRatingRepository ratingRepository;
+    @Mock private com.trainingapp.training.repository.WorkoutSetRepository setRepository;
     @InjectMocks private ExerciseService exerciseService;
 
     private UUID userId;
@@ -56,6 +57,7 @@ class ExerciseServiceTest {
     void findAll_returnsUserExercises() {
         when(exerciseRepository.findByUserIdOrIsPublic(userId)).thenReturn(List.of(sampleExercise));
         when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
+        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());
         List<ExerciseResponse> result = exerciseService.findAll(userId);
         assertThat(result).hasSize(1);
         assertThat(result.get(0).name()).isEqualTo("Bench Press");
@@ -78,6 +80,7 @@ class ExerciseServiceTest {
         when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
         when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
+        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());
         ExerciseResponse result = exerciseService.update(userId, exerciseId,
                 new ExerciseRequest("Incline Press", "Rogue", true, false, false, false));
         assertThat(sampleExercise.getName()).isEqualTo("Incline Press");
@@ -105,6 +108,7 @@ class ExerciseServiceTest {
         when(exerciseRepository.searchExercises(eq(userId), eq("bench"), any()))
                 .thenReturn(List.of(sampleExercise));
         when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
+        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());
         List<ExerciseResponse> result = exerciseService.search(userId, "bench");
         assertThat(result).hasSize(1);
         assertThat(result.get(0).name()).isEqualTo("Bench Press");

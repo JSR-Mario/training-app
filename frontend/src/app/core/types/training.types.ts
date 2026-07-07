@@ -51,6 +51,10 @@ export interface Exercise {
   isPublic: boolean;
   targets: ExerciseTarget[];
   averageRating?: number;
+  personalRecord?: {
+    weightKg: number;
+    reps: number;
+  };
   createdAt: string;
   updatedAt: string;
 }

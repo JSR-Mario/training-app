@@ -15,5 +15,6 @@ public record ExerciseResponse(
         boolean spinalLoading,
         Instant createdAt,
         List<ExerciseTargetResponse> targets,
-        Double averageRating
+        Double averageRating,
+        ExercisePrResponse personalRecord
 ) {}
