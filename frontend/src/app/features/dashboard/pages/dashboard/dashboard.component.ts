@@ -19,7 +19,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
       <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         
         <!-- Activity Calendar -->
-        <div class="md:col-span-12">
+        <div class="md:col-span-12 lg:col-span-9">
           @if (!isLoading() && summary()?.activityCalendar) {
             <app-activity-calendar [data]="summary()!.activityCalendar"></app-activity-calendar>
           } @else {

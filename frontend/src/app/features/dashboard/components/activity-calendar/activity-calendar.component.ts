@@ -22,7 +22,7 @@ interface MonthLabel {
       <h3 class="text-base font-medium text-gray-400 mb-4">Activity (Last 365 Days)</h3>
       
       <div class="flex items-start w-full overflow-x-auto pb-2">
-        <div class="flex md:ml-auto min-w-max">
+        <div class="flex min-w-max">
           <!-- Day labels (Mon, Wed, Fri) -->
           <div class="flex flex-col text-xs text-gray-500 mr-2 justify-between" style="height: 112px; padding-top: 16px; padding-bottom: 16px; margin-top: 20px;">
             <span style="line-height: 14px;">Mon</span>
