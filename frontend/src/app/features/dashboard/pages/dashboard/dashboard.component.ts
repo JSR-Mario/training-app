@@ -168,7 +168,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
         </div>
         <!-- Volume Progress Mini Chart Card -->
         <div 
-          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 flex flex-col h-40"
+          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 flex flex-col h-64"
           (click)="goToAnalytics()"
           (keyup.enter)="goToAnalytics()"
           tabindex="0"

@@ -21,39 +21,41 @@ interface MonthLabel {
     <div class="glass-card p-6 w-full overflow-x-auto">
       <h3 class="text-base font-medium text-gray-400 mb-4">Activity (Last 365 Days)</h3>
       
-      <div class="flex flex-col w-full">
-        <!-- Month labels row -->
-        <div class="relative w-full h-4 mb-1 text-xs text-gray-500 ml-8">
-          @for (month of monthLabels(); track $index) {
-            <span class="absolute" [style.left.px]="month.colIndex * 18">{{ month.label }}</span>
-          }
-        </div>
-        
-        <div class="flex items-start w-full">
+      <div class="flex items-start w-full overflow-x-auto pb-2">
+        <div class="flex md:ml-auto min-w-max">
           <!-- Day labels (Mon, Wed, Fri) -->
-          <div class="flex flex-col text-xs text-gray-500 mr-2 justify-between" style="height: 112px; padding-top: 16px; padding-bottom: 16px;">
+          <div class="flex flex-col text-xs text-gray-500 mr-2 justify-between" style="height: 112px; padding-top: 16px; padding-bottom: 16px; margin-top: 20px;">
             <span style="line-height: 14px;">Mon</span>
             <span style="line-height: 14px;">Wed</span>
             <span style="line-height: 14px;">Fri</span>
           </div>
 
-          <!-- Grid of weeks and days aligned to the right on desktop -->
-          <div class="flex gap-1 md:ml-auto" style="height: 112px;">
-            @for (week of weeks(); track $index) {
-              <div class="flex flex-col gap-1">
-                @for (day of week; track day?.date || $index) {
-                  @if (day) {
-                    <div 
-                      class="w-3.5 h-3.5 rounded-sm transition-colors duration-200"
-                      [ngClass]="getColorClass(day.intensity)"
-                      [title]="day.label">
-                    </div>
-                  } @else {
-                    <div class="w-3.5 h-3.5 rounded-sm bg-transparent"></div>
+          <div class="flex flex-col">
+            <!-- Month labels row -->
+            <div class="relative w-full h-4 mb-1 text-xs text-gray-500">
+              @for (month of monthLabels(); track $index) {
+                <span class="absolute" [style.left.px]="month.colIndex * 18">{{ month.label }}</span>
+              }
+            </div>
+
+            <!-- Grid of weeks and days -->
+            <div class="flex gap-1" style="height: 112px;">
+              @for (week of weeks(); track $index) {
+                <div class="flex flex-col gap-1">
+                  @for (day of week; track day?.date || $index) {
+                    @if (day) {
+                      <div 
+                        class="w-3.5 h-3.5 rounded-sm transition-colors duration-200"
+                        [ngClass]="getColorClass(day.intensity)"
+                        [title]="day.label">
+                      </div>
+                    } @else {
+                      <div class="w-3.5 h-3.5 rounded-sm bg-transparent"></div>
+                    }
                   }
-                }
-              </div>
-            }
+                </div>
+              }
+            </div>
           </div>
         </div>
       </div>
