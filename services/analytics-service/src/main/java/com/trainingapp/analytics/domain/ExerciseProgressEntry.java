@@ -35,6 +35,9 @@ public class ExerciseProgressEntry {
     @Column(name = "day_template_id")
     private UUID dayTemplateId;
 
+    @Column(name = "session_id")
+    private UUID sessionId;
+
     @Column(name = "max_weight_kg", nullable = false, precision = 6, scale = 2)
     private BigDecimal maxWeightKg = BigDecimal.ZERO;
 
@@ -62,4 +65,6 @@ public class ExerciseProgressEntry {
     public void setWeekNumber(Integer weekNumber) { this.weekNumber = weekNumber; }
     public UUID getDayTemplateId() { return dayTemplateId; }
     public void setDayTemplateId(UUID dayTemplateId) { this.dayTemplateId = dayTemplateId; }
+    public UUID getSessionId() { return sessionId; }
+    public void setSessionId(UUID sessionId) { this.sessionId = sessionId; }
 }
