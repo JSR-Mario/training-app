@@ -146,6 +146,30 @@ export interface WorkoutSetResponse {
   performanceStatus?: 'GOOD' | 'WARNING' | 'CRITICAL';
 }
 
+export interface ActivitySummary {
+  date: string;
+  intensity: number;
+}
+
+export interface DashboardSummaryResponse {
+  cardio: {
+    sessionsThisWeek: number;
+    minutesThisWeek: number;
+    minutesPercentageChange: number;
+  };
+  weights: {
+    sessionsThisWeek: number;
+    volumeThisWeekKg: number;
+    volumePercentageChange: number;
+  };
+  bodyWeight: {
+    currentWeekAvgKg: number;
+    percentageChange: number;
+    absoluteChangeKg: number;
+  };
+  activityCalendar: ActivitySummary[];
+}
+
 export interface ExerciseSuggestionResponse {
   dayExerciseId: string;
   exerciseId: string;

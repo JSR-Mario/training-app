@@ -5,13 +5,15 @@ public class DashboardSummaryResponse {
     private CardioSummary cardio;
     private WeightsSummary weights;
     private BodyWeightSummary bodyWeight;
+    private java.util.List<ActivitySummary> activityCalendar;
 
     public DashboardSummaryResponse() {}
 
-    public DashboardSummaryResponse(CardioSummary cardio, WeightsSummary weights, BodyWeightSummary bodyWeight) {
+    public DashboardSummaryResponse(CardioSummary cardio, WeightsSummary weights, BodyWeightSummary bodyWeight, java.util.List<ActivitySummary> activityCalendar) {
         this.cardio = cardio;
         this.weights = weights;
         this.bodyWeight = bodyWeight;
+        this.activityCalendar = activityCalendar;
     }
 
     public CardioSummary getCardio() { return cardio; }
@@ -22,6 +24,27 @@ public class DashboardSummaryResponse {
 
     public BodyWeightSummary getBodyWeight() { return bodyWeight; }
     public void setBodyWeight(BodyWeightSummary bodyWeight) { this.bodyWeight = bodyWeight; }
+
+    public java.util.List<ActivitySummary> getActivityCalendar() { return activityCalendar; }
+    public void setActivityCalendar(java.util.List<ActivitySummary> activityCalendar) { this.activityCalendar = activityCalendar; }
+
+    public static class ActivitySummary {
+        private String date;
+        private int intensity;
+
+        public ActivitySummary() {}
+
+        public ActivitySummary(String date, int intensity) {
+            this.date = date;
+            this.intensity = intensity;
+        }
+
+        public String getDate() { return date; }
+        public void setDate(String date) { this.date = date; }
+
+        public int getIntensity() { return intensity; }
+        public void setIntensity(int intensity) { this.intensity = intensity; }
+    }
 
     public static class CardioSummary {
         private int sessionsThisWeek;
@@ -72,12 +95,14 @@ public class DashboardSummaryResponse {
     public static class BodyWeightSummary {
         private double currentWeekAvgKg;
         private double percentageChange;
+        private double absoluteChangeKg;
 
         public BodyWeightSummary() {}
 
-        public BodyWeightSummary(double currentWeekAvgKg, double percentageChange) {
+        public BodyWeightSummary(double currentWeekAvgKg, double percentageChange, double absoluteChangeKg) {
             this.currentWeekAvgKg = currentWeekAvgKg;
             this.percentageChange = percentageChange;
+            this.absoluteChangeKg = absoluteChangeKg;
         }
 
         public double getCurrentWeekAvgKg() { return currentWeekAvgKg; }
@@ -85,5 +110,8 @@ public class DashboardSummaryResponse {
 
         public double getPercentageChange() { return percentageChange; }
         public void setPercentageChange(double percentageChange) { this.percentageChange = percentageChange; }
+
+        public double getAbsoluteChangeKg() { return absoluteChangeKg; }
+        public void setAbsoluteChangeKg(double absoluteChangeKg) { this.absoluteChangeKg = absoluteChangeKg; }
     }
 }
