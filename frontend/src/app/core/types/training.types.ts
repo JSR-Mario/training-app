@@ -65,6 +65,7 @@ export interface DayExercise {
   sortOrder: number;
   isAmrap?: boolean;
   unilateral?: boolean;
+  isBodyweight?: boolean;
 }
 
 export interface DayTemplate {
