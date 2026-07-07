@@ -463,7 +463,7 @@ export class ActiveWorkoutComponent implements OnInit {
         const lastSet = setsForEx[setsForEx.length - 1];
         defaultWeight = lastSet.weightKg?.toString() || '';
         defaultReps = lastSet.repsCompleted || '';
-        defaultRepsRight = lastSet.repsCompletedRight || lastSet.repsCompleted || '';
+        defaultRepsRight = lastSet.repsCompletedRight || '';
       }
 
       this.forms.set(ex.id, this.fb.group({
@@ -636,7 +636,7 @@ export class ActiveWorkoutComponent implements OnInit {
       dayExerciseId: ex.id,
       setNumber: setNumber,
       repsCompleted: form.value.repsCompleted,
-      repsCompletedRight: form.value.repsCompletedRight,
+      repsCompletedRight: ex.unilateral ? form.value.repsCompletedRight : null,
       weightKg: form.value.weightKg
     };
 
