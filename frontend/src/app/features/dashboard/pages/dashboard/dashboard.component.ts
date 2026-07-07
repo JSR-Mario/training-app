@@ -181,8 +181,8 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </div>
-          <div class="pointer-events-none mt-2 flex-1 flex flex-col justify-center">
-            <app-progress-chart [miniMode]="true" class="w-full"></app-progress-chart>
+          <div class="pointer-events-none mt-2 flex-1 flex flex-col justify-center h-full min-h-0">
+            <app-progress-chart [miniMode]="true" class="w-full h-full block"></app-progress-chart>
           </div>
         </div>
 

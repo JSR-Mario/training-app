@@ -111,7 +111,7 @@
   </div>
   }
 
-  <div class="relative w-full mt-4" [ngClass]="miniMode() ? 'aspect-[4/3] min-h-[180px]' : 'h-[500px]'">
+  <div class="relative w-full mt-4" [ngClass]="miniMode() ? 'h-full min-h-[100px]' : 'h-[500px]'">
     <!-- Loading overlay -->
     @if (isLoading()) {
       <div class="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm rounded-xl transition-all">
