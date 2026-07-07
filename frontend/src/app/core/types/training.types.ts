@@ -51,6 +51,10 @@ export interface Exercise {
   isPublic: boolean;
   targets: ExerciseTarget[];
   averageRating?: number;
+  personalRecord?: {
+    weightKg: number;
+    reps: number;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -65,6 +69,7 @@ export interface DayExercise {
   sortOrder: number;
   isAmrap?: boolean;
   unilateral?: boolean;
+  isBodyweight?: boolean;
 }
 
 export interface DayTemplate {
@@ -139,6 +144,30 @@ export interface WorkoutSetResponse {
   weightKg?: number;
   loggedAt: string;
   performanceStatus?: 'GOOD' | 'WARNING' | 'CRITICAL';
+}
+
+export interface ActivitySummary {
+  date: string;
+  intensity: number;
+}
+
+export interface DashboardSummaryResponse {
+  cardio: {
+    sessionsThisWeek: number;
+    minutesThisWeek: number;
+    minutesPercentageChange: number;
+  };
+  weights: {
+    sessionsThisWeek: number;
+    volumeThisWeekKg: number;
+    volumePercentageChange: number;
+  };
+  bodyWeight: {
+    currentWeekAvgKg: number;
+    percentageChange: number;
+    absoluteChangeKg: number;
+  };
+  activityCalendar: ActivitySummary[];
 }
 
 export interface ExerciseSuggestionResponse {

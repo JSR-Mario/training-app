@@ -16,6 +16,7 @@ import {
 } from '../../../../core/types/training.types';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/components/exercise-form/exercise-form.component';
+import { BodyWeightService } from '../../../analytics/services/body-weight.service';
 
 @Component({
   standalone: true,
@@ -346,6 +347,7 @@ export class ActiveWorkoutComponent implements OnInit {
   private programService = inject(ProgramService);
   private fb = inject(FormBuilder);
   private exerciseService = inject(ExerciseService);
+  private bodyWeightService = inject(BodyWeightService);
 
   sessionId = signal<string | null>(null);
   session = signal<WorkoutSessionResponse | null>(null);
@@ -353,6 +355,7 @@ export class ActiveWorkoutComponent implements OnInit {
   existingExerciseIds = computed(() => this.exercises().map(e => e.exerciseId));
   loggedSets = signal<WorkoutSetResponse[]>([]);
   suggestions = signal<Map<string, ExerciseSuggestionResponse>>(new Map());
+  latestBodyWeight = signal<number | null>(null);
   isLoading = signal<boolean>(true);
   isLoggingSet = signal<boolean>(false);
   isCompleting = signal<boolean>(false);
@@ -415,7 +418,8 @@ export class ActiveWorkoutComponent implements OnInit {
         forkJoin({
           sets: this.workoutService.getSets(id),
           exercises: this.programService.getDayExercises(sess.dayTemplateId),
-          suggestions: this.workoutService.getSuggestions(id).pipe(catchError(() => of([])))
+          suggestions: this.workoutService.getSuggestions(id).pipe(catchError(() => of([]))),
+          latestBW: this.bodyWeightService.getWeightEntries('2000-01-01', new Date().toISOString().split('T')[0]).pipe(catchError(() => of([])))
         }).subscribe({
           next: (res) => {
             this.loggedSets.set(res.sets);
@@ -423,6 +427,11 @@ export class ActiveWorkoutComponent implements OnInit {
             const suggMap = new Map<string, ExerciseSuggestionResponse>();
             res.suggestions.forEach(s => suggMap.set(s.dayExerciseId, s));
             this.suggestions.set(suggMap);
+            
+            if (res.latestBW && res.latestBW.length > 0) {
+              const sortedBW = [...res.latestBW].sort((a, b) => a.date.localeCompare(b.date));
+              this.latestBodyWeight.set(sortedBW[sortedBW.length - 1].weightKg);
+            }
             
             const sorted = res.exercises.sort((a, b) => a.sortOrder - b.sortOrder);
             this.exercises.set(sorted);
@@ -463,7 +472,9 @@ export class ActiveWorkoutComponent implements OnInit {
         const lastSet = setsForEx[setsForEx.length - 1];
         defaultWeight = lastSet.weightKg?.toString() || '';
         defaultReps = lastSet.repsCompleted || '';
-        defaultRepsRight = lastSet.repsCompletedRight || lastSet.repsCompleted || '';
+        defaultRepsRight = lastSet.repsCompletedRight || '';
+      } else if (ex.isBodyweight && this.latestBodyWeight() !== null) {
+        defaultWeight = this.latestBodyWeight()!.toString();
       }
 
       this.forms.set(ex.id, this.fb.group({
@@ -636,7 +647,7 @@ export class ActiveWorkoutComponent implements OnInit {
       dayExerciseId: ex.id,
       setNumber: setNumber,
       repsCompleted: form.value.repsCompleted,
-      repsCompletedRight: form.value.repsCompletedRight,
+      repsCompletedRight: ex.unilateral ? form.value.repsCompletedRight : null,
       weightKg: form.value.weightKg
     };
 

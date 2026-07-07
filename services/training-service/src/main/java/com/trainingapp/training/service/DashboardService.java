@@ -38,11 +38,11 @@ public class DashboardService {
 
     public DashboardSummaryResponse getSummary(UUID userId) {
         LocalDate today = LocalDate.now(ZoneId.of("UTC"));
-        LocalDate startOfThisWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        LocalDate endOfThisWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        LocalDate endOfThisWeek = today;
+        LocalDate startOfThisWeek = today.minusDays(6);
         
-        LocalDate startOfLastWeek = startOfThisWeek.minusWeeks(1);
-        LocalDate endOfLastWeek = endOfThisWeek.minusWeeks(1);
+        LocalDate endOfLastWeek = today.minusDays(7);
+        LocalDate startOfLastWeek = today.minusDays(13);
 
         // Cardio
         List<CardioLog> cardioThisWeek = cardioLogRepository.findByUserIdAndPerformedOnBetween(userId, startOfThisWeek, endOfThisWeek);
@@ -64,11 +64,23 @@ public class DashboardService {
         int weightSessionsThisWeek = sessionsThisWeek.size();
         double volumeThisWeek = setsThisWeek.stream()
                 .filter(s -> s.getWeightKg() != null && s.getRepsCompleted() != null)
-                .mapToDouble(s -> s.getWeightKg().multiply(java.math.BigDecimal.valueOf(s.getRepsCompleted())).doubleValue())
+                .mapToDouble(s -> {
+                    int totalReps = s.getRepsCompleted();
+                    if (s.getRepsCompletedRight() != null) {
+                        totalReps += s.getRepsCompletedRight();
+                    }
+                    return s.getWeightKg().multiply(java.math.BigDecimal.valueOf(totalReps)).doubleValue();
+                })
                 .sum();
         double volumeLastWeek = setsLastWeek.stream()
                 .filter(s -> s.getWeightKg() != null && s.getRepsCompleted() != null)
-                .mapToDouble(s -> s.getWeightKg().multiply(java.math.BigDecimal.valueOf(s.getRepsCompleted())).doubleValue())
+                .mapToDouble(s -> {
+                    int totalReps = s.getRepsCompleted();
+                    if (s.getRepsCompletedRight() != null) {
+                        totalReps += s.getRepsCompletedRight();
+                    }
+                    return s.getWeightKg().multiply(java.math.BigDecimal.valueOf(totalReps)).doubleValue();
+                })
                 .sum();
         
         double volumePercentageChange = calculatePercentageChange(volumeLastWeek, volumeThisWeek);
@@ -83,11 +95,46 @@ public class DashboardService {
         double avgWeightThisWeek = weightsThisWeek.stream().mapToDouble(e -> e.getWeightKg().doubleValue()).average().orElse(0.0);
         double avgWeightLastWeek = weightsLastWeek.stream().mapToDouble(e -> e.getWeightKg().doubleValue()).average().orElse(0.0);
         double bodyWeightPercentageChange = calculatePercentageChange(avgWeightLastWeek, avgWeightThisWeek);
+        
+        double absoluteChangeKg = 0.0;
+        if (avgWeightLastWeek > 0 && avgWeightThisWeek > 0) {
+            absoluteChangeKg = avgWeightThisWeek - avgWeightLastWeek;
+        }
 
         DashboardSummaryResponse.BodyWeightSummary bodyWeightSummary = new DashboardSummaryResponse.BodyWeightSummary(
-                avgWeightThisWeek, bodyWeightPercentageChange);
+                avgWeightThisWeek, bodyWeightPercentageChange, absoluteChangeKg);
 
-        return new DashboardSummaryResponse(cardioSummary, weightsSummary, bodyWeightSummary);
+        // Activity Calendar (Last 365 days)
+        LocalDate oneYearAgo = today.minusDays(364);
+        List<WorkoutSession> yearSessions = sessionRepository.findByUserIdAndPerformedOnBetween(userId, oneYearAgo, today);
+        List<CardioLog> yearCardio = cardioLogRepository.findByUserIdAndPerformedOnBetween(userId, oneYearAgo, today);
+        List<BodyWeightEntry> yearWeights = bodyWeightRepository.findAllByUserIdAndDateBetweenOrderByDateAsc(userId, oneYearAgo, today);
+
+        java.util.Map<LocalDate, Boolean> hasWorkout = new java.util.HashMap<>();
+        for (WorkoutSession s : yearSessions) {
+            hasWorkout.put(s.getPerformedOn(), true);
+        }
+
+        java.util.Map<LocalDate, Boolean> hasCardio = new java.util.HashMap<>();
+        for (CardioLog c : yearCardio) {
+            hasCardio.put(c.getPerformedOn(), true);
+        }
+
+        java.util.Map<LocalDate, Boolean> hasWeight = new java.util.HashMap<>();
+        for (BodyWeightEntry b : yearWeights) {
+            hasWeight.put(b.getDate(), true);
+        }
+
+        List<DashboardSummaryResponse.ActivitySummary> activityCalendar = new java.util.ArrayList<>();
+        for (LocalDate d = oneYearAgo; !d.isAfter(today); d = d.plusDays(1)) {
+            int intensity = 0;
+            if (hasWorkout.getOrDefault(d, false)) intensity++;
+            if (hasWeight.getOrDefault(d, false)) intensity++;
+            if (hasCardio.getOrDefault(d, false)) intensity++;
+            activityCalendar.add(new DashboardSummaryResponse.ActivitySummary(d.toString(), intensity));
+        }
+
+        return new DashboardSummaryResponse(cardioSummary, weightsSummary, bodyWeightSummary, activityCalendar);
     }
 
     private double calculatePercentageChange(double oldVal, double newVal) {

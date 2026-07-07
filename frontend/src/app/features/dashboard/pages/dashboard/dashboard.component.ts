@@ -2,12 +2,13 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ProgressChartComponent } from '../../../analytics/components/progress-chart/progress-chart.component';
+import { ActivityCalendarComponent } from '../../components/activity-calendar/activity-calendar.component';
 import { DashboardService, DashboardSummaryResponse } from '../../services/dashboard.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ProgressChartComponent],
+  imports: [CommonModule, ProgressChartComponent, ActivityCalendarComponent],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -17,6 +18,17 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
       <!-- CSS Grid for cards -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         
+        <!-- Activity Calendar -->
+        <div class="md:col-span-12">
+          @if (!isLoading() && summary()?.activityCalendar) {
+            <app-activity-calendar [data]="summary()!.activityCalendar"></app-activity-calendar>
+          } @else {
+            <div class="glass-card p-6 w-full h-48 animate-pulse flex items-center justify-center">
+              <span class="text-gray-500">Loading calendar...</span>
+            </div>
+          }
+        </div>
+
         <!-- Weights Sessions This Week -->
         <div 
           class="glass-card p-6 flex flex-col justify-between md:col-span-6 lg:col-span-3 hover:bg-gray-800/80 cursor-pointer transition-colors"
@@ -140,14 +152,14 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                     </svg>
-                    {{ math.abs(summary()?.bodyWeight?.percentageChange || 0) | number:'1.0-1' }}%
+                    {{ math.abs(summary()?.bodyWeight?.absoluteChangeKg || 0) | number:'1.0-1' }}kg ({{ math.abs(summary()?.bodyWeight?.percentageChange || 0) | number:'1.0-1' }}%)
                   </span>
                 } @else {
                   <span class="text-red-400 flex items-center bg-red-400/10 px-1.5 py-0.5 rounded text-xs font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                     </svg>
-                    {{ summary()?.bodyWeight?.percentageChange | number:'1.0-1' }}%
+                    +{{ math.abs(summary()?.bodyWeight?.absoluteChangeKg || 0) | number:'1.0-1' }}kg ({{ summary()?.bodyWeight?.percentageChange | number:'1.0-1' }}%)
                   </span>
                 }
               </div>
@@ -156,7 +168,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
         </div>
         <!-- Volume Progress Mini Chart Card -->
         <div 
-          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 lg:col-span-6 flex flex-col"
+          class="glass-card hover:bg-gray-800/80 cursor-pointer transition-colors p-4 md:col-span-12 flex flex-col h-40"
           (click)="goToAnalytics()"
           (keyup.enter)="goToAnalytics()"
           tabindex="0"

@@ -125,7 +125,8 @@ public class DayExerciseService {
                 de.getRepsMax(),
                 de.getSortOrder(),
                 de.isAmrap(),
-                de.getExercise().isUnilateral()
+                de.getExercise().isUnilateral(),
+                de.getExercise().isBodyweight()
         );
     }
 }
