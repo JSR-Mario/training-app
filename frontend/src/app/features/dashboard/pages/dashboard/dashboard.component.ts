@@ -15,8 +15,19 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
         <h2 class="text-2xl font-semibold text-white">Dashboard</h2>
       </div>
       
+      <!-- Activity Calendar -->
+      <div class="w-full mb-6 mt-4">
+        @if (!isLoading() && summary()?.activityCalendar) {
+          <app-activity-calendar [data]="summary()!.activityCalendar"></app-activity-calendar>
+        } @else {
+          <div class="glass-card p-6 w-full h-48 animate-pulse flex items-center justify-center">
+            <span class="text-gray-500">Loading calendar...</span>
+          </div>
+        }
+      </div>
+
       <!-- 4 Stat Cards Grid -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 items-start mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start mb-6">
         
         <!-- Streak Card -->
         <div class="glass-card p-6 flex flex-col justify-between col-span-1">
@@ -188,16 +199,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
 
       </div>
 
-      <!-- Activity Calendar -->
-      <div class="w-full">
-        @if (!isLoading() && summary()?.activityCalendar) {
-          <app-activity-calendar [data]="summary()!.activityCalendar"></app-activity-calendar>
-        } @else {
-          <div class="glass-card p-6 w-full h-48 animate-pulse flex items-center justify-center">
-            <span class="text-gray-500">Loading calendar...</span>
-          </div>
-        }
-      </div>
+
 
       <!-- Volume Progress Mini Chart Card -->
       <div class="w-full">
