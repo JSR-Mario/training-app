@@ -28,11 +28,19 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div></div>
-        @if (session()?.completedAt) {
-          <div class="px-3 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
-            Completed
-          </div>
-        }
+        <div class="flex items-center gap-3">
+          @if (session()?.completedAt) {
+            <div class="px-3 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
+              Completed
+            </div>
+          } @else {
+            <button (click)="cancelWorkout()" class="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-full transition-colors" title="Cancel Workout">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          }
+        </div>
       </div>
     
       @if (isLoading()) {
@@ -46,21 +54,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
     
       @if (!isLoading() && session()) {
         <div>
-          <!-- Global Progress Bar -->
-          <div class="mb-4">
-            <div class="flex justify-between text-xs text-gray-400 font-medium mb-1">
-              <span>Workout Progress</span>
-              <span>{{ getTotalLoggedSets() }} / {{ getTotalExpectedSets() }} Sets</span>
-            </div>
-            <div class="flex gap-1 h-1.5 w-full mt-1 mb-6">
-              @for (s of [].constructor(getTotalExpectedSets()); track $index; let idx = $index) {
-                <div class="flex-1 rounded-full overflow-hidden bg-gray-800">
-                  <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
-                       [style.width.%]="getTotalLoggedSets() > idx ? 100 : 0"></div>
-                </div>
-              }
-            </div>
-          </div>
+
           <h1 class="text-3xl font-bold text-white mb-1">{{ session()?.dayTemplateName }}</h1>
           <p class="text-gray-400 text-sm mb-6">Week {{ session()?.weekNumber }} &bull; {{ session()?.performedOn | date:'mediumDate' }}</p>
           <!-- Exercises List -->
@@ -315,6 +309,18 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
       <!-- Sticky Bottom Action Bar -->
       @if (!isLoading() && session()) {
         <div class="sticky bottom-16 md:bottom-0 p-4 mt-8 bg-gray-900/90 backdrop-blur-md border border-gray-800 rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40">
+          <!-- Global Progress Bar -->
+          <div class="mb-4">
+            <div class="flex justify-between text-xs text-gray-400 font-medium mb-1 px-1">
+              <span>Workout Progress</span>
+              <span>{{ getTotalLoggedSets() }} / {{ getTotalExpectedSets() }} Sets</span>
+            </div>
+            <div class="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden mt-1">
+              <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
+                   [style.width.%]="getGlobalProgress()"></div>
+            </div>
+          </div>
+          
           <div class="flex gap-4">
             @if (!session()?.completedAt) {
               <button
@@ -714,6 +720,23 @@ export class ActiveWorkoutComponent implements OnInit {
           console.error('Error completing session', err);
           this.isCompleting.set(false);
           alert('Failed to complete session.');
+        }
+      });
+    }
+  }
+
+  cancelWorkout() {
+    const id = this.sessionId();
+    if (!id) return;
+
+    if (confirm('Are you sure you want to cancel and delete this workout session?')) {
+      this.workoutService.deleteSession(id).subscribe({
+        next: () => {
+          this.router.navigate(['/workout']);
+        },
+        error: (err) => {
+          console.error('Error canceling session', err);
+          alert('Failed to cancel session.');
         }
       });
     }
