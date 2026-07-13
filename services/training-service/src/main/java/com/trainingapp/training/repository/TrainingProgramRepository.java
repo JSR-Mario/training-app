@@ -14,6 +14,7 @@ import java.util.UUID;
 public interface TrainingProgramRepository extends JpaRepository<TrainingProgram, UUID> {
     List<TrainingProgram> findByUserId(UUID userId);
     Optional<TrainingProgram> findByIdAndUserId(UUID id, UUID userId);
+    Optional<TrainingProgram> findByUserIdAndIsActiveTrue(UUID userId);
 
     @Modifying
     @Query("UPDATE TrainingProgram p SET p.isActive = false WHERE p.userId = :userId AND p.id != :excludeId")

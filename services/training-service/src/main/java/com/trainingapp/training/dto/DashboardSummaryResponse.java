@@ -1,5 +1,7 @@
 package com.trainingapp.training.dto;
 
+import com.trainingapp.training.domain.ProgramGoal;
+
 public class DashboardSummaryResponse {
 
     private CardioSummary cardio;
@@ -8,18 +10,21 @@ public class DashboardSummaryResponse {
     private java.util.List<ActivitySummary> activityCalendar;
     private StreakSummary streak;
     private ExperienceSummary experience;
+    private ProgramGoal activeGoal;
 
     public DashboardSummaryResponse() {}
 
     public DashboardSummaryResponse(CardioSummary cardio, WeightsSummary weights, BodyWeightSummary bodyWeight,
                                      java.util.List<ActivitySummary> activityCalendar,
-                                     StreakSummary streak, ExperienceSummary experience) {
+                                     StreakSummary streak, ExperienceSummary experience,
+                                     ProgramGoal activeGoal) {
         this.cardio = cardio;
         this.weights = weights;
         this.bodyWeight = bodyWeight;
         this.activityCalendar = activityCalendar;
         this.streak = streak;
         this.experience = experience;
+        this.activeGoal = activeGoal;
     }
 
     public CardioSummary getCardio() { return cardio; }
@@ -38,7 +43,17 @@ public class DashboardSummaryResponse {
     public void setStreak(StreakSummary streak) { this.streak = streak; }
 
     public ExperienceSummary getExperience() { return experience; }
-    public void setExperience(ExperienceSummary experience) { this.experience = experience; }
+    public void setExperience(ExperienceSummary experience) {
+        this.experience = experience;
+    }
+
+    public ProgramGoal getActiveGoal() {
+        return activeGoal;
+    }
+
+    public void setActiveGoal(ProgramGoal activeGoal) {
+        this.activeGoal = activeGoal;
+    }
 
     public static class ActivitySummary {
         private String date;

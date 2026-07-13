@@ -1,6 +1,7 @@
 package com.trainingapp.training.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.trainingapp.training.domain.ProgramGoal;
 import com.trainingapp.training.dto.ProgramRequest;
 import com.trainingapp.training.dto.ProgramResponse;
 import com.trainingapp.training.service.ProgramService;
@@ -55,8 +56,8 @@ class ProgramControllerTest {
     @Test
     void createProgram_Success() throws Exception {
         UUID userId = testUserId;
-        ProgramRequest req = new ProgramRequest("Hypertrophy", 8, LocalDate.now(), false, 1);
-        ProgramResponse resp = new ProgramResponse(UUID.randomUUID(), "Hypertrophy", 8, LocalDate.now(), false, 1, java.time.Instant.now());
+        ProgramRequest req = new ProgramRequest("Hypertrophy", 8, LocalDate.now(), false, 1, ProgramGoal.MAINTENANCE);
+        ProgramResponse resp = new ProgramResponse(UUID.randomUUID(), "Hypertrophy", 8, LocalDate.now(), false, 1, java.time.Instant.now(), ProgramGoal.MAINTENANCE);
 
         Mockito.when(programService.create(eq(userId), any())).thenReturn(resp);
 

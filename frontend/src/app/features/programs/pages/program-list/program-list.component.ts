@@ -59,6 +59,18 @@ import { TrainingProgram } from '../../../../core/types/training.types';
                 class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
                 >
             </div>
+            <div>
+              <label for="goalInput" class="block text-sm font-medium text-gray-300 mb-1">Goal</label>
+              <select
+                id="goalInput"
+                formControlName="goal"
+                class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
+              >
+                <option value="MAINTENANCE">Maintenance</option>
+                <option value="CUT">Cut (Lose Weight)</option>
+                <option value="BULK">Bulk (Gain Weight)</option>
+              </select>
+            </div>
             <div class="flex justify-end gap-3 pt-4 border-t border-gray-800">
               <button
                 type="button"
@@ -170,7 +182,8 @@ export class ProgramListComponent implements OnInit {
 
   form: FormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
-    durationWeeks: [12, [Validators.required, Validators.min(1), Validators.max(52)]]
+    durationWeeks: [12, [Validators.required, Validators.min(1), Validators.max(52)]],
+    goal: ['MAINTENANCE', Validators.required]
   });
 
   ngOnInit() {
@@ -192,7 +205,7 @@ export class ProgramListComponent implements OnInit {
   }
 
   openForm() {
-    this.form.reset({ durationWeeks: 12 });
+    this.form.reset({ durationWeeks: 12, goal: 'MAINTENANCE' });
     this.showForm.set(true);
   }
 
@@ -203,8 +216,8 @@ export class ProgramListComponent implements OnInit {
   onSubmit() {
     if (this.form.valid) {
       this.isLoading.set(true);
-      const { name, durationWeeks } = this.form.value;
-      this.programService.createProgram(name, durationWeeks).subscribe({
+      const { name, durationWeeks, goal } = this.form.value;
+      this.programService.createProgram(name, durationWeeks, goal).subscribe({
         next: () => {
           this.loadPrograms();
           this.closeForm();
@@ -231,7 +244,7 @@ export class ProgramListComponent implements OnInit {
   setProgramActive(program: TrainingProgram) {
     if (confirm(`Set "${program.name}" as the active program?`)) {
       this.activatingProgramId.set(program.id);
-      this.programService.updateProgram(program.id, program.name, program.durationWeeks, true).subscribe({
+      this.programService.updateProgram(program.id, program.name, program.durationWeeks, true, program.goal).subscribe({
         next: () => {
           this.loadPrograms();
           this.activatingProgramId.set(null);

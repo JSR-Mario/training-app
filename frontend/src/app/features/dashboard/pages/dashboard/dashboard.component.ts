@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ProgressChartComponent } from '../../../analytics/components/progress-chart/progress-chart.component';
@@ -173,23 +173,35 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
             } @else {
               <p class="text-5xl font-bold text-white mb-4 mt-2">{{ (summary()?.bodyWeight?.currentWeekAvgKg || 0) | number:'1.0-1' }} <span class="text-xl text-gray-400 font-normal">kg</span></p>
               <div class="flex items-center text-sm">
-                @if ((summary()?.bodyWeight?.percentageChange || 0) === 0) {
+                @if (bodyWeightChangeStatus() === 'NEUTRAL') {
                   <span class="text-gray-400 flex items-center bg-gray-700/50 px-1.5 py-0.5 rounded text-xs font-medium">
-                    No change
+                    @if ((summary()?.bodyWeight?.percentageChange || 0) === 0) {
+                      No change
+                    } @else {
+                      {{ (summary()?.bodyWeight?.percentageChange || 0) > 0 ? '+' : '-' }}{{ math.abs(summary()?.bodyWeight?.absoluteChangeKg || 0) | number:'1.0-1' }}kg ({{ math.abs(summary()?.bodyWeight?.percentageChange || 0) | number:'1.0-1' }}%)
+                    }
                   </span>
-                } @else if ((summary()?.bodyWeight?.percentageChange || 0) < 0) {
+                } @else if (bodyWeightChangeStatus() === 'GREEN') {
                   <span class="text-emerald-400 flex items-center bg-emerald-400/10 px-1.5 py-0.5 rounded text-xs font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      @if ((summary()?.bodyWeight?.percentageChange || 0) > 0) {
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      } @else {
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      }
                     </svg>
-                    {{ math.abs(summary()?.bodyWeight?.absoluteChangeKg || 0) | number:'1.0-1' }}kg ({{ math.abs(summary()?.bodyWeight?.percentageChange || 0) | number:'1.0-1' }}%)
+                    {{ (summary()?.bodyWeight?.percentageChange || 0) > 0 ? '+' : '-' }}{{ math.abs(summary()?.bodyWeight?.absoluteChangeKg || 0) | number:'1.0-1' }}kg ({{ math.abs(summary()?.bodyWeight?.percentageChange || 0) | number:'1.0-1' }}%)
                   </span>
                 } @else {
                   <span class="text-red-400 flex items-center bg-red-400/10 px-1.5 py-0.5 rounded text-xs font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      @if ((summary()?.bodyWeight?.percentageChange || 0) > 0) {
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      } @else {
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      }
                     </svg>
-                    +{{ math.abs(summary()?.bodyWeight?.absoluteChangeKg || 0) | number:'1.0-1' }}kg ({{ summary()?.bodyWeight?.percentageChange | number:'1.0-1' }}%)
+                    {{ (summary()?.bodyWeight?.percentageChange || 0) > 0 ? '+' : '-' }}{{ math.abs(summary()?.bodyWeight?.absoluteChangeKg || 0) | number:'1.0-1' }}kg ({{ math.abs(summary()?.bodyWeight?.percentageChange || 0) | number:'1.0-1' }}%)
                   </span>
                 }
               </div>
@@ -231,6 +243,24 @@ export class DashboardComponent implements OnInit {
   summary = signal<DashboardSummaryResponse | null>(null);
   isLoading = signal(true);
   math = Math;
+
+  bodyWeightChangeStatus = computed(() => {
+    const sum = this.summary();
+    if (!sum || !sum.bodyWeight) return 'NEUTRAL';
+    const pct = sum.bodyWeight.percentageChange || 0;
+    const absPct = Math.abs(pct);
+    if (absPct < 0.5) return 'NEUTRAL';
+
+    const goal = sum.activeGoal || 'MAINTENANCE';
+    if (goal === 'MAINTENANCE') {
+      return absPct > 2 ? 'RED' : 'NEUTRAL';
+    } else if (goal === 'BULK') {
+      return pct > 0 ? 'GREEN' : 'RED';
+    } else if (goal === 'CUT') {
+      return pct < 0 ? 'GREEN' : 'RED';
+    }
+    return 'NEUTRAL';
+  });
 
   ngOnInit() {
     this.dashboardService.getSummary().subscribe({

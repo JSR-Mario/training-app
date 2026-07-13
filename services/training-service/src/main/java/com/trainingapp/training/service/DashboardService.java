@@ -8,7 +8,9 @@ import com.trainingapp.training.repository.CardioLogRepository;
 import com.trainingapp.training.repository.WorkoutSessionRepository;
 import com.trainingapp.training.repository.WorkoutSetRepository;
 import com.trainingapp.training.repository.BodyWeightRepository;
+import com.trainingapp.training.repository.TrainingProgramRepository;
 import com.trainingapp.training.domain.BodyWeightEntry;
+import com.trainingapp.training.domain.ProgramGoal;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -31,17 +33,20 @@ public class DashboardService {
     private final WorkoutSetRepository setRepository;
     private final BodyWeightRepository bodyWeightRepository;
     private final ExperienceService experienceService;
+    private final TrainingProgramRepository programRepository;
 
     public DashboardService(CardioLogRepository cardioLogRepository,
                             WorkoutSessionRepository sessionRepository,
                             WorkoutSetRepository setRepository,
                             BodyWeightRepository bodyWeightRepository,
-                            ExperienceService experienceService) {
+                            ExperienceService experienceService,
+                            TrainingProgramRepository programRepository) {
         this.cardioLogRepository = cardioLogRepository;
         this.sessionRepository = sessionRepository;
         this.setRepository = setRepository;
         this.bodyWeightRepository = bodyWeightRepository;
         this.experienceService = experienceService;
+        this.programRepository = programRepository;
     }
 
     /**
@@ -161,8 +166,12 @@ public class DashboardService {
         DashboardSummaryResponse.ExperienceSummary experienceSummary =
                 new DashboardSummaryResponse.ExperienceSummary(totalXp, level, curLevelXp, nxtLevelXp);
 
+        ProgramGoal activeGoal = programRepository.findByUserIdAndIsActiveTrue(userId)
+                .map(com.trainingapp.training.domain.TrainingProgram::getGoal)
+                .orElse(ProgramGoal.MAINTENANCE);
+
         return new DashboardSummaryResponse(cardioSummary, weightsSummary, bodyWeightSummary,
-                activityCalendar, streakSummary, experienceSummary);
+                activityCalendar, streakSummary, experienceSummary, activeGoal);
     }
 
     /**

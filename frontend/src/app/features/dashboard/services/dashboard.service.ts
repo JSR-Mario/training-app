@@ -37,6 +37,7 @@ export interface ExperienceSummary {
 }
 
 export interface DashboardSummaryResponse {
+  activeGoal?: 'CUT' | 'BULK' | 'MAINTENANCE';
   cardio: CardioSummary;
   weights: WeightsSummary;
   bodyWeight: BodyWeightSummary;
