@@ -14,12 +14,35 @@ import java.util.Objects;
 public class GatewayConfig {
 
     /**
-     * Resolves the client IP address for the Redis Rate Limiter.
+     * Resolves the real client IP address for the Redis Rate Limiter.
      *
-     * @return a Mono emitting the client's IP address.
+     * <p>When running behind Cloudflare Tunnel, {@code getRemoteAddress()} returns the local
+     * tunnel daemon IP rather than the actual client. The resolver therefore checks headers in
+     * priority order:
+     * <ol>
+     *   <li>{@code CF-Connecting-IP} — set by Cloudflare to the single, verified originating IP.</li>
+     *   <li>{@code X-Forwarded-For} — standard proxy header; only the first (leftmost) entry is
+     *       used to avoid trusting client-supplied values appended further right.</li>
+     *   <li>Raw socket remote address — fallback for direct connections (e.g., local dev).</li>
+     * </ol>
+     *
+     * @return a {@link Mono} emitting the resolved client IP address string.
      */
     @Bean
     public KeyResolver ipKeyResolver() {
-        return exchange -> Mono.just(Objects.requireNonNull(exchange.getRequest().getRemoteAddress()).getAddress().getHostAddress());
+        return exchange -> {
+            String ip = exchange.getRequest().getHeaders().getFirst("CF-Connecting-IP");
+            if (ip == null || ip.isEmpty()) {
+                ip = exchange.getRequest().getHeaders().getFirst("X-Forwarded-For");
+            }
+            if (ip == null || ip.isEmpty()) {
+                ip = Objects.requireNonNull(exchange.getRequest().getRemoteAddress())
+                        .getAddress().getHostAddress();
+            } else {
+                // X-Forwarded-For may be comma-separated; the first entry is the original client
+                ip = ip.split(",")[0].trim();
+            }
+            return Mono.just(ip);
+        };
     }
 }

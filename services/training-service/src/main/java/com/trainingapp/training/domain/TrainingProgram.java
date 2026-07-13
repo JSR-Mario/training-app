@@ -4,6 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -48,6 +50,10 @@ public class TrainingProgram {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "goal", nullable = false)
+    private ProgramGoal goal = ProgramGoal.MAINTENANCE;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
@@ -67,4 +73,6 @@ public class TrainingProgram {
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
     public Instant getCreatedAt() { return createdAt; }
+    public ProgramGoal getGoal() { return goal; }
+    public void setGoal(ProgramGoal goal) { this.goal = goal; }
 }

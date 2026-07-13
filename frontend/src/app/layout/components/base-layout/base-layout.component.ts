@@ -1,12 +1,24 @@
 import { Component, inject, signal, computed } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd, Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import { DashboardService } from '../../../features/dashboard/services/dashboard.service';
+import { filter } from 'rxjs/operators';
 
 @Component({
   standalone: true,
   selector: 'app-base-layout',
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
   template: `
+    <style>
+      @keyframes levelUpGlow {
+        0% { transform: scale(1); box-shadow: 0 0 0px rgba(245, 158, 11, 0); }
+        50% { transform: scale(1.2); box-shadow: 0 0 20px rgba(245, 158, 11, 1); background-color: #F59E0B; color: white; }
+        100% { transform: scale(1); box-shadow: 0 0 0px rgba(245, 158, 11, 0); }
+      }
+      .animate-level-up {
+        animation: levelUpGlow 2s ease-in-out;
+      }
+    </style>
     <div class="h-screen w-screen bg-gray-900 flex flex-col md:flex-row overflow-hidden">
       
       <!-- Mobile Drawer Overlay -->
@@ -96,9 +108,19 @@ import { AuthService } from '../../../core/auth/auth.service';
           </button>
           
           <div class="relative">
-            <button (click)="dropdownOpen.set(!dropdownOpen())" class="flex items-center space-x-2 text-gray-300 hover:text-white focus:outline-none p-2 rounded-lg hover:bg-gray-800 transition-colors">
+            <button (click)="dropdownOpen.set(!dropdownOpen())" class="flex items-center space-x-3 text-gray-300 hover:text-white focus:outline-none p-2 rounded-lg hover:bg-gray-800 transition-colors">
               <span class="font-medium">{{ username() }}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <!-- Level Badge -->
+              @if (level() > 0) {
+                <span 
+                  class="px-2 py-0.5 text-xs font-bold rounded-full border border-orange-500/50 text-orange-400 bg-orange-500/10 transition-all duration-300"
+                  [class.animate-level-up]="animatingLevel()"
+                  title="Your Current Level"
+                >
+                  Lvl {{ level() }}
+                </span>
+              }
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -155,15 +177,49 @@ import { AuthService } from '../../../core/auth/auth.service';
 })
 export class BaseLayoutComponent {
   private authService = inject(AuthService);
+  private dashboardService = inject(DashboardService);
+  private router = inject(Router);
+
   isMobile = signal<boolean>(window.innerWidth < 768);
   isSidebarOpen = signal<boolean>(!this.isMobile());
   dropdownOpen = signal<boolean>(false);
+  level = signal<number>(0);
+  animatingLevel = signal<boolean>(false);
 
   username = computed(() => this.authService.username);
 
   constructor() {
     // We could use HostListener for resize, but window event listener is fine too.
     window.addEventListener('resize', this.onResize.bind(this));
+
+    // Reload level on navigation to dashboard
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe((event) => {
+      if (event.urlAfterRedirects === '/dashboard') {
+        this.loadLevel();
+      }
+    });
+
+    this.loadLevel();
+  }
+
+  loadLevel() {
+    this.dashboardService.getSummary().subscribe({
+      next: (res) => {
+        if (res.experience?.level) {
+          const newLevel = res.experience.level;
+          const currentLevel = this.level();
+          
+          if (currentLevel > 0 && newLevel > currentLevel) {
+            // Level Up!
+            this.animatingLevel.set(true);
+            setTimeout(() => this.animatingLevel.set(false), 2500);
+          }
+          this.level.set(newLevel);
+        }
+      }
+    });
   }
 
   onResize() {

@@ -19,10 +19,31 @@ export interface BodyWeightSummary {
   percentageChange: number;
 }
 
+export interface ActivitySummary {
+  date: string;
+  intensity: number;
+}
+
+export interface StreakSummary {
+  currentStreak: number;
+  longestStreak: number;
+}
+
+export interface ExperienceSummary {
+  totalXp: number;
+  level: number;
+  currentLevelXp: number;
+  nextLevelXp: number;
+}
+
 export interface DashboardSummaryResponse {
+  activeGoal?: 'CUT' | 'BULK' | 'MAINTENANCE';
   cardio: CardioSummary;
   weights: WeightsSummary;
   bodyWeight: BodyWeightSummary;
+  activityCalendar: ActivitySummary[];
+  streak: StreakSummary;
+  experience: ExperienceSummary;
 }
 
 @Injectable({

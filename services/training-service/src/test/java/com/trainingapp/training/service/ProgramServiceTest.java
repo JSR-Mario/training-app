@@ -1,6 +1,7 @@
 package com.trainingapp.training.service;
 
 import com.trainingapp.training.domain.TrainingProgram;
+import com.trainingapp.training.domain.ProgramGoal;
 import com.trainingapp.training.dto.ProgramRequest;
 import com.trainingapp.training.dto.ProgramResponse;
 import com.trainingapp.training.exception.ResourceNotFoundException;
@@ -51,7 +52,7 @@ class ProgramServiceTest {
     @Test
     void create_savesAndReturns() {
         when(programRepository.save(any())).thenReturn(sampleProgram);
-        ProgramResponse result = programService.create(userId, new ProgramRequest("PPL", 8, null, false, 1));
+        ProgramResponse result = programService.create(userId, new ProgramRequest("PPL", 8, null, false, 1, ProgramGoal.MAINTENANCE));
         assertThat(result.name()).isEqualTo("PPL");
     }
 

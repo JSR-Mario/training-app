@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
+import com.trainingapp.training.domain.ProgramGoal;
+import jakarta.validation.constraints.NotNull;
 
 /** Request body for creating or updating a training program. */
 public record ProgramRequest(
@@ -12,5 +14,6 @@ public record ProgramRequest(
         @Min(1) @Max(52) int durationWeeks,
         LocalDate startDate,
         boolean isActive,
-        @Min(1) @Max(52) Integer currentWeek
+        @Min(1) @Max(52) Integer currentWeek,
+        @NotNull ProgramGoal goal
 ) {}
