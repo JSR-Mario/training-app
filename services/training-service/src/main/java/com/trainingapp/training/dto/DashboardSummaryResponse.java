@@ -6,14 +6,20 @@ public class DashboardSummaryResponse {
     private WeightsSummary weights;
     private BodyWeightSummary bodyWeight;
     private java.util.List<ActivitySummary> activityCalendar;
+    private StreakSummary streak;
+    private ExperienceSummary experience;
 
     public DashboardSummaryResponse() {}
 
-    public DashboardSummaryResponse(CardioSummary cardio, WeightsSummary weights, BodyWeightSummary bodyWeight, java.util.List<ActivitySummary> activityCalendar) {
+    public DashboardSummaryResponse(CardioSummary cardio, WeightsSummary weights, BodyWeightSummary bodyWeight,
+                                     java.util.List<ActivitySummary> activityCalendar,
+                                     StreakSummary streak, ExperienceSummary experience) {
         this.cardio = cardio;
         this.weights = weights;
         this.bodyWeight = bodyWeight;
         this.activityCalendar = activityCalendar;
+        this.streak = streak;
+        this.experience = experience;
     }
 
     public CardioSummary getCardio() { return cardio; }
@@ -27,6 +33,12 @@ public class DashboardSummaryResponse {
 
     public java.util.List<ActivitySummary> getActivityCalendar() { return activityCalendar; }
     public void setActivityCalendar(java.util.List<ActivitySummary> activityCalendar) { this.activityCalendar = activityCalendar; }
+
+    public StreakSummary getStreak() { return streak; }
+    public void setStreak(StreakSummary streak) { this.streak = streak; }
+
+    public ExperienceSummary getExperience() { return experience; }
+    public void setExperience(ExperienceSummary experience) { this.experience = experience; }
 
     public static class ActivitySummary {
         private String date;
@@ -113,5 +125,53 @@ public class DashboardSummaryResponse {
 
         public double getAbsoluteChangeKg() { return absoluteChangeKg; }
         public void setAbsoluteChangeKg(double absoluteChangeKg) { this.absoluteChangeKg = absoluteChangeKg; }
+    }
+
+    /** Summary of the user's activity streak (consecutive active days). */
+    public static class StreakSummary {
+        private int currentStreak;
+        private int longestStreak;
+
+        public StreakSummary() {}
+
+        public StreakSummary(int currentStreak, int longestStreak) {
+            this.currentStreak = currentStreak;
+            this.longestStreak = longestStreak;
+        }
+
+        public int getCurrentStreak() { return currentStreak; }
+        public void setCurrentStreak(int currentStreak) { this.currentStreak = currentStreak; }
+
+        public int getLongestStreak() { return longestStreak; }
+        public void setLongestStreak(int longestStreak) { this.longestStreak = longestStreak; }
+    }
+
+    /** Summary of the user's XP and current level for the progression system. */
+    public static class ExperienceSummary {
+        private double totalXp;
+        private int level;
+        private double currentLevelXp;
+        private double nextLevelXp;
+
+        public ExperienceSummary() {}
+
+        public ExperienceSummary(double totalXp, int level, double currentLevelXp, double nextLevelXp) {
+            this.totalXp = totalXp;
+            this.level = level;
+            this.currentLevelXp = currentLevelXp;
+            this.nextLevelXp = nextLevelXp;
+        }
+
+        public double getTotalXp() { return totalXp; }
+        public void setTotalXp(double totalXp) { this.totalXp = totalXp; }
+
+        public int getLevel() { return level; }
+        public void setLevel(int level) { this.level = level; }
+
+        public double getCurrentLevelXp() { return currentLevelXp; }
+        public void setCurrentLevelXp(double currentLevelXp) { this.currentLevelXp = currentLevelXp; }
+
+        public double getNextLevelXp() { return nextLevelXp; }
+        public void setNextLevelXp(double nextLevelXp) { this.nextLevelXp = nextLevelXp; }
     }
 }

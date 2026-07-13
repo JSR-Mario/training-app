@@ -42,6 +42,7 @@ class WorkoutSessionServiceTest {
     @Mock private AnalyticsNotificationClient analyticsClient;
     @Mock private com.trainingapp.training.repository.SessionExerciseRatingRepository ratingRepository;
     @Mock private com.trainingapp.training.repository.DayExerciseRepository dayExerciseRepository;
+    @Mock private ExperienceService experienceService;
 
     @InjectMocks private WorkoutSessionService sessionService;
 
@@ -118,12 +119,14 @@ class WorkoutSessionServiceTest {
         when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
         when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(Collections.emptyList());
         when(targetRepository.findByExerciseIdIn(any())).thenReturn(List.of());
+        doNothing().when(experienceService).addVolume(any(), anyDouble());
 
         sessionService.completeSession(sessionId, userId);
 
         assertThat(session.getCompletedAt()).isNotNull();
         verify(sessionRepository).save(session);
         verify(analyticsClient).notifySessionCompleted(any());
+        verify(experienceService).addVolume(eq(userId), anyDouble());
     }
 
     @Test

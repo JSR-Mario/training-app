@@ -43,6 +43,7 @@ public class WorkoutSessionService {
     private final AnalyticsNotificationClient analyticsClient;
     private final SessionExerciseRatingRepository ratingRepository;
     private final DayExerciseRepository dayExerciseRepository;
+    private final ExperienceService experienceService;
 
     public WorkoutSessionService(WorkoutSessionRepository sessionRepository,
                                  DayTemplateRepository dayTemplateRepository,
@@ -50,7 +51,8 @@ public class WorkoutSessionService {
                                  ExerciseBodyPartTargetRepository targetRepository,
                                  AnalyticsNotificationClient analyticsClient,
                                  SessionExerciseRatingRepository ratingRepository,
-                                 DayExerciseRepository dayExerciseRepository) {
+                                 DayExerciseRepository dayExerciseRepository,
+                                 ExperienceService experienceService) {
         this.sessionRepository = sessionRepository;
         this.dayTemplateRepository = dayTemplateRepository;
         this.setRepository = setRepository;
@@ -58,6 +60,7 @@ public class WorkoutSessionService {
         this.analyticsClient = analyticsClient;
         this.ratingRepository = ratingRepository;
         this.dayExerciseRepository = dayExerciseRepository;
+        this.experienceService = experienceService;
     }
 
     @Transactional
@@ -222,6 +225,16 @@ public class WorkoutSessionService {
         );
 
         analyticsClient.notifySessionCompleted(event);
+
+        // Update persisted XP — compute volume from the sets already in memory
+        double sessionVolume = sets.stream()
+            .filter(s -> s.getWeightKg() != null && s.getRepsCompleted() != null)
+            .mapToDouble(s -> {
+                int reps = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
+                return s.getWeightKg().doubleValue() * reps;
+            })
+            .sum();
+        experienceService.addVolume(userId, sessionVolume);
     }
 
     @Transactional
@@ -275,6 +288,16 @@ public class WorkoutSessionService {
         );
 
         analyticsClient.notifySessionUncompleted(event);
+
+        // Reverse the XP that was added when this session was completed
+        double sessionVolume = sets.stream()
+            .filter(s -> s.getWeightKg() != null && s.getRepsCompleted() != null)
+            .mapToDouble(s -> {
+                int reps = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
+                return s.getWeightKg().doubleValue() * reps;
+            })
+            .sum();
+        experienceService.subtractVolume(userId, sessionVolume);
     }
 
     public List<ExerciseSuggestionResponse> getExerciseSuggestions(UUID id, UUID userId) {

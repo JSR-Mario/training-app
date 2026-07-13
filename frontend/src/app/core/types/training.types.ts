@@ -168,6 +168,16 @@ export interface DashboardSummaryResponse {
     absoluteChangeKg: number;
   };
   activityCalendar: ActivitySummary[];
+  streak: {
+    currentStreak: number;
+    longestStreak: number;
+  };
+  experience: {
+    totalXp: number;
+    level: number;
+    currentLevelXp: number;
+    nextLevelXp: number;
+  };
 }
 
 export interface ExerciseSuggestionResponse {

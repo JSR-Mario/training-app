@@ -58,4 +58,24 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
         ORDER BY e.id, (ws.weight_kg * (ws.reps_completed + COALESCE(ws.reps_completed_right, 0))) DESC
         """, nativeQuery = true)
     List<com.trainingapp.training.dto.ExercisePrProjection> findPersonalRecordsByUserId(@Param("userId") UUID userId);
+
+    /**
+     * Returns the all-time total volume (kg) for a user across all completed sessions.
+     *
+     * <p>Used only once to bootstrap the {@code user_experience} row on first dashboard load.
+     * Subsequent updates are done incrementally by {@link com.trainingapp.training.service.ExperienceService}.
+     *
+     * @param userId the user's UUID
+     * @return total volume in kg, or {@code 0.0} if no data exists
+     */
+    @Query("""
+            SELECT COALESCE(SUM(ws.weightKg * (ws.repsCompleted + COALESCE(ws.repsCompletedRight, 0))), 0)
+            FROM WorkoutSet ws JOIN ws.session s
+            WHERE s.userId = :userId
+              AND s.completedAt IS NOT NULL
+              AND ws.weightKg IS NOT NULL
+              AND ws.repsCompleted IS NOT NULL
+            """)
+    Double findTotalVolumeByUserId(@Param("userId") UUID userId);
 }
+
