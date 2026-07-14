@@ -34,9 +34,11 @@ import { filter } from 'rxjs/operators';
         [class.md:w-0]="!isSidebarOpen()"
       >
         <div class="p-6 whitespace-nowrap flex items-center justify-between">
-          <h1 class="text-2xl font-bold text-accent-pos">
-            Training App
-          </h1>
+          <a routerLink="/dashboard" (click)="closeOnMobile()" class="block cursor-pointer hover:opacity-80 transition-opacity">
+            <h1 class="text-2xl font-bold text-black dark:text-white">
+              TR <span class="text-accent-pos text-sm align-text-top ml-1">v0.1.0</span>
+            </h1>
+          </a>
           @if (isMobile()) {
             <button (click)="toggleSidebar()" class="text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white md:hidden">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
