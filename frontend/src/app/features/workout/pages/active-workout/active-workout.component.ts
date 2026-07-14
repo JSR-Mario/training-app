@@ -28,11 +28,19 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div></div>
-        @if (session()?.completedAt) {
-          <div class="px-3 py-1 bg-accent-pos/20 text-accent-pos text-xs rounded-full border border-accent-pos/30">
-            Completed
-          </div>
-        }
+        <div class="flex items-center gap-3">
+          @if (session()?.completedAt) {
+            <div class="px-3 py-1 bg-accent-pos/20 text-accent-pos text-xs rounded-full border border-accent-pos/30">
+              Completed
+            </div>
+          } @else {
+            <button (click)="cancelWorkout()" class="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-full transition-colors" title="Cancel Workout">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          }
+        </div>
       </div>
     
       @if (isLoading()) {
@@ -717,6 +725,23 @@ export class ActiveWorkoutComponent implements OnInit {
           console.error('Error completing session', err);
           this.isCompleting.set(false);
           alert('Failed to complete session.');
+        }
+      });
+    }
+  }
+
+  cancelWorkout() {
+    const id = this.sessionId();
+    if (!id) return;
+
+    if (confirm('Are you sure you want to cancel and delete this workout session?')) {
+      this.workoutService.deleteSession(id).subscribe({
+        next: () => {
+          this.router.navigate(['/workout']);
+        },
+        error: (err) => {
+          console.error('Error canceling session', err);
+          alert('Failed to cancel session.');
         }
       });
     }
