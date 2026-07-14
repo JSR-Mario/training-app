@@ -69,6 +69,14 @@ Swagger UI is available at: `http://localhost:8080/swagger-ui.html`
 
 ---
 
+## Versioning
+
+The project follows [Semantic Versioning (SemVer)](https://semver.org/).
+- Pre-release versions (during active initial development) are kept below `1.0.0` (e.g., `v0.1.0`, `v0.9.0`).
+- The frontend application explicitly displays this version in the UI.
+
+---
+
 ## Deployment Guide (EC2 + Cloudflare Tunnel)
 
 This application is designed to be deployed using Docker Compose on any standard Linux VM. It uses **Cloudflare Tunnels** to provide secure, encrypted HTTPS access without exposing *any* public ports on your server. **Caddy** acts as an internal reverse proxy to route traffic between the frontend and the backend over a shared local Docker network.
