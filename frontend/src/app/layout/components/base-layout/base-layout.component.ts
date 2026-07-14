@@ -115,7 +115,7 @@ import { filter } from 'rxjs/operators';
               <!-- Level Badge -->
               @if (level() > 0) {
                 <span 
-                  class="px-2 py-0.5 text-xs font-bold rounded-full border border-orange-500/50 text-orange-400 bg-orange-500/10 transition-all duration-300"
+                  class="px-2 py-0.5 text-xs font-bold rounded-full border border-accent-pos/50 text-accent-pos bg-accent-pos/10 transition-all duration-300"
                   [class.animate-level-up]="animatingLevel()"
                   title="Your Current Level"
                 >
