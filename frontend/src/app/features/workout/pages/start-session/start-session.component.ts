@@ -16,35 +16,35 @@ import { forkJoin } from 'rxjs';
     
       <!-- Header -->
       <div class="text-center">
-        <h1 class="text-3xl font-bold text-white">Start Session</h1>
-        <p class="text-gray-400 mt-1">Select the workout you want to log today</p>
+        <h1 class="text-3xl font-bold text-black dark:text-white">Start Session</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1">Select the workout you want to log today</p>
       </div>
     
       <!-- Loading State -->
       @if (isLoading()) {
         <div class="text-center py-12">
           <div class="animate-pulse flex flex-col items-center">
-            <div class="h-8 w-8 bg-blue-500 rounded-full mb-4"></div>
-            <p class="text-gray-400">Loading program details...</p>
+            <div class="h-8 w-8 bg-accent-pos rounded-full mb-4"></div>
+            <p class="text-gray-500 dark:text-gray-400">Loading program details...</p>
           </div>
         </div>
       }
     
       <!-- Form -->
       @if (!isLoading()) {
-        <div class="glass-card p-6">
+        <div class="solid-card p-6">
           <div class="mb-6">
-            <h2 class="text-xl font-semibold text-white mb-1">Program Details</h2>
-            <p class="text-gray-400 text-sm">Program: <span class="text-gray-200">{{ program()?.name }}</span></p>
-            <p class="text-gray-400 text-sm">Logging for Week: <span class="text-gray-200 font-bold">{{ targetWeekNumber() }}</span></p>
+            <h2 class="text-xl font-semibold text-black dark:text-white mb-1">Program Details</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Program: <span class="text-gray-800 dark:text-gray-200">{{ program()?.name }}</span></p>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Logging for Week: <span class="text-gray-800 dark:text-gray-200 font-bold">{{ targetWeekNumber() }}</span></p>
           </div>
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
             <div>
-              <label for="dayTemplateId" class="block text-sm font-medium text-gray-300 mb-1">Select Workout</label>
+              <label for="dayTemplateId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select Workout</label>
               <select
                 id="dayTemplateId"
                 formControlName="dayTemplateId"
-                class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white appearance-none"
+                class="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white appearance-none solid-input"
                 >
                 <option value="" disabled>Choose a day to train</option>
                 @for (day of days(); track day) {
@@ -55,24 +55,24 @@ import { forkJoin } from 'rxjs';
               </select>
             </div>
             <div>
-              <label for="performedOn" class="block text-sm font-medium text-gray-300 mb-1">Date</label>
+              <label for="performedOn" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
               <input
                 id="performedOn"
                 type="date"
                 formControlName="performedOn"
-                class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                class="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
                 >
             </div>
             <div class="pt-6">
               <button
                 type="submit"
                 [disabled]="form.invalid || isSubmitting()"
-                class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-lg rounded-xl shadow-lg disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-95"
+                class="w-full py-4 bg-accent-pos hover:opacity-80 text-white font-bold text-lg rounded-xl shadow-lg disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-95 solid-btn"
                 >
                 {{ isSubmitting() ? 'Starting...' : 'Let\\'s Go!' }}
               </button>
               <div class="text-center mt-4">
-                <a routerLink="/workout" class="text-gray-400 hover:text-white text-sm transition-colors">Cancel</a>
+                <a routerLink="/workout" class="text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm transition-colors">Cancel</a>
               </div>
             </div>
           </form>
