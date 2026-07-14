@@ -365,25 +365,15 @@ export class ProgressChartComponent implements OnInit {
         return sum;
       });
 
-      if (dataPoints.some(v => v >= 0)) {
-        datasets.push({
-          label: 'Total Volume',
-          data: dataPoints,
-          backgroundColor: this.getCssVariableValue('--color-accent-pos') + 'CC', // Accent color with transparency
-          borderColor: this.getCssVariableValue('--color-accent-pos'),
-          borderWidth: 1,
-          barPercentage: 1.0,
-          categoryPercentage: 1.0,
-          order: 1
-        });
+      if (dataPoints.length > 1 && dataPoints.some(v => v >= 0)) {
         datasets.push({
           type: 'line' as const,
           label: 'Trend',
           data: dataPoints,
-          borderColor: '#ffffff',
-          borderWidth: 2,
+          borderColor: this.getCssVariableValue('--color-accent-pos'),
+          borderWidth: 3,
           fill: false,
-          tension: 0,
+          tension: 0.2,
           pointRadius: 0,
           order: 0
         });

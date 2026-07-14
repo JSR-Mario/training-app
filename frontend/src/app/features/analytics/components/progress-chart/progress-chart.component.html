@@ -133,7 +133,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
-        <p>No volume data found for the selected body parts.</p>
+        @if (miniMode()) {
+          <p class="text-sm font-medium">Not enough data for trend.</p>
+        } @else {
+          <p>No volume data found for the selected body parts.</p>
+        }
       </div>
     }
   </div>
