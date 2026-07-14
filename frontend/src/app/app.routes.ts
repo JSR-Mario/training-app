@@ -11,7 +11,6 @@ export const routes: Routes = [
   },
   {
     path: '',
-    canMatch: [() => typeof window !== 'undefined' ? !window.location.hostname.startsWith('app.') : true],
     loadComponent: () => import('./features/portfolio/pages/portfolio/portfolio.component').then(m => m.PortfolioComponent),
     pathMatch: 'full'
   },
