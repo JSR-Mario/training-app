@@ -17,7 +17,6 @@ import { TrainingProgram } from '../../../../core/types/training.types';
         <div class="flex justify-between items-center">
           <div>
             <h1 class="text-3xl font-bold text-black dark:text-white">Programs</h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-1">Manage your training programs</p>
           </div>
           <button
             (click)="openForm()"
