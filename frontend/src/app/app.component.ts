@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ThemeService } from './core/services/theme.service';
 
 @Component({
   standalone: true,
@@ -10,4 +11,6 @@ import { RouterOutlet } from '@angular/router';
   `,
     styles: []
 })
-export class AppComponent {}
+export class AppComponent {
+  private themeService = inject(ThemeService);
+}

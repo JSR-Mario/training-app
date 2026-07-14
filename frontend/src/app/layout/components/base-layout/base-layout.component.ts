@@ -2,8 +2,8 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd, Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { DashboardService } from '../../../features/dashboard/services/dashboard.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { filter } from 'rxjs/operators';
-
 @Component({
   standalone: true,
   selector: 'app-base-layout',
@@ -126,13 +126,62 @@ import { filter } from 'rxjs/operators';
             </button>
             
             @if (dropdownOpen()) {
-              <div class="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-50">
-                <button (click)="logout()" class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-gray-700/50 transition-colors flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Sign Out
-                </button>
+              <div class="absolute right-0 mt-2 w-64 bg-white dark:bg-black border-2 border-black dark:border-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,1)] z-50 p-4 space-y-4">
+                
+                <!-- Theme Toggle -->
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-bold text-black dark:text-white">Theme Mode</span>
+                  <button (click)="themeService.toggleMode()" class="px-3 py-1 text-xs font-bold border-2 border-black dark:border-white active:translate-y-px active:translate-x-px text-black dark:text-white">
+                    {{ themeService.themeMode() === 'light' ? 'Dark' : 'Light' }}
+                  </button>
+                </div>
+
+                <!-- Positive Color -->
+                <div>
+                  <span class="text-xs font-bold text-gray-500 mb-2 block">Primary Color</span>
+                  <div class="flex gap-2">
+                    @for (color of ['blue', 'green', 'pink', 'purple', 'yellow']; track color) {
+                      <button 
+                        (click)="themeService.setPositiveColor(color)"
+                        class="w-6 h-6 rounded-full border-2 border-black dark:border-white hover:scale-110 transition-transform"
+                        [class.ring-2]="themeService.positiveColor() === color"
+                        [class.ring-black]="themeService.positiveColor() === color"
+                        [class.dark:ring-white]="themeService.positiveColor() === color"
+                        [style.background]="getPosColorHex(color)"
+                        [attr.aria-label]="'Set primary color to ' + color"
+                        [title]="color"
+                      ><span class="sr-only">{{ color }}</span></button>
+                    }
+                  </div>
+                </div>
+ 
+                <!-- Negative Color -->
+                <div>
+                  <span class="text-xs font-bold text-gray-500 mb-2 block">Alert Color</span>
+                  <div class="flex gap-2">
+                    @for (color of ['red', 'orange', 'rose', 'pink']; track color) {
+                      <button 
+                        (click)="themeService.setNegativeColor(color)"
+                        class="w-6 h-6 rounded-full border-2 border-black dark:border-white hover:scale-110 transition-transform"
+                        [class.ring-2]="themeService.negativeColor() === color"
+                        [class.ring-black]="themeService.negativeColor() === color"
+                        [class.dark:ring-white]="themeService.negativeColor() === color"
+                        [style.background]="getNegColorHex(color)"
+                        [attr.aria-label]="'Set alert color to ' + color"
+                        [title]="color"
+                      ><span class="sr-only">{{ color }}</span></button>
+                    }
+                  </div>
+                </div>
+
+                <div class="border-t-2 border-black dark:border-white pt-2">
+                  <button (click)="logout()" class="w-full text-left py-2 text-sm font-bold text-accent-neg hover:opacity-80 transition-colors flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Sign Out
+                  </button>
+                </div>
               </div>
             }
           </div>
@@ -179,6 +228,7 @@ export class BaseLayoutComponent {
   private authService = inject(AuthService);
   private dashboardService = inject(DashboardService);
   private router = inject(Router);
+  themeService = inject(ThemeService);
 
   isMobile = signal<boolean>(window.innerWidth < 768);
   isSidebarOpen = signal<boolean>(!this.isMobile());
@@ -248,6 +298,27 @@ export class BaseLayoutComponent {
 
   logout() {
     this.authService.logout();
+  }
+
+  getPosColorHex(color: string): string {
+    const map: Record<string, string> = {
+      'blue': '#3b82f6',
+      'green': '#22c55e',
+      'pink': '#ec4899',
+      'purple': '#a855f7',
+      'yellow': '#eab308'
+    };
+    return map[color] || '#3b82f6';
+  }
+
+  getNegColorHex(color: string): string {
+    const map: Record<string, string> = {
+      'red': '#ef4444',
+      'orange': '#f97316',
+      'rose': '#f43f5e',
+      'pink': '#ec4899'
+    };
+    return map[color] || '#ef4444';
   }
 }
 

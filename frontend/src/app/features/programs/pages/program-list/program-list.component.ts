@@ -9,19 +9,19 @@ import { TrainingProgram } from '../../../../core/types/training.types';
   standalone: true,
     selector: 'app-program-list',
     imports: [CommonModule, RouterModule, ReactiveFormsModule],
-    template: `
+  template: `
     <div class="max-w-7xl mx-auto space-y-6">
     
       <!-- Header -->
       @if (!showForm()) {
         <div class="flex justify-between items-center">
           <div>
-            <h1 class="text-3xl font-bold text-white">Programs</h1>
-            <p class="text-gray-400 mt-1">Manage your training programs</p>
+            <h1 class="text-3xl font-bold text-black dark:text-white">Programs</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">Manage your training programs</p>
           </div>
           <button
             (click)="openForm()"
-            class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
+            class="px-6 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl shadow-lg transition-all solid-btn"
             >
             + Create Program
           </button>
@@ -30,59 +30,59 @@ import { TrainingProgram } from '../../../../core/types/training.types';
     
       <!-- Form View -->
       @if (showForm()) {
-        <div class="glass-card p-6 w-full max-w-xl mx-auto">
-          <h2 class="text-2xl font-bold mb-6 text-white">New Program</h2>
+        <div class="solid-card p-6 w-full max-w-xl mx-auto">
+          <h2 class="text-2xl font-bold mb-6 text-black dark:text-white">New Program</h2>
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
             <div>
-              <label for="nameInput" class="block text-sm font-medium text-gray-300 mb-1">Program Name</label>
+              <label for="nameInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Program Name</label>
               <input
                 id="nameInput"
                 type="text"
                 formControlName="name"
-                class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
                 placeholder="e.g., Push Pull Legs 6 Days"
                 >
               @if (form.get('name')?.invalid && form.get('name')?.touched) {
-                <div class="text-red-400 text-xs mt-1">
+                <div class="text-accent-neg text-xs mt-1">
                   Name is required (max 100 chars).
                 </div>
               }
             </div>
             <div>
-              <label for="durationInput" class="block text-sm font-medium text-gray-300 mb-1">Duration (Weeks)</label>
+              <label for="durationInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Duration (Weeks)</label>
               <input
                 id="durationInput"
                 type="number"
                 min="1"
                 max="52"
                 formControlName="durationWeeks"
-                class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
                 >
             </div>
             <div>
-              <label for="goalInput" class="block text-sm font-medium text-gray-300 mb-1">Goal</label>
+              <label for="goalInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Goal</label>
               <select
                 id="goalInput"
                 formControlName="goal"
-                class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
               >
                 <option value="MAINTENANCE">Maintenance</option>
                 <option value="CUT">Cut (Lose Weight)</option>
                 <option value="BULK">Bulk (Gain Weight)</option>
               </select>
             </div>
-            <div class="flex justify-end gap-3 pt-4 border-t border-gray-800">
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-300 dark:border-gray-800">
               <button
                 type="button"
                 (click)="closeForm()"
-                class="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
                 >
                 Cancel
               </button>
               <button
                 type="submit"
                 [disabled]="form.invalid || isLoading()"
-                class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl disabled:opacity-50 transition-colors"
+                class="px-6 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl disabled:opacity-50 transition-colors solid-btn"
                 >
                 Create
               </button>
@@ -94,7 +94,7 @@ import { TrainingProgram } from '../../../../core/types/training.types';
       <!-- Loading State -->
       @if (isLoading() && !showForm()) {
         <div class="text-center py-12">
-          <p class="text-gray-400">Loading programs...</p>
+          <p class="text-gray-500 dark:text-gray-400">Loading programs...</p>
         </div>
       }
     
@@ -102,28 +102,28 @@ import { TrainingProgram } from '../../../../core/types/training.types';
       @if (!isLoading() && !showForm()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @if (sortedPrograms().length === 0) {
-            <div class="col-span-full text-center py-12 glass-card">
-              <p class="text-gray-400">No programs found. Create your first program!</p>
+            <div class="col-span-full text-center py-12 solid-card">
+              <p class="text-gray-500 dark:text-gray-400">No programs found. Create your first program!</p>
             </div>
           }
           @for (program of sortedPrograms(); track program.id) {
-            <div class="glass-card p-6 flex flex-col h-full hover:border-gray-600 transition-colors">
+            <div class="solid-card p-6 flex flex-col h-full hover:border-gray-400 dark:hover:border-gray-600 transition-colors">
               <div class="flex justify-between items-start mb-4">
-                <h3 class="text-xl font-bold text-white">{{ program.name }}</h3>
+                <h3 class="text-xl font-bold text-black dark:text-white">{{ program.name }}</h3>
                 @if (program.isActive) {
-                  <span class="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded border border-emerald-500/30 font-semibold tracking-wide">
+                  <span class="px-2 py-1 bg-accent-pos/20 text-accent-pos text-xs rounded border border-accent-pos/30 font-semibold tracking-wide">
                     ✓ Active
                   </span>
                 }
               </div>
               <div class="flex-1 space-y-2 mb-6">
-                <p class="text-gray-400 text-sm">Duration: {{ program.durationWeeks }} weeks</p>
-                <p class="text-gray-400 text-sm">Created: {{ program.createdAt | date:'mediumDate' }}</p>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">Duration: {{ program.durationWeeks }} weeks</p>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">Created: {{ program.createdAt | date:'mediumDate' }}</p>
               </div>
-              <div class="flex justify-between items-center pt-4 border-t border-gray-700/50">
+              <div class="flex justify-between items-center pt-4 border-t border-gray-300 dark:border-gray-700/50">
                 <button
                   (click)="deleteProgram(program.id)"
-                  class="text-red-400 hover:text-red-300 transition-colors text-sm"
+                  class="text-accent-neg hover:opacity-80 transition-opacity text-sm"
                   >
                   Delete
                 </button>
@@ -131,7 +131,7 @@ import { TrainingProgram } from '../../../../core/types/training.types';
                   <button
                     (click)="setProgramActive(program)"
                     [disabled]="activatingProgramId() === program.id"
-                    class="text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-1"
+                    class="text-accent-pos hover:opacity-80 transition-opacity text-sm font-medium disabled:opacity-50 flex items-center gap-1"
                   >
                     @if (activatingProgramId() === program.id) {
                       <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -147,7 +147,7 @@ import { TrainingProgram } from '../../../../core/types/training.types';
                 
                 <a
                   [routerLink]="['/programs', program.id]"
-                  class="text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium"
+                  class="text-accent-pos hover:opacity-80 transition-opacity text-sm font-medium"
                   >
                   Build & Edit &rarr;
                 </a>

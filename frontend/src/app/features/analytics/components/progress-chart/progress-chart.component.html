@@ -1,9 +1,9 @@
-<div class="glass-panel p-6 rounded-2xl animate-fade-in relative">
+<div class="solid-card p-6 rounded-2xl animate-fade-in relative border border-gray-300 dark:border-gray-700">
   @if (!miniMode()) {
-
+ 
   <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-    <h2 class="text-xl font-semibold text-white flex items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <h2 class="text-xl font-semibold text-black dark:text-white flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-accent-pos" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
       Total Volume (Week by Week)
@@ -12,14 +12,14 @@
     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
       <!-- Program Selector -->
       @if (programs().length > 0) {
-        <div class="flex items-center gap-3 bg-gray-900/50 p-2 rounded-xl border border-gray-800">
-          <label for="programFilter" class="text-sm font-medium text-gray-400 whitespace-nowrap pl-2">Program:</label>
+        <div class="flex items-center gap-3 bg-gray-100 dark:bg-gray-800/50 p-2 rounded-xl border border-gray-300 dark:border-gray-700">
+          <label for="programFilter" class="text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap pl-2">Program:</label>
           <div class="relative">
             <select
               id="programFilter"
               [ngModel]="selectedProgramId()"
               (ngModelChange)="selectedProgramId.set($event)"
-              class="appearance-none bg-gray-800 text-white text-sm rounded-lg pl-3 pr-8 py-1.5 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer hover:bg-gray-750"
+              class="appearance-none bg-white dark:bg-gray-900 text-black dark:text-white text-sm rounded-lg pl-3 pr-8 py-1.5 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-pos focus:border-transparent transition-all cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 solid-input"
             >
               @for (prog of programs(); track prog.id) {
                 <option [value]="prog.id">{{ prog.name }}</option>
@@ -33,14 +33,14 @@
           </div>
         </div>
       }
-
+ 
       <!-- Day Filter -->
       @if (uniqueDayNames().length > 0) {
-        <div class="flex items-center gap-3 bg-gray-900/50 p-2 rounded-xl border border-gray-800">
-          <label for="dayFilter" class="text-sm font-semibold text-gray-400 whitespace-nowrap">Filter by Day:</label>
+        <div class="flex items-center gap-3 bg-gray-100 dark:bg-gray-800/50 p-2 rounded-xl border border-gray-300 dark:border-gray-700">
+          <label for="dayFilter" class="text-sm font-semibold text-gray-600 dark:text-gray-400 whitespace-nowrap">Filter by Day:</label>
           <select 
             id="dayFilter"
-            class="bg-gray-800 text-white text-sm rounded border-gray-700 focus:ring-emerald-500 focus:border-emerald-500 p-2 min-w-[150px] transition-colors"
+            class="bg-white dark:bg-gray-900 text-black dark:text-white text-sm rounded border-gray-300 dark:border-gray-700 focus:ring-accent-pos focus:border-accent-pos p-2 min-w-[150px] transition-colors solid-input"
             (change)="onFilterChange($event)">
             <option value="All">All Days (Weekly Total)</option>
             @for (name of uniqueDayNames(); track name) {
@@ -51,27 +51,27 @@
       }
     </div>
   </div>
-
+ 
   <div class="mb-4">
     <!-- Checkboxes for Program Body Parts -->
     @if (programBodyParts().length > 0) {
-      <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800">
+      <div class="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-300 dark:border-gray-700">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Program Body Parts</h3>
+          <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Program Body Parts</h3>
           
           <label class="flex items-center gap-2 cursor-pointer group">
-            <span class="text-xs font-medium text-gray-400 group-hover:text-white transition-colors">Select All</span>
-            <div class="relative flex items-center justify-center w-5 h-5 rounded border border-gray-600 group-hover:border-emerald-500 transition-colors duration-200"
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white transition-colors">Select All</span>
+            <div class="relative flex items-center justify-center w-5 h-5 rounded border border-gray-300 dark:border-gray-600 group-hover:border-accent-pos transition-colors duration-200"
                  [ngStyle]="{
-                   'background-color': allBodyPartsSelected() ? '#10b98133' : 'transparent',
-                   'border-color': allBodyPartsSelected() ? '#10b981' : ''
+                   'background-color': allBodyPartsSelected() ? 'var(--color-accent-pos)' : 'transparent',
+                   'border-color': allBodyPartsSelected() ? 'var(--color-accent-pos)' : ''
                  }">
               <input type="checkbox" 
                      class="absolute opacity-0 w-full h-full cursor-pointer"
                      [checked]="allBodyPartsSelected()"
                      (change)="toggleAllBodyParts($event)" />
               @if (allBodyPartsSelected()) {
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
               }
@@ -83,7 +83,7 @@
             <label class="flex items-center gap-2 cursor-pointer group">
               <div class="relative flex items-center justify-center w-5 h-5 rounded border transition-colors duration-200"
                    [ngStyle]="{
-                     'border-color': bp.checked ? bp.color : '#4b5563',
+                     'border-color': bp.checked ? bp.color : 'var(--color-gray-400)',
                      'background-color': bp.checked ? bp.color + '33' : 'transparent'
                    }">
                 <input type="checkbox" 
@@ -96,7 +96,7 @@
                   </svg>
                 }
               </div>
-              <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ bp.name }}</span>
+              <span class="text-sm text-gray-700 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white transition-colors">{{ bp.name }}</span>
             </label>
           }
         </div>
@@ -110,12 +110,12 @@
     }
   </div>
   }
-
+ 
   <div class="relative w-full mt-4" [ngClass]="miniMode() ? 'h-full min-h-[100px]' : 'h-[500px]'">
     <!-- Loading overlay -->
     @if (isLoading()) {
-      <div class="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm rounded-xl transition-all">
-        <div class="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl transition-all">
+        <div class="w-8 h-8 border-4 border-accent-pos border-t-transparent rounded-full animate-spin"></div>
       </div>
     }
     
@@ -127,9 +127,9 @@
         [type]="chartType">
       </canvas>
     }
-
+ 
     @if ((!chartData.datasets || chartData.datasets.length === 0) && !isLoading()) {
-      <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+      <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>

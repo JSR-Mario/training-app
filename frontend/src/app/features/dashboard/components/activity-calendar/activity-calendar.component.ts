@@ -18,8 +18,8 @@ interface MonthLabel {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="glass-card p-6 w-full overflow-x-auto">
-      <h3 class="text-base font-medium text-gray-400 mb-4">Activity (Last 365 Days)</h3>
+    <div class="solid-card p-6 w-full overflow-x-auto">
+      <h3 class="text-base font-medium text-gray-500 dark:text-gray-400 mb-4">Activity (Last 365 Days)</h3>
       
       <div class="flex items-start w-full overflow-x-auto pb-2">
         <div class="flex min-w-max">
@@ -61,25 +61,21 @@ interface MonthLabel {
       </div>
       
       <!-- Legend -->
-      <div class="flex items-center justify-end mt-4 text-xs text-gray-500 space-x-2">
+      <div class="flex items-center justify-end mt-4 text-xs text-gray-600 dark:text-gray-400 space-x-2">
         <span>Less</span>
         <div class="flex gap-1">
-          <div class="w-3.5 h-3.5 rounded-sm bg-gray-800/80"></div>
-          <div class="w-3.5 h-3.5 rounded-sm bg-emerald-900/50"></div>
-          <div class="w-3.5 h-3.5 rounded-sm bg-emerald-600/80"></div>
-          <div class="w-3.5 h-3.5 rounded-sm bg-emerald-400"></div>
+          <div class="w-3.5 h-3.5 rounded-sm bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700"></div>
+          <div class="w-3.5 h-3.5 rounded-sm bg-accent-pos/40"></div>
+          <div class="w-3.5 h-3.5 rounded-sm bg-accent-pos/70"></div>
+          <div class="w-3.5 h-3.5 rounded-sm bg-accent-pos"></div>
         </div>
         <span>More</span>
       </div>
     </div>
   `,
   styles: [`
-    .glass-card {
-      background: rgba(31, 41, 55, 0.4);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 1rem;
+    .solid-card {
+      /* Uses global .solid-card class */
     }
     .overflow-x-auto::-webkit-scrollbar {
       height: 6px;
@@ -197,11 +193,11 @@ export class ActivityCalendarComponent implements OnChanges, OnInit {
 
   getColorClass(intensity: number): string {
     switch (intensity) {
-      case 0: return 'bg-gray-800/80';
-      case 1: return 'bg-emerald-900/50';
-      case 2: return 'bg-emerald-600/80';
-      case 3: return 'bg-emerald-400';
-      default: return 'bg-gray-800/80';
+      case 0: return 'bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700';
+      case 1: return 'bg-accent-pos/40';
+      case 2: return 'bg-accent-pos/70';
+      case 3: return 'bg-accent-pos';
+      default: return 'bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700';
     }
   }
 }

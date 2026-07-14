@@ -9,54 +9,54 @@ import { AuthService } from '../../../../core/auth/auth.service';
     selector: 'app-login',
     imports: [ReactiveFormsModule],
     template: `
-    <div class="min-h-screen flex items-center justify-center bg-gray-900 relative overflow-hidden">
+    <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
       <!-- Decorative background elements -->
-      <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600/20 rounded-full blur-3xl"></div>
-      <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"></div>
+      <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-accent-pos/10 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-accent-neg/10 rounded-full blur-3xl"></div>
     
-      <div class="glass-card w-full max-w-md p-8 relative z-10 transition-transform duration-500 hover:scale-[1.02]">
+      <div class="solid-card w-full max-w-md p-8 relative z-10 transition-transform duration-500 hover:scale-[1.02] border border-gray-300 dark:border-gray-700">
         <div class="text-center mb-8">
-          <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+          <h1 class="text-3xl font-bold text-accent-pos">
             Training App
           </h1>
-          <p class="text-gray-400 mt-2">Sign in to continue</p>
+          <p class="text-gray-500 dark:text-gray-400 mt-2">Sign in to continue</p>
         </div>
     
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
           <div>
-            <label for="username" class="block text-sm font-medium text-gray-300 mb-1">Username</label>
+            <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
             <input
               type="text"
               id="username"
               formControlName="username"
-              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-white placeholder-gray-500"
+              class="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos focus:border-transparent transition-all outline-none text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 solid-input"
               placeholder="Enter your username"
               >
             @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
-              <div class="text-red-400 text-xs mt-1">
+              <div class="text-accent-neg text-xs mt-1">
                 Username is required
               </div>
             }
           </div>
     
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
             <input
               type="password"
               id="password"
               formControlName="password"
-              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-white placeholder-gray-500"
+              class="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos focus:border-transparent transition-all outline-none text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 solid-input"
               placeholder="••••••••"
               >
             @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
-              <div class="text-red-400 text-xs mt-1">
+              <div class="text-accent-neg text-xs mt-1">
                 Password is required
               </div>
             }
           </div>
     
           @if (error()) {
-            <div class="p-3 bg-red-900/50 border border-red-500/50 rounded-lg text-red-200 text-sm text-center">
+            <div class="p-3 bg-accent-neg/10 border border-accent-neg/20 rounded-lg text-accent-neg text-sm text-center font-medium">
               {{ error() }}
             </div>
           }
@@ -64,7 +64,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
           <button
             type="submit"
             [disabled]="loginForm.invalid || isLoading()"
-            class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            class="w-full py-3 px-4 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl shadow-sm transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none solid-btn"
             >
             @if (!isLoading()) {
               <span>Sign In</span>

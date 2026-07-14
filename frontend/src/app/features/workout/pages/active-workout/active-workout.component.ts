@@ -22,14 +22,14 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
   standalone: true,
     selector: 'app-active-workout',
     imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent],
-    template: `
+  template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-32">
     
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div></div>
         @if (session()?.completedAt) {
-          <div class="px-3 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
+          <div class="px-3 py-1 bg-accent-pos/20 text-accent-pos text-xs rounded-full border border-accent-pos/30">
             Completed
           </div>
         }
@@ -38,8 +38,8 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
       @if (isLoading()) {
         <div class="text-center py-12">
           <div class="animate-pulse flex flex-col items-center">
-            <div class="h-8 w-8 bg-blue-500 rounded-full mb-4"></div>
-            <p class="text-gray-400">Loading workout...</p>
+            <div class="h-8 w-8 bg-accent-pos rounded-full mb-4"></div>
+            <p class="text-gray-500 dark:text-gray-400">Loading workout...</p>
           </div>
         </div>
       }
@@ -48,35 +48,35 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
         <div>
           <!-- Global Progress Bar -->
           <div class="mb-4">
-            <div class="flex justify-between text-xs text-gray-400 font-medium mb-1">
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">
               <span>Workout Progress</span>
               <span>{{ getTotalLoggedSets() }} / {{ getTotalExpectedSets() }} Sets</span>
             </div>
             <div class="flex gap-1 h-1.5 w-full mt-1 mb-6">
               @for (s of [].constructor(getTotalExpectedSets()); track $index; let idx = $index) {
-                <div class="flex-1 rounded-full overflow-hidden bg-gray-800">
-                  <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
+                <div class="flex-1 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-700">
+                  <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
                        [style.width.%]="getTotalLoggedSets() > idx ? 100 : 0"></div>
                 </div>
               }
             </div>
           </div>
-          <h1 class="text-3xl font-bold text-white mb-1">{{ session()?.dayTemplateName }}</h1>
-          <p class="text-gray-400 text-sm mb-6">Week {{ session()?.weekNumber }} &bull; {{ session()?.performedOn | date:'mediumDate' }}</p>
+          <h1 class="text-3xl font-bold text-black dark:text-white mb-1">{{ session()?.dayTemplateName }}</h1>
+          <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">Week {{ session()?.weekNumber }} &bull; {{ session()?.performedOn | date:'mediumDate' }}</p>
           <!-- Exercises List -->
           <div class="space-y-8">
             @if (exercises().length === 0) {
-              <div class="text-center py-12 glass-card">
-                <p class="text-gray-400">This workout day has no exercises configured.</p>
+              <div class="text-center py-12 solid-card">
+                <p class="text-gray-500 dark:text-gray-400">This workout day has no exercises configured.</p>
               </div>
             }
             @for (ex of exercises(); track ex; let i = $index) {
-              <div class="glass-card p-4 sm:p-6 overflow-hidden relative">
+              <div class="solid-card p-4 sm:p-6 overflow-hidden relative">
                 <!-- Exercise Header -->
-                <div class="flex items-start justify-between mb-4 border-b border-gray-700/50 pb-4">
+                <div class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4">
                   <div>
-                    <h2 class="text-xl font-bold text-white"><span class="text-blue-500 mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</h2>
-                    <p class="text-gray-400 text-sm mt-1">
+                    <h2 class="text-xl font-bold text-black dark:text-white"><span class="text-accent-pos mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</h2>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
                       Goal: {{ ex.sets }} sets × 
                       @if (ex.isAmrap) {
                         AMRAP
@@ -87,7 +87,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                   </div>
                   <button (click)="toggleCollapse(ex.id)"
                     class="ml-4 p-2 rounded-lg transition-colors border flex items-center justify-center"
-                    [ngClass]="isCollapsed(ex.id) ? 'bg-gray-800 border-gray-600 text-gray-400 hover:bg-gray-700' : 'bg-green-600/10 border-green-500/30 text-green-500 hover:bg-green-600/20'"
+                    [ngClass]="isCollapsed(ex.id) ? 'bg-gray-200 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-700' : 'bg-accent-pos/10 border-accent-pos/30 text-accent-pos hover:bg-accent-pos/20'"
                     [title]="isCollapsed(ex.id) ? 'Expand Exercise' : 'Mark as Done & Collapse'">
                     @if (!isCollapsed(ex.id)) {
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -106,7 +106,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                     <!-- Last Logged Set -->
                     @if (getLastSetForExercise(ex.id); as set) {
                       <div class="space-y-3 mb-4 transition-all duration-300" [class.scale-105]="isLoggingSet()">
-                        <div class="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border transition-colors"
+                        <div class="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-lg border transition-colors border-gray-200 dark:border-gray-700"
                           [ngClass]="getPerfContainerClass(set.performanceStatus)">
                           <div class="flex items-center gap-4">
                               <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors"
@@ -124,17 +124,17 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                                 }
                                 <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(set.performanceStatus)">reps</span>
                                 @if (set.performanceStatus === 'CRITICAL') {
-                                  <span class="ml-2 text-[10px] uppercase font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">Perf Drop</span>
+                                  <span class="ml-2 text-[10px] uppercase font-bold text-accent-neg bg-accent-neg/10 px-1.5 py-0.5 rounded">Perf Drop</span>
                                 }
                                 @if (set.performanceStatus === 'WARNING') {
-                                  <span class="ml-2 text-[10px] uppercase font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded">Fatigue</span>
+                                  <span class="ml-2 text-[10px] uppercase font-bold text-yellow-600 dark:text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded">Fatigue</span>
                                 }
                             </div>
                           </div>
                           @if (!session()?.completedAt) {
                             <button
                               (click)="deleteSet(set.id)"
-                              class="text-gray-500 hover:text-red-400 transition-colors p-2"
+                              class="text-gray-500 hover:text-accent-neg transition-colors p-2"
                               >
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -146,33 +146,33 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                     }
                     <!-- Log New Set Form -->
                     @if (!session()?.completedAt) {
-                      <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-700">
+                      <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <div class="mb-3 flex items-center justify-between gap-2">
                           <div class="flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-bold border border-blue-500/30">
+                            <span class="w-6 h-6 rounded-full bg-accent-pos/20 text-accent-pos flex items-center justify-center text-xs font-bold border border-accent-pos/30">
                               {{ getSetsForExercise(ex.id).length + 1 }}
                             </span>
-                            <span class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Next Set</span>
+                            <span class="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Next Set</span>
                           </div>
                         </div>
                         <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
                             <div class="flex-1 min-w-[80px]">
-                              <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Weight (kg)</label>
-                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" [placeholder]="getSuggestion(ex.id)?.suggestedWeightKg || '0'" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center placeholder-gray-500/50">
+                              <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Weight (kg)</label>
+                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" [placeholder]="getSuggestion(ex.id)?.suggestedWeightKg || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                             </div>
                             <div class="flex-1 min-w-[70px]">
-                              <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">{{ ex.unilateral ? 'Reps (L)' : 'Reps' }}</label>
-                              <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" [placeholder]="getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center placeholder-gray-500/50">
+                              <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ ex.unilateral ? 'Reps (L)' : 'Reps' }}</label>
+                              <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" [placeholder]="getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                             </div>
                             @if (ex.unilateral) {
                               <div class="flex-1 min-w-[70px]">
-                                <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-400 mb-1">Reps (R)</label>
-                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white text-lg font-bold text-center placeholder-gray-500/50">
+                                <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Reps (R)</label>
+                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                               </div>
                             }
                           <div class="w-full sm:w-auto mt-2 sm:mt-0">
-                            <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px]"
-                              [ngClass]="getSetsForExercise(ex.id).length >= ex.sets ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-blue-600 hover:bg-blue-500'">
+                            <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px] solid-btn"
+                              [ngClass]="getSetsForExercise(ex.id).length >= ex.sets ? 'bg-yellow-600 hover:bg-yellow-500 text-white' : ''">
                               {{ getSetsForExercise(ex.id).length >= ex.sets ? 'Log Extra Set' : 'Log' }}
                             </button>
                           </div>
@@ -184,24 +184,25 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                 <!-- Progress Bar inside Exercise Card -->
                 <div class="flex gap-1 h-1 w-full mt-4 mb-4">
                   @for (s of [].constructor(ex.sets || 1); track $index; let idx = $index) {
-                    <div class="flex-1 rounded-full overflow-hidden bg-gray-800">
-                      <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
+                    <div class="flex-1 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-700">
+                      <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
                            [style.width.%]="getSetsForExercise(ex.id).length > idx ? 100 : 0"></div>
                     </div>
                   }
                 </div>
                 <!-- Rating Section -->
                 @if (!session()?.completedAt) {
-                  <div class="pt-4 border-t border-gray-700/50 mt-4">
+                  <div class="pt-4 border-t border-gray-300 dark:border-gray-700/50 mt-4">
                     <div class="flex gap-1 sm:gap-1.5 justify-between sm:justify-start w-full">
                       <button
                         (click)="deleteRating(ex.id)"
-                        [class.bg-gray-800]="getRating(ex.id) !== null"
-                        [class.text-gray-400]="getRating(ex.id) !== null"
-                        [class.bg-blue-600]="getRating(ex.id) === null"
+                        [class.bg-gray-200]="getRating(ex.id) !== null"
+                        [class.dark:bg-gray-800]="getRating(ex.id) !== null"
+                        [class.text-gray-500]="getRating(ex.id) !== null"
+                        [class.bg-accent-pos]="getRating(ex.id) === null"
                         [class.text-white]="getRating(ex.id) === null"
                         title="Unrated"
-                        class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-blue-500 hover:text-white transition-colors"
+                        class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-accent-pos hover:text-white transition-colors"
                         >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -210,11 +211,12 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                       @for (r of [1,2,3,4,5,6,7,8,9,10]; track r) {
                         <button
                           (click)="setRating(ex.id, r)"
-                          [class.bg-blue-600]="getRating(ex.id) === r"
+                          [class.bg-accent-pos]="getRating(ex.id) === r"
                           [class.text-white]="getRating(ex.id) === r"
-                          [class.bg-gray-800]="getRating(ex.id) !== r"
-                          [class.text-gray-400]="getRating(ex.id) !== r"
-                          class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-blue-500 hover:text-white transition-colors"
+                          [class.bg-gray-200]="getRating(ex.id) !== r"
+                          [class.dark:bg-gray-800]="getRating(ex.id) !== r"
+                          [class.text-gray-500]="getRating(ex.id) !== r"
+                          class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-accent-pos hover:text-white transition-colors"
                           >
                           {{ r }}
                         </button>
@@ -231,46 +233,46 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
               @if (!showAddExercise()) {
                 <button
                   (click)="openAddExercise()"
-                  class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-blue-400 font-semibold rounded-xl border border-gray-700 hover:border-gray-600 transition-colors border-dashed shadow-md"
+                  class="w-full py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-accent-pos font-semibold rounded-xl border border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600 transition-colors border-dashed shadow-md"
                   >
                   + Add Exercise
                 </button>
               }
               @if (showAddExercise()) {
-                <div class="glass-card p-6 border border-blue-500/30">
-                  <h3 class="text-lg font-bold text-white mb-4">Add Exercise to Session</h3>
+                <div class="solid-card p-6 border border-accent-pos/30">
+                  <h3 class="text-lg font-bold text-black dark:text-white mb-4">Add Exercise to Session</h3>
                   
                   @if (!isCreatingNewExercise()) {
                     @if (!selectedExercise()) {
                       <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onExerciseSelected($event)"></app-exercise-search>
                       
                       <div class="mt-4 text-center">
-                        <button type="button" (click)="isCreatingNewExercise.set(true)" class="text-sm font-medium text-blue-400 hover:text-blue-300 border border-blue-500/30 bg-blue-500/10 px-4 py-2 rounded-lg transition-colors">
+                        <button type="button" (click)="isCreatingNewExercise.set(true)" class="text-sm font-medium text-accent-pos hover:opacity-80 border border-accent-pos/30 bg-accent-pos/10 px-4 py-2 rounded-lg transition-colors">
                           + Or create a new exercise
                         </button>
                       </div>
                     }
                     @if (selectedExercise()) {
                       <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
-                        Selected: {{ selectedExercise()?.name }}
+                        <div class="text-black dark:text-white">Selected: {{ selectedExercise()?.name }}</div>
                         <div class="flex gap-4">
                           <div class="flex-1">
-                            <label for="setsInput" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
-                            <input id="setsInput" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                            <label for="setsInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Sets</label>
+                            <input id="setsInput" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
                           </div>
                           <div class="flex-1">
-                            <label for="repsInput" class="block text-sm font-medium text-gray-300 mb-1">Min Reps</label>
-                            <input id="repsInput" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                            <label for="repsInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Min Reps</label>
+                            <input id="repsInput" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
                           </div>
                           <div class="flex-1">
-                            <label for="repsMaxInput" class="block text-sm font-medium text-gray-300 mb-1">Max Reps (Opt)</label>
-                            <input id="repsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm">
+                            <label for="repsMaxInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Max Reps (Opt)</label>
+                            <input id="repsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
                           </div>
                         </div>
 
                       <div class="flex justify-end gap-3 pt-2">
-                        <button type="button" (click)="cancelAdd()" class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm">Cancel</button>
-                        <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
+                        <button type="button" (click)="cancelAdd()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Cancel</button>
+                        <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
                       </div>
                     </form>
                   }
@@ -283,7 +285,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                   </app-exercise-form>
                   
                   @if (isSavingNewExercise()) {
-                    <div class="text-center mt-4 text-sm text-gray-400">Saving new exercise...</div>
+                    <div class="text-center mt-4 text-sm text-gray-500">Saving new exercise...</div>
                   }
                 }
                 </div>
@@ -292,20 +294,20 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
           }
 
           <!-- Session Notes -->
-          <div class="glass-card p-6 mt-8">
-            <h3 class="text-xl font-bold text-white mb-2">Session Notes</h3>
+          <div class="solid-card p-6 mt-8">
+            <h3 class="text-xl font-bold text-black dark:text-white mb-2">Session Notes</h3>
             <textarea
               [formControl]="notesControl"
               (blur)="saveNotes()"
               placeholder="Type your notes here..."
-              class="w-full h-32 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm resize-none"
+              class="w-full h-32 px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm resize-none placeholder-gray-400"
             ></textarea>
             <div class="flex justify-end mt-2">
               @if (isSavingNotes()) {
-                <span class="text-xs text-blue-400">Saving...</span>
+                <span class="text-xs text-accent-pos">Saving...</span>
               }
               @if (savedNotesSuccess()) {
-                <span class="text-xs text-green-400">Saved!</span>
+                <span class="text-xs text-green-500">Saved!</span>
               }
             </div>
           </div>
@@ -314,13 +316,14 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
     
       <!-- Sticky Bottom Action Bar -->
       @if (!isLoading() && session()) {
-        <div class="sticky bottom-16 md:bottom-0 p-4 mt-8 bg-gray-900/90 backdrop-blur-md border border-gray-800 rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40">
+        <div class="sticky bottom-16 md:bottom-0 p-4 mt-8 bg-white/90 dark:bg-black/90 backdrop-blur-md border border-gray-300 dark:border-gray-800 rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40">
           <div class="flex gap-4">
             @if (!session()?.completedAt) {
               <button
                 (click)="completeWorkout()"
                 [disabled]="isCompleting()"
-                class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-95"
+                class="flex-1 py-4 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90"
+                style="box-shadow: 0 0 20px var(--color-accent-pos);"
                 >
                 {{ isCompleting() ? 'Completing...' : 'Finish Workout' }}
               </button>
@@ -328,7 +331,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
               <button
                 (click)="uncompleteWorkout()"
                 [disabled]="isCompleting()"
-                class="flex-1 py-4 bg-gray-800 border border-gray-600 hover:bg-gray-700 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95"
+                class="flex-1 py-4 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-black dark:text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95"
                 >
                 {{ isCompleting() ? 'Reopening...' : 'Uncomplete & Edit' }}
               </button>
