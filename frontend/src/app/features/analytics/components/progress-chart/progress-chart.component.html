@@ -1,4 +1,4 @@
-<div class="solid-card p-6 rounded-2xl animate-fade-in relative border border-gray-300 dark:border-gray-700">
+<div [ngClass]="miniMode() ? 'w-full h-full flex flex-col' : 'solid-card p-6 rounded-2xl animate-fade-in relative border border-gray-300 dark:border-gray-700'">
   @if (!miniMode()) {
  
   <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
@@ -111,7 +111,7 @@
   </div>
   }
  
-  <div class="relative w-full mt-4" [ngClass]="miniMode() ? 'h-full min-h-[100px]' : 'h-[500px]'">
+  <div class="relative w-full" [ngClass]="miniMode() ? 'h-full flex-1 min-h-0' : 'h-[500px] mt-4'">
     <!-- Loading overlay -->
     @if (isLoading()) {
       <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl transition-all">

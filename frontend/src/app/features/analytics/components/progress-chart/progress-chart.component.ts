@@ -369,8 +369,8 @@ export class ProgressChartComponent implements OnInit {
         datasets.push({
           label: 'Total Volume',
           data: dataPoints,
-          backgroundColor: '#3b82f6', // blue-500
-          borderColor: '#2563eb', // blue-600
+          backgroundColor: this.getCssVariableValue('--color-accent-pos') + 'CC', // Accent color with transparency
+          borderColor: this.getCssVariableValue('--color-accent-pos'),
           borderWidth: 1,
           barPercentage: 1.0,
           categoryPercentage: 1.0,
@@ -447,5 +447,11 @@ export class ProgressChartComponent implements OnInit {
 
   private resetChart() {
     this.chartData = { labels: [], datasets: [] };
+  }
+
+  private getCssVariableValue(variableName: string): string {
+    if (typeof window === 'undefined') return '#3b82f6';
+    const val = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+    return val || '#3b82f6';
   }
 }
