@@ -92,6 +92,8 @@ export interface WeekTemplate {
   days: DayTemplate[];
 }
 
+export type ProgramGoal = 'CUT' | 'BULK' | 'MAINTENANCE';
+
 export interface TrainingProgram {
   id: string;
   userId: string;
@@ -99,6 +101,7 @@ export interface TrainingProgram {
   durationWeeks: number;
   isActive: boolean;
   currentWeek: number;
+  goal: ProgramGoal;
   createdAt: string;
   updatedAt: string;
 }
@@ -152,6 +155,7 @@ export interface ActivitySummary {
 }
 
 export interface DashboardSummaryResponse {
+  activeGoal?: ProgramGoal;
   cardio: {
     sessionsThisWeek: number;
     minutesThisWeek: number;
@@ -168,6 +172,16 @@ export interface DashboardSummaryResponse {
     absoluteChangeKg: number;
   };
   activityCalendar: ActivitySummary[];
+  streak: {
+    currentStreak: number;
+    longestStreak: number;
+  };
+  experience: {
+    totalXp: number;
+    level: number;
+    currentLevelXp: number;
+    nextLevelXp: number;
+  };
 }
 
 export interface ExerciseSuggestionResponse {
@@ -203,5 +217,6 @@ export interface ProgramRequest {
   durationWeeks: number;
   startDate: string | null;
   isActive: boolean;
+  goal: ProgramGoal;
   currentWeek?: number;
 }

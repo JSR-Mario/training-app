@@ -365,25 +365,15 @@ export class ProgressChartComponent implements OnInit {
         return sum;
       });
 
-      if (dataPoints.some(v => v >= 0)) {
-        datasets.push({
-          label: 'Total Volume',
-          data: dataPoints,
-          backgroundColor: '#3b82f6', // blue-500
-          borderColor: '#2563eb', // blue-600
-          borderWidth: 1,
-          barPercentage: 1.0,
-          categoryPercentage: 1.0,
-          order: 1
-        });
+      if (dataPoints.length > 1 && dataPoints.some(v => v >= 0)) {
         datasets.push({
           type: 'line' as const,
           label: 'Trend',
           data: dataPoints,
-          borderColor: '#ffffff',
-          borderWidth: 2,
+          borderColor: this.getCssVariableValue('--color-accent-pos'),
+          borderWidth: 3,
           fill: false,
-          tension: 0,
+          tension: 0.2,
           pointRadius: 0,
           order: 0
         });
@@ -447,5 +437,11 @@ export class ProgressChartComponent implements OnInit {
 
   private resetChart() {
     this.chartData = { labels: [], datasets: [] };
+  }
+
+  private getCssVariableValue(variableName: string): string {
+    if (typeof window === 'undefined') return '#3b82f6';
+    const val = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+    return val || '#3b82f6';
   }
 }

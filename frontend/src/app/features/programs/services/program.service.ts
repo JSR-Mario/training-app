@@ -23,12 +23,12 @@ export class ProgramService {
     return this.http.get<TrainingProgram>(`/api/v1/training/programs/${id}`);
   }
 
-  createProgram(name: string, durationWeeks: number): Observable<TrainingProgram> {
-    return this.http.post<TrainingProgram>('/api/v1/training/programs', { name, durationWeeks });
+  createProgram(name: string, durationWeeks: number, goal = 'MAINTENANCE'): Observable<TrainingProgram> {
+    return this.http.post<TrainingProgram>('/api/v1/training/programs', { name, durationWeeks, goal, isActive: false });
   }
 
-  updateProgram(id: string, name: string, durationWeeks: number, isActive: boolean): Observable<TrainingProgram> {
-    return this.http.put<TrainingProgram>(`/api/v1/training/programs/${id}`, { name, durationWeeks, isActive });
+  updateProgram(id: string, name: string, durationWeeks: number, isActive: boolean, goal = 'MAINTENANCE'): Observable<TrainingProgram> {
+    return this.http.put<TrainingProgram>(`/api/v1/training/programs/${id}`, { name, durationWeeks, isActive, goal });
   }
 
   deleteProgram(id: string): Observable<void> {

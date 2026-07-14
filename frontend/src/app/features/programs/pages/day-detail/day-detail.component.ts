@@ -18,18 +18,18 @@ import { forkJoin } from 'rxjs';
       <!-- Header -->
       <div>
         @if (isLoading()) {
-          <div class="text-gray-400">Loading day details...</div>
+          <div class="text-gray-500 dark:text-gray-400">Loading day details...</div>
         }
     
         @if (!isLoading() && day()) {
-          <div class="flex justify-between items-end border-b border-gray-800 pb-4">
+          <div class="flex justify-between items-end border-b border-gray-300 dark:border-gray-800 pb-4">
             <div>
-              <h1 class="text-3xl font-bold text-white">{{ day()?.name }}</h1>
-              <p class="text-gray-400 mt-1">{{ exercises().length }} exercises configured</p>
+              <h1 class="text-3xl font-bold text-black dark:text-white">{{ day()?.name }}</h1>
+              <p class="text-gray-500 dark:text-gray-400 mt-1">{{ exercises().length }} exercises configured</p>
             </div>
             <button
               (click)="openAddExercise()"
-              class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg"
+              class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-lg transition-colors text-sm font-medium shadow-lg solid-btn"
               >
               + Add Exercise
             </button>
@@ -39,25 +39,25 @@ import { forkJoin } from 'rxjs';
     
       <!-- Add Exercise Form -->
       @if (showAddExercise() && !isLoading()) {
-        <div class="glass-card p-6 border border-blue-500/30">
-          <h3 class="text-lg font-bold text-white mb-4">Add Exercise to {{ day()?.name }}</h3>
+        <div class="solid-card p-6 border border-accent-pos/30">
+          <h3 class="text-lg font-bold text-black dark:text-white mb-4">Add Exercise to {{ day()?.name }}</h3>
           @if (!selectedExercise()) {
             <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onExerciseSelected($event)"></app-exercise-search>
           }
           @if (selectedExercise()) {
             <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
-              <div class="text-sm font-semibold text-blue-400 mb-1 border-b border-gray-700 pb-2 flex items-center gap-2">
+              <div class="text-sm font-semibold text-accent-pos mb-1 border-b border-gray-300 dark:border-gray-700 pb-2 flex items-center gap-2">
                 Selected: {{ selectedExercise()?.name }}
               </div>
                 <div class="flex gap-4">
                   <div class="flex-1">
-                    <label for="setsInput" class="block text-sm font-medium text-gray-300 mb-1">Sets</label>
+                    <label for="setsInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sets</label>
                     <input
                       id="setsInput"
                       type="number"
                       formControlName="sets"
                       min="1"
-                      class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm"
+                      class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
                       >
                   </div>
                 </div>
@@ -69,34 +69,34 @@ import { forkJoin } from 'rxjs';
                       class="sr-only peer"
                       id="isAmrap"
                     >
-                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
                   </label>
-                  <label for="isAmrap" class="text-sm font-medium text-gray-300 cursor-pointer">
+                  <label for="isAmrap" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
                     AMRAP
-                    <span class="text-gray-500 text-xs ml-1">(As Many Reps As Possible)</span>
+                    <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(As Many Reps As Possible)</span>
                   </label>
                 </div>
-
+ 
                 @if (!exerciseForm.get('isAmrap')?.value) {
                   <div class="flex gap-4 mt-4">
                     <div class="flex-1">
-                      <label for="repsInput" class="block text-sm font-medium text-gray-300 mb-1">Min Reps</label>
+                      <label for="repsInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Min Reps</label>
                       <input
                         id="repsInput"
                         type="number"
                         formControlName="reps"
                         min="1"
-                        class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm"
+                        class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
                         >
                     </div>
                     <div class="flex-1">
-                      <label for="repsMaxInput" class="block text-sm font-medium text-gray-300 mb-1">Max Reps (Optional)</label>
+                      <label for="repsMaxInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Reps (Optional)</label>
                       <input
                         id="repsMaxInput"
                         type="number"
                         formControlName="repsMax"
                         min="1"
-                        class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-white text-sm"
+                        class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
                         >
                     </div>
                   </div>
@@ -105,14 +105,14 @@ import { forkJoin } from 'rxjs';
                 <button
                   type="button"
                   (click)="cancelAdd()"
-                  class="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm"
+                  class="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors text-sm"
                   >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   [disabled]="exerciseForm.invalid"
-                  class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50 transition-colors"
+                  class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-lg text-sm disabled:opacity-50 transition-colors solid-btn"
                   >
                   Save Exercise
                 </button>
@@ -126,23 +126,23 @@ import { forkJoin } from 'rxjs';
       @if (!isLoading() && day()) {
         <div class="space-y-6 mt-4">
           @if (exercises().length === 0 && !showAddExercise()) {
-            <div class="text-center py-12 glass-card border border-dashed border-gray-700">
-              <p class="text-gray-400">No exercises added yet.</p>
-              <button (click)="openAddExercise()" class="mt-4 text-blue-400 hover:text-blue-300 text-sm">Add your first exercise</button>
+            <div class="text-center py-12 solid-card border border-dashed border-gray-400 dark:border-gray-700">
+              <p class="text-gray-500 dark:text-gray-400">No exercises added yet.</p>
+              <button (click)="openAddExercise()" class="mt-4 text-accent-pos hover:opacity-80 text-sm">Add your first exercise</button>
             </div>
           }
           @if (exercises().length > 0) {
             <div class="space-y-3">
-              <h4 class="text-gray-300 font-semibold mb-2">Strength Exercises</h4>
+              <h4 class="text-gray-700 dark:text-gray-300 font-semibold mb-2">Strength Exercises</h4>
               @for (ex of exercises(); track ex; let i = $index) {
-                <div class="glass-card p-4 flex items-center justify-between group hover:border-gray-600 transition-colors">
+                <div class="solid-card p-4 flex items-center justify-between group hover:border-gray-400 dark:hover:border-gray-600 transition-colors">
                   <div class="flex items-center gap-4">
                     <!-- Reorder handles -->
                     <div class="flex flex-col gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
                       <button
                         (click)="moveStrengthExercise(ex.id, -1)"
                         [disabled]="i === 0"
-                        class="text-gray-400 hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
+                        class="text-gray-400 hover:text-black dark:hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
                         title="Move Up"
                         >
                         &uarr;
@@ -150,20 +150,20 @@ import { forkJoin } from 'rxjs';
                       <button
                         (click)="moveStrengthExercise(ex.id, 1)"
                         [disabled]="i === exercises().length - 1"
-                        class="text-gray-400 hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
+                        class="text-gray-400 hover:text-black dark:hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
                         title="Move Down"
                         >
                         &darr;
                       </button>
                     </div>
                     <div>
-                      <h4 class="font-semibold text-lg text-white flex items-center flex-wrap gap-2">
+                      <h4 class="font-semibold text-lg text-black dark:text-white flex items-center flex-wrap gap-2">
                         {{ ex.exerciseName }}
                         @for (target of getExerciseTargets(ex.exerciseId); track target) {
-                          <span class="text-[10px] bg-slate-700/60 text-slate-300 px-1.5 py-0.5 rounded border border-slate-600/50 uppercase">{{ target }}</span>
+                          <span class="text-[10px] bg-gray-200 dark:bg-gray-700/60 text-gray-800 dark:text-gray-300 px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600/50 uppercase">{{ target }}</span>
                         }
                       </h4>
-                      <p class="text-gray-400 text-sm">
+                      <p class="text-gray-500 dark:text-gray-400 text-sm">
                         {{ ex.sets }} sets &times;
                         @if (ex.isAmrap) {
                           AMRAP
@@ -175,7 +175,7 @@ import { forkJoin } from 'rxjs';
                   </div>
                   <button
                     (click)="deleteExercise(ex.id)"
-                    class="text-red-400 hover:text-red-300 p-2 opacity-50 group-hover:opacity-100 transition-opacity"
+                    class="text-accent-neg hover:opacity-80 p-2 opacity-50 group-hover:opacity-100 transition-opacity"
                     title="Remove"
                     >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -188,20 +188,20 @@ import { forkJoin } from 'rxjs';
           }
         </div>
       }
-
+ 
       @if (!isLoading() && volumeBreakdown().length > 0) {
-        <div class="mt-8 pt-8 border-t border-gray-800">
-          <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="mt-8 pt-8 border-t border-gray-300 dark:border-gray-800">
+          <h3 class="text-xl font-bold text-black dark:text-white mb-6 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-accent-pos" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             Volume Breakdown
           </h3>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             @for (item of volumeBreakdown(); track item.part) {
-              <div class="bg-gray-800/40 rounded-xl p-4 flex flex-col items-center justify-center border border-gray-700/50 hover:bg-gray-800 transition-colors">
-                <span class="text-3xl font-black text-blue-400">{{ item.sets }}</span>
-                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1 text-center">{{ item.part }}</span>
+              <div class="bg-gray-100 dark:bg-gray-800/40 rounded-xl p-4 flex flex-col items-center justify-center border border-gray-300 dark:border-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+                <span class="text-3xl font-black text-accent-pos">{{ item.sets }}</span>
+                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1 text-center">{{ item.part }}</span>
               </div>
             }
           </div>

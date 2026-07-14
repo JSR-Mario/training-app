@@ -18,15 +18,15 @@ export interface ExerciseFormData {
   standalone: true,
     selector: 'app-exercise-form',
     imports: [ReactiveFormsModule],
-    template: `
-    <div class="glass-card p-6 w-full max-w-2xl mx-auto">
-      <h2 class="text-2xl font-bold mb-6 text-white">{{ exercise() ? 'Edit Exercise' : 'New Exercise' }}</h2>
+  template: `
+    <div class="solid-card p-6 w-full max-w-2xl mx-auto">
+      <h2 class="text-2xl font-bold mb-6 text-black dark:text-white">{{ exercise() ? 'Edit Exercise' : 'New Exercise' }}</h2>
     
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
     
         <!-- Name with Autocomplete -->
         <div class="relative">
-          <label for="name" class="block text-sm font-medium text-gray-300 mb-1">Exercise Name</label>
+          <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Exercise Name</label>
           <input
             id="name"
             type="text"
@@ -34,11 +34,11 @@ export interface ExerciseFormData {
             (input)="onNameInput($event)"
             (focus)="showSuggestions.set(suggestions().length > 0)"
             autocomplete="off"
-            class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
+            class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
             placeholder="e.g., Bench Press"
             >
           @if (form.get('name')?.invalid && form.get('name')?.touched) {
-            <div class="text-red-400 text-xs mt-1">
+            <div class="text-accent-neg text-xs mt-1">
               Name is required (max 200 chars).
             </div>
           }
@@ -46,20 +46,20 @@ export interface ExerciseFormData {
           <!-- Autocomplete Dropdown -->
           @if (showSuggestions() && suggestions().length > 0) {
             <div
-              class="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-600 rounded-xl shadow-xl overflow-hidden"
+              class="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden"
               >
               @for (suggestion of suggestions(); track suggestion) {
                 <button
                   type="button"
                   (mousedown)="selectSuggestion(suggestion)"
-                  class="w-full text-left px-4 py-3 hover:bg-gray-700/80 transition-colors border-b border-gray-700/50 last:border-b-0"
+                  class="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors border-b border-gray-200 dark:border-gray-700/50 last:border-b-0"
                   >
-                  <span class="text-white font-medium">{{ suggestion.name }}</span>
+                  <span class="text-black dark:text-white font-medium">{{ suggestion.name }}</span>
                   @if (suggestion.equipmentBrand) {
-                    <span class="text-gray-400 text-xs ml-2">({{ suggestion.equipmentBrand }})</span>
+                    <span class="text-gray-500 dark:text-gray-400 text-xs ml-2">({{ suggestion.equipmentBrand }})</span>
                   }
                   @if (suggestion.unilateral) {
-                    <span class="ml-2 px-1.5 py-0.5 text-[10px] font-semibold bg-amber-500/20 text-amber-400 rounded">UNI</span>
+                    <span class="ml-2 px-1.5 py-0.5 text-[10px] font-semibold bg-amber-500/20 text-amber-500 dark:text-amber-400 rounded">UNI</span>
                   }
                 </button>
               }
@@ -67,18 +67,18 @@ export interface ExerciseFormData {
           }
         </div>
     
-
+ 
         <!-- Equipment Brand (optional) -->
         <div>
-          <label for="equipmentBrand" class="block text-sm font-medium text-gray-300 mb-1">
+          <label for="equipmentBrand" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Equipment Brand
-            <span class="text-gray-500 text-xs ml-1">(optional)</span>
+            <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(optional)</span>
           </label>
           <input
             id="equipmentBrand"
             type="text"
             formControlName="equipmentBrand"
-            class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white"
+            class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
             placeholder="e.g., Hammer Strength, Rogue, Life Fitness"
             >
         </div>
@@ -92,14 +92,14 @@ export interface ExerciseFormData {
                 class="sr-only peer"
                 id="unilateral"
                 >
-              <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
             </label>
-            <label for="unilateral" class="text-sm font-medium text-gray-300 cursor-pointer">
+            <label for="unilateral" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
               Unilateral exercise
-              <span class="text-gray-500 text-xs ml-1">(one side at a time)</span>
+              <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(one side at a time)</span>
             </label>
           </div>
-
+ 
           <div class="flex items-center gap-3">
             <label class="relative inline-flex items-center cursor-pointer">
               <input
@@ -108,14 +108,14 @@ export interface ExerciseFormData {
                 class="sr-only peer"
                 id="spinalLoading"
               >
-              <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
             </label>
-            <label for="spinalLoading" class="text-sm font-medium text-gray-300 cursor-pointer">
+            <label for="spinalLoading" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
               Spinal Loading
-              <span class="text-gray-500 text-xs ml-1">(significant axial load)</span>
+              <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(significant axial load)</span>
             </label>
           </div>
-
+ 
           <div class="flex items-center gap-3">
             <label class="relative inline-flex items-center cursor-pointer">
               <input
@@ -124,11 +124,11 @@ export interface ExerciseFormData {
                 class="sr-only peer"
                 id="isBodyweight"
               >
-              <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
             </label>
-            <label for="isBodyweight" class="text-sm font-medium text-gray-300 cursor-pointer">
+            <label for="isBodyweight" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
               Bodyweight exercise
-              <span class="text-gray-500 text-xs ml-1">(e.g., Pull-ups, Push-ups)</span>
+              <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(e.g., Pull-ups, Push-ups)</span>
             </label>
           </div>
         <!-- Public Checkbox (Admins Only) -->
@@ -141,11 +141,11 @@ export interface ExerciseFormData {
                 class="sr-only peer"
                 id="isPublic"
                 >
-              <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+              <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
             </label>
-            <label for="isPublic" class="text-sm font-medium text-gray-300 cursor-pointer">
+            <label for="isPublic" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
               Public exercise
-              <span class="text-gray-500 text-xs ml-1">(visible to all users)</span>
+              <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(visible to all users)</span>
             </label>
           </div>
         }
@@ -153,23 +153,23 @@ export interface ExerciseFormData {
         <!-- Body Part Targets -->
           <div>
             <div class="flex justify-between items-center mb-2">
-              <h3 class="block text-sm font-medium text-gray-300">Body Part Targets</h3>
+              <h3 class="block text-sm font-medium text-gray-700 dark:text-gray-300">Body Part Targets</h3>
               <button
                 type="button"
                 (click)="addTarget()"
-                class="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition-colors"
+                class="text-xs px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-black dark:text-white transition-colors border border-gray-300 dark:border-gray-600"
                 >
                 + Add Target
               </button>
             </div>
             <div formArrayName="targets" class="space-y-3">
               @for (targetForm of targets.controls; track targetForm; let i = $index) {
-                <div [formGroupName]="i" class="flex gap-3 items-start bg-gray-800/30 p-3 rounded-xl border border-gray-700/50">
+                <div [formGroupName]="i" class="flex gap-3 items-start bg-gray-50 dark:bg-gray-800/30 p-3 rounded-xl border border-gray-300 dark:border-gray-700/50">
                   <div class="flex-1 flex flex-col gap-2">
                     <select
                       formControlName="category"
                       (change)="onCategoryChange(i)"
-                      class="w-full px-3 py-2 text-sm bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                      class="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white"
                       >
                       <option value="" disabled>Select Region</option>
                       @for (cat of categories; track cat) {
@@ -180,7 +180,7 @@ export interface ExerciseFormData {
                       <select
                         formControlName="group"
                         (change)="onGroupChange(i)"
-                        class="w-full px-3 py-2 text-sm bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                        class="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white"
                         >
                         <option value="" disabled>Select Muscle Group</option>
                         @for (grp of getGroupsFor(targetForm.get('category')?.value); track grp) {
@@ -191,7 +191,7 @@ export interface ExerciseFormData {
                     @if (targetForm.get('group')?.value && getPartsFor(targetForm.get('category')?.value, targetForm.get('group')?.value).length > 1) {
                       <select
                         formControlName="bodyPart"
-                        class="w-full px-3 py-2 text-sm bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white border-l-2 border-l-blue-500"
+                        class="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white border-l-2 border-l-accent-pos"
                         >
                         <option value="" disabled>Select Specific Part</option>
                         @for (part of getPartsFor(targetForm.get('category')?.value, targetForm.get('group')?.value); track part) {
@@ -207,14 +207,14 @@ export interface ExerciseFormData {
                       min="0"
                       max="1"
                       formControlName="targetValue"
-                      class="w-full px-3 py-2 text-sm bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white"
+                      class="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white"
                       placeholder="0.0-1.0"
                       >
                   </div>
                   <button
                     type="button"
                     (click)="removeTarget(i)"
-                    class="p-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg transition-colors"
+                    class="p-2 bg-accent-neg/10 text-accent-neg hover:bg-accent-neg/20 rounded-lg transition-colors border border-accent-neg/20"
                     title="Remove Target"
                     >
                     X
@@ -222,25 +222,25 @@ export interface ExerciseFormData {
                 </div>
               }
               @if (targets.length === 0) {
-                <div class="text-sm text-gray-500 italic">
+                <div class="text-sm text-gray-500 dark:text-gray-400 italic">
                   No body part targets added. This exercise won't count towards weekly volume.
                 </div>
               }
             </div>
           </div>
-
-        <div class="flex justify-end gap-3 pt-4 border-t border-gray-800">
+ 
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-300 dark:border-gray-800">
           <button
             type="button"
             (click)="cancelForm.emit()"
-            class="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+            class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
             >
             Cancel
           </button>
           <button
             type="submit"
             [disabled]="form.invalid"
-            class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl disabled:opacity-50 transition-colors"
+            class="px-6 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl disabled:opacity-50 transition-colors solid-btn"
             >
             Save Exercise
           </button>

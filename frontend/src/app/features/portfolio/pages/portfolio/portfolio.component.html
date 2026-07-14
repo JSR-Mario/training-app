@@ -1,0 +1,158 @@
+<div
+  class="h-screen w-full overflow-y-auto bg-[#F5F5F3] dark:bg-[#0A0A0A] text-[#1A1A1A] dark:text-[#F5F5F3] font-sans selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black transition-colors duration-500">
+  <div class="max-w-2xl mx-auto px-6 py-12 md:py-20 relative">
+
+    <!-- Decorative Top Line -->
+    <hr class="border-black/10 dark:border-white/10 mb-12 mt-2">
+
+    <!-- Main Profile Section -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+      <!-- Image and Name -->
+      <div class="space-y-6">
+        <div
+          class="w-48 h-56 bg-gray-200 dark:bg-gray-800 overflow-hidden relative grayscale hover:grayscale-0 transition-all duration-700">
+          <img src="/me/me.jpg" alt="Juan Mario Sosa"
+            class="object-cover w-full h-full object-center scale-105 hover:scale-100 transition-transform duration-700">
+        </div>
+        <div>
+          <h1 class="text-5xl md:text-6xl font-medium tracking-tight mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            Juan Mario Sosa
+            <span class="text-lg md:text-xl font-normal opacity-40 tracking-normal normal-case">(He/Him)</span>
+          </h1>
+          <div class="flex flex-col gap-1.5 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] opacity-60">
+            <span>Computer Science Major</span>
+            <span>Data & Software Engineer</span>
+            <span>SRE @ Nutanix</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Stat Area -->
+      <div class="flex flex-col items-start md:items-end justify-start md:mt-0 mt-8">
+        <h2 class="text-7xl md:text-9xl font-light tracking-tighter leading-none mb-4">04</h2>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+          <span class="text-xs font-bold uppercase tracking-widest opacity-80">Mexico City</span>
+        </div>
+        <a href="mailto:juan.mario.sosa.p@gmail.com"
+          class="text-sm opacity-80 hover:underline">juan.mario.sosa.p@gmail.com</a>
+      </div>
+    </section>
+
+    <hr class="border-black/10 dark:border-white/10 mb-12">
+
+    <!-- About Section -->
+    <section class="mb-16 max-w-lg">
+      <h3 class="text-xs font-bold uppercase tracking-[0.2em] opacity-80 mb-6">About</h3>
+      <p class="text-lg md:text-xl leading-relaxed opacity-90 font-medium text-balance">
+        Software engineer focused on minimal systems, clean architectures, and scalable solutions. Passionate about
+        building robust applications with thoughtful details.
+      </p>
+    </section>
+
+    <!-- Interests / Stack Section -->
+    <section class="mb-16">
+      <h3 class="text-xs font-bold uppercase tracking-[0.2em] opacity-80 mb-6">Interests & Stack</h3>
+      <div class="flex flex-wrap gap-6 text-sm font-medium opacity-90">
+        <span>Linux</span>
+        <span>Backend Architecture</span>
+        <span>Computer Networking</span>
+        <span>Cloud Infrastructure</span>
+        <span>Kubernetes</span>
+      </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section class="mb-16">
+      <h3 class="text-xs font-bold uppercase tracking-[0.2em] opacity-80 mb-6">Selected Works</h3>
+      <div class="space-y-4">
+        <!-- Project 1 -->
+        <a href="https://app.jsr-mario.com/auth/login" class="block group">
+          <div
+            class="border border-black/10 dark:border-white/10 p-6 flex items-center justify-between hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors duration-300">
+            <div>
+              <h4 class="font-medium text-lg">Training App</h4>
+              <p class="text-sm opacity-60 mt-1">Microservices, Angular, Spring Boot, PostgreSQL</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </div>
+        </a>
+        <!-- Project 2 -->
+        <a href="https://github.com/JSR-Mario" target="_blank" class="block group">
+          <div
+            class="border border-black/10 dark:border-white/10 p-6 flex items-center justify-between hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors duration-300">
+            <div>
+              <h4 class="font-medium text-lg">More on GitHub</h4>
+              <p class="text-sm opacity-60 mt-1">Check out my other repositories and contributions</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Connect Card Section -->
+    <section class="mb-16">
+      <div class="bg-[#EAEAEA] dark:bg-[#1A1A1A] p-8 md:p-12 relative overflow-hidden group">
+        <p class="text-xs font-bold uppercase tracking-[0.2em] opacity-60 mb-6">Connect Card</p>
+        <p class="text-xl md:text-2xl font-medium mb-12 max-w-sm text-balance">
+          Download my resume to review my full experience and connect intentionally.
+        </p>
+        <a href="/me/JuanSosa_CV.pdf" download="Juan_Mario_Sosa_CV.pdf"
+          class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] hover:opacity-70 transition-opacity">
+          Tap to Download CV
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+        </a>
+
+        <!-- Decorative Grid -->
+        <div
+          class="hidden md:block absolute right-[-10%] bottom-[-10%] md:right-8 md:bottom-8 opacity-20 pointer-events-none group-hover:scale-105 transition-transform duration-700">
+          <div class="grid grid-cols-8 gap-2">
+            @for (i of [].constructor(64); track $index) {
+            <div class="w-1.5 h-1.5 bg-black dark:bg-white rounded-full"></div>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Links -->
+    <footer class="grid grid-cols-2 gap-8 pt-8 border-t border-black/10 dark:border-white/10">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-[0.2em] opacity-60 mb-2">Socials</p>
+        <div class="space-y-1">
+          <a href="https://github.com/JSR-Mario" target="_blank"
+            class="block text-sm font-medium hover:underline underline-offset-4">GitHub</a>
+          <a href="https://www.linkedin.com/in/juan-sosa-997405294" target="_blank"
+            class="block text-sm font-medium hover:underline underline-offset-4">LinkedIn</a>
+          <a href="https://wakatime.com/@JSRMario" target="_blank"
+            class="block text-sm font-medium hover:underline underline-offset-4">WakaTime</a>
+        </div>
+      </div>
+      <div>
+        <p class="text-xs font-bold uppercase tracking-[0.2em] opacity-60 mb-2">Application</p>
+        <a href="https://app.jsr-mario.com/auth/login"
+          class="inline-flex items-center gap-1 text-sm font-medium hover:underline underline-offset-4">
+          Login to Training App
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      </div>
+    </footer>
+
+  </div>
+</div>

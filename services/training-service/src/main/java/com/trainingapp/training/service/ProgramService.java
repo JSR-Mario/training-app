@@ -44,6 +44,7 @@ public class ProgramService {
         program.setDurationWeeks(request.durationWeeks());
         program.setStartDate(request.startDate());
         program.setActive(request.isActive());
+        program.setGoal(request.goal());
         if (request.currentWeek() != null) {
             program.setCurrentWeek(request.currentWeek());
         }
@@ -64,6 +65,7 @@ public class ProgramService {
         program.setDurationWeeks(request.durationWeeks());
         program.setStartDate(request.startDate());
         program.setActive(request.isActive());
+        program.setGoal(request.goal());
         if (request.currentWeek() != null) {
             program.setCurrentWeek(request.currentWeek());
         }
@@ -105,6 +107,6 @@ public class ProgramService {
     }
 
     private ProgramResponse toResponse(TrainingProgram p) {
-        return new ProgramResponse(p.getId(), p.getName(), p.getDurationWeeks(), p.getStartDate(), p.isActive(), p.getCurrentWeek(), p.getCreatedAt());
+        return new ProgramResponse(p.getId(), p.getName(), p.getDurationWeeks(), p.getStartDate(), p.isActive(), p.getCurrentWeek(), p.getCreatedAt(), p.getGoal());
     }
 }
