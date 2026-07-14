@@ -11,38 +11,37 @@ import { CardioLogService } from '../../services/cardio-log.service';
   template: `
     <div class="max-w-7xl mx-auto space-y-6">
       
-      <header class="mb-4">
-        <h1 class="text-2xl font-bold text-white tracking-tight sm:text-3xl">
-          Cardio <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500">Dashboard</span>
+      <header class="mb-6">
+        <h1 class="text-2xl font-bold text-black dark:text-white tracking-tight sm:text-3xl">
+          Cardio <span class="text-accent-pos">Dashboard</span>
         </h1>
       </header>
 
       <!-- Logging Form -->
-      <div class="glass-panel p-6 rounded-2xl mb-6">
-        <h2 class="text-lg font-semibold text-white mb-4">Log Cardio Session</h2>
+      <div class="solid-card border border-gray-300 dark:border-gray-700 p-6 rounded-2xl mb-6">
         
         <form [formGroup]="cardioForm" (ngSubmit)="onSubmit()" class="flex flex-col sm:flex-row items-end gap-4">
           
           <div class="flex-1 w-full">
-            <label for="performedOn" class="block text-sm font-medium text-gray-400 mb-1">Date</label>
+            <label for="performedOn" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
             <input id="performedOn" type="date" formControlName="performedOn" 
-                   class="w-full bg-gray-800 text-white rounded-lg border border-gray-700 px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+                   class="w-full solid-input">
           </div>
           
           <div class="flex-1 w-full">
-            <label for="durationMinutes" class="block text-sm font-medium text-gray-400 mb-1">Duration (min)</label>
+            <label for="durationMinutes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
             <input id="durationMinutes" type="number" formControlName="durationMinutes" min="1" placeholder="e.g. 30"
-                   class="w-full bg-gray-800 text-white rounded-lg border border-gray-700 px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+                   class="w-full solid-input">
           </div>
 
           <div class="flex-1 w-full">
-            <label for="cardioType" class="block text-sm font-medium text-gray-400 mb-1">Type (Optional)</label>
+            <label for="cardioType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type (Optional)</label>
             <input id="cardioType" type="text" formControlName="cardioType" placeholder="e.g. Treadmill"
-                   class="w-full bg-gray-800 text-white rounded-lg border border-gray-700 px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+                   class="w-full solid-input">
           </div>
 
           <button type="submit" [disabled]="cardioForm.invalid || isSubmitting()"
-                  class="w-full sm:w-auto px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50 h-[42px]">
+                  class="w-full sm:w-auto solid-btn solid-btn-pos disabled:opacity-50 h-[42px] px-6">
             @if (isSubmitting()) {
               Logging...
             } @else {
