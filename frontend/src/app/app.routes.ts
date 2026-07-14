@@ -11,6 +11,7 @@ export const routes: Routes = [
   },
   {
     path: '',
+    canMatch: [() => typeof window !== 'undefined' ? !window.location.hostname.startsWith('app.') : true],
     loadComponent: () => import('./features/portfolio/pages/portfolio/portfolio.component').then(m => m.PortfolioComponent),
     pathMatch: 'full'
   },
@@ -66,6 +67,11 @@ export const routes: Routes = [
       {
         path: 'cardio',
         loadComponent: () => import('./features/analytics/pages/cardio-dashboard/cardio-dashboard.component').then(m => m.CardioDashboardComponent)
+      },
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
       }
     ]
   },

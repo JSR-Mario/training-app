@@ -110,7 +110,7 @@ export class LoginComponent {
       
       this.authService.login(credentials).subscribe({
         next: () => {
-          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
           this.router.navigateByUrl(returnUrl);
         },
         error: () => {
