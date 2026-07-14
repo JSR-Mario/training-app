@@ -11,6 +11,11 @@ export const routes: Routes = [
   },
   {
     path: '',
+    loadComponent: () => import('./features/portfolio/pages/portfolio/portfolio.component').then(m => m.PortfolioComponent),
+    pathMatch: 'full'
+  },
+  {
+    path: '',
     component: BaseLayoutComponent,
     canActivate: [authGuard],
     children: [
@@ -61,11 +66,6 @@ export const routes: Routes = [
       {
         path: 'cardio',
         loadComponent: () => import('./features/analytics/pages/cardio-dashboard/cardio-dashboard.component').then(m => m.CardioDashboardComponent)
-      },
-      {
-        path: '',
-        redirectTo: 'dashboard',
-        pathMatch: 'full'
       }
     ]
   },
