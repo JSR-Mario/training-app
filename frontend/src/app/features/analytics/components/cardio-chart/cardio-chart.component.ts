@@ -35,6 +35,7 @@ export class CardioChartComponent implements OnInit {
     },
     scales: {
       x: {
+        stacked: true,
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: { color: '#94a3b8' }
       },
@@ -42,6 +43,7 @@ export class CardioChartComponent implements OnInit {
         type: 'linear',
         display: true,
         position: 'left',
+        stacked: true,
         grid: { color: 'rgba(255, 255, 255, 0.1)' },
         ticks: { color: '#10b981' }, // Emerald 500
         title: { display: true, text: 'Duration (Minutes)', color: '#10b981' },
@@ -55,7 +57,7 @@ export class CardioChartComponent implements OnInit {
     }
   };
 
-  public chartType: ChartType = 'line';
+  public chartType: ChartType = 'bar';
   public chartData: ChartConfiguration['data'] = {
     labels: [],
     datasets: []
@@ -92,35 +94,53 @@ export class CardioChartComponent implements OnInit {
       return;
     }
 
-    const aggregated = new Map<string, number>();
-    
+    const aggregated = new Map<string, Map<string, number>>();
+    const allTypes = new Set<string>();
+
     data.forEach(entry => {
       const date = entry.performedOn;
+      const type = (entry.cardioType || 'Other').trim();
+      const displayType = type === '' ? 'Other' : type;
       const duration = entry.durationMinutes || 0;
-      aggregated.set(date, (aggregated.get(date) || 0) + duration);
+      
+      allTypes.add(displayType);
+
+      if (!aggregated.has(date)) {
+        aggregated.set(date, new Map<string, number>());
+      }
+      const dateMap = aggregated.get(date)!;
+      dateMap.set(displayType, (dateMap.get(displayType) || 0) + duration);
     });
 
     const sortedDates = Array.from(aggregated.keys()).sort();
-    
+    const sortedTypes = Array.from(allTypes).sort();
+
+    const colors = [
+      { bg: 'rgba(16, 185, 129, 0.8)', border: '#10b981' }, // Emerald
+      { bg: 'rgba(59, 130, 246, 0.8)', border: '#3b82f6' }, // Blue
+      { bg: 'rgba(168, 85, 247, 0.8)', border: '#a855f7' }, // Purple
+      { bg: 'rgba(244, 63, 94, 0.8)', border: '#f43f5e' },  // Rose
+      { bg: 'rgba(245, 158, 11, 0.8)', border: '#f59e0b' }, // Amber
+      { bg: 'rgba(14, 165, 233, 0.8)', border: '#0ea5e9' }, // Sky
+      { bg: 'rgba(236, 72, 153, 0.8)', border: '#ec4899' }, // Pink
+      { bg: 'rgba(148, 163, 184, 0.8)', border: '#94a3b8' }  // Slate (Fallback)
+    ];
+
+    const datasets = sortedTypes.map((type, index) => {
+      const colorOptions = colors[index % colors.length];
+      return {
+        label: type,
+        data: sortedDates.map(d => aggregated.get(d)?.get(type) || 0),
+        backgroundColor: colorOptions.bg,
+        borderColor: colorOptions.border,
+        borderWidth: 2,
+        borderRadius: 4
+      };
+    });
+
     this.chartData = {
-      labels: sortedDates, // e.g. '2024-05-12'
-      datasets: [
-        {
-          data: sortedDates.map(d => aggregated.get(d)!),
-          label: 'Total Duration (min)',
-          backgroundColor: 'rgba(16, 185, 129, 0.2)', // Emerald with opacity
-          borderColor: '#10b981', // Emerald 500
-          borderWidth: 3,
-          pointBackgroundColor: '#10b981',
-          pointBorderColor: '#fff',
-          pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: '#10b981',
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          fill: true,
-          tension: 0.3 // Smooth curve
-        }
-      ]
+      labels: sortedDates,
+      datasets: datasets
     };
   }
 }
