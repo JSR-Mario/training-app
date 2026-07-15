@@ -1,13 +1,15 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ElementRef, HostListener } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
 import { DashboardService } from '../../../features/dashboard/services/dashboard.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { environment } from '../../../../environments/environment';
 import { filter } from 'rxjs/operators';
 @Component({
   standalone: true,
   selector: 'app-base-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   template: `
     <style>
       @keyframes levelUpGlow {
@@ -36,7 +38,7 @@ import { filter } from 'rxjs/operators';
         <div class="p-6 whitespace-nowrap flex items-center justify-between">
           <a routerLink="/dashboard" (click)="closeOnMobile()" class="block cursor-pointer hover:opacity-80 transition-opacity">
             <h1 class="text-2xl font-bold text-black dark:text-white">
-              TR <span class="text-accent-pos text-sm align-text-top ml-1">v0.1.0</span>
+              TR <span class="text-accent-pos text-sm align-text-top ml-1">{{ appVersion }}</span>
             </h1>
           </a>
           @if (isMobile()) {
@@ -119,7 +121,7 @@ import { filter } from 'rxjs/operators';
             </svg>
           </button>
           
-          <div class="relative">
+          <div class="relative user-dropdown-container">
             <button (click)="dropdownOpen.set(!dropdownOpen())" class="flex items-center space-x-3 text-gray-300 hover:text-white focus:outline-none p-2 rounded-lg hover:bg-gray-800 transition-colors">
               <span class="font-medium">{{ username() }}</span>
               <!-- Level Badge -->
@@ -140,6 +142,26 @@ import { filter } from 'rxjs/operators';
             @if (dropdownOpen()) {
               <div class="absolute right-0 mt-2 w-64 bg-white dark:bg-black border-2 border-black dark:border-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,1)] z-50 p-4 space-y-4">
                 
+                <!-- XP Progress -->
+                @if (level() > 0) {
+                  <div class="space-y-1.5 pb-2 border-b-2 border-black dark:border-white">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="font-bold text-black dark:text-white">Lvl {{ level() }}</span>
+                      <span class="text-gray-500">Lvl {{ level() + 1 }}</span>
+                    </div>
+                    <div class="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                      <div 
+                        class="h-full bg-accent-pos rounded-full transition-all duration-500"
+                        [style.width.%]="xpProgressPercent()"
+                      ></div>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-gray-500 font-medium">
+                      <span>{{ currentLevelXp() | number:'1.0-0' }} XP</span>
+                      <span>{{ nextLevelXp() | number:'1.0-0' }} XP</span>
+                    </div>
+                  </div>
+                }
+
                 <!-- Theme Toggle -->
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-bold text-black dark:text-white">Theme Mode</span>
@@ -241,14 +263,32 @@ export class BaseLayoutComponent {
   private dashboardService = inject(DashboardService);
   private router = inject(Router);
   themeService = inject(ThemeService);
+  appVersion = environment.appVersion;
 
   isMobile = signal<boolean>(window.innerWidth < 768);
   isSidebarOpen = signal<boolean>(!this.isMobile());
   dropdownOpen = signal<boolean>(false);
   level = signal<number>(0);
   animatingLevel = signal<boolean>(false);
+  currentLevelXp = signal<number>(0);
+  nextLevelXp = signal<number>(0);
 
   username = computed(() => this.authService.username);
+  
+  xpProgressPercent = computed(() => {
+    const next = this.nextLevelXp();
+    if (next <= 0) return 0;
+    return Math.min((this.currentLevelXp() / next) * 100, 100);
+  });
+
+  private elementRef = inject(ElementRef);
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent) {
+    if (this.dropdownOpen() && !this.elementRef.nativeElement.querySelector('.user-dropdown-container')?.contains(event.target)) {
+      this.dropdownOpen.set(false);
+    }
+  }
 
   constructor() {
     // We could use HostListener for resize, but window event listener is fine too.
@@ -279,6 +319,8 @@ export class BaseLayoutComponent {
             setTimeout(() => this.animatingLevel.set(false), 2500);
           }
           this.level.set(newLevel);
+          this.currentLevelXp.set(res.experience.currentLevelXp);
+          this.nextLevelXp.set(res.experience.nextLevelXp);
         }
       }
     });
