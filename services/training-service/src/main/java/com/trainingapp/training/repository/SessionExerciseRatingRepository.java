@@ -10,9 +10,9 @@ import java.util.UUID;
 
 @Repository
 public interface SessionExerciseRatingRepository extends JpaRepository<SessionExerciseRating, UUID> {
-    Optional<SessionExerciseRating> findBySessionIdAndDayExerciseId(UUID sessionId, UUID dayExerciseId);
-    void deleteBySessionIdAndDayExerciseId(UUID sessionId, UUID dayExerciseId);
+    Optional<SessionExerciseRating> findBySessionIdAndSessionExerciseId(UUID sessionId, UUID sessionExerciseId);
+    void deleteBySessionIdAndSessionExerciseId(UUID sessionId, UUID sessionExerciseId);
     List<SessionExerciseRating> findBySessionId(UUID sessionId);
-    @org.springframework.data.jpa.repository.Query("SELECT de.exercise.id, AVG(r.rating) FROM SessionExerciseRating r JOIN r.dayExercise de WHERE de.exercise.id IN :exerciseIds GROUP BY de.exercise.id")
+    @org.springframework.data.jpa.repository.Query("SELECT se.exercise.id, AVG(r.rating) FROM SessionExerciseRating r JOIN r.sessionExercise se WHERE se.exercise.id IN :exerciseIds GROUP BY se.exercise.id")
     List<Object[]> getAverageRatingsForExercises(@org.springframework.data.repository.query.Param("exerciseIds") List<UUID> exerciseIds);
 }

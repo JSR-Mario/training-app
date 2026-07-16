@@ -41,7 +41,7 @@ import { CardioLogService } from '../../services/cardio-log.service';
           </div>
 
           <button type="submit" [disabled]="cardioForm.invalid || isSubmitting()"
-                  class="w-full sm:w-auto solid-btn solid-btn-pos disabled:opacity-50 h-[42px] px-6">
+                  class="w-full sm:w-auto solid-btn bg-accent-pos hover:opacity-80 text-white disabled:opacity-50 h-[42px] px-6">
             @if (isSubmitting()) {
               Logging...
             } @else {

@@ -50,7 +50,7 @@ class DayTemplateServiceTest {
     @Test
     void findByWeek_validatesOwnership() {
         when(weekService.findOwned(userId, weekId)).thenReturn(sampleWeek);
-        when(dayRepository.findByWeekTemplateId(weekId)).thenReturn(List.of(sampleDay));
+        when(dayRepository.findByWeekTemplateIdOrderBySortOrderAsc(weekId)).thenReturn(List.of(sampleDay));
         List<DayTemplateResponse> result = dayService.findByWeek(userId, weekId);
         assertThat(result).hasSize(1);
         verify(weekService).findOwned(userId, weekId);
@@ -59,6 +59,7 @@ class DayTemplateServiceTest {
     @Test
     void create_validatesAndSaves() {
         when(weekService.findOwned(userId, weekId)).thenReturn(sampleWeek);
+        when(dayRepository.findByWeekTemplateIdOrderBySortOrderAsc(weekId)).thenReturn(List.of());
         when(dayRepository.save(any())).thenReturn(sampleDay);
         DayTemplateResponse result = dayService.create(userId, weekId, new DayTemplateRequest("Push"));
         assertThat(result.name()).isEqualTo("Push");

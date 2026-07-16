@@ -86,11 +86,22 @@ import { switchMap, of } from 'rxjs';
  
         <!-- Days Grid -->
         <div class="space-y-4">
-          @for (day of combinedDays(); track day.template.id) {
-            <div class="solid-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:border-gray-400 dark:hover:border-gray-600 transition-colors border border-gray-300 dark:border-gray-700">
-              <div class="mb-4 sm:mb-0">
-                <div class="flex items-center gap-3 mb-1">
-                  <h3 class="text-xl font-bold text-black dark:text-white">{{ day.template.name }}</h3>
+          @for (day of combinedDays(); track day.template.id; let i = $index) {
+            <div [id]="'day-' + day.template.id" class="solid-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:border-gray-400 dark:hover:border-gray-600 transition-colors border border-gray-300 dark:border-gray-700">
+              <div class="mb-4 sm:mb-0 flex-1 w-full">
+                <div class="flex items-center justify-between w-full mb-1">
+                  <div class="flex items-center gap-3">
+                    <div class="flex flex-col gap-1 mr-2">
+                      <button (click)="moveDayUp(i)" [disabled]="i === 0 || isReordering()" class="text-gray-400 hover:text-accent-pos disabled:opacity-30 disabled:hover:text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
+                      </button>
+                      <button (click)="moveDayDown(i)" [disabled]="i === combinedDays().length - 1 || isReordering()" class="text-gray-400 hover:text-accent-pos disabled:opacity-30 disabled:hover:text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                      </button>
+                    </div>
+                    <h3 class="text-xl font-bold text-black dark:text-white">{{ day.template.name }}</h3>
+                  </div>
+                  <div class="flex items-center gap-3">
                   
                   @if (day.session?.completedAt) {
                     <span class="px-2 py-0.5 bg-accent-pos/10 text-accent-pos text-xs rounded border border-accent-pos/20 font-bold">Completed</span>
@@ -99,6 +110,7 @@ import { switchMap, of } from 'rxjs';
                   } @else {
                     <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 text-xs rounded border border-gray-200 dark:border-gray-700 font-bold">Not Started</span>
                   }
+                  </div>
                 </div>
                 @if (day.session?.performedOn) {
                   <p class="text-gray-500 dark:text-gray-400 text-sm">Performed on: {{ day.session?.performedOn | date:'mediumDate' }}</p>
@@ -148,6 +160,7 @@ export class WorkoutDashboardComponent implements OnInit {
   dayTemplates = signal<DayTemplate[]>([]);
   sessions = signal<WorkoutSessionResponse[]>([]);
   isLoading = signal<boolean>(false);
+  isReordering = signal<boolean>(false);
   
   combinedDays = computed(() => {
     const templates = this.dayTemplates();
@@ -233,6 +246,7 @@ export class WorkoutDashboardComponent implements OnInit {
       next: (data) => {
         this.sessions.set(data);
         this.isLoading.set(false);
+        this.scrollToNextUnstartedDay();
       },
       error: (err) => {
         console.error('Failed to load sessions', err);
@@ -311,6 +325,69 @@ export class WorkoutDashboardComponent implements OnInit {
           this.loadSessionsOnly();
         },
         error: (err) => console.error('Error deleting session', err)
+      });
+    }
+  }
+
+  scrollToNextUnstartedDay() {
+    setTimeout(() => {
+      const days = this.combinedDays();
+      const nextDay = days.find(d => !d.session);
+      if (nextDay) {
+        const el = document.getElementById('day-' + nextDay.template.id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }, 100);
+  }
+
+  moveDayUp(index: number) {
+    if (index > 0) {
+      this.swapDays(index, index - 1);
+    }
+  }
+
+  moveDayDown(index: number) {
+    if (index < this.combinedDays().length - 1) {
+      this.swapDays(index, index + 1);
+    }
+  }
+
+  private swapDays(indexA: number, indexB: number) {
+    this.isReordering.set(true);
+    const templates = [...this.dayTemplates()];
+    const temp = templates[indexA];
+    templates[indexA] = templates[indexB];
+    templates[indexB] = temp;
+    
+    // Update local state immediately for fast feedback
+    this.dayTemplates.set(templates);
+
+    // Call API to persist
+    // Or we can use the first template's weekId
+    const weekId = templates[0]?.weekTemplateId; 
+    // Wait, weekTemplateId might not be in DayTemplate if we only return weekTemplate.id? Let's check DayTemplate type.
+    // In our types `DayTemplate` has `weekTemplateId` or we can find it. If not, we have `programId` and `displayedWeek`.
+    // Let me check DayTemplate definition in frontend...
+    // Actually, `DayTemplateResponse` has `weekId` as `weekTemplateId`. Let's assume it's `weekTemplateId`.
+
+    const requests = templates.map((t, i) => ({
+      id: t.id,
+      sortOrder: i + 1
+    }));
+
+    if (weekId) {
+      this.programService.reorderDays(weekId, requests).subscribe({
+        next: () => {
+          this.isReordering.set(false);
+          // Reload properly just in case
+          this.loadDaysAndSessions(this.activeProgram()!.id);
+        },
+        error: (err) => {
+          console.error('Failed to reorder', err);
+          this.isReordering.set(false);
+        }
       });
     }
   }

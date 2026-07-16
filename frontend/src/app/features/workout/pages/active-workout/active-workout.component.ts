@@ -54,21 +54,6 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
     
       @if (!isLoading() && session()) {
         <div>
-          <!-- Global Progress Bar -->
-          <div class="mb-4">
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">
-              <span>Workout Progress</span>
-              <span>{{ getTotalLoggedSets() }} / {{ getTotalExpectedSets() }} Sets</span>
-            </div>
-            <div class="flex gap-1 h-1.5 w-full mt-1 mb-6">
-              @for (s of [].constructor(getTotalExpectedSets()); track $index; let idx = $index) {
-                <div class="flex-1 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-700">
-                  <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
-                       [style.width.%]="getTotalLoggedSets() > idx ? 100 : 0"></div>
-                </div>
-              }
-            </div>
-          </div>
           <h1 class="text-3xl font-bold text-black dark:text-white mb-1">{{ session()?.dayTemplateName }}</h1>
           <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">Week {{ session()?.weekNumber }} &bull; {{ session()?.performedOn | date:'mediumDate' }}</p>
           <!-- Exercises List -->
@@ -79,36 +64,71 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
               </div>
             }
             @for (ex of exercises(); track ex; let i = $index) {
-              <div class="solid-card p-4 sm:p-6 overflow-hidden relative">
+              <div [id]="'exercise-' + ex.id" class="solid-card p-4 sm:p-6 overflow-hidden relative">
                 <!-- Exercise Header -->
                 <div class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4">
-                  <div>
-                    <h2 class="text-xl font-bold text-black dark:text-white"><span class="text-accent-pos mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</h2>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                      Goal: {{ ex.sets }} sets × 
-                      @if (ex.isAmrap) {
-                        AMRAP
-                      } @else {
-                        {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps
+                  <div class="flex-1 pr-4">
+                    <h2 class="text-xl font-bold text-black dark:text-white">
+                      <span class="text-accent-pos mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}
+                      @if (hasFatigueWarning(ex.id)) {
+                        <span class="ml-2 text-[10px] uppercase font-bold text-yellow-600 dark:text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 px-2 py-1 rounded align-middle">Fatigue Warning</span>
                       }
-                    </p>
-                  </div>
-                  <button (click)="toggleCollapse(ex.id)"
-                    class="ml-4 p-2 rounded-lg transition-colors border flex items-center justify-center"
-                    [ngClass]="isCollapsed(ex.id) ? 'bg-gray-200 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-700' : 'bg-accent-pos/10 border-accent-pos/30 text-accent-pos hover:bg-accent-pos/20'"
-                    [title]="isCollapsed(ex.id) ? 'Expand Exercise' : 'Mark as Done & Collapse'">
+                    </h2>
                     @if (!isCollapsed(ex.id)) {
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
+                      <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                        Goal: {{ ex.sets }} sets × 
+                        @if (ex.isAmrap) {
+                          AMRAP
+                        } @else {
+                          {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps
+                        }
+                      </p>
                     }
-                    @if (isCollapsed(ex.id)) {
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                      </svg>
+                  </div>
+                  
+                  <div class="flex items-center gap-1 border-l border-gray-200 dark:border-gray-700 pl-3">
+                    @if (i > 0) {
+                      <button (click)="moveExercise(i, -1)" class="p-1 text-gray-400 hover:text-accent-pos hover:bg-accent-pos/10 rounded transition-colors" title="Move Up">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                        </svg>
+                      </button>
                     }
-                  </button>
+                    @if (i < exercises().length - 1) {
+                      <button (click)="moveExercise(i, 1)" class="p-1 text-gray-400 hover:text-accent-pos hover:bg-accent-pos/10 rounded transition-colors" title="Move Down">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    }
+                    <button (click)="toggleCollapse(ex.id)"
+                      class="ml-2 p-1.5 rounded-lg transition-colors border flex items-center justify-center"
+                      [ngClass]="isCollapsed(ex.id) ? 'bg-gray-200 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-700' : 'bg-accent-neg/10 border-accent-neg/30 text-accent-neg hover:bg-accent-neg/20'"
+                      [title]="isCollapsed(ex.id) ? 'Expand Exercise' : 'Minimize Exercise'">
+                      @if (!isCollapsed(ex.id)) {
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      }
+                      @if (isCollapsed(ex.id)) {
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      }
+                    </button>
+                  </div>
                 </div>
+
+                <!-- Progress Bar inside Exercise Card -->
+                <div class="flex gap-1 h-1 w-full mt-2 mb-4">
+                  @for (s of [].constructor(ex.sets || 1); track $index; let idx = $index) {
+                    <div class="flex-1 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-700">
+                      <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
+                           [style.width.%]="getSetsForExercise(ex.id).length > idx ? 100 : 0"></div>
+                    </div>
+                  }
+                </div>
+
                 @if (!isCollapsed(ex.id)) {
                   <div>
                     <!-- Last Logged Set -->
@@ -131,6 +151,9 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                                   {{ set.repsCompleted }}
                                 }
                                 <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(set.performanceStatus)">reps</span>
+                                @if (set.isNewPr) {
+                                  <span class="ml-2 text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 px-1.5 py-0.5 rounded border border-accent-pos/20">PR!</span>
+                                }
                                 @if (set.performanceStatus === 'CRITICAL') {
                                   <span class="ml-2 text-[10px] uppercase font-bold text-accent-neg bg-accent-neg/10 px-1.5 py-0.5 rounded">Perf Drop</span>
                                 }
@@ -155,13 +178,18 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                     <!-- Log New Set Form -->
                     @if (!session()?.completedAt) {
                       <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <div class="mb-3 flex items-center justify-between gap-2">
+                        <div class="mb-3 flex items-center justify-between gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
                           <div class="flex items-center gap-2">
                             <span class="w-6 h-6 rounded-full bg-accent-pos/20 text-accent-pos flex items-center justify-center text-xs font-bold border border-accent-pos/30">
                               {{ getSetsForExercise(ex.id).length + 1 }}
                             </span>
                             <span class="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Next Set</span>
                           </div>
+                          @if (getSuggestion(ex.id)) {
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                              Last week: <span class="font-bold text-gray-700 dark:text-gray-300">{{ getSuggestion(ex.id)?.suggestedWeightKg }}kg &times; {{ getSuggestion(ex.id)?.suggestedReps }}</span>
+                            </div>
+                          }
                         </div>
                         <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
                             <div class="flex-1 min-w-[80px]">
@@ -179,57 +207,49 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                               </div>
                             }
                           <div class="w-full sm:w-auto mt-2 sm:mt-0">
-                            <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px] solid-btn"
-                              [ngClass]="getSetsForExercise(ex.id).length >= ex.sets ? 'bg-yellow-600 hover:bg-yellow-500 text-white' : ''">
+                            <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px]"
+                              [ngClass]="getSetsForExercise(ex.id).length >= ex.sets ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-accent-pos hover:opacity-90'">
                               {{ getSetsForExercise(ex.id).length >= ex.sets ? 'Log Extra Set' : 'Log' }}
                             </button>
                           </div>
                         </form>
                       </div>
                     }
-                  </div>
-                }
-                <!-- Progress Bar inside Exercise Card -->
-                <div class="flex gap-1 h-1 w-full mt-4 mb-4">
-                  @for (s of [].constructor(ex.sets || 1); track $index; let idx = $index) {
-                    <div class="flex-1 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-700">
-                      <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
-                           [style.width.%]="getSetsForExercise(ex.id).length > idx ? 100 : 0"></div>
-                    </div>
-                  }
-                </div>
-                <!-- Rating Section -->
-                @if (!session()?.completedAt) {
-                  <div class="pt-4 border-t border-gray-300 dark:border-gray-700/50 mt-4">
-                    <div class="flex gap-1 sm:gap-1.5 justify-between sm:justify-start w-full">
-                      <button
-                        (click)="deleteRating(ex.id)"
-                        [class.bg-gray-200]="getRating(ex.id) !== null"
-                        [class.dark:bg-gray-800]="getRating(ex.id) !== null"
-                        [class.text-gray-500]="getRating(ex.id) !== null"
-                        [class.bg-accent-pos]="getRating(ex.id) === null"
-                        [class.text-white]="getRating(ex.id) === null"
-                        title="Unrated"
-                        class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-accent-pos hover:text-white transition-colors"
-                        >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                      @for (r of [1,2,3,4,5,6,7,8,9,10]; track r) {
-                        <button
-                          (click)="setRating(ex.id, r)"
-                          [class.bg-accent-pos]="getRating(ex.id) === r"
-                          [class.text-white]="getRating(ex.id) === r"
-                          [class.bg-gray-200]="getRating(ex.id) !== r"
-                          [class.dark:bg-gray-800]="getRating(ex.id) !== r"
-                          [class.text-gray-500]="getRating(ex.id) !== r"
-                          class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-accent-pos hover:text-white transition-colors"
-                          >
-                          {{ r }}
-                        </button>
-                      }
-                    </div>
+                    
+                    <!-- Rating Section -->
+                    @if (!session()?.completedAt) {
+                      <div class="pt-4 border-t border-gray-300 dark:border-gray-700/50 mt-4">
+                        <div class="flex gap-1 sm:gap-1.5 justify-between sm:justify-start w-full">
+                          <button
+                            (click)="deleteRating(ex.id)"
+                            [class.bg-gray-200]="getRating(ex.id) !== null"
+                            [class.dark:bg-gray-800]="getRating(ex.id) !== null"
+                            [class.text-gray-500]="getRating(ex.id) !== null"
+                            [class.bg-accent-pos]="getRating(ex.id) === null"
+                            [class.text-white]="getRating(ex.id) === null"
+                            title="Unrated"
+                            class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-accent-pos hover:text-white transition-colors"
+                            >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                          @for (r of [1,2,3,4,5,6,7,8,9,10]; track r) {
+                            <button
+                              (click)="setRating(ex.id, r)"
+                              [class.bg-accent-pos]="getRating(ex.id) === r"
+                              [class.text-white]="getRating(ex.id) === r"
+                              [class.bg-gray-200]="getRating(ex.id) !== r"
+                              [class.dark:bg-gray-800]="getRating(ex.id) !== r"
+                              [class.text-gray-500]="getRating(ex.id) !== r"
+                              class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs font-bold hover:bg-accent-pos hover:text-white transition-colors"
+                              >
+                              {{ r }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
                   </div>
                 }
               </div>
@@ -310,6 +330,12 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
               placeholder="Type your notes here..."
               class="w-full h-32 px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm resize-none placeholder-gray-400"
             ></textarea>
+            @if (session()?.previousNotes) {
+              <div class="mt-4 p-4 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
+                <p class="text-xs text-gray-500 font-bold uppercase mb-1">Previous Session Notes</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{{ session()?.previousNotes }}</p>
+              </div>
+            }
             <div class="flex justify-end mt-2">
               @if (isSavingNotes()) {
                 <span class="text-xs text-accent-pos">Saving...</span>
@@ -324,26 +350,43 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
     
       <!-- Sticky Bottom Action Bar -->
       @if (!isLoading() && session()) {
-        <div class="sticky bottom-16 md:bottom-0 p-4 mt-8 bg-white/90 dark:bg-black/90 backdrop-blur-md border border-gray-300 dark:border-gray-800 rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40">
-          <div class="flex gap-4">
-            @if (!session()?.completedAt) {
-              <button
-                (click)="completeWorkout()"
-                [disabled]="isCompleting()"
-                class="flex-1 py-4 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90"
-                style="box-shadow: 0 0 20px var(--color-accent-pos);"
-                >
-                {{ isCompleting() ? 'Completing...' : 'Finish Workout' }}
-              </button>
-            } @else {
-              <button
-                (click)="uncompleteWorkout()"
-                [disabled]="isCompleting()"
-                class="flex-1 py-4 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-black dark:text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95"
-                >
-                {{ isCompleting() ? 'Reopening...' : 'Uncomplete & Edit' }}
-              </button>
-            }
+        <div class="sticky bottom-20 md:bottom-6 p-4 mt-8 bg-white/90 dark:bg-black/90 backdrop-blur-md border border-gray-300 dark:border-gray-800 rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40">
+          <div class="flex items-center gap-4">
+            <div class="flex-1 hidden sm:block">
+              <div class="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase mb-1.5 tracking-wider">
+                <span>Progress</span>
+                <span>{{ getTotalLoggedSets() }} / {{ getTotalExpectedSets() }} Sets</span>
+              </div>
+              <div class="flex gap-0.5 h-2 w-full">
+                @for (s of [].constructor(getTotalExpectedSets()); track $index; let idx = $index) {
+                  <div class="flex-1 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-700">
+                    <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
+                         [style.width.%]="getTotalLoggedSets() > idx ? 100 : 0"></div>
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="flex-none w-full sm:w-1/2">
+              @if (!session()?.completedAt) {
+                <button
+                  (click)="completeWorkout()"
+                  [disabled]="isCompleting()"
+                  class="w-full py-4 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
+                  style="box-shadow: 0 0 20px var(--color-accent-pos);"
+                  >
+                  <span>{{ isCompleting() ? 'Completing...' : 'Finish Workout' }}</span>
+                  <span class="text-[10px] sm:hidden opacity-80 mt-0.5">{{ getTotalLoggedSets() }} / {{ getTotalExpectedSets() }} Sets Completed</span>
+                </button>
+              } @else {
+                <button
+                  (click)="uncompleteWorkout()"
+                  [disabled]="isCompleting()"
+                  class="w-full py-4 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-black dark:text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95"
+                  >
+                  {{ isCompleting() ? 'Reopening...' : 'Uncomplete & Edit' }}
+                </button>
+              }
+            </div>
           </div>
         </div>
       }
@@ -397,6 +440,50 @@ export class ActiveWorkoutComponent implements OnInit {
       this.collapsedExercises.delete(exId);
     } else {
       this.collapsedExercises.add(exId);
+      this.scrollToFirstIncompleteExercise();
+    }
+  }
+
+  scrollToFirstIncompleteExercise() {
+    const exercises = this.exercises();
+    for (const ex of exercises) {
+      const setsDone = this.getSetsForExercise(ex.id).length;
+      const setsExpected = ex.sets || 1;
+      if (setsDone < setsExpected && !this.isCollapsed(ex.id)) {
+        setTimeout(() => {
+          const el = document.getElementById('exercise-' + ex.id);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+        return;
+      }
+    }
+  }
+
+  moveExercise(index: number, direction: number) {
+    if (this.session()?.completedAt) return;
+    const currentExercises = [...this.exercises()];
+    if (index < 0 || index >= currentExercises.length) return;
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= currentExercises.length) return;
+
+    // Swap in array
+    const temp = currentExercises[index];
+    currentExercises[index] = currentExercises[targetIndex];
+    currentExercises[targetIndex] = temp;
+
+    // Update sortOrder
+    currentExercises.forEach((ex, idx) => ex.sortOrder = idx);
+    this.exercises.set(currentExercises);
+
+    // Call backend to persist
+    const sessionId = this.sessionId();
+    if (sessionId) {
+      const requests = currentExercises.map(ex => ({ id: ex.id, sortOrder: ex.sortOrder }));
+      this.workoutService.reorderSessionExercises(sessionId, requests).subscribe({
+        error: (err) => console.error('Failed to reorder exercises on backend', err)
+      });
     }
   }
 
@@ -428,7 +515,7 @@ export class ActiveWorkoutComponent implements OnInit {
         
         forkJoin({
           sets: this.workoutService.getSets(id),
-          exercises: this.programService.getDayExercises(sess.dayTemplateId),
+          exercises: this.workoutService.getSessionExercises(id),
           suggestions: this.workoutService.getSuggestions(id).pipe(catchError(() => of([]))),
           latestBW: this.bodyWeightService.getWeightEntries('2000-01-01', new Date().toISOString().split('T')[0]).pipe(catchError(() => of([])))
         }).subscribe({
@@ -444,7 +531,21 @@ export class ActiveWorkoutComponent implements OnInit {
               this.latestBodyWeight.set(sortedBW[sortedBW.length - 1].weightKg);
             }
             
-            const sorted = res.exercises.sort((a, b) => a.sortOrder - b.sortOrder);
+            // Map SessionExerciseResponse to DayExercise format for frontend compatibility
+            const mappedExercises: DayExercise[] = res.exercises.map(e => ({
+              id: e.id,
+              exerciseId: e.exercise.id,
+              exerciseName: e.exercise.name,
+              sets: e.sets,
+              reps: e.reps,
+              repsMax: e.repsMax,
+              sortOrder: e.sortOrder,
+              isAmrap: e.isAmrap,
+              unilateral: e.exercise.unilateral,
+              isBodyweight: e.exercise.isBodyweight
+            }));
+            
+            const sorted = mappedExercises.sort((a, b) => a.sortOrder - b.sortOrder);
             this.exercises.set(sorted);
             this.initForms(sorted);
             
@@ -484,8 +585,13 @@ export class ActiveWorkoutComponent implements OnInit {
         defaultWeight = lastSet.weightKg?.toString() || '';
         defaultReps = lastSet.repsCompleted || '';
         defaultRepsRight = lastSet.repsCompletedRight || '';
-      } else if (ex.isBodyweight && this.latestBodyWeight() !== null) {
-        defaultWeight = this.latestBodyWeight()!.toString();
+      } else {
+        const suggestion = this.getSuggestion(ex.id);
+        if (suggestion?.suggestedWeightKg != null) {
+          defaultWeight = suggestion.suggestedWeightKg.toString();
+        } else if (ex.isBodyweight && this.latestBodyWeight() !== null) {
+          defaultWeight = this.latestBodyWeight()!.toString();
+        }
       }
 
       this.forms.set(ex.id, this.fb.group({
@@ -500,15 +606,26 @@ export class ActiveWorkoutComponent implements OnInit {
     return this.forms.get(exerciseId) as FormGroup;
   }
 
-  getSetsForExercise(exerciseId: string): WorkoutSetResponse[] {
+  getSetsForExercise(exerciseId: string) {
     return this.loggedSets()
-      .filter(s => s.dayExerciseId === exerciseId)
+      .filter(s => s.sessionExerciseId === exerciseId)
       .sort((a, b) => a.setNumber - b.setNumber);
   }
 
   getLastSetForExercise(exerciseId: string): WorkoutSetResponse | null {
     const sets = this.getSetsForExercise(exerciseId);
     return sets.length > 0 ? sets[sets.length - 1] : null;
+  }
+
+  hasFatigueWarning(exerciseId: string): boolean {
+    const sets = this.getSetsForExercise(exerciseId);
+    let criticals = 0;
+    let warnings = 0;
+    for (const s of sets) {
+      if (s.performanceStatus === 'CRITICAL') criticals++;
+      if (s.performanceStatus === 'WARNING') warnings++;
+    }
+    return criticals >= 1 || warnings >= 2;
   }
 
   getSuggestion(dayExerciseId: string) {
@@ -567,27 +684,34 @@ export class ActiveWorkoutComponent implements OnInit {
 
   onSubmitExercise() {
     const session = this.session();
-    if (this.exerciseForm.valid && session?.dayTemplateId) {
+    if (this.exerciseForm.valid && session) {
       const formVal = this.exerciseForm.value;
-      const sortOrder = this.exercises().length;
+      const payload = {
+        exerciseId: formVal.exerciseId,
+        sets: formVal.sets,
+        reps: formVal.reps,
+        repsMax: formVal.repsMax,
+        isAmrap: false
+      };
 
-      const sets = formVal.sets;
-      const reps = formVal.reps;
-      const repsMax = formVal.repsMax;
-
-      this.programService.addDayExercise(
-        session.dayTemplateId,
-        formVal.exerciseId,
-        sets,
-        reps,
-        sortOrder,
-        repsMax
-      ).subscribe({
+      this.workoutService.addSessionExercise(session.id, payload).subscribe({
         next: () => {
           this.cancelAdd();
           // Reload exercises to show the newly added one
-          this.programService.getDayExercises(session.dayTemplateId).subscribe(exercises => {
-            const sorted = exercises.sort((a, b) => a.sortOrder - b.sortOrder);
+          this.workoutService.getSessionExercises(session.id).subscribe(exercises => {
+            const mappedExercises: DayExercise[] = exercises.map(e => ({
+              id: e.id,
+              exerciseId: e.exercise.id,
+              exerciseName: e.exercise.name,
+              sets: e.sets,
+              reps: e.reps,
+              repsMax: e.repsMax,
+              sortOrder: e.sortOrder,
+              isAmrap: e.isAmrap,
+              unilateral: e.exercise.unilateral,
+              isBodyweight: e.exercise.isBodyweight
+            }));
+            const sorted = mappedExercises.sort((a, b) => a.sortOrder - b.sortOrder);
             this.exercises.set(sorted);
             this.initForms(sorted);
           });
@@ -596,8 +720,6 @@ export class ActiveWorkoutComponent implements OnInit {
       });
     }
   }
-
-
 
   onSaveNewExercise(formData: ExerciseFormData) {
     this.isSavingNewExercise.set(true);
@@ -655,7 +777,7 @@ export class ActiveWorkoutComponent implements OnInit {
     const setNumber = currentSets.length > 0 ? currentSets[currentSets.length - 1].setNumber + 1 : 1;
 
     const request = {
-      dayExerciseId: ex.id,
+      sessionExerciseId: ex.id,
       setNumber: setNumber,
       repsCompleted: form.value.repsCompleted,
       repsCompletedRight: ex.unilateral ? form.value.repsCompletedRight : null,

@@ -82,6 +82,10 @@ export class ProgramService {
     return this.http.get<DayExercise[]>(`/api/v1/training/days/${dayId}/exercises`);
   }
 
+  reorderDays(weekId: string, requests: { id: string, sortOrder: number }[]): Observable<DayTemplate[]> {
+    return this.http.patch<DayTemplate[]>(`/api/v1/training/weeks/${weekId}/days/reorder`, requests);
+  }
+
   addDayExercise(dayId: string, exerciseId: string, sets: number | undefined, reps: number | undefined, sortOrder: number, repsMax?: number, durationMinutes?: number, incline?: number, resistance?: number, isAmrap = false): Observable<DayExercise> {
     return this.http.post<DayExercise>(`/api/v1/training/days/${dayId}/exercises`, { exerciseId, sets, reps, sortOrder, repsMax, durationMinutes, incline, resistance, isAmrap });
   }

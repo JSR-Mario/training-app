@@ -1,12 +1,12 @@
 package com.trainingapp.training.service;
 
-import com.trainingapp.training.domain.DayExercise;
+import com.trainingapp.training.domain.SessionExercise;
 import com.trainingapp.training.domain.DayTemplate;
 import com.trainingapp.training.domain.WorkoutSession;
 import com.trainingapp.training.domain.WorkoutSet;
 import com.trainingapp.training.dto.WorkoutSetRequest;
 import com.trainingapp.training.dto.WorkoutSetResponse;
-import com.trainingapp.training.repository.DayExerciseRepository;
+import com.trainingapp.training.repository.SessionExerciseRepository;
 import com.trainingapp.training.repository.WorkoutSessionRepository;
 import com.trainingapp.training.repository.WorkoutSetRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,22 +32,22 @@ class WorkoutSetServiceTest {
 
     @Mock private WorkoutSetRepository setRepository;
     @Mock private WorkoutSessionRepository sessionRepository;
-    @Mock private DayExerciseRepository dayExerciseRepository;
+    @Mock private SessionExerciseRepository sessionExerciseRepository;
 
     @InjectMocks private WorkoutSetService setService;
 
     private UUID userId;
     private UUID sessionId;
-    private UUID dayExerciseId;
+    private UUID sessionExerciseId;
     private WorkoutSession session;
-    private DayExercise dayExercise;
+    private SessionExercise sessionExercise;
     private com.trainingapp.training.domain.Exercise exercise;
 
     @BeforeEach
     void setUp() {
         userId = UUID.randomUUID();
         sessionId = UUID.randomUUID();
-        dayExerciseId = UUID.randomUUID();
+        sessionExerciseId = UUID.randomUUID();
 
         DayTemplate template = new DayTemplate();
         ReflectionTestUtils.setField(template, "id", UUID.randomUUID());
@@ -57,27 +57,27 @@ class WorkoutSetServiceTest {
         session.setUserId(userId);
         session.setDayTemplate(template);
 
-        dayExercise = new DayExercise();
-        ReflectionTestUtils.setField(dayExercise, "id", dayExerciseId);
-        dayExercise.setDayTemplate(template);
-
+        sessionExercise = new SessionExercise();
+        ReflectionTestUtils.setField(sessionExercise, "id", sessionExerciseId);
+        sessionExercise.setSession(session);
+        
         exercise = new com.trainingapp.training.domain.Exercise();
         ReflectionTestUtils.setField(exercise, "id", UUID.randomUUID());
         exercise.setUnilateral(false);
-        dayExercise.setExercise(exercise);
+        sessionExercise.setExercise(exercise);
     }
 
     @Test
     void logSet_Success() {
-        WorkoutSetRequest request = new WorkoutSetRequest(dayExerciseId, 1, 10, null, BigDecimal.valueOf(50.0));
+        WorkoutSetRequest request = new WorkoutSetRequest(sessionExerciseId, 1, 10, null, BigDecimal.valueOf(50.0));
 
         when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
-        when(dayExerciseRepository.findById(dayExerciseId)).thenReturn(Optional.of(dayExercise));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(sessionExercise));
 
         WorkoutSet savedSet = new WorkoutSet();
         ReflectionTestUtils.setField(savedSet, "id", UUID.randomUUID());
         savedSet.setSession(session);
-        savedSet.setDayExercise(dayExercise);
+        savedSet.setSessionExercise(sessionExercise);
         savedSet.setSetNumber(1);
         savedSet.setRepsCompleted(10);
         savedSet.setWeightKg(BigDecimal.valueOf(50.5));
@@ -97,7 +97,7 @@ class WorkoutSetServiceTest {
         session.setCompletedAt(java.time.Instant.now());
         when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
 
-        WorkoutSetRequest request = new WorkoutSetRequest(dayExerciseId, 1, 10, null, BigDecimal.TEN);
+        WorkoutSetRequest request = new WorkoutSetRequest(sessionExerciseId, 1, 10, null, BigDecimal.TEN);
 
         assertThatThrownBy(() -> setService.logSet(sessionId, userId, request))
                 .isInstanceOf(ResponseStatusException.class)
@@ -106,18 +106,18 @@ class WorkoutSetServiceTest {
 
     @Test
     void logSet_ThrowsBadRequest_WhenExerciseNotBelongToDay() {
-        // Change template
-        DayTemplate otherTemplate = new DayTemplate();
-        ReflectionTestUtils.setField(otherTemplate, "id", UUID.randomUUID());
-        dayExercise.setDayTemplate(otherTemplate);
+        // Change session
+        WorkoutSession otherSession = new WorkoutSession();
+        ReflectionTestUtils.setField(otherSession, "id", UUID.randomUUID());
+        sessionExercise.setSession(otherSession);
 
-        WorkoutSetRequest request = new WorkoutSetRequest(dayExerciseId, 1, 10, null, BigDecimal.TEN);
+        WorkoutSetRequest request = new WorkoutSetRequest(sessionExerciseId, 1, 10, null, BigDecimal.TEN);
 
         when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
-        when(dayExerciseRepository.findById(dayExerciseId)).thenReturn(Optional.of(dayExercise));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(sessionExercise));
 
         assertThatThrownBy(() -> setService.logSet(sessionId, userId, request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Exercise does not belong to this day template");
+                .hasMessageContaining("Exercise does not belong to this session");
     }
 }

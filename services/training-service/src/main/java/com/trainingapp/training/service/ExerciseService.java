@@ -222,10 +222,13 @@ public class ExerciseService {
                 ));
                 
         List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserId(userId);
-        Map<UUID, com.trainingapp.training.dto.ExercisePrResponse> prMap = prs.stream()
-                .collect(Collectors.toMap(
+        Map<UUID, List<com.trainingapp.training.dto.ExercisePrResponse>> prMap = prs.stream()
+                .collect(Collectors.groupingBy(
                         com.trainingapp.training.dto.ExercisePrProjection::getExerciseId,
-                        pr -> new com.trainingapp.training.dto.ExercisePrResponse(pr.getPrWeight(), pr.getPrReps())
+                        Collectors.mapping(
+                            pr -> new com.trainingapp.training.dto.ExercisePrResponse(pr.getPrWeight(), pr.getPrReps(), pr.getBucket()),
+                            Collectors.toList()
+                        )
                 ));
                 
         return exercises.stream()
@@ -233,11 +236,11 @@ public class ExerciseService {
                 .toList();
     }
 
-    private ExerciseResponse toResponse(Exercise e, Double averageRating, com.trainingapp.training.dto.ExercisePrResponse pr) {
+    private ExerciseResponse toResponse(Exercise e, Double averageRating, List<com.trainingapp.training.dto.ExercisePrResponse> prs) {
         List<ExerciseTargetResponse> targetResponses = e.getTargets().stream()
                 .map(this::toTargetResponse)
                 .toList();
-        return new ExerciseResponse(e.getId(), e.getName(), e.getEquipmentBrand(), e.isUnilateral(), e.isBodyweight(), e.getIsPublic(), e.isSpinalLoading(), e.getCreatedAt(), targetResponses, averageRating, pr);
+        return new ExerciseResponse(e.getId(), e.getName(), e.getEquipmentBrand(), e.isUnilateral(), e.isBodyweight(), e.getIsPublic(), e.isSpinalLoading(), e.getCreatedAt(), targetResponses, averageRating, prs != null ? prs : List.of());
     }
 
     private ExerciseTargetResponse toTargetResponse(ExerciseBodyPartTarget t) {

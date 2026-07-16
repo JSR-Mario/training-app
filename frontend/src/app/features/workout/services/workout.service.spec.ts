@@ -19,13 +19,14 @@ describe('WorkoutService', () => {
     dayTemplateName: 'Push Day',
     performedOn: '2023-10-27',
     weekNumber: 1,
+    startedAt: '2023-10-27T09:00:00Z',
     completedAt: null
   };
 
   const mockSetResponse: WorkoutSetResponse = {
     id: 'set-1',
     sessionId: '123',
-    dayExerciseId: 'day-ex-1',
+    sessionExerciseId: 'day-ex-1',
     setNumber: 1,
     repsCompleted: 10,
     weightKg: 100,
@@ -120,7 +121,7 @@ describe('WorkoutService', () => {
 
   it('should log a set', () => {
     const request: WorkoutSetRequest = {
-      dayExerciseId: 'day-ex-1',
+      sessionExerciseId: 'day-ex-1',
       setNumber: 1,
       repsCompleted: 10,
       weightKg: 100
@@ -138,7 +139,7 @@ describe('WorkoutService', () => {
 
   it('should update a set', () => {
     const request: WorkoutSetRequest = {
-      dayExerciseId: 'day-ex-1',
+      sessionExerciseId: 'day-ex-1',
       setNumber: 1,
       repsCompleted: 12,
       weightKg: 105

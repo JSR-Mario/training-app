@@ -50,4 +50,10 @@ public class DayTemplateController {
         dayService.delete(UserContext.getCurrentUserId(), id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/weeks/{weekId}/days/reorder")
+    public List<DayTemplateResponse> reorder(
+            @PathVariable UUID weekId, @Valid @RequestBody List<com.trainingapp.training.dto.DayReorderRequest> requests) {
+        return dayService.reorderDays(UserContext.getCurrentUserId(), weekId, requests);
+    }
 }

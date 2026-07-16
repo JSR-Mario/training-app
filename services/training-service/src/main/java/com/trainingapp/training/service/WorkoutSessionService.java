@@ -4,6 +4,9 @@ import com.trainingapp.training.client.AnalyticsNotificationClient;
 import com.trainingapp.training.domain.DayTemplate;
 import com.trainingapp.training.domain.WorkoutSession;
 import com.trainingapp.training.domain.WorkoutSet;
+import com.trainingapp.training.repository.BodyWeightRepository;
+import com.trainingapp.training.domain.BodyWeightEntry;
+import java.util.Optional;
 import com.trainingapp.training.dto.SessionCompletedEvent;
 import com.trainingapp.training.dto.WorkoutSessionRequest;
 import com.trainingapp.training.dto.WorkoutSessionResponse;
@@ -14,6 +17,8 @@ import com.trainingapp.training.repository.WorkoutSessionRepository;
 import com.trainingapp.training.repository.WorkoutSetRepository;
 import com.trainingapp.training.repository.SessionExerciseRatingRepository;
 import com.trainingapp.training.repository.DayExerciseRepository;
+import com.trainingapp.training.domain.SessionExercise;
+import com.trainingapp.training.repository.SessionExerciseRepository;
 import com.trainingapp.training.domain.SessionExerciseRating;
 import com.trainingapp.training.domain.DayExercise;
 import com.trainingapp.training.dto.SessionRatingRequest;
@@ -23,6 +28,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.trainingapp.training.dto.ExerciseSuggestionResponse;
+
+import com.trainingapp.training.dto.SessionExerciseResponse;
+import com.trainingapp.training.dto.SessionExerciseRequest;
+import com.trainingapp.training.dto.SessionExerciseReorderRequest;
+import com.trainingapp.training.repository.ExerciseRepository;
+import com.trainingapp.training.domain.Exercise;
 
 import java.time.Instant;
 import java.util.List;
@@ -44,6 +55,9 @@ public class WorkoutSessionService {
     private final SessionExerciseRatingRepository ratingRepository;
     private final DayExerciseRepository dayExerciseRepository;
     private final ExperienceService experienceService;
+    private final BodyWeightRepository bodyWeightRepository;
+    private final SessionExerciseRepository sessionExerciseRepository;
+    private final ExerciseRepository exerciseRepository;
 
     public WorkoutSessionService(WorkoutSessionRepository sessionRepository,
                                  DayTemplateRepository dayTemplateRepository,
@@ -52,7 +66,10 @@ public class WorkoutSessionService {
                                  AnalyticsNotificationClient analyticsClient,
                                  SessionExerciseRatingRepository ratingRepository,
                                  DayExerciseRepository dayExerciseRepository,
-                                 ExperienceService experienceService) {
+                                 ExperienceService experienceService,
+                                 BodyWeightRepository bodyWeightRepository,
+                                 SessionExerciseRepository sessionExerciseRepository,
+                                 ExerciseRepository exerciseRepository) {
         this.sessionRepository = sessionRepository;
         this.dayTemplateRepository = dayTemplateRepository;
         this.setRepository = setRepository;
@@ -61,6 +78,9 @@ public class WorkoutSessionService {
         this.ratingRepository = ratingRepository;
         this.dayExerciseRepository = dayExerciseRepository;
         this.experienceService = experienceService;
+        this.bodyWeightRepository = bodyWeightRepository;
+        this.sessionExerciseRepository = sessionExerciseRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     @Transactional
@@ -78,8 +98,23 @@ public class WorkoutSessionService {
         session.setDayTemplate(dayTemplate);
         session.setPerformedOn(request.performedOn());
         session.setWeekNumber(request.weekNumber());
+        session.setStartedAt(Instant.now());
 
         WorkoutSession saved = sessionRepository.save(session);
+
+        // Copy DayExercises to SessionExercises
+        dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplate.getId()).forEach(de -> {
+            SessionExercise se = new SessionExercise();
+            se.setSession(saved);
+            se.setExercise(de.getExercise());
+            se.setSets(de.getSets());
+            se.setReps(de.getReps());
+            se.setRepsMax(de.getRepsMax());
+            se.setSortOrder(de.getSortOrder());
+            se.setAmrap(de.isAmrap());
+            sessionExerciseRepository.save(se);
+        });
+
         return mapToResponse(saved);
     }
 
@@ -111,7 +146,7 @@ public class WorkoutSessionService {
             List<WorkoutSet> sets = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId());
             List<com.trainingapp.training.dto.SessionUncompletedEvent.SetData> setDatas = sets.stream()
                 .map(s -> {
-                    UUID exId = s.getDayExercise().getExercise().getId();
+                    UUID exId = s.getSessionExercise().getExercise().getId();
                     return new com.trainingapp.training.dto.SessionUncompletedEvent.SetData(
                         exId, 
                         s.getRepsCompleted() != null ? s.getRepsCompleted() : 0,
@@ -149,16 +184,16 @@ public class WorkoutSessionService {
     }
 
     @Transactional
-    public WorkoutSessionResponse updateRating(UUID id, UUID userId, UUID dayExerciseId, SessionRatingRequest request) {
+    public WorkoutSessionResponse updateRating(UUID id, UUID userId, UUID sessionExerciseId, SessionRatingRequest request) {
         WorkoutSession session = getSessionEntity(id, userId);
-        DayExercise dayExercise = dayExerciseRepository.findById(dayExerciseId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Day exercise not found"));
+        SessionExercise sessionExercise = sessionExerciseRepository.findById(sessionExerciseId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session exercise not found"));
 
-        SessionExerciseRating rating = ratingRepository.findBySessionIdAndDayExerciseId(session.getId(), dayExerciseId)
+        SessionExerciseRating rating = ratingRepository.findBySessionIdAndSessionExerciseId(session.getId(), sessionExerciseId)
             .orElse(new SessionExerciseRating());
         
         rating.setSession(session);
-        rating.setDayExercise(dayExercise);
+        rating.setSessionExercise(sessionExercise);
         rating.setRating(request.rating());
 
         ratingRepository.save(rating);
@@ -166,9 +201,9 @@ public class WorkoutSessionService {
     }
 
     @Transactional
-    public WorkoutSessionResponse deleteRating(UUID id, UUID userId, UUID dayExerciseId) {
+    public WorkoutSessionResponse deleteRating(UUID id, UUID userId, UUID sessionExerciseId) {
         WorkoutSession session = getSessionEntity(id, userId);
-        ratingRepository.deleteBySessionIdAndDayExerciseId(session.getId(), dayExerciseId);
+        ratingRepository.deleteBySessionIdAndSessionExerciseId(session.getId(), sessionExerciseId);
         
         // Return updated session response so frontend gets the fresh state
         return mapToResponse(session);
@@ -189,7 +224,7 @@ public class WorkoutSessionService {
         List<WorkoutSet> sets = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId());
         
         Set<UUID> exerciseIds = sets.stream()
-            .map(s -> s.getDayExercise().getExercise().getId())
+            .map(s -> s.getSessionExercise().getExercise().getId())
             .collect(Collectors.toSet());
             
         Map<UUID, Map<String, java.math.BigDecimal>> targetsByExerciseId = targetRepository.findByExerciseIdIn(exerciseIds).stream()
@@ -203,7 +238,7 @@ public class WorkoutSessionService {
 
         List<SessionCompletedEvent.SetData> setDatas = sets.stream()
             .map(s -> {
-                UUID exId = s.getDayExercise().getExercise().getId();
+                UUID exId = s.getSessionExercise().getExercise().getId();
                 return new SessionCompletedEvent.SetData(
                     exId, 
                     s.getRepsCompleted() != null ? s.getRepsCompleted() : 0,
@@ -252,7 +287,7 @@ public class WorkoutSessionService {
         List<WorkoutSet> sets = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId());
         
         Set<UUID> exerciseIds = sets.stream()
-            .map(s -> s.getDayExercise().getExercise().getId())
+            .map(s -> s.getSessionExercise().getExercise().getId())
             .collect(Collectors.toSet());
             
         Map<UUID, Map<String, java.math.BigDecimal>> targetsByExerciseId = targetRepository.findByExerciseIdIn(exerciseIds).stream()
@@ -266,7 +301,7 @@ public class WorkoutSessionService {
 
         List<com.trainingapp.training.dto.SessionUncompletedEvent.SetData> setDatas = sets.stream()
             .map(s -> {
-                UUID exId = s.getDayExercise().getExercise().getId();
+                UUID exId = s.getSessionExercise().getExercise().getId();
                 return new com.trainingapp.training.dto.SessionUncompletedEvent.SetData(
                     exId, 
                     s.getRepsCompleted() != null ? s.getRepsCompleted() : 0,
@@ -303,38 +338,54 @@ public class WorkoutSessionService {
     public List<ExerciseSuggestionResponse> getExerciseSuggestions(UUID id, UUID userId) {
         WorkoutSession session = getSessionEntity(id, userId);
         List<DayExercise> dayExercises = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(session.getDayTemplate().getId());
+        List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserId(userId);
+        Optional<BodyWeightEntry> latestBw = bodyWeightRepository.findFirstByUserIdOrderByDateDesc(userId);
         
         List<ExerciseSuggestionResponse> suggestions = new java.util.ArrayList<>();
         for (DayExercise de : dayExercises) {
-            List<WorkoutSet> history = setRepository.findHistoricalSetsForExercise(
-                de.getExercise().getId(), userId, session.getPerformedOn());
-            if (!history.isEmpty()) {
-                WorkoutSession mostRecentSession = history.get(0).getSession();
-                WorkoutSet bestSet = null;
-                double maxPerf = 0;
-                for (WorkoutSet s : history) {
-                    if (!s.getSession().getId().equals(mostRecentSession.getId())) continue;
-                    if (s.getWeightKg() != null && s.getRepsCompleted() != null) {
-                        int reps = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
-                        double perf = s.getWeightKg().doubleValue() * reps;
-                        if (perf > maxPerf) {
-                            maxPerf = perf;
-                            bestSet = s;
-                        }
-                    }
+            int targetReps = de.getReps() != null ? de.getReps() : 10;
+            if (de.getReps() != null && de.getRepsMax() != null) {
+                targetReps = (de.getReps() + de.getRepsMax()) / 2;
+            }
+            
+            String targetBucket = getBucketForReps(targetReps);
+            java.math.BigDecimal suggestedWeight = null;
+            Integer suggestedReps = targetReps;
+            
+            // Find PR for this exercise and bucket
+            for (com.trainingapp.training.dto.ExercisePrProjection pr : prs) {
+                if (pr.getExerciseId().equals(de.getExercise().getId()) && targetBucket.equals(pr.getBucket())) {
+                    suggestedWeight = pr.getPrWeight();
+                    suggestedReps = pr.getPrReps();
+                    break;
                 }
-                
-                if (bestSet != null) {
-                    suggestions.add(new ExerciseSuggestionResponse(
-                        de.getId(),
-                        de.getExercise().getId(),
-                        bestSet.getWeightKg(),
-                        bestSet.getRepsCompleted() != null ? bestSet.getRepsCompleted() : de.getReps()
-                    ));
-                }
+            }
+            
+            // If no PR and it's bodyweight, default to latest recorded body weight
+            if (suggestedWeight == null && de.getExercise().isBodyweight() && latestBw.isPresent()) {
+                suggestedWeight = latestBw.get().getWeightKg();
+            }
+            
+            if (suggestedWeight != null) {
+                suggestions.add(new ExerciseSuggestionResponse(
+                    de.getId(),
+                    de.getExercise().getId(),
+                    suggestedWeight,
+                    suggestedReps
+                ));
             }
         }
         return suggestions;
+    }
+
+    private String getBucketForReps(int reps) {
+        if (reps >= 1 && reps <= 5) return "1-5";
+        if (reps >= 6 && reps <= 10) return "6-10";
+        if (reps >= 11 && reps <= 15) return "11-15";
+        if (reps >= 16 && reps <= 20) return "16-20";
+        if (reps >= 21 && reps <= 25) return "21-25";
+        if (reps >= 26 && reps <= 30) return "26-30";
+        return "31+";
     }
 
     private WorkoutSession getSessionEntity(UUID id, UUID userId) {
@@ -345,8 +396,17 @@ public class WorkoutSessionService {
     private WorkoutSessionResponse mapToResponse(WorkoutSession session) {
         List<SessionRatingResponse> ratings = ratingRepository.findBySessionId(session.getId())
             .stream()
-            .map(r -> new SessionRatingResponse(r.getId(), r.getDayExercise().getId(), r.getRating()))
+            .map(r -> new SessionRatingResponse(r.getId(), r.getSessionExercise().getId(), r.getRating()))
             .collect(Collectors.toList());
+
+        String previousNotes = null;
+        if (session.getDayTemplate() != null) {
+            Optional<WorkoutSession> previous = sessionRepository.findFirstByUserIdAndDayTemplateIdAndNotesIsNotNullOrderByPerformedOnDesc(
+                    session.getUserId(), session.getDayTemplate().getId());
+            if (previous.isPresent() && !previous.get().getId().equals(session.getId())) {
+                previousNotes = previous.get().getNotes();
+            }
+        }
 
         return new WorkoutSessionResponse(
             session.getId(),
@@ -354,9 +414,97 @@ public class WorkoutSessionService {
             session.getDayTemplate().getName(),
             session.getPerformedOn(),
             session.getWeekNumber(),
+            session.getStartedAt(),
             session.getCompletedAt(),
             session.getNotes(),
+            previousNotes,
             ratings
+        );
+    }
+
+    public List<SessionExerciseResponse> getSessionExercises(UUID sessionId, UUID userId) {
+        WorkoutSession session = getSessionEntity(sessionId, userId);
+        return sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(session.getId())
+            .stream()
+            .map(this::mapSessionExerciseToResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<SessionExerciseResponse> reorderSessionExercises(UUID sessionId, UUID userId, List<SessionExerciseReorderRequest> requests) {
+        WorkoutSession session = getSessionEntity(sessionId, userId);
+        Map<UUID, SessionExercise> exerciseMap = sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(session.getId())
+            .stream().collect(Collectors.toMap(SessionExercise::getId, e -> e));
+
+        for (SessionExerciseReorderRequest req : requests) {
+            SessionExercise se = exerciseMap.get(req.id());
+            if (se != null) {
+                se.setSortOrder(req.sortOrder());
+            }
+        }
+        return sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(session.getId())
+            .stream()
+            .map(this::mapSessionExerciseToResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public SessionExerciseResponse addSessionExercise(UUID sessionId, UUID userId, SessionExerciseRequest request) {
+        WorkoutSession session = getSessionEntity(sessionId, userId);
+        Exercise exercise = exerciseRepository.findById(request.exerciseId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Exercise not found"));
+
+        int maxOrder = sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(session.getId())
+            .stream().mapToInt(SessionExercise::getSortOrder).max().orElse(0);
+
+        SessionExercise se = new SessionExercise();
+        se.setSession(session);
+        se.setExercise(exercise);
+        se.setSets(request.sets());
+        se.setReps(request.reps());
+        se.setRepsMax(request.repsMax());
+        se.setAmrap(request.isAmrap());
+        se.setSortOrder(maxOrder + 1);
+
+        SessionExercise saved = sessionExerciseRepository.save(se);
+        return mapSessionExerciseToResponse(saved);
+    }
+
+    @Transactional
+    public void removeSessionExercise(UUID sessionId, UUID userId, UUID sessionExerciseId) {
+        WorkoutSession session = getSessionEntity(sessionId, userId);
+        SessionExercise se = sessionExerciseRepository.findById(sessionExerciseId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session exercise not found"));
+        
+        if (!se.getSession().getId().equals(session.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your session exercise");
+        }
+        sessionExerciseRepository.delete(se);
+    }
+
+    private SessionExerciseResponse mapSessionExerciseToResponse(SessionExercise se) {
+        // We need to map Exercise to ExerciseResponse using something. Let's create it manually or use ExerciseService mapToResponse if available.
+        return new SessionExerciseResponse(
+            se.getId(),
+            se.getSession().getId(),
+            new com.trainingapp.training.dto.ExerciseResponse(
+                se.getExercise().getId(),
+                se.getExercise().getName(),
+                se.getExercise().getEquipmentBrand(),
+                se.getExercise().isUnilateral(),
+                se.getExercise().isBodyweight(),
+                se.getExercise().getIsPublic(),
+                se.getExercise().isSpinalLoading(),
+                se.getExercise().getCreatedAt(),
+                se.getExercise().getTargets().stream().map(t -> new com.trainingapp.training.dto.ExerciseTargetResponse(t.getId(), t.getBodyPart(), t.getTargetValue())).collect(Collectors.toList()),
+                null,
+                null
+            ),
+            se.getSets(),
+            se.getReps(),
+            se.getRepsMax(),
+            se.getSortOrder(),
+            se.isAmrap()
         );
     }
 }

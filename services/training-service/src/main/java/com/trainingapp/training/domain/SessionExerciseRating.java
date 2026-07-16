@@ -27,8 +27,8 @@ public class SessionExerciseRating {
     private WorkoutSession session;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "day_exercise_id", nullable = false, updatable = false)
-    private DayExercise dayExercise;
+    @JoinColumn(name = "session_exercise_id", nullable = false, updatable = false)
+    private SessionExercise sessionExercise;
 
     @Column(nullable = false)
     private int rating;
@@ -36,8 +36,8 @@ public class SessionExerciseRating {
     public UUID getId() { return id; }
     public WorkoutSession getSession() { return session; }
     public void setSession(WorkoutSession session) { this.session = session; }
-    public DayExercise getDayExercise() { return dayExercise; }
-    public void setDayExercise(DayExercise dayExercise) { this.dayExercise = dayExercise; }
+    public SessionExercise getSessionExercise() { return sessionExercise; }
+    public void setSessionExercise(SessionExercise sessionExercise) { this.sessionExercise = sessionExercise; }
     public int getRating() { return rating; }
     public void setRating(int rating) { this.rating = rating; }
 }
