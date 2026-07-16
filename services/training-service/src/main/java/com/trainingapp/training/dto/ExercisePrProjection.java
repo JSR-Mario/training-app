@@ -7,4 +7,5 @@ public interface ExercisePrProjection {
     UUID getExerciseId();
     BigDecimal getPrWeight();
     Integer getPrReps();
+    String getBucket();
 }

@@ -4,6 +4,9 @@ import com.trainingapp.training.client.AnalyticsNotificationClient;
 import com.trainingapp.training.domain.DayTemplate;
 import com.trainingapp.training.domain.WorkoutSession;
 import com.trainingapp.training.domain.WorkoutSet;
+import com.trainingapp.training.repository.BodyWeightRepository;
+import com.trainingapp.training.domain.BodyWeightEntry;
+import java.util.Optional;
 import com.trainingapp.training.dto.SessionCompletedEvent;
 import com.trainingapp.training.dto.WorkoutSessionRequest;
 import com.trainingapp.training.dto.WorkoutSessionResponse;
@@ -44,6 +47,7 @@ public class WorkoutSessionService {
     private final SessionExerciseRatingRepository ratingRepository;
     private final DayExerciseRepository dayExerciseRepository;
     private final ExperienceService experienceService;
+    private final BodyWeightRepository bodyWeightRepository;
 
     public WorkoutSessionService(WorkoutSessionRepository sessionRepository,
                                  DayTemplateRepository dayTemplateRepository,
@@ -52,7 +56,8 @@ public class WorkoutSessionService {
                                  AnalyticsNotificationClient analyticsClient,
                                  SessionExerciseRatingRepository ratingRepository,
                                  DayExerciseRepository dayExerciseRepository,
-                                 ExperienceService experienceService) {
+                                 ExperienceService experienceService,
+                                 BodyWeightRepository bodyWeightRepository) {
         this.sessionRepository = sessionRepository;
         this.dayTemplateRepository = dayTemplateRepository;
         this.setRepository = setRepository;
@@ -61,6 +66,7 @@ public class WorkoutSessionService {
         this.ratingRepository = ratingRepository;
         this.dayExerciseRepository = dayExerciseRepository;
         this.experienceService = experienceService;
+        this.bodyWeightRepository = bodyWeightRepository;
     }
 
     @Transactional
@@ -303,38 +309,54 @@ public class WorkoutSessionService {
     public List<ExerciseSuggestionResponse> getExerciseSuggestions(UUID id, UUID userId) {
         WorkoutSession session = getSessionEntity(id, userId);
         List<DayExercise> dayExercises = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(session.getDayTemplate().getId());
+        List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserId(userId);
+        Optional<BodyWeightEntry> latestBw = bodyWeightRepository.findFirstByUserIdOrderByDateDesc(userId);
         
         List<ExerciseSuggestionResponse> suggestions = new java.util.ArrayList<>();
         for (DayExercise de : dayExercises) {
-            List<WorkoutSet> history = setRepository.findHistoricalSetsForExercise(
-                de.getExercise().getId(), userId, session.getPerformedOn());
-            if (!history.isEmpty()) {
-                WorkoutSession mostRecentSession = history.get(0).getSession();
-                WorkoutSet bestSet = null;
-                double maxPerf = 0;
-                for (WorkoutSet s : history) {
-                    if (!s.getSession().getId().equals(mostRecentSession.getId())) continue;
-                    if (s.getWeightKg() != null && s.getRepsCompleted() != null) {
-                        int reps = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
-                        double perf = s.getWeightKg().doubleValue() * reps;
-                        if (perf > maxPerf) {
-                            maxPerf = perf;
-                            bestSet = s;
-                        }
-                    }
+            int targetReps = de.getReps() != null ? de.getReps() : 10;
+            if (de.getReps() != null && de.getRepsMax() != null) {
+                targetReps = (de.getReps() + de.getRepsMax()) / 2;
+            }
+            
+            String targetBucket = getBucketForReps(targetReps);
+            java.math.BigDecimal suggestedWeight = null;
+            Integer suggestedReps = targetReps;
+            
+            // Find PR for this exercise and bucket
+            for (com.trainingapp.training.dto.ExercisePrProjection pr : prs) {
+                if (pr.getExerciseId().equals(de.getExercise().getId()) && targetBucket.equals(pr.getBucket())) {
+                    suggestedWeight = pr.getPrWeight();
+                    suggestedReps = pr.getPrReps();
+                    break;
                 }
-                
-                if (bestSet != null) {
-                    suggestions.add(new ExerciseSuggestionResponse(
-                        de.getId(),
-                        de.getExercise().getId(),
-                        bestSet.getWeightKg(),
-                        bestSet.getRepsCompleted() != null ? bestSet.getRepsCompleted() : de.getReps()
-                    ));
-                }
+            }
+            
+            // If no PR and it's bodyweight, default to latest recorded body weight
+            if (suggestedWeight == null && de.getExercise().isBodyweight() && latestBw.isPresent()) {
+                suggestedWeight = latestBw.get().getWeightKg();
+            }
+            
+            if (suggestedWeight != null) {
+                suggestions.add(new ExerciseSuggestionResponse(
+                    de.getId(),
+                    de.getExercise().getId(),
+                    suggestedWeight,
+                    suggestedReps
+                ));
             }
         }
         return suggestions;
+    }
+
+    private String getBucketForReps(int reps) {
+        if (reps >= 1 && reps <= 5) return "1-5";
+        if (reps >= 6 && reps <= 10) return "6-10";
+        if (reps >= 11 && reps <= 15) return "11-15";
+        if (reps >= 16 && reps <= 20) return "16-20";
+        if (reps >= 21 && reps <= 25) return "21-25";
+        if (reps >= 26 && reps <= 30) return "26-30";
+        return "31+";
     }
 
     private WorkoutSession getSessionEntity(UUID id, UUID userId) {
