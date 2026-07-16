@@ -44,10 +44,29 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
     );
 
     @Query(value = """
-        SELECT DISTINCT ON (e.id)
+        SELECT DISTINCT ON (e.id, 
+            CASE 
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 1 AND 5 THEN '1-5'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 6 AND 10 THEN '6-10'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 11 AND 15 THEN '11-15'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 16 AND 20 THEN '16-20'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 21 AND 25 THEN '21-25'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 26 AND 30 THEN '26-30'
+                ELSE '31+'
+            END
+        )
             e.id AS exerciseId,
             ws.weight_kg AS prWeight,
-            (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) AS prReps
+            (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) AS prReps,
+            CASE 
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 1 AND 5 THEN '1-5'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 6 AND 10 THEN '6-10'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 11 AND 15 THEN '11-15'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 16 AND 20 THEN '16-20'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 21 AND 25 THEN '21-25'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 26 AND 30 THEN '26-30'
+                ELSE '31+'
+            END AS bucket
         FROM training.workout_sets ws
         JOIN training.day_exercises de ON ws.day_exercise_id = de.id
         JOIN training.exercises e ON de.exercise_id = e.id
@@ -55,7 +74,17 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
         WHERE sess.user_id = :userId
           AND sess.completed_at IS NOT NULL
           AND ws.weight_kg IS NOT NULL
-        ORDER BY e.id, (ws.weight_kg * (ws.reps_completed + COALESCE(ws.reps_completed_right, 0))) DESC
+        ORDER BY e.id, 
+            CASE 
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 1 AND 5 THEN '1-5'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 6 AND 10 THEN '6-10'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 11 AND 15 THEN '11-15'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 16 AND 20 THEN '16-20'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 21 AND 25 THEN '21-25'
+                WHEN (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) BETWEEN 26 AND 30 THEN '26-30'
+                ELSE '31+'
+            END,
+            (ws.weight_kg * (ws.reps_completed + COALESCE(ws.reps_completed_right, 0))) DESC
         """, nativeQuery = true)
     List<com.trainingapp.training.dto.ExercisePrProjection> findPersonalRecordsByUserId(@Param("userId") UUID userId);
 

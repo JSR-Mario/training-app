@@ -16,5 +16,5 @@ public record ExerciseResponse(
         Instant createdAt,
         List<ExerciseTargetResponse> targets,
         Double averageRating,
-        ExercisePrResponse personalRecord
+        List<ExercisePrResponse> personalRecords
 ) {}

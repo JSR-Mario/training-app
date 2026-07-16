@@ -83,7 +83,12 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                 <!-- Exercise Header -->
                 <div class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4">
                   <div>
-                    <h2 class="text-xl font-bold text-black dark:text-white"><span class="text-accent-pos mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</h2>
+                    <h2 class="text-xl font-bold text-black dark:text-white">
+                      <span class="text-accent-pos mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}
+                      @if (hasFatigueWarning(ex.id)) {
+                        <span class="ml-2 text-[10px] uppercase font-bold text-yellow-600 dark:text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 px-2 py-1 rounded align-middle">Fatigue Warning</span>
+                      }
+                    </h2>
                     <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
                       Goal: {{ ex.sets }} sets × 
                       @if (ex.isAmrap) {
@@ -484,8 +489,13 @@ export class ActiveWorkoutComponent implements OnInit {
         defaultWeight = lastSet.weightKg?.toString() || '';
         defaultReps = lastSet.repsCompleted || '';
         defaultRepsRight = lastSet.repsCompletedRight || '';
-      } else if (ex.isBodyweight && this.latestBodyWeight() !== null) {
-        defaultWeight = this.latestBodyWeight()!.toString();
+      } else {
+        const suggestion = this.getSuggestion(ex.id);
+        if (suggestion?.suggestedWeightKg != null) {
+          defaultWeight = suggestion.suggestedWeightKg.toString();
+        } else if (ex.isBodyweight && this.latestBodyWeight() !== null) {
+          defaultWeight = this.latestBodyWeight()!.toString();
+        }
       }
 
       this.forms.set(ex.id, this.fb.group({
@@ -509,6 +519,17 @@ export class ActiveWorkoutComponent implements OnInit {
   getLastSetForExercise(exerciseId: string): WorkoutSetResponse | null {
     const sets = this.getSetsForExercise(exerciseId);
     return sets.length > 0 ? sets[sets.length - 1] : null;
+  }
+
+  hasFatigueWarning(exerciseId: string): boolean {
+    const sets = this.getSetsForExercise(exerciseId);
+    let criticals = 0;
+    let warnings = 0;
+    for (const s of sets) {
+      if (s.performanceStatus === 'CRITICAL') criticals++;
+      if (s.performanceStatus === 'WARNING') warnings++;
+    }
+    return criticals >= 1 || warnings >= 2;
   }
 
   getSuggestion(dayExerciseId: string) {
