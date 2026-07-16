@@ -365,7 +365,7 @@ export class WorkoutDashboardComponent implements OnInit {
     this.dayTemplates.set(templates);
 
     // Call API to persist
-    const week = this.activeProgram()?.currentWeek; // Or we can use the first template's weekId
+    // Or we can use the first template's weekId
     const weekId = templates[0]?.weekTemplateId; 
     // Wait, weekTemplateId might not be in DayTemplate if we only return weekTemplate.id? Let's check DayTemplate type.
     // In our types `DayTemplate` has `weekTemplateId` or we can find it. If not, we have `programId` and `displayedWeek`.
