@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  appVersion: 'v0.11.1',
-  apiUrl: 'https://api.training-app.mariososa.com'
+  apiUrl: `${window.location.protocol}//${window.location.hostname}`,
+  appVersion: 'v0.11.1'
 };

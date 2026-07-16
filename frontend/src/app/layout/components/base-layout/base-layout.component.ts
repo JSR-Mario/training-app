@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
 import { DashboardService } from '../../../features/dashboard/services/dashboard.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { environment } from '../../../../environments/environment';
 import { filter } from 'rxjs/operators';
 @Component({
   standalone: true,
@@ -37,7 +38,7 @@ import { filter } from 'rxjs/operators';
         <div class="p-6 whitespace-nowrap flex items-center justify-between">
           <a routerLink="/dashboard" (click)="closeOnMobile()" class="block cursor-pointer hover:opacity-80 transition-opacity">
             <h1 class="text-2xl font-bold text-black dark:text-white">
-              TR <span class="text-accent-pos text-sm align-text-top ml-1">v0.1.0</span>
+              TR <span class="text-accent-pos text-sm align-text-top ml-1">{{ appVersion }}</span>
             </h1>
           </a>
           @if (isMobile()) {
@@ -262,6 +263,7 @@ export class BaseLayoutComponent {
   private dashboardService = inject(DashboardService);
   private router = inject(Router);
   themeService = inject(ThemeService);
+  appVersion = environment.appVersion;
 
   isMobile = signal<boolean>(window.innerWidth < 768);
   isSidebarOpen = signal<boolean>(!this.isMobile());
