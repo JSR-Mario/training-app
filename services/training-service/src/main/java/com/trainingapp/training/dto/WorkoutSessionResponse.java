@@ -12,7 +12,9 @@ public record WorkoutSessionResponse(
     String dayTemplateName,
     LocalDate performedOn,
     int weekNumber,
+    Instant startedAt,
     Instant completedAt,
     String notes,
+    String previousSessionNotes,
     List<SessionRatingResponse> ratings
 ) {}

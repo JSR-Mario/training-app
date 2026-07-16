@@ -20,4 +20,6 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
     List<WorkoutSession> findByUserIdAndProgramIdAndWeekNumber(@Param("userId") UUID userId, @Param("programId") UUID programId, @Param("weekNumber") int weekNumber);
 
     List<WorkoutSession> findByUserIdAndPerformedOnBetween(UUID userId, java.time.LocalDate startDate, java.time.LocalDate endDate);
+
+    Optional<WorkoutSession> findFirstByUserIdAndDayTemplateIdAndNotesIsNotNullOrderByPerformedOnDesc(UUID userId, UUID dayTemplateId);
 }

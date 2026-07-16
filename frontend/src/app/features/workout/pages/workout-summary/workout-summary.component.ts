@@ -41,7 +41,7 @@ import {
             <p class="text-gray-500 dark:text-gray-400 mt-2 text-lg text-center">Great job crushing your <span class="text-gray-800 dark:text-gray-200 font-semibold">{{ session()?.dayTemplateName }}</span> workout.</p>
           </div>
           <!-- Stats Grid -->
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div class="solid-card p-6 rounded-2xl border border-gray-300 dark:border-gray-700">
               <p class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Total Volume</p>
               <p class="text-3xl font-bold text-black dark:text-white">{{ totalVolumeKg() | number:'1.0-1' }} <span class="text-gray-500 text-lg">kg</span></p>
@@ -50,6 +50,12 @@ import {
               <p class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Sets Completed</p>
               <p class="text-3xl font-bold text-black dark:text-white">{{ loggedSets().length }}</p>
             </div>
+            @if (getSessionDurationMinutes()) {
+              <div class="solid-card p-6 rounded-2xl border border-gray-300 dark:border-gray-700 col-span-2 md:col-span-1">
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Duration</p>
+                <p class="text-3xl font-bold text-black dark:text-white">{{ getSessionDurationMinutes() }} <span class="text-gray-500 text-lg">min</span></p>
+              </div>
+            }
           </div>
           <!-- Details -->
           <div class="solid-card p-6 text-left space-y-4 border border-gray-300 dark:border-gray-700">
@@ -57,7 +63,12 @@ import {
             @for (ex of exercises(); track ex) {
               <div class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-800 last:border-0">
                 <div>
-                  <p class="text-gray-800 dark:text-gray-200 font-medium">{{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</p>
+                  <p class="text-gray-800 dark:text-gray-200 font-medium">
+                    {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}
+                    @if (hasPrForExercise(ex.id)) {
+                      <span class="ml-2 text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 px-1.5 py-0.5 rounded border border-accent-pos/20">PR!</span>
+                    }
+                  </p>
                   <p class="text-gray-500 text-sm">{{ getSetsForExercise(ex.id).length }} sets completed</p>
                 </div>
                 <div class="text-right">
@@ -125,9 +136,21 @@ export class WorkoutSummaryComponent implements OnInit {
           next: (sets) => {
             this.loggedSets.set(sets);
             
-            this.programService.getDayExercises(sess.dayTemplateId).subscribe({
+            this.workoutService.getSessionExercises(id).subscribe({
               next: (exs) => {
-                this.exercises.set(exs.sort((a, b) => a.sortOrder - b.sortOrder));
+                const mappedExercises: DayExercise[] = exs.map(e => ({
+                  id: e.id,
+                  exerciseId: e.exercise.id,
+                  exerciseName: e.exercise.name,
+                  sets: e.sets,
+                  reps: e.reps,
+                  repsMax: e.repsMax,
+                  sortOrder: e.sortOrder,
+                  isAmrap: e.isAmrap,
+                  unilateral: e.exercise.unilateral,
+                  isBodyweight: e.exercise.isBodyweight
+                }));
+                this.exercises.set(mappedExercises.sort((a, b) => a.sortOrder - b.sortOrder));
                 this.isLoading.set(false);
               },
               error: (err) => {
@@ -150,7 +173,7 @@ export class WorkoutSummaryComponent implements OnInit {
   }
 
   getSetsForExercise(exerciseId: string): WorkoutSetResponse[] {
-    return this.loggedSets().filter(s => s.dayExerciseId === exerciseId);
+    return this.loggedSets().filter(s => s.sessionExerciseId === exerciseId);
   }
 
   getVolumeForExercise(exerciseId: string): number {
@@ -161,7 +184,18 @@ export class WorkoutSummaryComponent implements OnInit {
       }, 0);
   }
 
+  hasPrForExercise(exerciseId: string): boolean {
+    return this.getSetsForExercise(exerciseId).some(s => s.isNewPr);
+  }
 
+  getSessionDurationMinutes(): number | null {
+    const session = this.session();
+    if (!session || !session.startedAt || !session.completedAt) return null;
+    const start = new Date(session.startedAt).getTime();
+    const end = new Date(session.completedAt).getTime();
+    const diff = end - start;
+    return Math.max(1, Math.round(diff / 60000));
+  }
 
   totalVolumeKg() {
     return this.loggedSets()

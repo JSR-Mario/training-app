@@ -85,4 +85,20 @@ export class WorkoutService {
   getSuggestions(sessionId: string): Observable<ExerciseSuggestionResponse[]> {
     return this.http.get<ExerciseSuggestionResponse[]>(`${this.baseUrl}/sessions/${sessionId}/suggestions`);
   }
+
+  getSessionExercises(sessionId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/sessions/${sessionId}/exercises`);
+  }
+
+  addSessionExercise(sessionId: string, request: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/sessions/${sessionId}/exercises`, request);
+  }
+
+  removeSessionExercise(sessionId: string, sessionExerciseId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/sessions/${sessionId}/exercises/${sessionExerciseId}`);
+  }
+
+  reorderSessionExercises(sessionId: string, requests: any[]): Observable<any[]> {
+    return this.http.patch<any[]>(`${this.baseUrl}/sessions/${sessionId}/exercises/reorder`, requests);
+  }
 }
