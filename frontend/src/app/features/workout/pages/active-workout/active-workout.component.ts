@@ -446,7 +446,7 @@ export class ActiveWorkoutComponent implements OnInit {
 
   scrollToFirstIncompleteExercise() {
     const exercises = this.exercises();
-    for (let ex of exercises) {
+    for (const ex of exercises) {
       const setsDone = this.getSetsForExercise(ex.id).length;
       const setsExpected = ex.sets || 1;
       if (setsDone < setsExpected && !this.isCollapsed(ex.id)) {

@@ -6,7 +6,10 @@ import {
   WorkoutSessionResponse, 
   WorkoutSetRequest, 
   WorkoutSetResponse,
-  ExerciseSuggestionResponse
+  ExerciseSuggestionResponse,
+  SessionExerciseResponse,
+  SessionExerciseRequest,
+  SessionExerciseReorderRequest
 } from '../../../core/types/training.types';
 
 @Injectable({
@@ -86,19 +89,19 @@ export class WorkoutService {
     return this.http.get<ExerciseSuggestionResponse[]>(`${this.baseUrl}/sessions/${sessionId}/suggestions`);
   }
 
-  getSessionExercises(sessionId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/sessions/${sessionId}/exercises`);
+  getSessionExercises(sessionId: string): Observable<SessionExerciseResponse[]> {
+    return this.http.get<SessionExerciseResponse[]>(`${this.baseUrl}/sessions/${sessionId}/exercises`);
   }
 
-  addSessionExercise(sessionId: string, request: any): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/sessions/${sessionId}/exercises`, request);
+  addSessionExercise(sessionId: string, request: SessionExerciseRequest): Observable<SessionExerciseResponse> {
+    return this.http.post<SessionExerciseResponse>(`${this.baseUrl}/sessions/${sessionId}/exercises`, request);
   }
 
   removeSessionExercise(sessionId: string, sessionExerciseId: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/sessions/${sessionId}/exercises/${sessionExerciseId}`);
   }
 
-  reorderSessionExercises(sessionId: string, requests: any[]): Observable<any[]> {
-    return this.http.patch<any[]>(`${this.baseUrl}/sessions/${sessionId}/exercises/reorder`, requests);
+  reorderSessionExercises(sessionId: string, requests: SessionExerciseReorderRequest[]): Observable<SessionExerciseResponse[]> {
+    return this.http.patch<SessionExerciseResponse[]>(`${this.baseUrl}/sessions/${sessionId}/exercises/reorder`, requests);
   }
 }
