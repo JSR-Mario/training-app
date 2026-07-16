@@ -2,6 +2,7 @@ package com.trainingapp.training.service;
 
 import com.trainingapp.training.domain.DayTemplate;
 import com.trainingapp.training.domain.WeekTemplate;
+import com.trainingapp.training.dto.DayReorderRequest;
 import com.trainingapp.training.dto.DayTemplateRequest;
 import com.trainingapp.training.dto.DayTemplateResponse;
 import com.trainingapp.training.exception.ResourceNotFoundException;
@@ -10,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Business logic for day templates. Validates that the parent week
@@ -31,7 +34,7 @@ public class DayTemplateService {
     @Transactional(readOnly = true)
     public List<DayTemplateResponse> findByWeek(UUID userId, UUID weekId) {
         weekService.findOwned(userId, weekId);
-        return dayRepository.findByWeekTemplateId(weekId).stream()
+        return dayRepository.findByWeekTemplateIdOrderBySortOrderAsc(weekId).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -47,6 +50,8 @@ public class DayTemplateService {
         DayTemplate day = new DayTemplate();
         day.setWeekTemplate(week);
         day.setName(request.name());
+        long currentCount = dayRepository.findByWeekTemplateIdOrderBySortOrderAsc(weekId).size();
+        day.setSortOrder((int) currentCount + 1);
         return toResponse(dayRepository.save(day));
     }
 
@@ -61,6 +66,25 @@ public class DayTemplateService {
     public void delete(UUID userId, UUID dayId) {
         DayTemplate day = findOwned(userId, dayId);
         dayRepository.delete(day);
+    }
+
+    @Transactional
+    public List<DayTemplateResponse> reorderDays(UUID userId, UUID weekId, List<DayReorderRequest> requests) {
+        weekService.findOwned(userId, weekId);
+        List<DayTemplate> days = dayRepository.findByWeekTemplateIdOrderBySortOrderAsc(weekId);
+        Map<UUID, DayTemplate> dayMap = days.stream().collect(Collectors.toMap(DayTemplate::getId, d -> d));
+
+        for (DayReorderRequest req : requests) {
+            DayTemplate day = dayMap.get(req.id());
+            if (day != null) {
+                day.setSortOrder(req.sortOrder());
+            }
+        }
+        dayRepository.saveAll(days);
+
+        return dayRepository.findByWeekTemplateIdOrderBySortOrderAsc(weekId).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     /** Package-private: validates day's parent week belongs to user. */

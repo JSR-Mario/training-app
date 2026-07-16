@@ -39,6 +39,9 @@ public class WorkoutSession {
     @Column(name = "week_number", nullable = false)
     private int weekNumber;
 
+    @Column(name = "started_at")
+    private Instant startedAt;
+
     @Column(name = "completed_at")
     private Instant completedAt;
 
@@ -54,6 +57,8 @@ public class WorkoutSession {
     public void setPerformedOn(LocalDate performedOn) { this.performedOn = performedOn; }
     public int getWeekNumber() { return weekNumber; }
     public void setWeekNumber(int weekNumber) { this.weekNumber = weekNumber; }
+    public Instant getStartedAt() { return startedAt; }
+    public void setStartedAt(Instant startedAt) { this.startedAt = startedAt; }
     public Instant getCompletedAt() { return completedAt; }
     public void setCompletedAt(Instant completedAt) { this.completedAt = completedAt; }
     public String getNotes() { return notes; }

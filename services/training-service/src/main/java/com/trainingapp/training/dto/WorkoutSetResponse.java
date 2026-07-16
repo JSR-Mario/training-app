@@ -8,11 +8,12 @@ import java.util.UUID;
 public record WorkoutSetResponse(
     UUID id,
     UUID sessionId,
-    UUID dayExerciseId,
+    UUID sessionExerciseId,
     int setNumber,
     Integer repsCompleted,
     Integer repsCompletedRight,
     BigDecimal weightKg,
     Instant loggedAt,
-    String performanceStatus
+    String performanceStatus,
+    boolean isNewPr
 ) {}

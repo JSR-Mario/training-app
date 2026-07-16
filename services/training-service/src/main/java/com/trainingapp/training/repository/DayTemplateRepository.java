@@ -7,5 +7,5 @@ import java.util.UUID;
 
 /** Spring Data JPA repository for {@link DayTemplate} entities. */
 public interface DayTemplateRepository extends JpaRepository<DayTemplate, UUID> {
-    List<DayTemplate> findByWeekTemplateId(UUID weekTemplateId);
+    List<DayTemplate> findByWeekTemplateIdOrderBySortOrderAsc(UUID weekTemplateId);
 }

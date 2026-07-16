@@ -124,13 +124,39 @@ export interface WorkoutSessionResponse {
   dayTemplateName: string;
   performedOn: string;
   weekNumber: number;
+  startedAt: string | null;
   completedAt: string | null;
   notes?: string;
+  previousNotes?: string;
   ratings?: SessionRatingResponse[];
 }
 
+export interface SessionExerciseResponse {
+  id: string;
+  sessionId: string;
+  exercise: Exercise;
+  sets?: number;
+  reps?: number;
+  repsMax?: number;
+  sortOrder: number;
+  isAmrap?: boolean;
+}
+
+export interface SessionExerciseRequest {
+  exerciseId: string;
+  sets?: number;
+  reps?: number;
+  repsMax?: number;
+  isAmrap?: boolean;
+}
+
+export interface SessionExerciseReorderRequest {
+  id: string;
+  sortOrder: number;
+}
+
 export interface WorkoutSetRequest {
-  dayExerciseId: string;
+  sessionExerciseId: string;
   setNumber: number;
   repsCompleted?: number;
   repsCompletedRight?: number;
@@ -140,13 +166,14 @@ export interface WorkoutSetRequest {
 export interface WorkoutSetResponse {
   id: string;
   sessionId: string;
-  dayExerciseId: string;
+  sessionExerciseId: string;
   setNumber: number;
   repsCompleted?: number;
   repsCompletedRight?: number;
   weightKg?: number;
   loggedAt: string;
   performanceStatus?: 'GOOD' | 'WARNING' | 'CRITICAL';
+  isNewPr?: boolean;
 }
 
 export interface ActivitySummary {

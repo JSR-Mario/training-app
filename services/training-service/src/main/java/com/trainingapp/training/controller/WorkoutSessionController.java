@@ -58,6 +58,27 @@ public class WorkoutSessionController {
         return sessionService.updateRating(id, UserContext.getCurrentUserId(), dayExerciseId, request);
     }
 
+    @GetMapping("/{id}/exercises")
+    public List<com.trainingapp.training.dto.SessionExerciseResponse> getSessionExercises(@PathVariable UUID id) {
+        return sessionService.getSessionExercises(id, UserContext.getCurrentUserId());
+    }
+
+    @PostMapping("/{id}/exercises")
+    public com.trainingapp.training.dto.SessionExerciseResponse addSessionExercise(@PathVariable UUID id, @Valid @RequestBody com.trainingapp.training.dto.SessionExerciseRequest request) {
+        return sessionService.addSessionExercise(id, UserContext.getCurrentUserId(), request);
+    }
+
+    @DeleteMapping("/{id}/exercises/{sessionExerciseId}")
+    public ResponseEntity<Void> removeSessionExercise(@PathVariable UUID id, @PathVariable UUID sessionExerciseId) {
+        sessionService.removeSessionExercise(id, UserContext.getCurrentUserId(), sessionExerciseId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/exercises/reorder")
+    public List<com.trainingapp.training.dto.SessionExerciseResponse> reorderSessionExercises(@PathVariable UUID id, @Valid @RequestBody List<com.trainingapp.training.dto.SessionExerciseReorderRequest> requests) {
+        return sessionService.reorderSessionExercises(id, UserContext.getCurrentUserId(), requests);
+    }
+
     @DeleteMapping("/{id}/ratings/{dayExerciseId}")
     public WorkoutSessionResponse deleteRating(@PathVariable UUID id, @PathVariable UUID dayExerciseId) {
         return sessionService.deleteRating(id, UserContext.getCurrentUserId(), dayExerciseId);
