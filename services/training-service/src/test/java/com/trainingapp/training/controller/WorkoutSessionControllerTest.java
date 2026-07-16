@@ -59,7 +59,7 @@ class WorkoutSessionControllerTest {
     void startSession() throws Exception {
         UUID dayTemplateId = UUID.randomUUID();
         WorkoutSessionRequest request = new WorkoutSessionRequest(dayTemplateId, LocalDate.now(), 1);
-        WorkoutSessionResponse response = new WorkoutSessionResponse(UUID.randomUUID(), dayTemplateId, "Push", LocalDate.now(), 1, null, null, java.util.List.of());
+        WorkoutSessionResponse response = new WorkoutSessionResponse(UUID.randomUUID(), dayTemplateId, "Push", LocalDate.now(), 1, null, null, null, null, java.util.List.of());
 
         when(sessionService.startSession(eq(userId), any(WorkoutSessionRequest.class))).thenReturn(response);
 

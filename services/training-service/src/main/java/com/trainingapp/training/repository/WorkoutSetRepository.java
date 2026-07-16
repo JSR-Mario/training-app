@@ -13,8 +13,8 @@ import java.util.UUID;
 /** Spring Data JPA repository for {@link WorkoutSet} entities. */
 public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
     
-    @Query("SELECT ws FROM WorkoutSet ws JOIN ws.dayExercise de JOIN ws.session s " +
-           "WHERE de.exercise.id = :exerciseId AND s.userId = :userId AND s.completedAt IS NOT NULL AND s.performedOn < :currentDate " +
+    @Query("SELECT ws FROM WorkoutSet ws JOIN ws.sessionExercise se JOIN ws.session s " +
+           "WHERE se.exercise.id = :exerciseId AND s.userId = :userId AND s.completedAt IS NOT NULL AND s.performedOn < :currentDate " +
            "ORDER BY s.performedOn DESC")
     List<WorkoutSet> findHistoricalSetsForExercise(
         @Param("exerciseId") UUID exerciseId, 
@@ -22,8 +22,8 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
         @Param("currentDate") LocalDate currentDate
     );
     
-    @Query("SELECT ws FROM WorkoutSet ws JOIN ws.dayExercise de JOIN ws.session s " +
-           "WHERE de.exercise.id = :exerciseId AND s.userId = :userId AND s.completedAt IS NOT NULL " +
+    @Query("SELECT ws FROM WorkoutSet ws JOIN ws.sessionExercise se JOIN ws.session s " +
+           "WHERE se.exercise.id = :exerciseId AND s.userId = :userId AND s.completedAt IS NOT NULL " +
            "ORDER BY s.performedOn ASC")
     List<WorkoutSet> findHistoricalSetsForExerciseAll(
         @Param("exerciseId") UUID exerciseId, 
@@ -68,8 +68,8 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
                 ELSE '31+'
             END AS bucket
         FROM training.workout_sets ws
-        JOIN training.day_exercises de ON ws.day_exercise_id = de.id
-        JOIN training.exercises e ON de.exercise_id = e.id
+        JOIN training.session_exercises se ON ws.session_exercise_id = se.id
+        JOIN training.exercises e ON se.exercise_id = e.id
         JOIN training.workout_sessions sess ON ws.session_id = sess.id
         WHERE sess.user_id = :userId
           AND sess.completed_at IS NOT NULL
