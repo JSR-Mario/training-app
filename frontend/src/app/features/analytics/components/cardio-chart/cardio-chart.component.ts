@@ -4,6 +4,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { CardioLogService } from '../../services/cardio-log.service';
 import { CardioLogResponse } from '../../../../core/types/training.types';
+import { CARDIO_TYPES } from '../../../../core/constants/cardio-types';
 
 @Component({
   selector: 'app-cardio-chart',
@@ -113,21 +114,17 @@ export class CardioChartComponent implements OnInit {
     });
 
     const sortedDates = Array.from(aggregated.keys()).sort();
-    const sortedTypes = Array.from(allTypes).sort();
+    const typeOrder = CARDIO_TYPES.map(t => t.value) as string[];
+    const sortedTypes = Array.from(allTypes).sort((a, b) => {
+      const idxA = typeOrder.indexOf(a);
+      const idxB = typeOrder.indexOf(b);
+      // Known types first in predefined order, unknown types at the end
+      return (idxA === -1 ? typeOrder.length : idxA) - (idxB === -1 ? typeOrder.length : idxB);
+    });
 
-    const colors = [
-      { bg: 'rgba(16, 185, 129, 0.8)', border: '#10b981' }, // Emerald
-      { bg: 'rgba(59, 130, 246, 0.8)', border: '#3b82f6' }, // Blue
-      { bg: 'rgba(168, 85, 247, 0.8)', border: '#a855f7' }, // Purple
-      { bg: 'rgba(244, 63, 94, 0.8)', border: '#f43f5e' },  // Rose
-      { bg: 'rgba(245, 158, 11, 0.8)', border: '#f59e0b' }, // Amber
-      { bg: 'rgba(14, 165, 233, 0.8)', border: '#0ea5e9' }, // Sky
-      { bg: 'rgba(236, 72, 153, 0.8)', border: '#ec4899' }, // Pink
-      { bg: 'rgba(148, 163, 184, 0.8)', border: '#94a3b8' }  // Slate (Fallback)
-    ];
-
-    const datasets = sortedTypes.map((type, index) => {
-      const colorOptions = colors[index % colors.length];
+    const datasets = sortedTypes.map(type => {
+      const typeDef = CARDIO_TYPES.find(t => t.value === type) || CARDIO_TYPES.find(t => t.value === 'Other')!;
+      const colorOptions = typeDef.color;
       return {
         label: type,
         data: sortedDates.map(d => aggregated.get(d)?.get(type) || 0),
