@@ -120,26 +120,31 @@ public class DashboardSummaryResponse {
     }
 
     public static class BodyWeightSummary {
-        private double currentWeekAvgKg;
+        private double currentWeightKg;
         private double percentageChange;
         private double absoluteChangeKg;
+        private String timeframeLabel;
 
         public BodyWeightSummary() {}
 
-        public BodyWeightSummary(double currentWeekAvgKg, double percentageChange, double absoluteChangeKg) {
-            this.currentWeekAvgKg = currentWeekAvgKg;
+        public BodyWeightSummary(double currentWeightKg, double percentageChange, double absoluteChangeKg, String timeframeLabel) {
+            this.currentWeightKg = currentWeightKg;
             this.percentageChange = percentageChange;
             this.absoluteChangeKg = absoluteChangeKg;
+            this.timeframeLabel = timeframeLabel;
         }
 
-        public double getCurrentWeekAvgKg() { return currentWeekAvgKg; }
-        public void setCurrentWeekAvgKg(double currentWeekAvgKg) { this.currentWeekAvgKg = currentWeekAvgKg; }
+        public double getCurrentWeightKg() { return currentWeightKg; }
+        public void setCurrentWeightKg(double currentWeightKg) { this.currentWeightKg = currentWeightKg; }
 
         public double getPercentageChange() { return percentageChange; }
         public void setPercentageChange(double percentageChange) { this.percentageChange = percentageChange; }
 
         public double getAbsoluteChangeKg() { return absoluteChangeKg; }
         public void setAbsoluteChangeKg(double absoluteChangeKg) { this.absoluteChangeKg = absoluteChangeKg; }
+
+        public String getTimeframeLabel() { return timeframeLabel; }
+        public void setTimeframeLabel(String timeframeLabel) { this.timeframeLabel = timeframeLabel; }
     }
 
     /** Summary of the user's activity streak (consecutive active days). */
