@@ -17,4 +17,8 @@ public interface BodyWeightRepository extends JpaRepository<BodyWeightEntry, UUI
     Optional<BodyWeightEntry> findByUserIdAndDate(UUID userId, LocalDate date);
     
     Optional<BodyWeightEntry> findFirstByUserIdOrderByDateDesc(UUID userId);
+
+    Optional<BodyWeightEntry> findFirstByUserIdAndDateLessThanEqualOrderByDateDesc(UUID userId, LocalDate date);
+    
+    Optional<BodyWeightEntry> findFirstByUserIdAndDateGreaterThanEqualOrderByDateAsc(UUID userId, LocalDate date);
 }
