@@ -95,30 +95,36 @@ export class CardioChartComponent implements OnInit {
       return;
     }
 
+    const typeOrder = CARDIO_TYPES.map(t => t.value) as string[];
+    const knownNames = new Set(typeOrder);
+
     const aggregated = new Map<string, Map<string, number>>();
-    const allTypes = new Set<string>();
+    const presentTypes = new Set<string>();
 
     data.forEach(entry => {
       const date = entry.performedOn;
-      const type = (entry.cardioType || 'Other').trim();
-      const displayType = type === '' ? 'Other' : type;
-      const duration = entry.durationMinutes || 0;
+      let type = (entry.cardioType || 'Other').trim();
       
-      allTypes.add(displayType);
+      // Group anything not in the predefined list into 'Other'
+      if (type === '' || !knownNames.has(type)) {
+        type = 'Other';
+      }
+      
+      presentTypes.add(type);
 
       if (!aggregated.has(date)) {
         aggregated.set(date, new Map<string, number>());
       }
       const dateMap = aggregated.get(date)!;
-      dateMap.set(displayType, (dateMap.get(displayType) || 0) + duration);
+      dateMap.set(type, (dateMap.get(type) || 0) + (entry.durationMinutes || 0));
     });
 
     const sortedDates = Array.from(aggregated.keys()).sort();
-    const typeOrder = CARDIO_TYPES.map(t => t.value) as string[];
-    const sortedTypes = Array.from(allTypes).sort((a, b) => {
+    
+    // Sort types: known types in defined order, then 'Other'
+    const sortedTypes = Array.from(presentTypes).sort((a, b) => {
       const idxA = typeOrder.indexOf(a);
       const idxB = typeOrder.indexOf(b);
-      // Known types first in predefined order, unknown types at the end
       return (idxA === -1 ? typeOrder.length : idxA) - (idxB === -1 ? typeOrder.length : idxB);
     });
 

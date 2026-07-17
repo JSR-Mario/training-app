@@ -89,17 +89,32 @@ public class DashboardService {
                 weightSessionsThisWeek, volumeThisWeek, volumePercentageChange);
 
         // ── Body Weight ───────────────────────────────────────────────────────
-        List<BodyWeightEntry> weightsThisWeek = bodyWeightRepository.findAllByUserIdAndDateBetweenOrderByDateAsc(userId, startOfThisWeek, endOfThisWeek);
-        List<BodyWeightEntry> weightsLastWeek = bodyWeightRepository.findAllByUserIdAndDateBetweenOrderByDateAsc(userId, startOfLastWeek, endOfLastWeek);
+        java.util.Optional<com.trainingapp.training.domain.TrainingProgram> activeProgramOpt = programRepository.findByUserIdAndIsActiveTrue(userId);
+        
+        LocalDate weightStartDate;
+        String timeframeLabel;
+        if (activeProgramOpt.isPresent() && activeProgramOpt.get().getStartDate() != null) {
+            weightStartDate = activeProgramOpt.get().getStartDate();
+            timeframeLabel = "Since program start";
+        } else {
+            weightStartDate = today.minusDays(30);
+            timeframeLabel = "Last 30 days";
+        }
 
-        double avgWeightThisWeek = weightsThisWeek.stream().mapToDouble(e -> e.getWeightKg().doubleValue()).average().orElse(0.0);
-        double avgWeightLastWeek = weightsLastWeek.stream().mapToDouble(e -> e.getWeightKg().doubleValue()).average().orElse(0.0);
-        double bodyWeightPercentageChange = calculatePercentageChange(avgWeightLastWeek, avgWeightThisWeek);
-        double absoluteChangeKg = (avgWeightLastWeek > 0 && avgWeightThisWeek > 0)
-                ? avgWeightThisWeek - avgWeightLastWeek : 0.0;
+        java.util.Optional<com.trainingapp.training.domain.BodyWeightEntry> currentWeightOpt = bodyWeightRepository.findFirstByUserIdOrderByDateDesc(userId);
+        java.util.Optional<com.trainingapp.training.domain.BodyWeightEntry> baselineWeightOpt = bodyWeightRepository.findFirstByUserIdAndDateLessThanEqualOrderByDateDesc(userId, weightStartDate);
+        if (baselineWeightOpt.isEmpty()) {
+            baselineWeightOpt = bodyWeightRepository.findFirstByUserIdAndDateGreaterThanEqualOrderByDateAsc(userId, weightStartDate);
+        }
+
+        double currentWeightKg = currentWeightOpt.map(e -> e.getWeightKg().doubleValue()).orElse(0.0);
+        double baselineWeightKg = baselineWeightOpt.map(e -> e.getWeightKg().doubleValue()).orElse(currentWeightKg);
+
+        double absoluteChangeKg = (baselineWeightKg > 0 && currentWeightKg > 0) ? currentWeightKg - baselineWeightKg : 0.0;
+        double bodyWeightPercentageChange = calculatePercentageChange(baselineWeightKg, currentWeightKg);
 
         DashboardSummaryResponse.BodyWeightSummary bodyWeightSummary = new DashboardSummaryResponse.BodyWeightSummary(
-                avgWeightThisWeek, bodyWeightPercentageChange, absoluteChangeKg);
+                currentWeightKg, bodyWeightPercentageChange, absoluteChangeKg, timeframeLabel);
 
         // ── Activity Calendar (last 365 days) ─────────────────────────────────
         LocalDate oneYearAgo = today.minusDays(364);
