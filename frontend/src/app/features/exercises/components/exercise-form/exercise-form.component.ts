@@ -22,6 +22,25 @@ export interface ExerciseFormData {
     <div class="solid-card p-6 w-full max-w-2xl mx-auto">
       <h2 class="text-2xl font-bold mb-6 text-black dark:text-white">{{ exercise() ? 'Edit Exercise' : 'New Exercise' }}</h2>
     
+      @if (exercise()?.personalRecords?.length) {
+        <div class="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl p-4 mb-6">
+          <h3 class="text-sm font-bold text-yellow-800 dark:text-yellow-500 mb-2 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+            Personal Records
+          </h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            @for (pr of exercise()?.personalRecords; track pr.bucket) {
+              <div class="bg-white dark:bg-gray-800 rounded-lg p-2.5 border border-yellow-100 dark:border-yellow-500/10 text-center shadow-sm">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">{{ pr.bucket }} Reps</div>
+                <div class="font-bold text-gray-900 dark:text-white">{{ pr.weightKg }}kg &times; {{ pr.reps }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
     
         <!-- Name with Autocomplete -->
