@@ -122,7 +122,12 @@ import { filter } from 'rxjs/operators';
           </button>
           
           <div class="relative user-dropdown-container">
-            <button (click)="dropdownOpen.set(!dropdownOpen())" class="flex items-center space-x-3 text-gray-300 hover:text-white focus:outline-none p-2 rounded-lg hover:bg-gray-800 transition-colors">
+            <button (click)="dropdownOpen.set(!dropdownOpen())" 
+              class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white focus:outline-none p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+              [class.bg-gray-200]="dropdownOpen()"
+              [class.dark:bg-gray-800]="dropdownOpen()"
+              [class.text-black]="dropdownOpen()"
+              [class.dark:text-white]="dropdownOpen()">
               <span class="font-medium">{{ username() }}</span>
               <!-- Level Badge -->
               @if (level() > 0) {
