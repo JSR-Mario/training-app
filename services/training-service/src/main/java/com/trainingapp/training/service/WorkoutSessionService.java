@@ -337,15 +337,15 @@ public class WorkoutSessionService {
 
     public List<ExerciseSuggestionResponse> getExerciseSuggestions(UUID id, UUID userId) {
         WorkoutSession session = getSessionEntity(id, userId);
-        List<DayExercise> dayExercises = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(session.getDayTemplate().getId());
+        List<SessionExercise> sessionExercises = sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(session.getId());
         List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserId(userId);
         Optional<BodyWeightEntry> latestBw = bodyWeightRepository.findFirstByUserIdOrderByDateDesc(userId);
         
         List<ExerciseSuggestionResponse> suggestions = new java.util.ArrayList<>();
-        for (DayExercise de : dayExercises) {
-            int targetReps = de.getReps() != null ? de.getReps() : 10;
-            if (de.getReps() != null && de.getRepsMax() != null) {
-                targetReps = (de.getReps() + de.getRepsMax()) / 2;
+        for (SessionExercise se : sessionExercises) {
+            int targetReps = se.getReps() != null ? se.getReps() : 10;
+            if (se.getReps() != null && se.getRepsMax() != null) {
+                targetReps = (se.getReps() + se.getRepsMax()) / 2;
             }
             
             String targetBucket = getBucketForReps(targetReps);
@@ -354,7 +354,7 @@ public class WorkoutSessionService {
             
             // Find PR for this exercise and bucket
             for (com.trainingapp.training.dto.ExercisePrProjection pr : prs) {
-                if (pr.getExerciseId().equals(de.getExercise().getId()) && targetBucket.equals(pr.getBucket())) {
+                if (pr.getExerciseId().equals(se.getExercise().getId()) && targetBucket.equals(pr.getBucket())) {
                     suggestedWeight = pr.getPrWeight();
                     suggestedReps = pr.getPrReps();
                     break;
@@ -362,14 +362,14 @@ public class WorkoutSessionService {
             }
             
             // If no PR and it's bodyweight, default to latest recorded body weight
-            if (suggestedWeight == null && de.getExercise().isBodyweight() && latestBw.isPresent()) {
+            if (suggestedWeight == null && se.getExercise().isBodyweight() && latestBw.isPresent()) {
                 suggestedWeight = latestBw.get().getWeightKg();
             }
             
             if (suggestedWeight != null) {
                 suggestions.add(new ExerciseSuggestionResponse(
-                    de.getId(),
-                    de.getExercise().getId(),
+                    se.getId(),
+                    se.getExercise().getId(),
                     suggestedWeight,
                     suggestedReps
                 ));
