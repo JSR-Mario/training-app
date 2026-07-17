@@ -76,7 +76,6 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
             } @else {
               <p class="text-5xl font-bold text-black dark:text-white mb-4 mt-2">{{ (summary()?.weights?.volumeThisWeekKg || 0) | number:'1.0-0' }} <span class="text-xl text-gray-500 dark:text-gray-400 font-normal">kg</span></p>
               <div class="flex items-center text-sm">
-                <span class="mr-2 text-gray-600 dark:text-gray-300">Sessions: {{ summary()?.weights?.sessionsThisWeek || 0 }}</span>
                 @if ((summary()?.weights?.volumePercentageChange || 0) >= 0) {
                   <span class="text-accent-pos flex items-center bg-accent-pos/10 px-1.5 py-0.5 rounded text-xs font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -121,7 +120,6 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
             } @else {
               <p class="text-5xl font-bold text-black dark:text-white mb-4 mt-2">{{ summary()?.cardio?.minutesThisWeek || 0 }} <span class="text-xl text-gray-500 dark:text-gray-400 font-normal">min</span></p>
               <div class="flex items-center text-sm">
-                <span class="mr-2 text-gray-600 dark:text-gray-300">Sessions: {{ summary()?.cardio?.sessionsThisWeek || 0 }}</span>
                 @if ((summary()?.cardio?.minutesPercentageChange || 0) >= 0) {
                   <span class="text-accent-pos flex items-center bg-accent-pos/10 px-1.5 py-0.5 rounded text-xs font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -152,7 +150,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
           title="Go to Body Weight"
         >
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-base font-medium text-gray-500 dark:text-gray-400">Body Weight</h3>
+            <h3 class="text-base font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">Body Weight <span class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{{ summary()?.bodyWeight?.timeframeLabel || 'Since start' }}</span></h3>
             <div class="w-8 h-8 rounded-lg bg-accent-pos/20 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent-pos" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
@@ -165,9 +163,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
               <div class="h-4 w-32 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
             } @else {
               <p class="text-5xl font-bold text-black dark:text-white mb-4 mt-2">{{ (summary()?.bodyWeight?.currentWeightKg || 0) | number:'1.0-1' }} <span class="text-xl text-gray-500 dark:text-gray-400 font-normal">kg</span></p>
-              <div class="flex flex-col gap-1 items-start text-sm">
-                <span class="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{{ summary()?.bodyWeight?.timeframeLabel || 'Since start' }}</span>
-                <div class="flex items-center">
+              <div class="flex items-center text-sm">
                 @if (bodyWeightChangeStatus() === 'NEUTRAL') {
                   <span class="text-gray-500 dark:text-gray-400 flex items-center bg-gray-200 dark:bg-gray-700/50 px-1.5 py-0.5 rounded text-xs font-medium">
                     @if ((summary()?.bodyWeight?.percentageChange || 0) === 0) {
@@ -199,7 +195,6 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
                     {{ (summary()?.bodyWeight?.percentageChange || 0) > 0 ? '+' : '-' }}{{ math.abs(summary()?.bodyWeight?.absoluteChangeKg || 0) | number:'1.0-1' }}kg ({{ math.abs(summary()?.bodyWeight?.percentageChange || 0) | number:'1.0-1' }}%)
                   </span>
                 }
-                </div>
               </div>
             }
           </div>
