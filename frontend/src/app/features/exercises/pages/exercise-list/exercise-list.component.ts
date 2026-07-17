@@ -187,11 +187,6 @@ import { FormsModule } from '@angular/forms';
                 <div>
                   <div class="flex items-center gap-3">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-accent-pos transition-colors">{{ exercise.name }}</h3>
-                    @if (exercise.personalRecord) {
-                      <span class="text-xs font-bold text-yellow-600 dark:text-yellow-500 bg-yellow-100 dark:bg-yellow-500/10 px-2 py-1 rounded-md border border-yellow-200 dark:border-yellow-500/20 shadow-sm">
-                        PR: {{ exercise.personalRecord.weightKg }}kg x {{ exercise.personalRecord.reps }}
-                      </span>
-                    }
                   </div>
                   <div class="flex flex-wrap gap-1.5 mt-2.5">
                     @if (exercise.equipmentBrand) {

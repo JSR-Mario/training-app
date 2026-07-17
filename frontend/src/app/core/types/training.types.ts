@@ -51,10 +51,11 @@ export interface Exercise {
   isPublic: boolean;
   targets: ExerciseTarget[];
   averageRating?: number;
-  personalRecord?: {
+  personalRecords?: {
     weightKg: number;
     reps: number;
-  };
+    bucket: string;
+  }[];
   createdAt: string;
   updatedAt: string;
 }

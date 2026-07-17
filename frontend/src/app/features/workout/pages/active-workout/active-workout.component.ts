@@ -25,24 +25,6 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
   template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-32">
     
-      <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div></div>
-        <div class="flex items-center gap-3">
-          @if (session()?.completedAt) {
-            <div class="px-3 py-1 bg-accent-pos/20 text-accent-pos text-xs rounded-full border border-accent-pos/30">
-              Completed
-            </div>
-          } @else {
-            <button (click)="cancelWorkout()" class="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-full transition-colors" title="Cancel Workout">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          }
-        </div>
-      </div>
-    
       @if (isLoading()) {
         <div class="text-center py-12">
           <div class="animate-pulse flex flex-col items-center">
@@ -54,8 +36,26 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
     
       @if (!isLoading() && session()) {
         <div>
-          <h1 class="text-3xl font-bold text-black dark:text-white mb-1">{{ session()?.dayTemplateName }}</h1>
-          <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">Week {{ session()?.weekNumber }} &bull; {{ session()?.performedOn | date:'mediumDate' }}</p>
+          <!-- Header -->
+          <div class="flex items-start justify-between mb-6">
+            <div>
+              <h1 class="text-3xl font-bold text-black dark:text-white mb-1">{{ session()?.dayTemplateName }}</h1>
+              <p class="text-gray-500 dark:text-gray-400 text-sm">Week {{ session()?.weekNumber }} &bull; {{ session()?.performedOn | date:'mediumDate' }}</p>
+            </div>
+            <div class="flex items-center gap-3">
+              @if (session()?.completedAt) {
+                <div class="px-3 py-1 bg-accent-pos/20 text-accent-pos text-xs rounded-full border border-accent-pos/30">
+                  Completed
+                </div>
+              } @else {
+                <button (click)="cancelWorkout()" class="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-full transition-colors" title="Cancel Workout">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              }
+            </div>
+          </div>
           <!-- Exercises List -->
           <div class="space-y-8">
             @if (exercises().length === 0) {
@@ -102,12 +102,12 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                       </button>
                     }
                     <button (click)="toggleCollapse(ex.id)"
-                      class="ml-2 p-1.5 rounded-lg transition-colors border flex items-center justify-center"
-                      [ngClass]="isCollapsed(ex.id) ? 'bg-gray-200 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-700' : 'bg-accent-neg/10 border-accent-neg/30 text-accent-neg hover:bg-accent-neg/20'"
+                      class="ml-2 p-1.5 rounded-lg transition-colors border flex items-center justify-center text-gray-500 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      [ngClass]="isCollapsed(ex.id) ? 'bg-gray-200 dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-900'"
                       [title]="isCollapsed(ex.id) ? 'Expand Exercise' : 'Minimize Exercise'">
                       @if (!isCollapsed(ex.id)) {
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                         </svg>
                       }
                       @if (isCollapsed(ex.id)) {
@@ -350,43 +350,32 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
     
       <!-- Sticky Bottom Action Bar -->
       @if (!isLoading() && session()) {
-        <div class="sticky bottom-20 md:bottom-6 p-4 mt-8 bg-white/90 dark:bg-black/90 backdrop-blur-md border border-gray-300 dark:border-gray-800 rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40">
-          <div class="flex items-center gap-4">
-            <div class="flex-1 hidden sm:block">
-              <div class="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase mb-1.5 tracking-wider">
-                <span>Progress</span>
-                <span>{{ getTotalLoggedSets() }} / {{ getTotalExpectedSets() }} Sets</span>
-              </div>
-              <div class="flex gap-0.5 h-2 w-full">
-                @for (s of [].constructor(getTotalExpectedSets()); track $index; let idx = $index) {
-                  <div class="flex-1 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-700">
-                    <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
-                         [style.width.%]="getTotalLoggedSets() > idx ? 100 : 0"></div>
-                  </div>
-                }
-              </div>
+        <div class="sticky bottom-16 md:bottom-6 p-4 md:p-6 mt-8 bg-white/90 dark:bg-black/90 backdrop-blur-md border-t md:border border-gray-300 dark:border-gray-800 rounded-t-2xl md:rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40 flex flex-col items-center">
+          <div class="w-full max-w-sm mb-3">
+            <div class="w-full h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
+                   [style.width.%]="getTotalExpectedSets() > 0 ? (getTotalLoggedSets() / getTotalExpectedSets()) * 100 : 0"></div>
             </div>
-            <div class="flex-none w-full sm:w-1/2">
-              @if (!session()?.completedAt) {
-                <button
-                  (click)="completeWorkout()"
-                  [disabled]="isCompleting()"
-                  class="w-full py-4 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
-                  style="box-shadow: 0 0 20px var(--color-accent-pos);"
-                  >
-                  <span>{{ isCompleting() ? 'Completing...' : 'Finish Workout' }}</span>
-                  <span class="text-[10px] sm:hidden opacity-80 mt-0.5">{{ getTotalLoggedSets() }} / {{ getTotalExpectedSets() }} Sets Completed</span>
-                </button>
-              } @else {
-                <button
-                  (click)="uncompleteWorkout()"
-                  [disabled]="isCompleting()"
-                  class="w-full py-4 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-black dark:text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95"
-                  >
-                  {{ isCompleting() ? 'Reopening...' : 'Uncomplete & Edit' }}
-                </button>
-              }
-            </div>
+          </div>
+          <div class="w-full max-w-sm">
+            @if (!session()?.completedAt) {
+              <button
+                (click)="completeWorkout()"
+                [disabled]="isCompleting()"
+                class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
+                style="box-shadow: 0 0 20px var(--color-accent-pos);"
+                >
+                <span>{{ isCompleting() ? 'Completing...' : 'Finish Workout' }}</span>
+              </button>
+            } @else {
+              <button
+                (click)="uncompleteWorkout()"
+                [disabled]="isCompleting()"
+                class="w-full py-3 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-black dark:text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95"
+                >
+                {{ isCompleting() ? 'Reopening...' : 'Uncomplete & Edit' }}
+              </button>
+            }
           </div>
         </div>
       }
