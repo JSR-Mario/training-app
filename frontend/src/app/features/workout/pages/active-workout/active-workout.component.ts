@@ -23,7 +23,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
     selector: 'app-active-workout',
     imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent],
   template: `
-    <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-32">
+    <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-48">
     
       @if (isLoading()) {
         <div class="text-center py-12">
@@ -107,12 +107,12 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                       [title]="isCollapsed(ex.id) ? 'Expand Exercise' : 'Minimize Exercise'">
                       @if (!isCollapsed(ex.id)) {
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
                         </svg>
                       }
                       @if (isCollapsed(ex.id)) {
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                       }
                     </button>
@@ -347,10 +347,10 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
           </div>
         </div>
       }
-    
-      <!-- Sticky Bottom Action Bar -->
+    </div>
+      <!-- Fixed Bottom Action Bar -->
       @if (!isLoading() && session()) {
-        <div class="sticky bottom-16 md:bottom-6 p-4 md:p-6 mt-8 bg-white/90 dark:bg-black/90 backdrop-blur-md border-t md:border border-gray-300 dark:border-gray-800 rounded-t-2xl md:rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40 flex flex-col items-center">
+        <div class="fixed bottom-16 md:bottom-6 left-0 right-0 md:left-1/2 md:-translate-x-1/2 w-full md:max-w-2xl mx-auto p-4 md:p-6 bg-white/90 dark:bg-black/90 backdrop-blur-md border-t md:border border-gray-300 dark:border-gray-800 rounded-t-2xl md:rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40 flex flex-col items-center">
           <div class="w-full max-w-sm mb-3">
             <div class="w-full h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
               <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
@@ -380,7 +380,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
         </div>
       }
     
-    </div>
+    
     `
 })
 export class ActiveWorkoutComponent implements OnInit {
