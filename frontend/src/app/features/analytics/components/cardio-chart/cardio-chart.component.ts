@@ -4,6 +4,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { CardioLogService } from '../../services/cardio-log.service';
 import { CardioLogResponse } from '../../../../core/types/training.types';
+import { CARDIO_TYPES } from '../../../../core/constants/cardio-types';
 
 @Component({
   selector: 'app-cardio-chart',
@@ -94,19 +95,8 @@ export class CardioChartComponent implements OnInit {
       return;
     }
 
-    const KNOWN_TYPES = [
-      { name: 'Running',       bg: 'rgba(59, 130, 246, 0.8)',  border: '#3b82f6' }, // Blue
-      { name: 'Walking',       bg: 'rgba(16, 185, 129, 0.8)',  border: '#10b981' }, // Emerald
-      { name: 'Cycling',       bg: 'rgba(245, 158, 11, 0.8)',  border: '#f59e0b' }, // Amber
-      { name: 'Swimming',      bg: 'rgba(14, 165, 233, 0.8)',  border: '#0ea5e9' }, // Sky
-      { name: 'Rowing',        bg: 'rgba(244, 63, 94, 0.8)',   border: '#f43f5e' }, // Rose
-      { name: 'Elliptical',    bg: 'rgba(168, 85, 247, 0.8)',  border: '#a855f7' }, // Purple
-      { name: 'Jump Rope',     bg: 'rgba(236, 72, 153, 0.8)',  border: '#ec4899' }, // Pink
-      { name: 'Stair Climber', bg: 'rgba(249, 115, 22, 0.8)',  border: '#f97316' }, // Orange
-      { name: 'HIIT',          bg: 'rgba(239, 68, 68, 0.8)',   border: '#ef4444' }  // Red
-    ];
-    const OTHER_COLOR = { bg: 'rgba(148, 163, 184, 0.8)', border: '#94a3b8' }; // Slate
-    const knownNames = new Set(KNOWN_TYPES.map(t => t.name));
+    const typeOrder = CARDIO_TYPES.map(t => t.value) as string[];
+    const knownNames = new Set(typeOrder);
 
     const aggregated = new Map<string, Map<string, number>>();
     const presentTypes = new Set<string>();
@@ -133,20 +123,19 @@ export class CardioChartComponent implements OnInit {
     
     // Sort types: known types in defined order, then 'Other'
     const sortedTypes = Array.from(presentTypes).sort((a, b) => {
-      if (a === 'Other') return 1;
-      if (b === 'Other') return -1;
-      const idxA = KNOWN_TYPES.findIndex(t => t.name === a);
-      const idxB = KNOWN_TYPES.findIndex(t => t.name === b);
-      return idxA - idxB;
+      const idxA = typeOrder.indexOf(a);
+      const idxB = typeOrder.indexOf(b);
+      return (idxA === -1 ? typeOrder.length : idxA) - (idxB === -1 ? typeOrder.length : idxB);
     });
 
     const datasets = sortedTypes.map(type => {
-      const colorDef = KNOWN_TYPES.find(t => t.name === type) || OTHER_COLOR;
+      const typeDef = CARDIO_TYPES.find(t => t.value === type) || CARDIO_TYPES.find(t => t.value === 'Other')!;
+      const colorOptions = typeDef.color;
       return {
         label: type,
         data: sortedDates.map(d => aggregated.get(d)?.get(type) || 0),
-        backgroundColor: colorDef.bg,
-        borderColor: colorDef.border,
+        backgroundColor: colorOptions.bg,
+        borderColor: colorOptions.border,
         borderWidth: 2,
         borderRadius: 4
       };

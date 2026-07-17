@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CardioChartComponent } from '../../components/cardio-chart/cardio-chart.component';
 import { CardioLogService } from '../../services/cardio-log.service';
+import { CARDIO_TYPES } from '../../../../core/constants/cardio-types';
 
 @Component({
   standalone: true,
@@ -36,8 +37,12 @@ import { CardioLogService } from '../../services/cardio-log.service';
 
           <div class="flex-1 w-full">
             <label for="cardioType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type (Optional)</label>
-            <input id="cardioType" type="text" formControlName="cardioType" placeholder="e.g. Treadmill"
-                   class="w-full solid-input">
+            <select id="cardioType" formControlName="cardioType" class="w-full solid-input">
+              <option value="">— Select type —</option>
+              @for (type of cardioTypes; track type.value) {
+                <option [value]="type.value">{{ type.label }}</option>
+              }
+            </select>
           </div>
 
           <button type="submit" [disabled]="cardioForm.invalid || isSubmitting()"
@@ -59,6 +64,8 @@ import { CardioLogService } from '../../services/cardio-log.service';
 export class CardioDashboardComponent {
   private fb = inject(FormBuilder);
   private cardioService = inject(CardioLogService);
+
+  cardioTypes = CARDIO_TYPES;
 
   private getLocalDateString(): string {
     const today = new Date();
