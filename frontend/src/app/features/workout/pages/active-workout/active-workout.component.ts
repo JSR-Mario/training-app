@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -21,7 +22,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
 @Component({
   standalone: true,
     selector: 'app-active-workout',
-    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent],
+    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent, DragDropModule],
   template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-32">
     
@@ -57,21 +58,24 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
             </div>
           </div>
           <!-- Exercises List -->
-          <div class="space-y-8">
+          <div class="space-y-8" cdkDropList (cdkDropListDropped)="dropExercise($event)">
             @if (exercises().length === 0) {
               <div class="text-center py-12 solid-card">
                 <p class="text-gray-500 dark:text-gray-400">This workout day has no exercises configured.</p>
               </div>
             }
             @for (ex of exercises(); track ex; let i = $index) {
-              <div [id]="'exercise-' + ex.id" class="solid-card p-4 sm:p-6 overflow-hidden relative">
+              <div cdkDrag [id]="'exercise-' + ex.id" class="solid-card p-4 sm:p-6 overflow-hidden relative">
                 <!-- Exercise Header -->
                 <div class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4">
                   <div class="flex-1 pr-4">
-                    <h2 class="text-xl font-bold text-black dark:text-white">
-                      <span class="text-accent-pos mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}
-                      @if (hasFatigueWarning(ex.id)) {
-                        <span class="ml-2 text-[10px] uppercase font-bold text-yellow-600 dark:text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 px-2 py-1 rounded align-middle">Fatigue Warning</span>
+                    <h2 class="text-xl font-bold text-black dark:text-white flex flex-wrap items-center gap-2">
+                      <span><span class="text-accent-pos mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</span>
+                      @if (getSuggestion(ex.id)?.hadFatigueLastWeek) {
+                        <span class="text-[10px] uppercase font-bold text-accent-neg bg-accent-neg/10 border border-accent-neg/20 px-2 py-1 rounded">Fatigue Warning</span>
+                      }
+                      @if (hasPrForExercise(ex.id)) {
+                        <span class="text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 border border-accent-pos/20 px-2 py-1 rounded animate-pulse">PR!</span>
                       }
                     </h2>
                     @if (!isCollapsed(ex.id)) {
@@ -87,20 +91,11 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                   </div>
                   
                   <div class="flex items-center gap-1 border-l border-gray-200 dark:border-gray-700 pl-3">
-                    @if (i > 0) {
-                      <button (click)="moveExercise(i, -1)" class="p-1 text-gray-400 hover:text-accent-pos hover:bg-accent-pos/10 rounded transition-colors" title="Move Up">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                        </svg>
-                      </button>
-                    }
-                    @if (i < exercises().length - 1) {
-                      <button (click)="moveExercise(i, 1)" class="p-1 text-gray-400 hover:text-accent-pos hover:bg-accent-pos/10 rounded transition-colors" title="Move Down">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                    }
+                    <div cdkDragHandle class="p-1 text-gray-400 hover:text-accent-pos cursor-grab active:cursor-grabbing" title="Drag to reorder">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                      </svg>
+                    </div>
                     <button (click)="toggleCollapse(ex.id)"
                       class="ml-2 p-1.5 rounded-lg transition-colors border flex items-center justify-center text-gray-500 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
                       [ngClass]="isCollapsed(ex.id) ? 'bg-gray-200 dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-900'"
@@ -111,9 +106,15 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                         </svg>
                       }
                       @if (isCollapsed(ex.id)) {
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
+                        @if (getSetsForExercise(ex.id).length >= (ex.sets || 1)) {
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent-pos" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                          </svg>
+                        } @else {
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        }
                       }
                     </button>
                   </div>
@@ -151,14 +152,11 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                                   {{ set.repsCompleted }}
                                 }
                                 <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(set.performanceStatus)">reps</span>
-                                @if (set.isNewPr) {
-                                  <span class="ml-2 text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 px-1.5 py-0.5 rounded border border-accent-pos/20">PR!</span>
-                                }
                                 @if (set.performanceStatus === 'CRITICAL') {
-                                  <span class="ml-2 text-[10px] uppercase font-bold text-accent-neg bg-accent-neg/10 px-1.5 py-0.5 rounded">Perf Drop</span>
+                                  <span class="ml-2 text-[10px] uppercase font-bold text-accent-neg bg-accent-neg/10 border border-accent-neg/20 px-1.5 py-0.5 rounded">Perf Drop</span>
                                 }
                                 @if (set.performanceStatus === 'WARNING') {
-                                  <span class="ml-2 text-[10px] uppercase font-bold text-yellow-600 dark:text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded">Fatigue</span>
+                                  <span class="ml-2 text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 border border-accent-pos/20 px-1.5 py-0.5 rounded">Fatigue</span>
                                 }
                             </div>
                           </div>
@@ -185,25 +183,25 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                             </span>
                             <span class="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Next Set</span>
                           </div>
-                          @if (getSuggestion(ex.id)) {
+                          @if (getSuggestionForNextSet(ex.id)) {
                             <div class="text-xs text-gray-500 dark:text-gray-400">
-                              Last week: <span class="font-bold text-gray-700 dark:text-gray-300">{{ getSuggestion(ex.id)?.suggestedWeightKg }}kg &times; {{ getSuggestion(ex.id)?.suggestedReps }}</span>
+                              Last week: <span class="font-bold text-gray-700 dark:text-gray-300">{{ getSuggestionForNextSet(ex.id)?.weightKg }}kg &times; {{ getSuggestionForNextSet(ex.id)?.reps }}</span>
                             </div>
                           }
                         </div>
                         <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
                             <div class="flex-1 min-w-[80px]">
                               <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Weight (kg)</label>
-                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" [placeholder]="getSuggestion(ex.id)?.suggestedWeightKg || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
+                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" [placeholder]="getSuggestionForNextSet(ex.id)?.weightKg || getSuggestion(ex.id)?.suggestedWeightKg || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                             </div>
                             <div class="flex-1 min-w-[70px]">
                               <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ ex.unilateral ? 'Reps (L)' : 'Reps' }}</label>
-                              <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" [placeholder]="getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
+                              <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" [placeholder]="getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                             </div>
                             @if (ex.unilateral) {
                               <div class="flex-1 min-w-[70px]">
                                 <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Reps (R)</label>
-                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
+                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                               </div>
                             }
                           <div class="w-full sm:w-auto mt-2 sm:mt-0">
@@ -450,17 +448,11 @@ export class ActiveWorkoutComponent implements OnInit {
     }
   }
 
-  moveExercise(index: number, direction: number) {
+  dropExercise(event: CdkDragDrop<DayExercise[]>) {
     if (this.session()?.completedAt) return;
     const currentExercises = [...this.exercises()];
-    if (index < 0 || index >= currentExercises.length) return;
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= currentExercises.length) return;
-
-    // Swap in array
-    const temp = currentExercises[index];
-    currentExercises[index] = currentExercises[targetIndex];
-    currentExercises[targetIndex] = temp;
+    
+    moveItemInArray(currentExercises, event.previousIndex, event.currentIndex);
 
     // Update sortOrder
     currentExercises.forEach((ex, idx) => ex.sortOrder = idx);
@@ -547,6 +539,7 @@ export class ActiveWorkoutComponent implements OnInit {
             });
 
             this.isLoading.set(false);
+            setTimeout(() => this.scrollToFirstIncompleteExercise(), 300);
           },
           error: (err) => {
             console.error('Failed to load workout data', err);
@@ -606,46 +599,55 @@ export class ActiveWorkoutComponent implements OnInit {
     return sets.length > 0 ? sets[sets.length - 1] : null;
   }
 
-  hasFatigueWarning(exerciseId: string): boolean {
-    const sets = this.getSetsForExercise(exerciseId);
-    let criticals = 0;
-    let warnings = 0;
-    for (const s of sets) {
-      if (s.performanceStatus === 'CRITICAL') criticals++;
-      if (s.performanceStatus === 'WARNING') warnings++;
-    }
-    return criticals >= 1 || warnings >= 2;
+  hasPrForExercise(exerciseId: string): boolean {
+    return this.getSetsForExercise(exerciseId).some(set => set.isNewPr);
   }
 
   getSuggestion(dayExerciseId: string) {
     return this.suggestions().get(dayExerciseId);
   }
 
+  getSuggestionForNextSet(dayExerciseId: string) {
+    const suggestion = this.getSuggestion(dayExerciseId);
+    if (!suggestion || !suggestion.previousSets || suggestion.previousSets.length === 0) return null;
+    
+    const setsDone = this.getSetsForExercise(dayExerciseId).length;
+    const nextSetNumber = setsDone + 1;
+    
+    // Find the specific set from last week, or fallback to the last set they did if they are doing extra sets
+    let targetSet = suggestion.previousSets.find(s => s.setNumber === nextSetNumber);
+    if (!targetSet) {
+      targetSet = suggestion.previousSets[suggestion.previousSets.length - 1];
+    }
+    
+    return targetSet;
+  }
+
   getPerfContainerClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
-    if (status === 'CRITICAL') return 'border-red-500/50 bg-red-900/20';
-    if (status === 'WARNING') return 'border-yellow-500/50 bg-yellow-900/20';
-    if (status === 'GOOD') return 'border-emerald-500/50 bg-emerald-900/20';
-    return 'border-gray-700';
+    if (status === 'CRITICAL') return 'border-accent-neg/50 bg-accent-neg/10';
+    if (status === 'WARNING') return 'border-accent-pos/50 bg-accent-pos/10';
+    if (status === 'GOOD') return 'border-gray-300 dark:border-gray-600';
+    return 'border-gray-300 dark:border-gray-600';
   }
 
   getPerfBadgeClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
-    if (status === 'CRITICAL') return 'bg-red-600/20 text-red-400 border-red-500/30';
-    if (status === 'WARNING') return 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30';
-    if (status === 'GOOD') return 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30';
-    return 'bg-blue-600/20 text-blue-400 border-blue-500/30';
+    if (status === 'CRITICAL') return 'bg-accent-neg/20 text-accent-neg border-accent-neg/30';
+    if (status === 'WARNING') return 'bg-accent-pos/20 text-accent-pos border-accent-pos/30';
+    if (status === 'GOOD') return 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600';
+    return 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600';
   }
 
   getPerfTextClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
-    if (status === 'CRITICAL') return 'text-red-300';
-    if (status === 'WARNING') return 'text-yellow-300';
-    if (status === 'GOOD') return 'text-emerald-300';
-    return 'text-gray-200';
+    if (status === 'CRITICAL') return 'text-accent-neg';
+    if (status === 'WARNING') return 'text-accent-pos';
+    if (status === 'GOOD') return 'text-gray-800 dark:text-gray-200';
+    return 'text-gray-800 dark:text-gray-200';
   }
 
   getPerfSubtextClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
-    if (status === 'CRITICAL') return 'text-red-400/70';
-    if (status === 'WARNING') return 'text-yellow-400/70';
-    if (status === 'GOOD') return 'text-emerald-400/70';
+    if (status === 'CRITICAL') return 'text-accent-neg/70';
+    if (status === 'WARNING') return 'text-accent-pos/70';
+    if (status === 'GOOD') return 'text-gray-500';
     return 'text-gray-500';
   }
 
