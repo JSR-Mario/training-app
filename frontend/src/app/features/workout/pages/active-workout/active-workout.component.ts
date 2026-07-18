@@ -72,7 +72,11 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                     <h2 class="text-xl font-bold text-black dark:text-white flex flex-wrap items-center gap-2">
                       <span><span class="text-accent-pos mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</span>
                       @if (getSuggestion(ex.id)?.hadFatigueLastWeek) {
-                        <span class="text-[10px] uppercase font-bold text-accent-neg bg-accent-neg/10 border border-accent-neg/20 px-2 py-1 rounded">Fatigue Warning</span>
+                        <span title="Reached failure last session" class="text-amber-500 bg-amber-500/10 border border-amber-500/20 p-0.5 rounded flex items-center justify-center cursor-help ml-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                        </span>
                       }
                       @if (hasPrForExercise(ex.id)) {
                         <span class="text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 border border-accent-pos/20 px-2 py-1 rounded animate-pulse">PR!</span>
