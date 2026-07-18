@@ -8,7 +8,8 @@ import {
   WorkoutSetResponse,
   DayExercise 
 } from '../../../../core/types/training.types';
-import { AnalyticsService } from '../../analytics/services/analytics.service';
+import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
+import { AnalyticsService } from '../../../analytics/services/analytics.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 import { forkJoin } from 'rxjs';
@@ -213,14 +214,14 @@ export class WorkoutSummaryComponent implements OnInit {
     
     const obs = exs.map(ex => this.analyticsService.getExerciseProgress(ex.exerciseId));
     
-    forkJoin(obs).subscribe(results => {
+    forkJoin(obs).subscribe((results: ExerciseProgressEntry[][]) => {
       const dayId = this.session()?.dayTemplateId;
       if (!dayId) return;
 
       const volumeByDate = new Map<string, number>();
       
-      results.forEach(entries => {
-        entries.forEach(entry => {
+      results.forEach((entries: ExerciseProgressEntry[]) => {
+        entries.forEach((entry: ExerciseProgressEntry) => {
           if (entry.dayTemplateId === dayId) {
             const current = volumeByDate.get(entry.sessionDate) || 0;
             volumeByDate.set(entry.sessionDate, current + entry.totalVolumeKg);
