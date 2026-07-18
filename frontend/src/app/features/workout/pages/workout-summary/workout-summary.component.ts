@@ -8,11 +8,16 @@ import {
   WorkoutSetResponse,
   DayExercise 
 } from '../../../../core/types/training.types';
+import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
+import { AnalyticsService } from '../../../analytics/services/analytics.service';
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration } from 'chart.js';
+import { forkJoin } from 'rxjs';
 
 @Component({
   standalone: true,
     selector: 'app-workout-summary',
-    imports: [CommonModule, RouterModule],
+    imports: [CommonModule, RouterModule, BaseChartDirective],
     template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-8 pb-24 text-center">
     
@@ -57,6 +62,21 @@ import {
               </div>
             }
           </div>
+          
+          <!-- Chart -->
+          @if (chartData) {
+            <div class="solid-card p-6 border border-gray-300 dark:border-gray-700">
+              <h2 class="text-xl font-bold text-black dark:text-white mb-4 text-left">Volume History</h2>
+              <div class="h-64 relative">
+                <canvas baseChart 
+                  [data]="chartData" 
+                  [options]="chartOptions" 
+                  [type]="'bar'">
+                </canvas>
+              </div>
+            </div>
+          }
+
           <!-- Details -->
           <div class="solid-card p-6 text-left space-y-4 border border-gray-300 dark:border-gray-700">
             <h2 class="text-xl font-bold text-black dark:text-white border-b border-gray-300 dark:border-gray-700 pb-2">Summary</h2>
@@ -105,6 +125,7 @@ export class WorkoutSummaryComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private workoutService = inject(WorkoutService);
   private programService = inject(ProgramService);
+  private analyticsService = inject(AnalyticsService);
 
   sessionId = signal<string | null>(null);
   session = signal<WorkoutSessionResponse | null>(null);
@@ -112,6 +133,20 @@ export class WorkoutSummaryComponent implements OnInit {
   loggedSets = signal<WorkoutSetResponse[]>([]);
   
   isLoading = signal<boolean>(true);
+
+  chartData: ChartConfiguration['data'] | null = null;
+  chartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { 
+        beginAtZero: true, 
+        grid: { color: 'rgba(128, 128, 128, 0.1)' }
+      }
+    }
+  };
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
@@ -151,6 +186,7 @@ export class WorkoutSummaryComponent implements OnInit {
                   isBodyweight: e.exercise.isBodyweight
                 }));
                 this.exercises.set(mappedExercises.sort((a, b) => a.sortOrder - b.sortOrder));
+                this.buildChartData();
                 this.isLoading.set(false);
               },
               error: (err) => {
@@ -169,6 +205,44 @@ export class WorkoutSummaryComponent implements OnInit {
         console.error('Failed to load session', err);
         this.isLoading.set(false);
       }
+    });
+  }
+
+  buildChartData() {
+    const exs = this.exercises();
+    if (exs.length === 0) return;
+    
+    const obs = exs.map(ex => this.analyticsService.getExerciseProgress(ex.exerciseId));
+    
+    forkJoin(obs).subscribe((results: ExerciseProgressEntry[][]) => {
+      const dayId = this.session()?.dayTemplateId;
+      if (!dayId) return;
+
+      const volumeByDate = new Map<string, number>();
+      
+      results.forEach((entries: ExerciseProgressEntry[]) => {
+        entries.forEach((entry: ExerciseProgressEntry) => {
+          if (entry.dayTemplateId === dayId) {
+            const current = volumeByDate.get(entry.sessionDate) || 0;
+            volumeByDate.set(entry.sessionDate, current + entry.totalVolumeKg);
+          }
+        });
+      });
+      
+      const sortedDates = Array.from(volumeByDate.keys()).sort();
+      if (sortedDates.length === 0) return;
+      
+      // Get the CSS variable for accent-pos or fallback
+      const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+      
+      this.chartData = {
+        labels: sortedDates,
+        datasets: [{
+          data: sortedDates.map(d => volumeByDate.get(d)!),
+          backgroundColor: accentColor,
+          borderRadius: 4
+        }]
+      };
     });
   }
 

@@ -56,9 +56,9 @@ export class BodyWeightTrackerComponent implements OnInit {
         type: 'linear',
         display: true,
         position: 'left',
-        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-        ticks: { color: '#3b82f6' }, // Blue 500
-        title: { display: true, text: 'Weight (kg)', color: '#3b82f6' }
+        grid: { color: 'rgba(128, 128, 128, 0.1)' },
+        ticks: { color: '#8b5cf6' },
+        title: { display: true, text: 'Weight (kg)', color: '#8b5cf6' }
       }
     },
     interaction: {
@@ -129,18 +129,20 @@ export class BodyWeightTrackerComponent implements OnInit {
             this.periodChangePercent.set(0);
           }
 
+          const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+          
           this.lineChartData = {
             labels,
             datasets: [
               {
                 data: weights,
                 label: 'Body Weight (kg)',
-                backgroundColor: 'rgba(59, 130, 246, 0.2)', // Blue 500
-                borderColor: '#3b82f6',
-                pointBackgroundColor: '#3b82f6',
+                backgroundColor: 'rgba(139, 92, 246, 0.2)', // violet
+                borderColor: accentColor,
+                pointBackgroundColor: accentColor,
                 pointBorderColor: '#fff',
                 pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#3b82f6',
+                pointHoverBorderColor: accentColor,
                 fill: 'origin',
                 tension: 0.4,
                 order: 1
@@ -149,7 +151,7 @@ export class BodyWeightTrackerComponent implements OnInit {
                 data: trendData,
                 label: 'Trend',
                 type: 'line',
-                borderColor: '#ffffff',
+                borderColor: '#6b7280', // gray-500
                 borderWidth: 2,
                 borderDash: [5, 5],
                 fill: false,
