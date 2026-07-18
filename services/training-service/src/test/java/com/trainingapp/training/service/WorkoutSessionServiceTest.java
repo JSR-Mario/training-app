@@ -5,6 +5,7 @@ import com.trainingapp.training.domain.DayTemplate;
 import com.trainingapp.training.domain.TrainingProgram;
 import com.trainingapp.training.domain.WeekTemplate;
 import com.trainingapp.training.domain.WorkoutSession;
+import com.trainingapp.training.domain.WorkoutSet;
 import com.trainingapp.training.dto.WorkoutSessionRequest;
 import com.trainingapp.training.dto.WorkoutSessionResponse;
 import com.trainingapp.training.repository.DayTemplateRepository;
@@ -42,6 +43,8 @@ class WorkoutSessionServiceTest {
     @Mock private AnalyticsNotificationClient analyticsClient;
     @Mock private com.trainingapp.training.repository.SessionExerciseRatingRepository ratingRepository;
     @Mock private com.trainingapp.training.repository.DayExerciseRepository dayExerciseRepository;
+    @Mock private com.trainingapp.training.repository.SessionExerciseRepository sessionExerciseRepository;
+    @Mock private com.trainingapp.training.repository.BodyWeightRepository bodyWeightRepository;
     @Mock private ExperienceService experienceService;
 
     @InjectMocks private WorkoutSessionService sessionService;
@@ -140,5 +143,58 @@ class WorkoutSessionServiceTest {
         assertThatThrownBy(() -> sessionService.completeSession(sessionId, userId))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("already completed");
+    }
+
+    @Test
+    void getExerciseSuggestions_CalculatesFatigueCorrectly() {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setUserId(userId);
+        session.setPerformedOn(LocalDate.now());
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", UUID.randomUUID());
+        ex.setBodyweight(false);
+
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", UUID.randomUUID());
+        se.setExercise(ex);
+        se.setReps(10);
+        se.setSession(session);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(se));
+
+        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(Collections.emptyList());
+        when(bodyWeightRepository.findFirstByUserIdOrderByDateDesc(userId)).thenReturn(Optional.empty());
+
+        // Setup historical sets (2 warnings = fatigue)
+        WorkoutSession pastSession = new WorkoutSession();
+        ReflectionTestUtils.setField(pastSession, "id", UUID.randomUUID());
+
+        WorkoutSet set1 = new WorkoutSet();
+        set1.setSession(pastSession);
+        set1.setWeightKg(java.math.BigDecimal.valueOf(100));
+        set1.setRepsCompleted(10); // Perf = 1000 (Max)
+
+        WorkoutSet set2 = new WorkoutSet();
+        set2.setSession(pastSession);
+        set2.setWeightKg(java.math.BigDecimal.valueOf(100));
+        set2.setRepsCompleted(8); // Perf = 800 (80% -> warning)
+
+        WorkoutSet set3 = new WorkoutSet();
+        set3.setSession(pastSession);
+        set3.setWeightKg(java.math.BigDecimal.valueOf(100));
+        set3.setRepsCompleted(8); // Perf = 800 (80% -> warning)
+
+        when(setRepository.findHistoricalSetsForExercise(ex.getId(), userId, session.getPerformedOn()))
+            .thenReturn(List.of(set1, set2, set3));
+
+        List<com.trainingapp.training.dto.ExerciseSuggestionResponse> suggestions = sessionService.getExerciseSuggestions(sessionId, userId);
+
+        assertThat(suggestions).hasSize(1);
+        assertThat(suggestions.get(0).hadFatigueLastWeek()).isTrue();
+        assertThat(suggestions.get(0).previousSets()).hasSize(3);
     }
 }

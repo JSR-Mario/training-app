@@ -235,11 +235,23 @@ export class WorkoutSummaryComponent implements OnInit {
       // Get the CSS variable for accent-pos or fallback
       const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
       
+      const currentSessionAt = this.session()?.startedAt;
+      let currentSessionDate: string | null = null;
+      if (currentSessionAt) {
+        // Safely extract YYYY-MM-DD in local or UTC depending on how it's stored.
+        // Assuming sessionDate is YYYY-MM-DD and startedAt is ISO 8601.
+        currentSessionDate = currentSessionAt.substring(0, 10);
+      }
+      
+      const bgColors = sortedDates.map(d => 
+        d === currentSessionDate ? accentColor : 'rgba(128, 128, 128, 0.3)'
+      );
+
       this.chartData = {
         labels: sortedDates,
         datasets: [{
           data: sortedDates.map(d => volumeByDate.get(d)!),
-          backgroundColor: accentColor,
+          backgroundColor: bgColors,
           borderRadius: 4
         }]
       };
