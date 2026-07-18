@@ -1,4 +1,5 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { WorkoutService } from '../../services/workout.service';
@@ -9,7 +10,7 @@ import { switchMap, of } from 'rxjs';
 @Component({
   standalone: true,
   selector: 'app-workout-dashboard',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, DragDropModule],
   template: `
   <div class="max-w-7xl mx-auto space-y-6 pb-24">
   
@@ -85,19 +86,18 @@ import { switchMap, of } from 'rxjs';
         </div>
  
         <!-- Days Grid -->
-        <div class="space-y-4">
+        <div class="space-y-4" cdkDropList (cdkDropListDropped)="dropDay($event)">
           @for (day of combinedDays(); track day.template.id; let i = $index) {
-            <div [id]="'day-' + day.template.id" class="solid-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:border-gray-400 dark:hover:border-gray-600 transition-colors border border-gray-300 dark:border-gray-700">
+            <div cdkDrag [id]="'day-' + day.template.id" class="solid-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:border-gray-400 dark:hover:border-gray-600 transition-colors border border-gray-300 dark:border-gray-700">
               <div class="mb-4 sm:mb-0 flex-1 w-full">
                 <div class="flex items-center justify-between w-full mb-1">
                   <div class="flex items-center gap-3">
                     <div class="flex flex-col gap-1 mr-2">
-                      <button (click)="moveDayUp(i)" [disabled]="i === 0 || isReordering()" class="text-gray-400 hover:text-accent-pos disabled:opacity-30 disabled:hover:text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
-                      </button>
-                      <button (click)="moveDayDown(i)" [disabled]="i === combinedDays().length - 1 || isReordering()" class="text-gray-400 hover:text-accent-pos disabled:opacity-30 disabled:hover:text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                      </button>
+                      <div cdkDragHandle class="text-gray-400 hover:text-accent-pos cursor-grab active:cursor-grabbing p-2" title="Drag to reorder">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                        </svg>
+                      </div>
                     </div>
                     <h3 class="text-xl font-bold text-black dark:text-white">{{ day.template.name }}</h3>
                   </div>
@@ -342,35 +342,19 @@ export class WorkoutDashboardComponent implements OnInit {
     }, 100);
   }
 
-  moveDayUp(index: number) {
-    if (index > 0) {
-      this.swapDays(index, index - 1);
-    }
-  }
-
-  moveDayDown(index: number) {
-    if (index < this.combinedDays().length - 1) {
-      this.swapDays(index, index + 1);
-    }
-  }
-
-  private swapDays(indexA: number, indexB: number) {
+  dropDay(event: CdkDragDrop<unknown[]>) {
+    if (this.isReordering()) return;
+    
     this.isReordering.set(true);
     const templates = [...this.dayTemplates()];
-    const temp = templates[indexA];
-    templates[indexA] = templates[indexB];
-    templates[indexB] = temp;
+    
+    moveItemInArray(templates, event.previousIndex, event.currentIndex);
     
     // Update local state immediately for fast feedback
     this.dayTemplates.set(templates);
 
     // Call API to persist
-    // Or we can use the first template's weekId
     const weekId = templates[0]?.weekTemplateId; 
-    // Wait, weekTemplateId might not be in DayTemplate if we only return weekTemplate.id? Let's check DayTemplate type.
-    // In our types `DayTemplate` has `weekTemplateId` or we can find it. If not, we have `programId` and `displayedWeek`.
-    // Let me check DayTemplate definition in frontend...
-    // Actually, `DayTemplateResponse` has `weekId` as `weekTemplateId`. Let's assume it's `weekTemplateId`.
 
     const requests = templates.map((t, i) => ({
       id: t.id,
@@ -381,7 +365,6 @@ export class WorkoutDashboardComponent implements OnInit {
       this.programService.reorderDays(weekId, requests).subscribe({
         next: () => {
           this.isReordering.set(false);
-          // Reload properly just in case
           this.loadDaysAndSessions(this.activeProgram()!.id);
         },
         error: (err) => {
@@ -389,6 +372,8 @@ export class WorkoutDashboardComponent implements OnInit {
           this.isReordering.set(false);
         }
       });
+    } else {
+      this.isReordering.set(false);
     }
   }
 }

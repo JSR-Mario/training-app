@@ -366,14 +366,59 @@ public class WorkoutSessionService {
                 suggestedWeight = latestBw.get().getWeightKg();
             }
             
-            if (suggestedWeight != null) {
-                suggestions.add(new ExerciseSuggestionResponse(
-                    se.getId(),
-                    se.getExercise().getId(),
-                    suggestedWeight,
-                    suggestedReps
-                ));
+            List<WorkoutSet> allHistorical = setRepository.findHistoricalSetsForExercise(se.getExercise().getId(), userId, session.getPerformedOn());
+            boolean hadFatigueLastWeek = false;
+            List<com.trainingapp.training.dto.PreviousSetSuggestion> previousSets = new java.util.ArrayList<>();
+            
+            if (!allHistorical.isEmpty()) {
+                UUID mostRecentSessionId = allHistorical.get(0).getSession().getId();
+                List<WorkoutSet> recentSets = new java.util.ArrayList<>();
+                for (WorkoutSet historicalSet : allHistorical) {
+                    if (historicalSet.getSession().getId().equals(mostRecentSessionId)) {
+                        recentSets.add(historicalSet);
+                    }
+                }
+                
+                double maxPerf = 0;
+                for (WorkoutSet s : recentSets) {
+                    if (s.getWeightKg() != null && s.getRepsCompleted() != null) {
+                        int r = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
+                        double perf = s.getWeightKg().doubleValue() * r;
+                        if (perf > maxPerf) maxPerf = perf;
+                    }
+                }
+                
+                int warnings = 0;
+                int criticals = 0;
+                for (WorkoutSet s : recentSets) {
+                    if (s.getWeightKg() != null && s.getRepsCompleted() != null && maxPerf > 0) {
+                        int r = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
+                        double perf = s.getWeightKg().doubleValue() * r;
+                        double ratio = perf / maxPerf;
+                        if (ratio < 0.75) criticals++;
+                        else if (ratio < 0.90) warnings++;
+                    }
+                }
+                
+                hadFatigueLastWeek = criticals >= 1 || warnings >= 2;
+                
+                for (WorkoutSet s : recentSets) {
+                    previousSets.add(new com.trainingapp.training.dto.PreviousSetSuggestion(
+                        s.getSetNumber(),
+                        s.getWeightKg(),
+                        s.getRepsCompleted()
+                    ));
+                }
             }
+            
+            suggestions.add(new ExerciseSuggestionResponse(
+                se.getId(),
+                se.getExercise().getId(),
+                suggestedWeight,
+                suggestedReps,
+                hadFatigueLastWeek,
+                previousSets
+            ));
         }
         return suggestions;
     }

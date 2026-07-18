@@ -1,10 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+
 import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-portfolio',
-  imports: [RouterLink],
+  imports: [],
   templateUrl: './portfolio.component.html',
   styleUrl: './portfolio.component.css',
 })

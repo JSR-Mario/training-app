@@ -212,11 +212,19 @@ export interface DashboardSummaryResponse {
   };
 }
 
+export interface PreviousSetSuggestion {
+  setNumber: number;
+  weightKg?: number;
+  reps?: number;
+}
+
 export interface ExerciseSuggestionResponse {
   dayExerciseId: string;
   exerciseId: string;
   suggestedWeightKg?: number;
   suggestedReps?: number;
+  hadFatigueLastWeek?: boolean;
+  previousSets?: PreviousSetSuggestion[];
 }
 
 export interface ExerciseHistoryResponse {
