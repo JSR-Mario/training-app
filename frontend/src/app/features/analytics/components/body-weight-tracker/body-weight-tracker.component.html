@@ -1,4 +1,4 @@
-<div class="solid-card rounded-xl p-6 border border-gray-300 dark:border-gray-700">
+<div class="solid-card p-6 border border-gray-300 dark:border-gray-700">
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
     <div>
       <!-- Summary Stats -->
@@ -44,19 +44,19 @@
   </div>
 
   <!-- Input Form -->
-  <form [formGroup]="form" (ngSubmit)="saveWeight()" class="flex flex-col sm:flex-row gap-3 mb-6 items-end">
-    <div class="w-full sm:w-auto">
-      <label for="date" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Date</label>
+  <form [formGroup]="form" (ngSubmit)="saveWeight()" class="flex flex-col sm:flex-row items-end gap-4 mb-6">
+    <div class="flex-1 w-full">
+      <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
       <input id="date" type="date" formControlName="date"
-        class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-black dark:text-white focus:ring-1 focus:ring-accent-pos outline-none solid-input">
+        class="w-full solid-input">
     </div>
-    <div class="w-full sm:w-auto flex-1 max-w-xs">
-      <label for="weightKg" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Weight (kg)</label>
+    <div class="flex-1 w-full">
+      <label for="weightKg" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Weight (kg)</label>
       <input id="weightKg" type="number" step="0.1" formControlName="weightKg" placeholder="e.g. 75.5"
-        class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-black dark:text-white focus:ring-1 focus:ring-accent-pos outline-none solid-input">
+        class="w-full solid-input">
     </div>
     <button type="submit" [disabled]="form.invalid || isSaving()"
-      class="w-full sm:w-auto px-4 py-2 bg-accent-pos hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors solid-btn">
+      class="w-full sm:w-auto solid-btn bg-accent-pos hover:opacity-80 text-white disabled:opacity-50 h-[42px] px-6">
       {{ isSaving() ? 'Saving...' : 'Log Weight' }}
     </button>
   </form>
@@ -64,7 +64,7 @@
   <!-- Chart Area -->
   <div class="h-64 relative w-full">
     @if (isLoading()) {
-      <div class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 z-10 rounded-lg backdrop-blur-sm">
+      <div class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 z-10 backdrop-blur-sm">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-pos border-t-transparent"></div>
       </div>
     }
