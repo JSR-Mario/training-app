@@ -17,7 +17,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
       <div class="solid-card w-full max-w-md p-8 relative z-10 transition-transform duration-500 hover:scale-[1.02] border border-gray-300 dark:border-gray-700">
         <div class="text-center mb-8">
           <h1 class="text-3xl font-bold text-accent-pos">
-            Training App
+            Yes App
           </h1>
           <p class="text-gray-500 dark:text-gray-400 mt-2">Sign in to continue</p>
         </div>

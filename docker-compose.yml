@@ -1,5 +1,5 @@
 # =============================================================
-# Training App — Full Stack Compose
+# Yes App — Full Stack Compose
 # Usage: docker-compose up
 # Requires a .env file at the project root (copy from .env.example).
 # =============================================================

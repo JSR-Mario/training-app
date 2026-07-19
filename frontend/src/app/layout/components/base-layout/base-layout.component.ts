@@ -38,7 +38,7 @@ import { filter } from 'rxjs/operators';
         <div class="p-6 whitespace-nowrap flex items-center justify-between">
           <a routerLink="/dashboard" (click)="closeOnMobile()" class="block cursor-pointer hover:opacity-80 transition-opacity">
             <h1 class="text-2xl font-bold text-black dark:text-white">
-              TR <span class="text-accent-pos text-sm align-text-top ml-1">{{ appVersion }}</span>
+              Yes <span class="text-accent-pos text-sm align-text-top ml-1">{{ appVersion }}</span>
             </h1>
           </a>
           @if (isMobile()) {

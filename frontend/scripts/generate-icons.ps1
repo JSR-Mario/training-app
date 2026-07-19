@@ -19,7 +19,7 @@ foreach ($size in $sizes) {
     $svg = @"
 <svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size" viewBox="0 0 $size $size">
   <rect width="$size" height="$size" rx="$rx" fill="#ffffff"/>
-  <text x="$x" y="$y" font-family="Inter, Arial, Helvetica, sans-serif" font-size="$fontSize" font-weight="700" fill="#111827">TR</text>
+  <text x="30" y="145" font-family="Inter, Arial, Helvetica, sans-serif" font-size="110" font-weight="700" fill="#111827">Yes</text>
 </svg>
 "@
     Set-Content -Path "$TEMP_DIR/$name.svg" -Value $svg -NoNewline
@@ -40,7 +40,7 @@ foreach ($size in $maskSizes) {
     $svg = @"
 <svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size" viewBox="0 0 $size $size">
   <rect width="$size" height="$size" fill="#ffffff"/>
-  <text x="$tx" y="$ty" font-family="Inter, Arial, Helvetica, sans-serif" font-size="$fontSize" font-weight="700" fill="#111827">TR</text>
+  <text x="30" y="145" font-family="Inter, Arial, Helvetica, sans-serif" font-size="110" font-weight="700" fill="#111827">Yes</text>
 </svg>
 "@
     Set-Content -Path "$TEMP_DIR/$name.svg" -Value $svg -NoNewline
