@@ -1,5 +1,5 @@
 # =============================================================
-# Training App — Development Overrides
+# Yes App — Development Overrides
 # Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 #
 # Differences from the base compose file:
