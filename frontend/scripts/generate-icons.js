@@ -44,7 +44,7 @@ function createMonochromeSvg(size) {
   const x = padding + Math.round(innerSize * 0.08);
   const y = padding + Math.round(fontSize * 1.15);
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <text x="${x}" y="${y}" font-family="Inter, Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="700" fill="#000000">Yes</text>
+  <text x="${x}" y="${y}" font-family="Inter, Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="700" fill="#ffffff">Yes</text>
 </svg>`);
 }
 

@@ -58,7 +58,7 @@ foreach ($size in $maskSizes) {
     $my = $padding + [math]::Round($fontSize * 1.15)
     $svg = @"
 <svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size" viewBox="0 0 $size $size">
-  <text x="$mx" y="$my" font-family="Inter, Arial, Helvetica, sans-serif" font-size="$fontSize" font-weight="700" fill="#000000">Yes</text>
+  <text x="$mx" y="$my" font-family="Inter, Arial, Helvetica, sans-serif" font-size="$fontSize" font-weight="700" fill="#ffffff">Yes</text>
 </svg>
 "@
     Set-Content -Path "$TEMP_DIR/$name.svg" -Value $svg -NoNewline
