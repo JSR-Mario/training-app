@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProgramService } from '../../services/program.service';
 import { TrainingProgram, DayTemplate, Exercise, getBodyPartPath, BodyPart } from '../../../../core/types/training.types';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { forkJoin } from 'rxjs';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { ExerciseService } from '../../../exercises/services/exercise.service';
@@ -11,7 +12,7 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
 @Component({
   standalone: true,
     selector: 'app-program-detail',
-    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
+    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, DragDropModule],
   template: `
     <div class="max-w-7xl mx-auto space-y-6">
     
@@ -28,12 +29,20 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
               <p class="text-gray-500 dark:text-gray-400 mt-1">This template repeats for {{ program()?.durationWeeks }} weeks</p>
             </div>
             @if (weekTemplateId()) {
-              <button
-                (click)="openAddDay()"
-                class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-lg transition-colors text-sm font-medium shadow-lg solid-btn"
+              <div class="flex gap-2">
+                <button 
+                  (click)="toggleReorderMode()"
+                  class="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold rounded-lg transition-all text-sm"
                 >
-                + Add Day
-              </button>
+                  {{ reorderModeActive() ? 'Done Reordering' : 'Reorder Days' }}
+                </button>
+                <button
+                  (click)="openAddDay()"
+                  class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-lg transition-colors text-sm font-medium shadow-lg solid-btn"
+                  >
+                  + Add Day
+                </button>
+              </div>
             }
           </div>
         }
@@ -75,11 +84,20 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
               <button (click)="openAddDay()" class="mt-4 text-accent-pos hover:opacity-80 text-sm">Add your first day</button>
             </div>
           }
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" cdkDropList [cdkDropListDisabled]="!reorderModeActive()" (cdkDropListDropped)="dropDay($event)">
             @for (day of days(); track day) {
-              <div class="solid-card p-5 group flex flex-col hover:border-gray-400 dark:hover:border-gray-600 transition-all cursor-pointer" [routerLink]="['/programs', program()?.id, 'days', day.id]">
+              <div cdkDrag class="solid-card p-5 group flex flex-col hover:border-gray-400 dark:hover:border-gray-600 transition-all cursor-pointer" [routerLink]="['/programs', program()?.id, 'days', day.id]">
                 <div class="flex justify-between items-start mb-4">
-                  <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200 group-hover:text-accent-pos transition-colors">{{ day.name }}</h3>
+                  <div class="flex items-center gap-3">
+                    @if (reorderModeActive()) {
+                      <button type="button" cdkDragHandle class="text-gray-400 hover:text-accent-pos cursor-grab active:cursor-grabbing p-1" title="Drag to reorder" (click)="$event.stopPropagation()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                        </svg>
+                      </button>
+                    }
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200 group-hover:text-accent-pos transition-colors">{{ day.name }}</h3>
+                  </div>
                   <button
                     (click)="deleteDay(day.id, $event)"
                     class="text-accent-neg hover:opacity-80 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -213,6 +231,12 @@ export class ProgramDetailComponent implements OnInit {
   availableExercises = signal<Exercise[]>([]);
   isLoading = signal<boolean>(true);
   showAddDay = signal<boolean>(false);
+  reorderModeActive = signal<boolean>(false);
+  isReordering = signal<boolean>(false);
+
+  toggleReorderMode() {
+    this.reorderModeActive.update(v => !v);
+  }
 
   expectedWeeklyVolume = computed(() => {
     const allExercises = this.availableExercises();
@@ -422,6 +446,40 @@ export class ProgramDetailComponent implements OnInit {
         error: (err) => console.error('Failed to delete day', err)
       });
     }
+  }
+
+  dropDay(event: CdkDragDrop<DayTemplate[]>) {
+    if (this.isReordering()) return;
+    
+    this.isReordering.set(true);
+    const currentDays = [...this.days()];
+    
+    moveItemInArray(currentDays, event.previousIndex, event.currentIndex);
+    
+    // Update local state immediately for fast feedback
+    this.days.set(currentDays);
+
+    const weekId = this.weekTemplateId();
+    if (!weekId) {
+      this.isReordering.set(false);
+      return;
+    }
+
+    const requests = currentDays.map((t, i) => ({
+      id: t.id,
+      sortOrder: i + 1
+    }));
+
+    this.programService.reorderDays(weekId, requests).subscribe({
+      next: () => {
+        this.isReordering.set(false);
+        this.loadDays(weekId);
+      },
+      error: (err) => {
+        console.error('Failed to reorder', err);
+        this.isReordering.set(false);
+      }
+    });
   }
 
   openQuickAdd(dayId: string, event: Event) {

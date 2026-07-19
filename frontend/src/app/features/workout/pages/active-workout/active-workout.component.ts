@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -18,11 +17,15 @@ import {
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/components/exercise-form/exercise-form.component';
 import { BodyWeightService } from '../../../analytics/services/body-weight.service';
+import { AnalyticsService } from '../../../analytics/services/analytics.service';
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration } from 'chart.js';
+import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
 
 @Component({
   standalone: true,
     selector: 'app-active-workout',
-    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent, DragDropModule],
+    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent, BaseChartDirective],
   template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-48">
     
@@ -57,15 +60,29 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
               }
             </div>
           </div>
+          <!-- Chart for Completed Sessions -->
+          @if (session()?.completedAt && chartData) {
+            <div class="solid-card p-6 border border-gray-300 dark:border-gray-700 mb-8">
+              <h2 class="text-xl font-bold text-black dark:text-white mb-4 text-left">Volume History</h2>
+              <div class="h-64 relative">
+                <canvas baseChart 
+                  [data]="chartData" 
+                  [options]="chartOptions" 
+                  [type]="'bar'">
+                </canvas>
+              </div>
+            </div>
+          }
+
           <!-- Exercises List -->
-          <div class="space-y-8" cdkDropList (cdkDropListDropped)="dropExercise($event)">
+          <div class="space-y-8">
             @if (exercises().length === 0) {
               <div class="text-center py-12 solid-card">
                 <p class="text-gray-500 dark:text-gray-400">This workout day has no exercises configured.</p>
               </div>
             }
             @for (ex of exercises(); track ex; let i = $index) {
-              <div cdkDrag [id]="'exercise-' + ex.id" class="solid-card p-4 sm:p-6 overflow-hidden relative">
+              <div [id]="'exercise-' + ex.id" class="solid-card p-4 sm:p-6 overflow-hidden relative">
                 <!-- Exercise Header -->
                 <div class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4">
                   <div class="flex-1 pr-4">
@@ -82,7 +99,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                         <span class="text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 border border-accent-pos/20 px-2 py-1 rounded animate-pulse">PR!</span>
                       }
                     </h2>
-                    @if (!isCollapsed(ex.id)) {
+                    @if (!isCollapsed(ex.id) && !session()?.completedAt) {
                       <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
                         Goal: {{ ex.sets }} sets × 
                         @if (ex.isAmrap) {
@@ -95,11 +112,13 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                   </div>
                   
                   <div class="flex items-center gap-1 border-l border-gray-200 dark:border-gray-700 pl-3">
-                    <div cdkDragHandle class="p-1 text-gray-400 hover:text-accent-pos cursor-grab active:cursor-grabbing" title="Drag to reorder">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-                      </svg>
-                    </div>
+                    @if (!session()?.completedAt) {
+                      <button (click)="openOptionsModal(ex.id)" class="p-1.5 text-gray-400 hover:text-accent-pos hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" title="Options">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                      </button>
+                    }
                     <button (click)="toggleCollapse(ex.id)"
                       class="ml-2 p-1.5 rounded-lg transition-colors border flex items-center justify-center text-gray-500 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
                       [ngClass]="isCollapsed(ex.id) ? 'bg-gray-200 dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-900'"
@@ -125,20 +144,23 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                 </div>
 
                 <!-- Progress Bar inside Exercise Card -->
-                <div class="flex gap-1 h-1 w-full mt-2 mb-4">
-                  @for (s of [].constructor(ex.sets || 1); track $index; let idx = $index) {
-                    <div class="flex-1 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-700">
-                      <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
-                           [style.width.%]="getSetsForExercise(ex.id).length > idx ? 100 : 0"></div>
-                    </div>
-                  }
-                </div>
+                @if (!session()?.completedAt) {
+                  <div class="flex gap-1 h-1 w-full mt-2 mb-4">
+                    @for (s of [].constructor(ex.sets || 1); track $index; let idx = $index) {
+                      <div class="flex-1 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-700">
+                        <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
+                             [style.width.%]="getSetsForExercise(ex.id).length > idx ? 100 : 0"></div>
+                      </div>
+                    }
+                  </div>
+                }
 
                 @if (!isCollapsed(ex.id)) {
-                  <div>
-                    <!-- Last Logged Set -->
-                    @if (getLastSetForExercise(ex.id); as set) {
-                      <div class="space-y-3 mb-4 transition-all duration-300" [class.scale-105]="isLoggingSet()">
+                  <div [class.mt-4]="session()?.completedAt">
+                    <!-- Logged Sets -->
+                    <div class="space-y-2 mb-4">
+                      @for (set of getSetsForExercise(ex.id); track set.id; let last = $last) {
+                        <div class="transition-all duration-300" [class.scale-105]="isLoggingSet() && last">
                         <div class="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-lg border transition-colors border-gray-200 dark:border-gray-700"
                           [ngClass]="getPerfContainerClass(set.performanceStatus)">
                           <div class="flex items-center gap-4">
@@ -148,7 +170,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                               </span>
                             <div class="font-medium transition-colors"
                               [ngClass]="getPerfTextClass(set.performanceStatus)">
-                                {{ set.weightKg }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(set.performanceStatus)">kg</span> ×
+                                {{ getDisplayWeight(set.weightKg, ex.id) }} <span class="text-xs uppercase" [ngClass]="getPerfSubtextClass(set.performanceStatus)">{{ getUnit(ex.id) }}</span> ×
                                 @if (ex.unilateral) {
                                   {{ set.repsCompleted }} / {{ set.repsCompletedRight ?? set.repsCompleted }}
                                 }
@@ -176,7 +198,8 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                           }
                         </div>
                       </div>
-                    }
+                      }
+                    </div>
                     <!-- Log New Set Form -->
                     @if (!session()?.completedAt) {
                       <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
@@ -189,14 +212,14 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                           </div>
                           @if (getSuggestionForNextSet(ex.id)) {
                             <div class="text-xs text-gray-500 dark:text-gray-400">
-                              Last week: <span class="font-bold text-gray-700 dark:text-gray-300">{{ getSuggestionForNextSet(ex.id)?.weightKg }}kg &times; {{ getSuggestionForNextSet(ex.id)?.reps }}</span>
+                              Last week: <span class="font-bold text-gray-700 dark:text-gray-300">{{ getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg, ex.id) }}{{ getUnit(ex.id) }} &times; {{ getSuggestionForNextSet(ex.id)?.reps }}</span>
                             </div>
                           }
                         </div>
                         <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
                             <div class="flex-1 min-w-[80px]">
-                              <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Weight (kg)</label>
-                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" [placeholder]="getSuggestionForNextSet(ex.id)?.weightKg || getSuggestion(ex.id)?.suggestedWeightKg || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
+                              <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Weight ({{ getUnit(ex.id) }})</label>
+                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" [placeholder]="getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg || getSuggestion(ex.id)?.suggestedWeightKg, ex.id)" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                             </div>
                             <div class="flex-1 min-w-[70px]">
                               <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ ex.unilateral ? 'Reps (L)' : 'Reps' }}</label>
@@ -208,12 +231,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                                 <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                               </div>
                             }
-                          <div class="w-full sm:w-auto mt-2 sm:mt-0">
-                            <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px]"
-                              [ngClass]="getSetsForExercise(ex.id).length >= ex.sets ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-accent-pos hover:opacity-90'">
-                              {{ getSetsForExercise(ex.id).length >= ex.sets ? 'Log Extra Set' : 'Log' }}
-                            </button>
-                          </div>
+
                         </form>
                       </div>
                     }
@@ -252,6 +270,34 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                         </div>
                       </div>
                     }
+                  </div>
+                }
+                
+                @if (optionsModalOpen() === ex.id) {
+                  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-black/80 backdrop-blur-sm">
+                    <div class="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative p-6">
+                      <button (click)="closeOptionsModal()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white">✕</button>
+                      <h3 class="text-xl font-bold mb-6 text-black dark:text-white">{{ ex.exerciseName }} Options</h3>
+                      <div class="space-y-4">
+                        <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
+                          <span class="font-medium text-gray-700 dark:text-gray-300">Unit</span>
+                          <button (click)="toggleUnit(ex.id)" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-sm font-bold transition-colors uppercase w-16">
+                            {{ getUnit(ex.id) }}
+                          </button>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl flex flex-col gap-2">
+                          <span class="font-medium text-gray-700 dark:text-gray-300 mb-1">Reorder</span>
+                          <div class="flex gap-2">
+                            <button (click)="moveExercise(ex.id, -1)" [disabled]="i === 0" class="flex-1 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-bold transition-colors text-black dark:text-white">
+                              &uarr; Move Up
+                            </button>
+                            <button (click)="moveExercise(ex.id, 1)" [disabled]="i === exercises().length - 1" class="flex-1 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-bold transition-colors text-black dark:text-white">
+                              &darr; Move Down
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 }
               </div>
@@ -347,6 +393,27 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
               }
             </div>
           </div>
+
+          <!-- Non-sticky Finish / End Early Button -->
+          <div class="mt-8 mb-4 text-center">
+            @if (!session()?.completedAt) {
+              <button
+                (click)="completeWorkout()"
+                [disabled]="isCompleting()"
+                class="px-6 py-3 text-gray-500 hover:text-accent-pos dark:text-gray-400 dark:hover:text-accent-pos border border-gray-300 dark:border-gray-700 hover:border-accent-pos dark:hover:border-accent-pos rounded-xl transition-colors bg-transparent shadow-sm w-full md:w-auto"
+                >
+                {{ isCompleting() ? 'Completing...' : 'End Workout Early' }}
+              </button>
+            } @else {
+              <button
+                (click)="uncompleteWorkout()"
+                [disabled]="isCompleting()"
+                class="px-6 py-3 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-black dark:text-white font-bold rounded-xl transition-colors shadow-sm w-full md:w-auto"
+                >
+                {{ isCompleting() ? 'Reopening...' : 'Uncomplete & Edit' }}
+              </button>
+            }
+          </div>
         </div>
       }
     </div>
@@ -361,22 +428,29 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
           </div>
           <div class="w-full max-w-sm">
             @if (!session()?.completedAt) {
-              <button
-                (click)="completeWorkout()"
-                [disabled]="isCompleting()"
-                class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
-                style="box-shadow: 0 0 20px var(--color-accent-pos);"
-                >
-                <span>{{ isCompleting() ? 'Completing...' : 'Finish Workout' }}</span>
-              </button>
+              @if (getActiveExercise(); as activeEx) {
+                <button
+                  (click)="logSet(activeEx)"
+                  [disabled]="getForm(activeEx.id).invalid || isLoggingSet()"
+                  class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
+                  style="box-shadow: 0 0 20px var(--color-accent-pos);"
+                  >
+                  <span>{{ isLoggingSet() ? 'Logging...' : 'Log Set' }}</span>
+                </button>
+              } @else {
+                <button
+                  (click)="completeWorkout()"
+                  [disabled]="isCompleting()"
+                  class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
+                  style="box-shadow: 0 0 20px var(--color-accent-pos);"
+                  >
+                  <span>{{ isCompleting() ? 'Completing...' : 'Finish Workout' }}</span>
+                </button>
+              }
             } @else {
-              <button
-                (click)="uncompleteWorkout()"
-                [disabled]="isCompleting()"
-                class="w-full py-3 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-black dark:text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95"
-                >
-                {{ isCompleting() ? 'Reopening...' : 'Uncomplete & Edit' }}
-              </button>
+              <div class="text-center font-bold text-lg text-accent-pos">
+                Workout Complete!
+              </div>
             }
           </div>
         </div>
@@ -393,6 +467,7 @@ export class ActiveWorkoutComponent implements OnInit {
   private fb = inject(FormBuilder);
   private exerciseService = inject(ExerciseService);
   private bodyWeightService = inject(BodyWeightService);
+  private analyticsService = inject(AnalyticsService);
 
   sessionId = signal<string | null>(null);
   session = signal<WorkoutSessionResponse | null>(null);
@@ -407,6 +482,20 @@ export class ActiveWorkoutComponent implements OnInit {
   isSavingNotes = signal<boolean>(false);
   savedNotesSuccess = signal<boolean>(false);
 
+  chartData: ChartConfiguration['data'] | null = null;
+  chartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { 
+        beginAtZero: true, 
+        grid: { color: 'rgba(128, 128, 128, 0.1)' }
+      }
+    }
+  };
+
   showAddExercise = signal<boolean>(false);
   selectedExercise = signal<Exercise | null>(null);
   isCreatingNewExercise = signal<boolean>(false);
@@ -416,6 +505,9 @@ export class ActiveWorkoutComponent implements OnInit {
 
   // Map of exerciseId -> FormGroup
   forms = new Map<string, FormGroup>();
+  
+  optionsModalOpen = signal<string | null>(null);
+  exerciseUnits = signal<Record<string, 'kg' | 'lb'>>({});
 
   exerciseForm: FormGroup = this.fb.group({
     exerciseId: ['', Validators.required],
@@ -452,17 +544,57 @@ export class ActiveWorkoutComponent implements OnInit {
     }
   }
 
-  dropExercise(event: CdkDragDrop<DayExercise[]>) {
-    if (this.session()?.completedAt) return;
-    const currentExercises = [...this.exercises()];
+  openOptionsModal(exId: string) {
+    this.optionsModalOpen.set(exId);
+  }
+
+  closeOptionsModal() {
+    this.optionsModalOpen.set(null);
+  }
+
+  getUnit(exId: string): 'kg' | 'lb' {
+    return this.exerciseUnits()[exId] || 'kg';
+  }
+
+  toggleUnit(exId: string) {
+    const current = this.getUnit(exId);
+    const newUnit = current === 'kg' ? 'lb' : 'kg';
+    this.exerciseUnits.update(units => ({...units, [exId]: newUnit}));
     
-    moveItemInArray(currentExercises, event.previousIndex, event.currentIndex);
+    const form = this.getForm(exId);
+    const currentWeight = form.value.weightKg;
+    if (currentWeight) {
+      if (newUnit === 'lb') {
+        form.patchValue({weightKg: parseFloat((currentWeight * 2.20462).toFixed(1))});
+      } else {
+        form.patchValue({weightKg: parseFloat((currentWeight / 2.20462).toFixed(1))});
+      }
+    }
+  }
 
-    // Update sortOrder
-    currentExercises.forEach((ex, idx) => ex.sortOrder = idx);
+  getDisplayWeight(kg: number | undefined | null, exId: string): string {
+    if (kg == null) return '0';
+    const unit = this.getUnit(exId);
+    if (unit === 'lb') {
+      return (kg * 2.20462).toFixed(1).replace(/\.0$/, '');
+    }
+    return kg.toString();
+  }
+
+  moveExercise(exId: string, direction: -1 | 1) {
+    const currentExercises = [...this.exercises()];
+    const idx = currentExercises.findIndex(ex => ex.id === exId);
+    if (idx === -1) return;
+    if (idx + direction < 0 || idx + direction >= currentExercises.length) return;
+    
+    // Swap
+    const temp = currentExercises[idx];
+    currentExercises[idx] = currentExercises[idx + direction];
+    currentExercises[idx + direction] = temp;
+    
+    currentExercises.forEach((ex, i) => ex.sortOrder = i);
     this.exercises.set(currentExercises);
-
-    // Call backend to persist
+    
     const sessionId = this.sessionId();
     if (sessionId) {
       const requests = currentExercises.map(ex => ({ id: ex.id, sortOrder: ex.sortOrder }));
@@ -542,6 +674,10 @@ export class ActiveWorkoutComponent implements OnInit {
               }
             });
 
+            if (this.session()?.completedAt) {
+              this.buildChartData();
+            }
+
             this.isLoading.set(false);
             setTimeout(() => this.scrollToFirstIncompleteExercise(), 300);
           },
@@ -568,15 +704,28 @@ export class ActiveWorkoutComponent implements OnInit {
 
       if (setsForEx.length > 0) {
         const lastSet = setsForEx[setsForEx.length - 1];
-        defaultWeight = lastSet.weightKg?.toString() || '';
+        if (lastSet.weightKg != null) {
+          const unit = this.getUnit(ex.id);
+          defaultWeight = unit === 'lb' 
+            ? (lastSet.weightKg * 2.20462).toFixed(1).replace(/\.0$/, '') 
+            : lastSet.weightKg.toString();
+        }
         defaultReps = lastSet.repsCompleted || '';
         defaultRepsRight = lastSet.repsCompletedRight || '';
       } else {
         const suggestion = this.getSuggestion(ex.id);
+        let baseWeightKg: number | null = null;
         if (suggestion?.suggestedWeightKg != null) {
-          defaultWeight = suggestion.suggestedWeightKg.toString();
+          baseWeightKg = suggestion.suggestedWeightKg;
         } else if (ex.isBodyweight && this.latestBodyWeight() !== null) {
-          defaultWeight = this.latestBodyWeight()!.toString();
+          baseWeightKg = this.latestBodyWeight()!;
+        }
+        
+        if (baseWeightKg != null) {
+          const unit = this.getUnit(ex.id);
+          defaultWeight = unit === 'lb' 
+            ? (baseWeightKg * 2.20462).toFixed(1).replace(/\.0$/, '') 
+            : baseWeightKg.toString();
         }
       }
 
@@ -588,6 +737,57 @@ export class ActiveWorkoutComponent implements OnInit {
     });
   }
 
+  buildChartData() {
+    const exs = this.exercises();
+    if (exs.length === 0) return;
+    
+    const obs = exs.map(ex => this.analyticsService.getExerciseProgress(ex.exerciseId));
+    
+    forkJoin(obs).subscribe((results: ExerciseProgressEntry[][]) => {
+      const dayId = this.session()?.dayTemplateId;
+      if (!dayId) return;
+
+      const volumeByDate = new Map<string, number>();
+      
+      results.forEach((entries: ExerciseProgressEntry[]) => {
+        entries.forEach((entry: ExerciseProgressEntry) => {
+          if (entry.dayTemplateId === dayId) {
+            const current = volumeByDate.get(entry.sessionDate) || 0;
+            volumeByDate.set(entry.sessionDate, current + entry.totalVolumeKg);
+          }
+        });
+      });
+      
+      const sortedDates = Array.from(volumeByDate.keys()).sort();
+      if (sortedDates.length === 0) return;
+      
+      // Get the CSS variable for accent-pos or fallback
+      let accentColor = '#8b5cf6';
+      if (typeof window !== 'undefined') {
+        accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+      }
+      
+      const currentSessionAt = this.session()?.startedAt;
+      let currentSessionDate: string | null = null;
+      if (currentSessionAt) {
+        currentSessionDate = currentSessionAt.substring(0, 10);
+      }
+      
+      const bgColors = sortedDates.map(d => 
+        d === currentSessionDate ? accentColor : 'rgba(128, 128, 128, 0.3)'
+      );
+
+      this.chartData = {
+        labels: sortedDates,
+        datasets: [{
+          data: sortedDates.map(d => volumeByDate.get(d)!),
+          backgroundColor: bgColors,
+          borderRadius: 4
+        }]
+      };
+    });
+  }
+
   getForm(exerciseId: string): FormGroup {
     return this.forms.get(exerciseId) as FormGroup;
   }
@@ -596,6 +796,10 @@ export class ActiveWorkoutComponent implements OnInit {
     return this.loggedSets()
       .filter(s => s.sessionExerciseId === exerciseId)
       .sort((a, b) => a.setNumber - b.setNumber);
+  }
+
+  getActiveExercise(): DayExercise | undefined {
+    return this.exercises().find(ex => this.getSetsForExercise(ex.id).length < (ex.sets || 1));
   }
 
   getLastSetForExercise(exerciseId: string): WorkoutSetResponse | null {
@@ -771,12 +975,17 @@ export class ActiveWorkoutComponent implements OnInit {
     const currentSets = this.getSetsForExercise(ex.id);
     const setNumber = currentSets.length > 0 ? currentSets[currentSets.length - 1].setNumber + 1 : 1;
 
+    let weightToLog = form.value.weightKg;
+    if (this.getUnit(ex.id) === 'lb' && weightToLog != null) {
+      weightToLog = parseFloat((weightToLog / 2.20462).toFixed(2));
+    }
+
     const request = {
       sessionExerciseId: ex.id,
       setNumber: setNumber,
       repsCompleted: form.value.repsCompleted,
       repsCompletedRight: ex.unilateral ? form.value.repsCompletedRight : null,
-      weightKg: form.value.weightKg
+      weightKg: weightToLog
     };
 
     this.workoutService.logSet(id, request).subscribe({
