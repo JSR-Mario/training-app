@@ -321,6 +321,17 @@ export class BaseLayoutComponent {
     });
 
     this.loadLevel();
+    
+    this.authService.getMe().subscribe({
+      next: (user) => {
+        this.themeService.syncFromServer({
+          themeMode: user.themeMode,
+          themePos: user.themePos,
+          themeNeg: user.themeNeg
+        });
+      },
+      error: (err) => console.error('Failed to get preferences:', err)
+    });
   }
 
   loadLevel() {

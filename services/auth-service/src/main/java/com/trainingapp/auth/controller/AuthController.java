@@ -5,6 +5,7 @@ import com.trainingapp.auth.config.JwtProperties;
 import com.trainingapp.auth.dto.AuthResponse;
 import com.trainingapp.auth.dto.LoginRequest;
 import com.trainingapp.auth.dto.RegisterRequest;
+import com.trainingapp.auth.dto.UpdatePreferencesRequest;
 import com.trainingapp.auth.dto.UserResponse;
 import com.trainingapp.auth.service.AuthService;
 import com.trainingapp.auth.service.AuthService.LoginResult;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -129,6 +131,22 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(@RequestHeader("X-User-Id") UUID userId) {
         UserResponse response = authService.getUser(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Updates the theme preferences for the currently authenticated user.
+     *
+     * @param userId  the authenticated user's UUID (from gateway header)
+     * @param request the new preferences
+     * @return 200 OK with the updated user profile
+     */
+    @Operation(summary = "Update user theme preferences")
+    @PatchMapping("/me/preferences")
+    public ResponseEntity<UserResponse> updatePreferences(
+            @RequestHeader("X-User-Id") UUID userId,
+            @Valid @RequestBody UpdatePreferencesRequest request) {
+        UserResponse response = authService.updatePreferences(userId, request);
         return ResponseEntity.ok(response);
     }
 

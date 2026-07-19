@@ -8,6 +8,23 @@ export interface AuthResponse {
   accessToken: string;
 }
 
+export interface UserResponse {
+  id: string;
+  username: string;
+  email: string;
+  createdAt: string;
+  role: string;
+  themeMode?: string;
+  themePos?: string;
+  themeNeg?: string;
+}
+
+export interface ThemePreferences {
+  themeMode?: string;
+  themePos?: string;
+  themeNeg?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -84,5 +101,13 @@ export class AuthService {
       next: () => this.router.navigate(['/auth/login']),
       error: () => this.router.navigate(['/auth/login'])
     });
+  }
+
+  getMe(): Observable<UserResponse> {
+    return this.http.get<UserResponse>('/api/v1/auth/me');
+  }
+
+  updatePreferences(prefs: ThemePreferences): Observable<UserResponse> {
+    return this.http.patch<UserResponse>('/api/v1/auth/me/preferences', prefs);
   }
 }

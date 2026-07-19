@@ -47,6 +47,15 @@ public class User {
     @Column(nullable = false, length = 50)
     private Role role = Role.ROLE_USER;
 
+    @Column(name = "theme_mode", length = 20)
+    private String themeMode = "light";
+
+    @Column(name = "theme_pos", length = 50)
+    private String themePos = "blue";
+
+    @Column(name = "theme_neg", length = 50)
+    private String themeNeg = "red";
+
     /**
      * Sets {@code createdAt} to the current UTC instant before the first persist.
      * Ensures the field is always populated regardless of the caller.
@@ -89,4 +98,13 @@ public class User {
 
     /** Sets the user role. */
     public void setRole(Role role) { this.role = role; }
+
+    public String getThemeMode() { return themeMode; }
+    public void setThemeMode(String themeMode) { this.themeMode = themeMode; }
+
+    public String getThemePos() { return themePos; }
+    public void setThemePos(String themePos) { this.themePos = themePos; }
+
+    public String getThemeNeg() { return themeNeg; }
+    public void setThemeNeg(String themeNeg) { this.themeNeg = themeNeg; }
 }
