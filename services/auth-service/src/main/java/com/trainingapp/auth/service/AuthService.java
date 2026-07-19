@@ -4,6 +4,7 @@ import com.trainingapp.auth.domain.User;
 import com.trainingapp.auth.dto.AuthResponse;
 import com.trainingapp.auth.dto.LoginRequest;
 import com.trainingapp.auth.dto.RegisterRequest;
+import com.trainingapp.auth.dto.UpdatePreferencesRequest;
 import com.trainingapp.auth.dto.UserResponse;
 import com.trainingapp.auth.exception.DuplicateResourceException;
 import com.trainingapp.auth.exception.InvalidTokenException;
@@ -143,12 +144,41 @@ public class AuthService {
         return toResponse(user);
     }
 
+    /**
+     * Updates the user's theme preferences.
+     *
+     * @param userId  the authenticated user's UUID
+     * @param request the payload containing preferences
+     * @return updated user profile
+     */
+    @Transactional
+    public UserResponse updatePreferences(UUID userId, UpdatePreferencesRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+        
+        if (request.themeMode() != null) user.setThemeMode(request.themeMode());
+        if (request.themePos() != null) user.setThemePos(request.themePos());
+        if (request.themeNeg() != null) user.setThemeNeg(request.themeNeg());
+        
+        userRepository.save(user);
+        return toResponse(user);
+    }
+
     // ----------------------------------------------------------------
     // Private helpers
     // ----------------------------------------------------------------
 
     private UserResponse toResponse(User user) {
-        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getCreatedAt(), user.getRole().name());
+        return new UserResponse(
+                user.getId(), 
+                user.getUsername(), 
+                user.getEmail(), 
+                user.getCreatedAt(), 
+                user.getRole().name(),
+                user.getThemeMode(),
+                user.getThemePos(),
+                user.getThemeNeg()
+        );
     }
 
     /**

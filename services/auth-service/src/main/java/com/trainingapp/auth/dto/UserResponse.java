@@ -18,5 +18,8 @@ public record UserResponse(
         String username,
         String email,
         Instant createdAt,
-        String role
+        String role,
+        String themeMode,
+        String themePos,
+        String themeNeg
 ) {}

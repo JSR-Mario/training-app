@@ -42,7 +42,7 @@ class AuthControllerTest {
     @Test
     void register_Success() throws Exception {
         RegisterRequest req = new RegisterRequest("testuser", "test@example.com", "password123");
-        UserResponse resp = new UserResponse(UUID.randomUUID(), "testuser", "test@example.com", java.time.Instant.now(), "ROLE_USER");
+        UserResponse resp = new UserResponse(UUID.randomUUID(), "testuser", "test@example.com", java.time.Instant.now(), "ROLE_USER", "light", "blue", "red");
 
         Mockito.when(authService.register(any())).thenReturn(resp);
 
