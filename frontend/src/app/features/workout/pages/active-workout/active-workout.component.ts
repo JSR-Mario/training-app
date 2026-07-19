@@ -18,11 +18,15 @@ import {
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/components/exercise-form/exercise-form.component';
 import { BodyWeightService } from '../../../analytics/services/body-weight.service';
+import { AnalyticsService } from '../../../analytics/services/analytics.service';
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration } from 'chart.js';
+import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
 
 @Component({
   standalone: true,
     selector: 'app-active-workout',
-    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent, DragDropModule],
+    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent, DragDropModule, BaseChartDirective],
   template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-48">
     
@@ -57,8 +61,22 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
               }
             </div>
           </div>
+          <!-- Chart for Completed Sessions -->
+          @if (session()?.completedAt && chartData) {
+            <div class="solid-card p-6 border border-gray-300 dark:border-gray-700 mb-8">
+              <h2 class="text-xl font-bold text-black dark:text-white mb-4 text-left">Volume History</h2>
+              <div class="h-64 relative">
+                <canvas baseChart 
+                  [data]="chartData" 
+                  [options]="chartOptions" 
+                  [type]="'bar'">
+                </canvas>
+              </div>
+            </div>
+          }
+
           <!-- Exercises List -->
-          <div class="space-y-8" cdkDropList (cdkDropListDropped)="dropExercise($event)">
+          <div class="space-y-8" cdkDropList [cdkDropListDisabled]="!!session()?.completedAt" (cdkDropListDropped)="dropExercise($event)">
             @if (exercises().length === 0) {
               <div class="text-center py-12 solid-card">
                 <p class="text-gray-500 dark:text-gray-400">This workout day has no exercises configured.</p>
@@ -82,7 +100,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                         <span class="text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 border border-accent-pos/20 px-2 py-1 rounded animate-pulse">PR!</span>
                       }
                     </h2>
-                    @if (!isCollapsed(ex.id)) {
+                    @if (!isCollapsed(ex.id) && !session()?.completedAt) {
                       <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
                         Goal: {{ ex.sets }} sets × 
                         @if (ex.isAmrap) {
@@ -95,11 +113,13 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                   </div>
                   
                   <div class="flex items-center gap-1 border-l border-gray-200 dark:border-gray-700 pl-3">
-                    <div cdkDragHandle class="p-1 text-gray-400 hover:text-accent-pos cursor-grab active:cursor-grabbing" title="Drag to reorder">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-                      </svg>
-                    </div>
+                    @if (!session()?.completedAt) {
+                      <div cdkDragHandle class="p-1 text-gray-400 hover:text-accent-pos cursor-grab active:cursor-grabbing" title="Drag to reorder">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                        </svg>
+                      </div>
+                    }
                     <button (click)="toggleCollapse(ex.id)"
                       class="ml-2 p-1.5 rounded-lg transition-colors border flex items-center justify-center text-gray-500 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
                       [ngClass]="isCollapsed(ex.id) ? 'bg-gray-200 dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-900'"
@@ -125,20 +145,23 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                 </div>
 
                 <!-- Progress Bar inside Exercise Card -->
-                <div class="flex gap-1 h-1 w-full mt-2 mb-4">
-                  @for (s of [].constructor(ex.sets || 1); track $index; let idx = $index) {
-                    <div class="flex-1 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-700">
-                      <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
-                           [style.width.%]="getSetsForExercise(ex.id).length > idx ? 100 : 0"></div>
-                    </div>
-                  }
-                </div>
+                @if (!session()?.completedAt) {
+                  <div class="flex gap-1 h-1 w-full mt-2 mb-4">
+                    @for (s of [].constructor(ex.sets || 1); track $index; let idx = $index) {
+                      <div class="flex-1 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-700">
+                        <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
+                             [style.width.%]="getSetsForExercise(ex.id).length > idx ? 100 : 0"></div>
+                      </div>
+                    }
+                  </div>
+                }
 
                 @if (!isCollapsed(ex.id)) {
-                  <div>
-                    <!-- Last Logged Set -->
-                    @if (getLastSetForExercise(ex.id); as set) {
-                      <div class="space-y-3 mb-4 transition-all duration-300" [class.scale-105]="isLoggingSet()">
+                  <div [class.mt-4]="session()?.completedAt">
+                    <!-- Logged Sets -->
+                    <div class="space-y-2 mb-4">
+                      @for (set of getSetsForExercise(ex.id); track set.id; let last = $last) {
+                        <div class="transition-all duration-300" [class.scale-105]="isLoggingSet() && last">
                         <div class="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-lg border transition-colors border-gray-200 dark:border-gray-700"
                           [ngClass]="getPerfContainerClass(set.performanceStatus)">
                           <div class="flex items-center gap-4">
@@ -176,7 +199,8 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                           }
                         </div>
                       </div>
-                    }
+                      }
+                    </div>
                     <!-- Log New Set Form -->
                     @if (!session()?.completedAt) {
                       <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
@@ -416,6 +440,7 @@ export class ActiveWorkoutComponent implements OnInit {
   private fb = inject(FormBuilder);
   private exerciseService = inject(ExerciseService);
   private bodyWeightService = inject(BodyWeightService);
+  private analyticsService = inject(AnalyticsService);
 
   sessionId = signal<string | null>(null);
   session = signal<WorkoutSessionResponse | null>(null);
@@ -429,6 +454,20 @@ export class ActiveWorkoutComponent implements OnInit {
   isCompleting = signal<boolean>(false);
   isSavingNotes = signal<boolean>(false);
   savedNotesSuccess = signal<boolean>(false);
+
+  chartData: ChartConfiguration['data'] | null = null;
+  chartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { 
+        beginAtZero: true, 
+        grid: { color: 'rgba(128, 128, 128, 0.1)' }
+      }
+    }
+  };
 
   showAddExercise = signal<boolean>(false);
   selectedExercise = signal<Exercise | null>(null);
@@ -565,6 +604,10 @@ export class ActiveWorkoutComponent implements OnInit {
               }
             });
 
+            if (this.session()?.completedAt) {
+              this.buildChartData();
+            }
+
             this.isLoading.set(false);
             setTimeout(() => this.scrollToFirstIncompleteExercise(), 300);
           },
@@ -608,6 +651,57 @@ export class ActiveWorkoutComponent implements OnInit {
         repsCompleted: [defaultReps, [Validators.required, Validators.min(0)]],
         repsCompletedRight: [defaultRepsRight, [Validators.min(0)]]
       }));
+    });
+  }
+
+  buildChartData() {
+    const exs = this.exercises();
+    if (exs.length === 0) return;
+    
+    const obs = exs.map(ex => this.analyticsService.getExerciseProgress(ex.exerciseId));
+    
+    forkJoin(obs).subscribe((results: ExerciseProgressEntry[][]) => {
+      const dayId = this.session()?.dayTemplateId;
+      if (!dayId) return;
+
+      const volumeByDate = new Map<string, number>();
+      
+      results.forEach((entries: ExerciseProgressEntry[]) => {
+        entries.forEach((entry: ExerciseProgressEntry) => {
+          if (entry.dayTemplateId === dayId) {
+            const current = volumeByDate.get(entry.sessionDate) || 0;
+            volumeByDate.set(entry.sessionDate, current + entry.totalVolumeKg);
+          }
+        });
+      });
+      
+      const sortedDates = Array.from(volumeByDate.keys()).sort();
+      if (sortedDates.length === 0) return;
+      
+      // Get the CSS variable for accent-pos or fallback
+      let accentColor = '#8b5cf6';
+      if (typeof window !== 'undefined') {
+        accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+      }
+      
+      const currentSessionAt = this.session()?.startedAt;
+      let currentSessionDate: string | null = null;
+      if (currentSessionAt) {
+        currentSessionDate = currentSessionAt.substring(0, 10);
+      }
+      
+      const bgColors = sortedDates.map(d => 
+        d === currentSessionDate ? accentColor : 'rgba(128, 128, 128, 0.3)'
+      );
+
+      this.chartData = {
+        labels: sortedDates,
+        datasets: [{
+          data: sortedDates.map(d => volumeByDate.get(d)!),
+          backgroundColor: bgColors,
+          borderRadius: 4
+        }]
+      };
     });
   }
 
