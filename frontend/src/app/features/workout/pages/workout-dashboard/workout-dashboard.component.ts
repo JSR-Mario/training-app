@@ -73,7 +73,13 @@ import { switchMap, of } from 'rxjs';
             </button>
           </div>
           
-          <div class="mt-4 sm:mt-0">
+          <div class="mt-4 sm:mt-0 flex flex-wrap gap-2 justify-center sm:justify-end">
+            <button 
+              (click)="toggleReorderMode()"
+              class="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold rounded-xl transition-all solid-btn"
+            >
+              {{ reorderModeActive() ? 'Done Reordering' : 'Reorder Days' }}
+            </button>
             @if (displayedWeek() === program.currentWeek) {
               <button 
                 (click)="finishWeek()"
@@ -86,19 +92,21 @@ import { switchMap, of } from 'rxjs';
         </div>
  
         <!-- Days Grid -->
-        <div class="space-y-4" cdkDropList (cdkDropListDropped)="dropDay($event)">
+        <div class="space-y-4" cdkDropList [cdkDropListDisabled]="!reorderModeActive()" (cdkDropListDropped)="dropDay($event)">
           @for (day of combinedDays(); track day.template.id; let i = $index) {
             <div cdkDrag [id]="'day-' + day.template.id" class="solid-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:border-gray-400 dark:hover:border-gray-600 transition-colors border border-gray-300 dark:border-gray-700">
               <div class="mb-4 sm:mb-0 flex-1 w-full">
                 <div class="flex items-center justify-between w-full mb-1">
                   <div class="flex items-center gap-3">
-                    <div class="flex flex-col gap-1 mr-2">
-                      <div cdkDragHandle class="text-gray-400 hover:text-accent-pos cursor-grab active:cursor-grabbing p-2" title="Drag to reorder">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-                        </svg>
+                    @if (reorderModeActive()) {
+                      <div class="flex flex-col gap-1 mr-2">
+                        <div cdkDragHandle class="text-gray-400 hover:text-accent-pos cursor-grab active:cursor-grabbing p-2" title="Drag to reorder">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                          </svg>
+                        </div>
                       </div>
-                    </div>
+                    }
                     <h3 class="text-xl font-bold text-black dark:text-white">{{ day.template.name }}</h3>
                   </div>
                   <div class="flex items-center gap-3">
@@ -161,6 +169,11 @@ export class WorkoutDashboardComponent implements OnInit {
   sessions = signal<WorkoutSessionResponse[]>([]);
   isLoading = signal<boolean>(false);
   isReordering = signal<boolean>(false);
+  reorderModeActive = signal<boolean>(false);
+
+  toggleReorderMode() {
+    this.reorderModeActive.update(v => !v);
+  }
   
   combinedDays = computed(() => {
     const templates = this.dayTemplates();
