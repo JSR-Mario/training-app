@@ -18,10 +18,10 @@ import { CARDIO_TYPES } from '../../../../core/constants/cardio-types';
         </h1>
       </header>
 
-      <!-- Logging Form -->
-      <div class="solid-card border border-gray-300 dark:border-gray-700 p-6 rounded-2xl mb-6">
+      <!-- Logging Form & Chart Container -->
+      <div class="solid-card border border-gray-300 dark:border-gray-700 p-6 mb-6">
         
-        <form [formGroup]="cardioForm" (ngSubmit)="onSubmit()" class="flex flex-col sm:flex-row items-end gap-4">
+        <form [formGroup]="cardioForm" (ngSubmit)="onSubmit()" class="flex flex-col sm:flex-row items-end gap-4 mb-6">
           
           <div class="flex-1 w-full">
             <label for="performedOn" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
@@ -54,10 +54,10 @@ import { CARDIO_TYPES } from '../../../../core/constants/cardio-types';
             }
           </button>
         </form>
-      </div>
 
-      <!-- Chart -->
-      <app-cardio-chart></app-cardio-chart>
+        <!-- Chart -->
+        <app-cardio-chart></app-cardio-chart>
+      </div>
     </div>
   `
 })
