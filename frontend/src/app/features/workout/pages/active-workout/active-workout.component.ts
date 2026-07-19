@@ -208,12 +208,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
                                 <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                               </div>
                             }
-                          <div class="w-full sm:w-auto mt-2 sm:mt-0">
-                            <button type="submit" [disabled]="getForm(ex.id).invalid || isLoggingSet()" class="px-6 py-2 text-white font-semibold rounded-lg shadow-md disabled:opacity-50 transition-colors h-[42px]"
-                              [ngClass]="getSetsForExercise(ex.id).length >= ex.sets ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-accent-pos hover:opacity-90'">
-                              {{ getSetsForExercise(ex.id).length >= ex.sets ? 'Log Extra Set' : 'Log' }}
-                            </button>
-                          </div>
+
                         </form>
                       </div>
                     }
@@ -347,6 +342,27 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
               }
             </div>
           </div>
+
+          <!-- Non-sticky Finish / End Early Button -->
+          <div class="mt-8 mb-4 text-center">
+            @if (!session()?.completedAt) {
+              <button
+                (click)="completeWorkout()"
+                [disabled]="isCompleting()"
+                class="px-6 py-3 text-gray-500 hover:text-accent-pos dark:text-gray-400 dark:hover:text-accent-pos border border-gray-300 dark:border-gray-700 hover:border-accent-pos dark:hover:border-accent-pos rounded-xl transition-colors bg-transparent shadow-sm w-full md:w-auto"
+                >
+                {{ isCompleting() ? 'Completing...' : 'End Workout Early' }}
+              </button>
+            } @else {
+              <button
+                (click)="uncompleteWorkout()"
+                [disabled]="isCompleting()"
+                class="px-6 py-3 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-black dark:text-white font-bold rounded-xl transition-colors shadow-sm w-full md:w-auto"
+                >
+                {{ isCompleting() ? 'Reopening...' : 'Uncomplete & Edit' }}
+              </button>
+            }
+          </div>
         </div>
       }
     </div>
@@ -361,22 +377,29 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
           </div>
           <div class="w-full max-w-sm">
             @if (!session()?.completedAt) {
-              <button
-                (click)="completeWorkout()"
-                [disabled]="isCompleting()"
-                class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
-                style="box-shadow: 0 0 20px var(--color-accent-pos);"
-                >
-                <span>{{ isCompleting() ? 'Completing...' : 'Finish Workout' }}</span>
-              </button>
+              @if (getActiveExercise(); as activeEx) {
+                <button
+                  (click)="logSet(activeEx)"
+                  [disabled]="getForm(activeEx.id).invalid || isLoggingSet()"
+                  class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
+                  style="box-shadow: 0 0 20px var(--color-accent-pos);"
+                  >
+                  <span>{{ isLoggingSet() ? 'Logging...' : 'Log Set' }}</span>
+                </button>
+              } @else {
+                <button
+                  (click)="completeWorkout()"
+                  [disabled]="isCompleting()"
+                  class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
+                  style="box-shadow: 0 0 20px var(--color-accent-pos);"
+                  >
+                  <span>{{ isCompleting() ? 'Completing...' : 'Finish Workout' }}</span>
+                </button>
+              }
             } @else {
-              <button
-                (click)="uncompleteWorkout()"
-                [disabled]="isCompleting()"
-                class="w-full py-3 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-black dark:text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95"
-                >
-                {{ isCompleting() ? 'Reopening...' : 'Uncomplete & Edit' }}
-              </button>
+              <div class="text-center font-bold text-lg text-accent-pos">
+                Workout Complete!
+              </div>
             }
           </div>
         </div>
@@ -596,6 +619,10 @@ export class ActiveWorkoutComponent implements OnInit {
     return this.loggedSets()
       .filter(s => s.sessionExerciseId === exerciseId)
       .sort((a, b) => a.setNumber - b.setNumber);
+  }
+
+  getActiveExercise(): DayExercise | undefined {
+    return this.exercises().find(ex => this.getSetsForExercise(ex.id).length < (ex.sets || 1));
   }
 
   getLastSetForExercise(exerciseId: string): WorkoutSetResponse | null {
