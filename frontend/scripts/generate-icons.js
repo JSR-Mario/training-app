@@ -14,12 +14,12 @@ const ICONS_DIR = path.join(__dirname, '..', 'public', 'icons');
 /** SVG template for regular (any purpose) icons. */
 function createRegularSvg(size) {
   const rx = Math.round(size * 0.2);
-  const fontSize = Math.round(size * 0.234);
-  const x = Math.round(size * 0.078);
+  const fontSize = Math.round(size * 0.2);
+  const x = Math.round(size * 0.06);
   const y = Math.round(size * 0.273);
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <rect width="${size}" height="${size}" rx="${rx}" fill="#ffffff"/>
-  <text x="30" y="145" font-family="Inter, Arial, Helvetica, sans-serif" font-size="110" font-weight="700" fill="#111827">Yes</text>
+  <text x="${x}" y="${y}" font-family="Inter, Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="700" fill="#111827">Yes</text>
 </svg>`);
 }
 
@@ -27,12 +27,12 @@ function createRegularSvg(size) {
 function createMaskableSvg(size) {
   const inset = Math.round(size * 0.15);
   const innerSize = size - inset * 2;
-  const fontSize = Math.round(innerSize * 0.22);
-  const x = inset + Math.round(innerSize * 0.08);
+  const fontSize = Math.round(innerSize * 0.18);
+  const x = inset + Math.round(innerSize * 0.06);
   const y = inset + Math.round(fontSize * 1.15);
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <rect width="${size}" height="${size}" fill="#ffffff"/>
-  <text x="30" y="145" font-family="Inter, Arial, Helvetica, sans-serif" font-size="110" font-weight="700" fill="#111827">Yes</text>
+  <text x="${x}" y="${y}" font-family="Inter, Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="700" fill="#111827">Yes</text>
 </svg>`);
 }
 

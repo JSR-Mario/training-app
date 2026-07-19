@@ -13,13 +13,13 @@ foreach ($size in $sizes) {
     $name = "icon-${size}x${size}"
     # Create temp SVG at exact pixel size
     $rx = [math]::Round($size * 0.2)
-    $fontSize = [math]::Round($size * 0.234)
-    $x = [math]::Round($size * 0.078)
+    $fontSize = [math]::Round($size * 0.2)
+    $x = [math]::Round($size * 0.06)
     $y = [math]::Round($size * 0.273)
     $svg = @"
 <svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size" viewBox="0 0 $size $size">
   <rect width="$size" height="$size" rx="$rx" fill="#ffffff"/>
-  <text x="30" y="145" font-family="Inter, Arial, Helvetica, sans-serif" font-size="110" font-weight="700" fill="#111827">Yes</text>
+  <text x="$x" y="$y" font-family="Inter, Arial, Helvetica, sans-serif" font-size="$fontSize" font-weight="700" fill="#111827">Yes</text>
 </svg>
 "@
     Set-Content -Path "$TEMP_DIR/$name.svg" -Value $svg -NoNewline
@@ -34,13 +34,13 @@ foreach ($size in $maskSizes) {
     $name = "icon-${size}x${size}-maskable"
     $inset = [math]::Round($size * 0.15)
     $innerSize = $size - $inset * 2
-    $fontSize = [math]::Round($innerSize * 0.22)
-    $tx = $inset + [math]::Round($innerSize * 0.08)
+    $fontSize = [math]::Round($innerSize * 0.18)
+    $tx = $inset + [math]::Round($innerSize * 0.06)
     $ty = $inset + [math]::Round($fontSize * 1.15)
     $svg = @"
 <svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size" viewBox="0 0 $size $size">
   <rect width="$size" height="$size" fill="#ffffff"/>
-  <text x="30" y="145" font-family="Inter, Arial, Helvetica, sans-serif" font-size="110" font-weight="700" fill="#111827">Yes</text>
+  <text x="$tx" y="$ty" font-family="Inter, Arial, Helvetica, sans-serif" font-size="$fontSize" font-weight="700" fill="#111827">Yes</text>
 </svg>
 "@
     Set-Content -Path "$TEMP_DIR/$name.svg" -Value $svg -NoNewline
