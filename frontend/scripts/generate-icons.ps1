@@ -13,9 +13,9 @@ foreach ($size in $sizes) {
     $name = "icon-${size}x${size}"
     # Create temp SVG at exact pixel size
     $rx = [math]::Round($size * 0.2)
-    $fontSize = [math]::Round($size * 0.2)
-    $x = [math]::Round($size * 0.06)
-    $y = [math]::Round($size * 0.273)
+    $fontSize = [math]::Round($size * 0.22)
+    $x = [math]::Round($size * 0.08)
+    $y = [math]::Round($size * 0.28)
     $svg = @"
 <svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size" viewBox="0 0 $size $size">
   <rect width="$size" height="$size" rx="$rx" fill="#ffffff"/>
@@ -34,13 +34,31 @@ foreach ($size in $maskSizes) {
     $name = "icon-${size}x${size}-maskable"
     $inset = [math]::Round($size * 0.15)
     $innerSize = $size - $inset * 2
-    $fontSize = [math]::Round($innerSize * 0.18)
-    $tx = $inset + [math]::Round($innerSize * 0.06)
+    $fontSize = [math]::Round($innerSize * 0.22)
+    $tx = $inset + [math]::Round($innerSize * 0.08)
     $ty = $inset + [math]::Round($fontSize * 1.15)
     $svg = @"
 <svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size" viewBox="0 0 $size $size">
   <rect width="$size" height="$size" fill="#ffffff"/>
   <text x="$tx" y="$ty" font-family="Inter, Arial, Helvetica, sans-serif" font-size="$fontSize" font-weight="700" fill="#111827">Yes</text>
+</svg>
+"@
+    Set-Content -Path "$TEMP_DIR/$name.svg" -Value $svg -NoNewline
+    npx -y sharp-cli -i "$TEMP_DIR/$name.svg" -o $ICONS_DIR -f png 2>&1 | Out-Null
+    Write-Host "  ok $name.png"
+}
+
+# Monochrome icons (192 and 512) - transparent background, for Android/Apple themes
+foreach ($size in $maskSizes) {
+    $name = "icon-${size}x${size}-monochrome"
+    $innerSize = $size * 0.8
+    $padding = $size * 0.1
+    $fontSize = [math]::Round($innerSize * 0.25)
+    $mx = $padding + [math]::Round($innerSize * 0.08)
+    $my = $padding + [math]::Round($fontSize * 1.15)
+    $svg = @"
+<svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size" viewBox="0 0 $size $size">
+  <text x="$mx" y="$my" font-family="Inter, Arial, Helvetica, sans-serif" font-size="$fontSize" font-weight="700" fill="#000000">Yes</text>
 </svg>
 "@
     Set-Content -Path "$TEMP_DIR/$name.svg" -Value $svg -NoNewline
