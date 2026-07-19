@@ -1,4 +1,4 @@
-# Training App — Agent Development Plan
+# Yes App — Agent Development Plan
 > Version 2.0 — Final
 
 ---

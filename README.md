@@ -1,4 +1,4 @@
-# Training App
+# Yes App
 
 A microservices-based personal training tracker. Built to be a cloud-native, scalable platform for tracking workout sessions, managing exercise programs, and analyzing volume and progress.
 

@@ -17,6 +17,6 @@ export class AppComponent {
   private titleService = inject(Title);
 
   constructor() {
-    this.titleService.setTitle(`TR ${environment.appVersion}`);
+    this.titleService.setTitle(`Yes ${environment.appVersion}`);
   }
 }
