@@ -15,6 +15,8 @@ export class ThemeService {
 
   // Flag to avoid updating the server during the initial sync from the server
   private isSyncingFromServer = false;
+  // Flag to avoid overwriting backend with local storage defaults on startup
+  private initialEffectRun = true;
 
   constructor() {
     this.loadPreferences();
@@ -22,6 +24,16 @@ export class ThemeService {
     // Effect to reactively update the DOM when signals change
     effect(() => {
       this.applyTheme(this.themeMode(), this.positiveColor(), this.negativeColor());
+      
+      if (this.initialEffectRun) {
+        this.initialEffectRun = false;
+        // Only save to local storage on the initial run
+        localStorage.setItem('themeMode', this.themeMode());
+        localStorage.setItem('themePos', this.positiveColor());
+        localStorage.setItem('themeNeg', this.negativeColor());
+        return;
+      }
+      
       this.savePreferences();
     });
   }
