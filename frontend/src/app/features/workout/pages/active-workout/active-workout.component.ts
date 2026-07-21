@@ -87,7 +87,7 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
                 <div class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4">
                   <div class="flex-1 pr-4">
                     <h2 class="text-xl font-bold text-black dark:text-white flex flex-wrap items-center gap-2">
-                      <span><span class="text-accent-pos mr-2">{{i + 1}}.</span> {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</span>
+                      <span>{{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</span>
                       @if (getSuggestion(ex.id)?.hadFatigueLastWeek) {
                         <span title="Reached failure last session" class="text-amber-500 bg-amber-500/10 border border-amber-500/20 p-0.5 rounded flex items-center justify-center cursor-help ml-2">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -123,22 +123,12 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
                       class="ml-2 p-1.5 rounded-lg transition-colors border flex items-center justify-center text-gray-500 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
                       [ngClass]="isCollapsed(ex.id) ? 'bg-gray-200 dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-900'"
                       [title]="isCollapsed(ex.id) ? 'Expand Exercise' : 'Minimize Exercise'">
-                      @if (!isCollapsed(ex.id)) {
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                        </svg>
-                      }
-                      @if (isCollapsed(ex.id)) {
-                        @if (getSetsForExercise(ex.id).length >= (ex.sets || 1)) {
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent-pos" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                          </svg>
-                        } @else {
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                          </svg>
-                        }
-                      }
+                      <svg xmlns="http://www.w3.org/2000/svg" 
+                           class="h-5 w-5 transition-colors" 
+                           [class.text-accent-pos]="isCollapsed(ex.id)"
+                           fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -158,10 +148,36 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
                 @if (!isCollapsed(ex.id)) {
                   <div [class.mt-4]="session()?.completedAt">
                     <!-- Logged Sets -->
-                    <div class="space-y-2 mb-4">
+                    <div class="space-y-1.5 mb-4">
                       @for (set of getSetsForExercise(ex.id); track set.id; let last = $last) {
                         <div class="transition-all duration-300" [class.scale-105]="isLoggingSet() && last">
-                        <div class="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-lg border transition-colors border-gray-200 dark:border-gray-700"
+                        @if (editingSetId() === set.id) {
+                          <div class="flex items-center justify-between bg-white dark:bg-gray-800 py-2 px-3 rounded-lg border border-accent-pos/50 shadow-sm">
+                            <form [formGroup]="editSetForm" (ngSubmit)="saveEditSet(ex.id)" class="flex items-center w-full gap-2">
+                              <span class="w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-xs font-bold border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700">
+                                {{ set.setNumber }}
+                              </span>
+                              <div class="flex items-center flex-1 gap-2 overflow-hidden">
+                                <input type="number" formControlName="weightKg" class="w-16 sm:w-20 px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded text-sm text-center outline-none focus:border-accent-pos" step="0.5" min="0">
+                                <span class="text-xs text-gray-500">{{ getUnit(ex.id) }} ×</span>
+                                <input type="number" formControlName="repsCompleted" class="w-12 sm:w-16 px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded text-sm text-center outline-none focus:border-accent-pos" min="0">
+                                @if (ex.unilateral) {
+                                  <span class="text-xs text-gray-500">/</span>
+                                  <input type="number" formControlName="repsCompletedRight" class="w-12 sm:w-16 px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded text-sm text-center outline-none focus:border-accent-pos" min="0">
+                                }
+                              </div>
+                              <div class="flex items-center shrink-0">
+                                <button type="button" (click)="cancelEditSet()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 transition-colors">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                                <button type="submit" [disabled]="editSetForm.invalid || isSavingEdit()" class="text-accent-pos hover:text-white hover:bg-accent-pos p-1.5 rounded transition-colors disabled:opacity-50">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        } @else {
+                          <div class="flex items-center justify-between bg-gray-100 dark:bg-gray-800 py-2 px-3 rounded-lg border transition-colors border-gray-200 dark:border-gray-700"
                           [ngClass]="getPerfContainerClass(set.performanceStatus)">
                           <div class="flex items-center gap-4">
                               <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors"
@@ -187,21 +203,34 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
                             </div>
                           </div>
                           @if (!session()?.completedAt) {
-                            <button
-                              (click)="deleteSet(set.id)"
-                              class="text-gray-500 hover:text-accent-neg transition-colors p-2"
-                              >
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+                            <div class="flex items-center">
+                              <button
+                                (click)="startEditSet(set, ex.id)"
+                                class="text-gray-400 hover:text-accent-pos transition-colors p-2"
+                                title="Edit Set"
+                                >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                              </button>
+                              <button
+                                (click)="deleteSet(set.id)"
+                                class="text-gray-400 hover:text-accent-neg transition-colors p-2"
+                                title="Delete Set"
+                                >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
                           }
                         </div>
+                        }
                       </div>
                       }
                     </div>
                     <!-- Log New Set Form -->
-                    @if (!session()?.completedAt) {
+                    @if (!session()?.completedAt && getSetsForExercise(ex.id).length < (ex.sets || 1)) {
                       <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <div class="mb-3 flex items-center justify-between gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
                           <div class="flex items-center gap-2">
@@ -501,6 +530,15 @@ export class ActiveWorkoutComponent implements OnInit {
   isCreatingNewExercise = signal<boolean>(false);
   isSavingNewExercise = signal<boolean>(false);
 
+  editingSetId = signal<string | null>(null);
+  isSavingEdit = signal<boolean>(false);
+  
+  editSetForm: FormGroup = this.fb.group({
+    weightKg: [0, [Validators.required, Validators.min(0)]],
+    repsCompleted: [0, [Validators.required, Validators.min(0)]],
+    repsCompletedRight: [null, [Validators.min(0)]]
+  });
+
   notesControl = new FormControl('');
 
   // Map of exerciseId -> FormGroup
@@ -550,6 +588,74 @@ export class ActiveWorkoutComponent implements OnInit {
 
   closeOptionsModal() {
     this.optionsModalOpen.set(null);
+  }
+
+  startEditSet(set: WorkoutSetResponse, exId: string) {
+    this.editingSetId.set(set.id);
+    const unit = this.getUnit(exId);
+    let displayWeight = set.weightKg;
+    if (unit === 'lb' && displayWeight != null) {
+      displayWeight = parseFloat((displayWeight * 2.20462).toFixed(1));
+    }
+    this.editSetForm.patchValue({
+      weightKg: displayWeight,
+      repsCompleted: set.repsCompleted,
+      repsCompletedRight: set.repsCompletedRight
+    });
+  }
+
+  cancelEditSet() {
+    this.editingSetId.set(null);
+    this.editSetForm.reset();
+  }
+
+  saveEditSet(exId: string) {
+    const setId = this.editingSetId();
+    if (!setId || this.editSetForm.invalid || this.isSavingEdit()) return;
+
+    this.isSavingEdit.set(true);
+    const formVal = this.editSetForm.value;
+    const unit = this.getUnit(exId);
+    let weightKg = formVal.weightKg;
+    
+    if (weightKg != null && unit === 'lb') {
+      weightKg = parseFloat((weightKg / 2.20462).toFixed(1));
+    }
+
+    const originalSet = this.loggedSets().find(s => s.id === setId);
+    if (!originalSet) {
+       this.isSavingEdit.set(false);
+       return;
+    }
+
+    const request = {
+      sessionExerciseId: originalSet.sessionExerciseId,
+      setNumber: originalSet.setNumber,
+      weightKg: weightKg,
+      repsCompleted: formVal.repsCompleted,
+      repsCompletedRight: formVal.repsCompletedRight,
+      rpe: null
+    };
+
+    this.workoutService.updateSet(setId, request).subscribe({
+      next: (updatedSet) => {
+        const currentSets = [...this.loggedSets()];
+        const idx = currentSets.findIndex(s => s.id === setId);
+        if (idx !== -1) {
+          currentSets[idx] = updatedSet;
+          this.loggedSets.set(currentSets);
+        } else {
+           this.loadWorkoutData();
+        }
+        this.cancelEditSet();
+        this.isSavingEdit.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to update set', err);
+        this.isSavingEdit.set(false);
+        alert('Failed to update set.');
+      }
+    });
   }
 
   getUnit(exId: string): 'kg' | 'lb' {
