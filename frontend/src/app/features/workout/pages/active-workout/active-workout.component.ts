@@ -622,7 +622,15 @@ export class ActiveWorkoutComponent implements OnInit {
       weightKg = parseFloat((weightKg / 2.20462).toFixed(1));
     }
 
+    const originalSet = this.loggedSets().find(s => s.id === setId);
+    if (!originalSet) {
+       this.isSavingEdit.set(false);
+       return;
+    }
+
     const request = {
+      sessionExerciseId: originalSet.sessionExerciseId,
+      setNumber: originalSet.setNumber,
       weightKg: weightKg,
       repsCompleted: formVal.repsCompleted,
       repsCompletedRight: formVal.repsCompletedRight,
