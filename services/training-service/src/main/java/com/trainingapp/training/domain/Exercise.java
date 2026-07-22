@@ -54,6 +54,9 @@ public class Exercise {
     @Column(name = "is_bodyweight", nullable = false)
     private boolean isBodyweight = false;
 
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ExerciseBodyPartTarget> targets = new ArrayList<>();
 
@@ -86,4 +89,7 @@ public class Exercise {
 
     public boolean isBodyweight() { return isBodyweight; }
     public void setBodyweight(boolean bodyweight) { isBodyweight = bodyweight; }
+
+    public boolean isDeleted() { return isDeleted; }
+    public void setDeleted(boolean deleted) { isDeleted = deleted; }
 }

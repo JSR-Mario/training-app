@@ -34,15 +34,18 @@ public class ExerciseService {
     private final ExerciseBodyPartTargetRepository targetRepository;
     private final SessionExerciseRatingRepository ratingRepository;
     private final com.trainingapp.training.repository.WorkoutSetRepository setRepository;
+    private final com.trainingapp.training.repository.DayExerciseRepository dayExerciseRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository,
                            ExerciseBodyPartTargetRepository targetRepository,
                            SessionExerciseRatingRepository ratingRepository,
-                           com.trainingapp.training.repository.WorkoutSetRepository setRepository) {
+                           com.trainingapp.training.repository.WorkoutSetRepository setRepository,
+                           com.trainingapp.training.repository.DayExerciseRepository dayExerciseRepository) {
         this.exerciseRepository = exerciseRepository;
         this.targetRepository = targetRepository;
         this.ratingRepository = ratingRepository;
         this.setRepository = setRepository;
+        this.dayExerciseRepository = dayExerciseRepository;
     }
 
     /** Returns all exercises belonging to the given user or public exercises. */
@@ -119,7 +122,11 @@ public class ExerciseService {
     @Transactional
     public void delete(UUID userId, UUID exerciseId) {
         Exercise exercise = findOwnedOrPublicAdmin(userId, exerciseId);
-        exerciseRepository.delete(exercise);
+        exercise.setDeleted(true);
+        exerciseRepository.save(exercise);
+        
+        // Remove this exercise from any future templates so it doesn't appear in schedules
+        dayExerciseRepository.deleteByExerciseId(exerciseId);
     }
 
     /** Returns all body-part targets for the given exercise. Validates ownership. */

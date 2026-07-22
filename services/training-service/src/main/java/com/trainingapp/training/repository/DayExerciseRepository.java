@@ -8,4 +8,5 @@ import java.util.UUID;
 /** Spring Data JPA repository for {@link DayExercise} entities. */
 public interface DayExerciseRepository extends JpaRepository<DayExercise, UUID> {
     List<DayExercise> findByDayTemplateIdOrderBySortOrderAsc(UUID dayTemplateId);
+    void deleteByExerciseId(UUID exerciseId);
 }

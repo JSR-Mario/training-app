@@ -10,5 +10,6 @@ public record ExerciseSuggestionResponse(
     BigDecimal suggestedWeightKg,
     Integer suggestedReps,
     boolean hadFatigueLastWeek,
+    boolean suggestAddWeight,
     List<PreviousSetSuggestion> previousSets
 ) {}
