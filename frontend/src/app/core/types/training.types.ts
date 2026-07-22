@@ -151,6 +151,10 @@ export interface SessionExerciseRequest {
   isAmrap?: boolean;
 }
 
+export interface SessionExerciseReplaceRequest {
+  newExerciseId: string;
+}
+
 export interface SessionExerciseReorderRequest {
   id: string;
   sortOrder: number;
@@ -224,6 +228,7 @@ export interface ExerciseSuggestionResponse {
   suggestedWeightKg?: number;
   suggestedReps?: number;
   hadFatigueLastWeek?: boolean;
+  suggestAddWeight?: boolean;
   previousSets?: PreviousSetSuggestion[];
 }
 

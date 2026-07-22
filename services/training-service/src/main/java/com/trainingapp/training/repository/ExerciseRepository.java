@@ -13,7 +13,7 @@ import java.util.UUID;
 /** Spring Data JPA repository for {@link Exercise} entities. */
 public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
     @EntityGraph(attributePaths = "targets")
-    @Query("SELECT e FROM Exercise e WHERE e.userId = :userId OR e.isPublic = true")
+    @Query("SELECT e FROM Exercise e WHERE (e.userId = :userId OR e.isPublic = true) AND e.isDeleted = false")
     List<Exercise> findByUserIdOrIsPublic(@Param("userId") UUID userId);
     
     @EntityGraph(attributePaths = "targets")
@@ -22,6 +22,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
 
     /** Returns up to 3 exercises whose name contains the query (case-insensitive). */
     @EntityGraph(attributePaths = "targets")
-    @Query("SELECT e FROM Exercise e WHERE (e.userId = :userId OR e.isPublic = true) AND LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    @Query("SELECT e FROM Exercise e WHERE (e.userId = :userId OR e.isPublic = true) AND e.isDeleted = false AND LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Exercise> searchExercises(@Param("userId") UUID userId, @Param("name") String name, Pageable pageable);
 }
