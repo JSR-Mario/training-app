@@ -527,6 +527,37 @@ public class WorkoutSessionService {
         sessionExerciseRepository.delete(se);
     }
 
+    @Transactional
+    public SessionExerciseResponse replaceSessionExercise(UUID sessionId, UUID userId, UUID sessionExerciseId, com.trainingapp.training.dto.SessionExerciseReplaceRequest request) {
+        WorkoutSession session = getSessionEntity(sessionId, userId);
+        if (session.getCompletedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot modify a completed session");
+        }
+
+        SessionExercise se = sessionExerciseRepository.findById(sessionExerciseId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session exercise not found"));
+        
+        if (!se.getSession().getId().equals(session.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your session exercise");
+        }
+
+        Exercise newExercise = exerciseRepository.findById(request.newExerciseId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "New exercise not found"));
+
+        se.setExercise(newExercise);
+
+        // Delete any logged sets for the replaced exercise
+        List<WorkoutSet> setsToDelete = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId())
+            .stream()
+            .filter(set -> set.getSessionExercise().getId().equals(se.getId()))
+            .collect(Collectors.toList());
+        
+        setRepository.deleteAll(setsToDelete);
+
+        SessionExercise saved = sessionExerciseRepository.save(se);
+        return mapSessionExerciseToResponse(saved);
+    }
+
     private SessionExerciseResponse mapSessionExerciseToResponse(SessionExercise se) {
         // We need to map Exercise to ExerciseResponse using something. Let's create it manually or use ExerciseService mapToResponse if available.
         return new SessionExerciseResponse(
