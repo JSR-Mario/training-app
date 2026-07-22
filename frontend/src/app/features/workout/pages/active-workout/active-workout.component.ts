@@ -161,7 +161,7 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
                         @if (editingSetId() === set.id) {
                           <div class="flex items-center justify-between bg-white dark:bg-gray-800 py-2 px-3 rounded-lg border border-accent-pos/50 shadow-sm">
                             <form [formGroup]="editSetForm" (ngSubmit)="saveEditSet(ex.id)" class="flex items-center w-full gap-2">
-                              <span class="w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-xs font-bold border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700">
+                              <span class="w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-xs font-bold border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white">
                                 {{ set.setNumber }}
                               </span>
                               <div class="flex items-center flex-1 gap-2 overflow-hidden">
