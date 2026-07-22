@@ -22,7 +22,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
           <p class="text-gray-500 dark:text-gray-400 mt-2">Sign in to continue</p>
         </div>
     
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" action="#" method="post" class="space-y-6">
           <div>
             <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
             <input
