@@ -325,6 +325,24 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
                             </button>
                           </div>
                         </div>
+                        <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl flex flex-col gap-2">
+                          <button (click)="startReplaceExercise(ex.id)" class="w-full py-2 bg-accent-neg/10 text-accent-neg hover:bg-accent-neg/20 border border-accent-neg/20 rounded-lg text-sm font-bold transition-colors">
+                            Replace Exercise
+                          </button>
+                          <p class="text-xs text-gray-500 text-center mt-1">Logged sets for this exercise will be removed.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
+                
+                @if (replacingExerciseId() === ex.id) {
+                  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-black/80 backdrop-blur-sm">
+                    <div class="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative p-6 h-[80vh] flex flex-col">
+                      <button (click)="cancelReplace()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white z-10">✕</button>
+                      <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0">Replace {{ ex.exerciseName }}</h3>
+                      <div class="flex-1 overflow-y-auto min-h-0">
+                        <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onReplaceExerciseSelected($event)"></app-exercise-search>
                       </div>
                     </div>
                   </div>
@@ -545,6 +563,7 @@ export class ActiveWorkoutComponent implements OnInit {
   forms = new Map<string, FormGroup>();
   
   optionsModalOpen = signal<string | null>(null);
+  replacingExerciseId = signal<string | null>(null);
   exerciseUnits = signal<Record<string, 'kg' | 'lb'>>({});
 
   exerciseForm: FormGroup = this.fb.group({
@@ -588,6 +607,36 @@ export class ActiveWorkoutComponent implements OnInit {
 
   closeOptionsModal() {
     this.optionsModalOpen.set(null);
+  }
+
+  startReplaceExercise(exId: string) {
+    this.closeOptionsModal();
+    this.replacingExerciseId.set(exId);
+  }
+
+  cancelReplace() {
+    this.replacingExerciseId.set(null);
+  }
+
+  onReplaceExerciseSelected(newExercise: Exercise) {
+    const sessionExerciseId = this.replacingExerciseId();
+    const sessionId = this.sessionId();
+    if (!sessionExerciseId || !sessionId) return;
+    
+    if (!confirm('Are you sure you want to replace this exercise? Any logged sets will be deleted.')) {
+      return;
+    }
+
+    this.workoutService.replaceSessionExercise(sessionId, sessionExerciseId, { newExerciseId: newExercise.id }).subscribe({
+      next: () => {
+        this.loadWorkoutData();
+        this.replacingExerciseId.set(null);
+      },
+      error: (err) => {
+        console.error('Failed to replace exercise', err);
+        alert('Failed to replace exercise');
+      }
+    });
   }
 
   startEditSet(set: WorkoutSetResponse, exId: string) {

@@ -101,6 +101,10 @@ export class WorkoutService {
     return this.http.delete<void>(`${this.baseUrl}/sessions/${sessionId}/exercises/${sessionExerciseId}`);
   }
 
+  replaceSessionExercise(sessionId: string, sessionExerciseId: string, req: import('../../../core/types/training.types').SessionExerciseReplaceRequest): Observable<SessionExerciseResponse> {
+    return this.http.put<SessionExerciseResponse>(`${this.baseUrl}/sessions/${sessionId}/exercises/${sessionExerciseId}/replace`, req);
+  }
+
   reorderSessionExercises(sessionId: string, requests: SessionExerciseReorderRequest[]): Observable<SessionExerciseResponse[]> {
     return this.http.patch<SessionExerciseResponse[]>(`${this.baseUrl}/sessions/${sessionId}/exercises/reorder`, requests);
   }

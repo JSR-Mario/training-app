@@ -151,6 +151,10 @@ export interface SessionExerciseRequest {
   isAmrap?: boolean;
 }
 
+export interface SessionExerciseReplaceRequest {
+  newExerciseId: string;
+}
+
 export interface SessionExerciseReorderRequest {
   id: string;
   sortOrder: number;

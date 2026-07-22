@@ -74,6 +74,14 @@ public class WorkoutSessionController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/{id}/exercises/{sessionExerciseId}/replace")
+    public com.trainingapp.training.dto.SessionExerciseResponse replaceSessionExercise(
+            @PathVariable UUID id, 
+            @PathVariable UUID sessionExerciseId, 
+            @Valid @RequestBody com.trainingapp.training.dto.SessionExerciseReplaceRequest request) {
+        return sessionService.replaceSessionExercise(id, UserContext.getCurrentUserId(), sessionExerciseId, request);
+    }
+
     @PatchMapping("/{id}/exercises/reorder")
     public List<com.trainingapp.training.dto.SessionExerciseResponse> reorderSessionExercises(@PathVariable UUID id, @Valid @RequestBody List<com.trainingapp.training.dto.SessionExerciseReorderRequest> requests) {
         return sessionService.reorderSessionExercises(id, UserContext.getCurrentUserId(), requests);
