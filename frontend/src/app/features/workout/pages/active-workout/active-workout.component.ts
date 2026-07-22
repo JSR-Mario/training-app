@@ -165,12 +165,12 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
                                 {{ set.setNumber }}
                               </span>
                               <div class="flex items-center flex-1 gap-2 overflow-hidden">
-                                <input type="number" formControlName="weightKg" class="w-16 sm:w-20 px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded text-sm text-center outline-none focus:border-accent-pos" step="0.5" min="0">
+                                <input type="number" formControlName="weightKg" class="w-16 sm:w-20 px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded text-sm text-black dark:text-white text-center outline-none focus:border-accent-pos" step="0.5" min="0">
                                 <span class="text-xs text-gray-500">{{ getUnit(ex.id) }} ×</span>
-                                <input type="number" formControlName="repsCompleted" class="w-12 sm:w-16 px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded text-sm text-center outline-none focus:border-accent-pos" min="0">
+                                <input type="number" formControlName="repsCompleted" class="w-12 sm:w-16 px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded text-sm text-black dark:text-white text-center outline-none focus:border-accent-pos" min="0">
                                 @if (ex.unilateral) {
                                   <span class="text-xs text-gray-500">/</span>
-                                  <input type="number" formControlName="repsCompletedRight" class="w-12 sm:w-16 px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded text-sm text-center outline-none focus:border-accent-pos" min="0">
+                                  <input type="number" formControlName="repsCompletedRight" class="w-12 sm:w-16 px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded text-sm text-black dark:text-white text-center outline-none focus:border-accent-pos" min="0">
                                 }
                               </div>
                               <div class="flex items-center shrink-0">

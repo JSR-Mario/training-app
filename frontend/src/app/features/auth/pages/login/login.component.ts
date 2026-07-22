@@ -28,6 +28,8 @@ import { AuthService } from '../../../../core/auth/auth.service';
             <input
               type="text"
               id="username"
+              name="username"
+              autocomplete="username"
               formControlName="username"
               class="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos focus:border-transparent transition-all outline-none text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 solid-input"
               placeholder="Enter your username"
@@ -44,6 +46,8 @@ import { AuthService } from '../../../../core/auth/auth.service';
             <input
               type="password"
               id="password"
+              name="password"
+              autocomplete="current-password"
               formControlName="password"
               class="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos focus:border-transparent transition-all outline-none text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 solid-input"
               placeholder="••••••••"
