@@ -228,6 +228,7 @@ export interface ExerciseSuggestionResponse {
   suggestedWeightKg?: number;
   suggestedReps?: number;
   hadFatigueLastWeek?: boolean;
+  suggestAddWeight?: boolean;
   previousSets?: PreviousSetSuggestion[];
 }
 

@@ -36,6 +36,7 @@ class ExerciseServiceTest {
     @Mock private ExerciseBodyPartTargetRepository targetRepository;
     @Mock private SessionExerciseRatingRepository ratingRepository;
     @Mock private com.trainingapp.training.repository.WorkoutSetRepository setRepository;
+    @Mock private com.trainingapp.training.repository.DayExerciseRepository dayExerciseRepository;
     @InjectMocks private ExerciseService exerciseService;
 
     private UUID userId;
@@ -99,8 +100,12 @@ class ExerciseServiceTest {
     @Test
     void delete_existingExercise_deletes() {
         when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
+
         exerciseService.delete(userId, exerciseId);
-        verify(exerciseRepository).delete(sampleExercise);
+
+        assertThat(sampleExercise.isDeleted()).isTrue();
+        verify(exerciseRepository).save(sampleExercise);
+        verify(dayExerciseRepository).deleteByExerciseId(exerciseId);
     }
 
     @Test

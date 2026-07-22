@@ -95,6 +95,13 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
                           </svg>
                         </span>
                       }
+                      @if (getSuggestion(ex.id)?.suggestAddWeight) {
+                        <span title="Ready for heavier weights!" class="text-accent-pos bg-accent-pos/10 border border-accent-pos/20 p-0.5 rounded flex items-center justify-center cursor-help ml-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                          </svg>
+                        </span>
+                      }
                       @if (hasPrForExercise(ex.id)) {
                         <span class="text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 border border-accent-pos/20 px-2 py-1 rounded animate-pulse">PR!</span>
                       }
@@ -167,10 +174,10 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
                                 }
                               </div>
                               <div class="flex items-center shrink-0">
-                                <button type="button" (click)="cancelEditSet()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 transition-colors">
+                                <button type="button" (click)="cancelEditSet()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 transition-colors bg-gray-100 dark:bg-gray-700 rounded mr-1">
                                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
-                                <button type="submit" [disabled]="editSetForm.invalid || isSavingEdit()" class="text-accent-pos hover:text-white hover:bg-accent-pos p-1.5 rounded transition-colors disabled:opacity-50">
+                                <button type="submit" [disabled]="editSetForm.invalid || isSavingEdit()" class="text-white bg-accent-pos hover:opacity-80 p-1.5 rounded transition-all disabled:opacity-50">
                                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                                 </button>
                               </div>

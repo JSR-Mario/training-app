@@ -368,6 +368,7 @@ public class WorkoutSessionService {
             
             List<WorkoutSet> allHistorical = setRepository.findHistoricalSetsForExercise(se.getExercise().getId(), userId, session.getPerformedOn());
             boolean hadFatigueLastWeek = false;
+            boolean suggestAddWeight = false;
             List<com.trainingapp.training.dto.PreviousSetSuggestion> previousSets = new java.util.ArrayList<>();
             
             if (!allHistorical.isEmpty()) {
@@ -390,6 +391,9 @@ public class WorkoutSessionService {
                 
                 int warnings = 0;
                 int criticals = 0;
+                int setsBelowMinReps = 0;
+                int setsAboveMaxReps = 0;
+                
                 for (WorkoutSet s : recentSets) {
                     if (s.getWeightKg() != null && s.getRepsCompleted() != null && maxPerf > 0) {
                         int r = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
@@ -398,9 +402,22 @@ public class WorkoutSessionService {
                         if (ratio < 0.75) criticals++;
                         else if (ratio < 0.90) warnings++;
                     }
+                    
+                    if (s.getRepsCompleted() != null) {
+                        int r = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
+                        if (se.getReps() != null && r < se.getReps()) {
+                            setsBelowMinReps++;
+                        }
+                        if (se.getRepsMax() != null && r >= se.getRepsMax()) {
+                            setsAboveMaxReps++;
+                        } else if (se.getRepsMax() == null && se.getReps() != null && r > se.getReps()) {
+                            setsAboveMaxReps++;
+                        }
+                    }
                 }
                 
-                hadFatigueLastWeek = criticals >= 1 || warnings >= 2;
+                hadFatigueLastWeek = criticals >= 1 || warnings >= 2 || setsBelowMinReps > 0;
+                suggestAddWeight = setsAboveMaxReps >= 3;
                 
                 for (WorkoutSet s : recentSets) {
                     previousSets.add(new com.trainingapp.training.dto.PreviousSetSuggestion(
@@ -417,6 +434,7 @@ public class WorkoutSessionService {
                 suggestedWeight,
                 suggestedReps,
                 hadFatigueLastWeek,
+                suggestAddWeight,
                 previousSets
             ));
         }
