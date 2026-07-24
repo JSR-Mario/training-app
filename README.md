@@ -37,11 +37,11 @@ cd training-app
 docker-compose up -d
 ```
 
-- **Frontend:** `http://localhost:3000`
+- **Frontend (Production):** `https://app.jsr-mario.com` (Local dev: `http://localhost:3000`)
 - **API Gateway (Swagger UI):** `http://localhost:8080/swagger-ui.html`
 - **Grafana Monitoring:**
-  - **Local/SSH Tunnel:** `http://localhost:3000` (`ssh -L 3000:127.0.0.1:3000 user@ec2-host`)
-  - **Production Access:** Routed via Cloudflare Tunnel (`grafana.yourdomain.com`) and secured behind Cloudflare Zero Trust (Email OTP Access Policy).
+  - **Production Access:** `https://grafana.jsr-mario.com` (Secured behind Cloudflare Zero Trust Email OTP Policy).
+  - **Local / SSH Tunnel:** `http://localhost:3000` (`ssh -L 3000:127.0.0.1:3000 user@ec2-host`).
 
 ## Infrastructure & Security Highlights
 
