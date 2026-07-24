@@ -48,6 +48,7 @@ services:
   # auth-service (port 8081)
   # -----------------------------------------------------------
   auth-service:
+    image: ghcr.io/jsr-mario/training-app/auth-service:main
     build:
       context: .
       dockerfile: services/auth-service/Dockerfile
@@ -73,6 +74,7 @@ services:
   # training-service (port 8082)
   # -----------------------------------------------------------
   training-service:
+    image: ghcr.io/jsr-mario/training-app/training-service:main
     build:
       context: .
       dockerfile: services/training-service/Dockerfile
@@ -98,6 +100,7 @@ services:
   # analytics-service (port 8083)
   # -----------------------------------------------------------
   analytics-service:
+    image: ghcr.io/jsr-mario/training-app/analytics-service:main
     build:
       context: .
       dockerfile: services/analytics-service/Dockerfile
@@ -122,6 +125,7 @@ services:
   # api-gateway (Internal port 8080) — no longer public, routed via Caddy
   # -----------------------------------------------------------
   api-gateway:
+    image: ghcr.io/jsr-mario/training-app/api-gateway:main
     build:
       context: .
       dockerfile: services/api-gateway/Dockerfile
@@ -149,6 +153,7 @@ services:
   # frontend — nginx serving the Angular PWA (Internal port 80)
   # -----------------------------------------------------------
   frontend:
+    image: ghcr.io/jsr-mario/training-app/frontend:main
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -193,8 +198,12 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.retention.time=48h'
-    mem_limit: 250m
-    mem_reservation: 150m
+    deploy:
+      resources:
+        limits:
+          memory: 250m
+        reservations:
+          memory: 150m
     volumes:
       - ./docs/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -206,8 +215,12 @@ services:
     image: grafana/loki:3.0.0
     restart: unless-stopped
     command: -config.file=/etc/loki/loki-config.yml
-    mem_limit: 300m
-    mem_reservation: 150m
+    deploy:
+      resources:
+        limits:
+          memory: 300m
+        reservations:
+          memory: 150m
     volumes:
       - ./docs/observability/loki-config.yml:/etc/loki/loki-config.yml:ro
       - loki_data:/tmp/loki
@@ -219,7 +232,10 @@ services:
     image: grafana/promtail:3.0.0
     restart: unless-stopped
     command: -config.file=/etc/promtail/promtail-config.yml
-    mem_limit: 50m
+    deploy:
+      resources:
+        limits:
+          memory: 50m
     volumes:
       - ./docs/observability/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
@@ -235,8 +251,12 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
-    mem_limit: 250m
-    mem_reservation: 150m
+    deploy:
+      resources:
+        limits:
+          memory: 250m
+        reservations:
+          memory: 150m
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
       GF_ANALYTICS_REPORTING_ENABLED: "false"
