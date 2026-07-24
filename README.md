@@ -6,7 +6,7 @@ A cloud-native, microservices-based platform for tracking workout sessions, mana
 
 ![Architecture Diagram](docs/architecture.drawio.png)
 
-The frontend clients communicate exclusively with the Spring Cloud Gateway. The gateway validates authentication and routes traffic to the isolated backend microservices. Each service maintains its own separate PostgreSQL schema to ensure strict domain boundary enforcement.
+> **Note:** The architecture diagram is currently being updated to reflect the latest infrastructure additions (Cloudflare Tunnel ingress, Caddy internal proxy, Redis L2 caching, and the Centralized Observability Stack).
 
 ## Tech Stack
 
