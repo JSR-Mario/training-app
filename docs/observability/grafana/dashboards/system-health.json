@@ -198,7 +198,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{container=~\".*\"}",
+          "expr": "{container=~\".+\"}",
           "queryType": "range",
           "refId": "A"
         }
