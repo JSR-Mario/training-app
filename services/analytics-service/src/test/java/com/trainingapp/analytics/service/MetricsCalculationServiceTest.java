@@ -35,6 +35,9 @@ class MetricsCalculationServiceTest {
     @Mock
     private ExerciseProgressRepository progressRepository;
 
+    @Mock
+    private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+
     @InjectMocks
     private MetricsCalculationService metricsCalculationService;
 

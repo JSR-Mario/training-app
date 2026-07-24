@@ -56,6 +56,8 @@ class ExerciseServiceTest {
 
     @Test
     void findAll_returnsUserExercises() {
+        when(exerciseRepository.findByIsPublicTrueAndIsDeletedFalse()).thenReturn(List.of());
+        when(exerciseRepository.findByUserIdAndIsDeletedFalse(userId)).thenReturn(List.of(sampleExercise));
         when(exerciseRepository.findByUserIdOrIsPublic(userId)).thenReturn(List.of(sampleExercise));
         when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
         when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());

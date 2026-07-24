@@ -210,6 +210,10 @@ public class WorkoutSessionService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+        @org.springframework.cache.annotation.CacheEvict(value = "userExerciseProjections:v1", key = "#userId"),
+        @org.springframework.cache.annotation.CacheEvict(value = "dashboardSummary:v1", allEntries = true)
+    })
     public void completeSession(UUID id, UUID userId) {
         WorkoutSession session = getSessionEntity(id, userId);
         
@@ -273,6 +277,10 @@ public class WorkoutSessionService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+        @org.springframework.cache.annotation.CacheEvict(value = "userExerciseProjections:v1", key = "#userId"),
+        @org.springframework.cache.annotation.CacheEvict(value = "dashboardSummary:v1", allEntries = true)
+    })
     public void uncompleteSession(UUID id, UUID userId) {
         WorkoutSession session = getSessionEntity(id, userId);
         

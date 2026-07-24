@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface CardioSummary {
@@ -54,6 +54,9 @@ export class DashboardService {
   private apiUrl = '/api/v1/training/dashboard';
 
   getSummary(): Observable<DashboardSummaryResponse> {
-    return this.http.get<DashboardSummaryResponse>(`${this.apiUrl}/summary`);
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    const params = new HttpParams().set('tz', tz);
+    return this.http.get<DashboardSummaryResponse>(`${this.apiUrl}/summary`, { params });
   }
 }
+

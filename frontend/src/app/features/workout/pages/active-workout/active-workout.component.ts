@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, HostListener, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -20,7 +20,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
 import { AnalyticsService } from '../../../analytics/services/analytics.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
-import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
+import { DayVolumeEntry } from '../../../../core/types/analytics.types';
 
 @Component({
   standalone: true,
@@ -89,21 +89,56 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
                     <h2 class="text-xl font-bold text-black dark:text-white flex flex-wrap items-center gap-2">
                       <span>{{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</span>
                       @if (getSuggestion(ex.id)?.hadFatigueLastWeek) {
-                        <span title="Reached failure last session" class="text-amber-500 bg-amber-500/10 border border-amber-500/20 p-0.5 rounded flex items-center justify-center cursor-help ml-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                          </svg>
-                        </span>
+                        <div class="relative ml-2">
+                          <button
+                            type="button"
+                            (click)="$event.stopPropagation(); toggleIconTooltip(ex.id + '-fatigue')"
+                            class="w-6 h-6 text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded flex items-center justify-center cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                          </button>
+                          @if (activeIconTooltip() === ex.id + '-fatigue') {
+                            <div class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
+                              High fatigue detected last session. Maintain current weight and focus on form.
+                              <div class="absolute top-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900 dark:border-t-white"></div>
+                            </div>
+                          }
+                        </div>
                       }
-                      @if (getSuggestion(ex.id)?.suggestAddWeight) {
-                        <span title="Ready for heavier weights!" class="text-accent-pos bg-accent-pos/10 border border-accent-pos/20 p-0.5 rounded flex items-center justify-center cursor-help ml-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                          </svg>
-                        </span>
+                      @if (getSuggestion(ex.id)?.suggestAddWeight && !hasPerfDropForExercise(ex.id) && !getSuggestion(ex.id)?.hadFatigueLastWeek) {
+                        <div class="relative ml-2">
+                          <button
+                            type="button"
+                            (click)="$event.stopPropagation(); toggleIconTooltip(ex.id + '-weight')"
+                            class="w-6 h-6 text-accent-pos bg-accent-pos/10 border border-accent-pos/20 rounded flex items-center justify-center cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                          </button>
+                          @if (activeIconTooltip() === ex.id + '-weight') {
+                            <div class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
+                              You crushed your rep targets last session! Consider adding weight this week.
+                              <div class="absolute top-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900 dark:border-t-white"></div>
+                            </div>
+                          }
+                        </div>
                       }
                       @if (hasPrForExercise(ex.id)) {
-                        <span class="text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 border border-accent-pos/20 px-2 py-1 rounded animate-pulse">PR!</span>
+                        <div class="relative ml-2">
+                          <button
+                            type="button"
+                            (click)="$event.stopPropagation(); toggleIconTooltip(ex.id + '-pr')"
+                            class="w-6 h-6 text-accent-pos bg-accent-pos/10 border border-accent-pos/20 rounded flex items-center justify-center cursor-pointer animate-pulse text-[10px] font-bold uppercase">
+                            PR!
+                          </button>
+                          @if (activeIconTooltip() === ex.id + '-pr') {
+                            <div class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
+                              Personal Record! You lifted heavier than ever on this exercise.
+                              <div class="absolute top-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900 dark:border-t-white"></div>
+                            </div>
+                          }
+                        </div>
                       }
                     </h2>
                     @if (!isCollapsed(ex.id) && !session()?.completedAt) {
@@ -523,6 +558,9 @@ export class ActiveWorkoutComponent implements OnInit {
   private bodyWeightService = inject(BodyWeightService);
   private analyticsService = inject(AnalyticsService);
 
+  /** Tracks which icon tooltip is currently visible. Key format: `${dayExerciseId}-${type}`. */
+  activeIconTooltip = signal<string | null>(null);
+
   sessionId = signal<string | null>(null);
   session = signal<WorkoutSessionResponse | null>(null);
   exercises = signal<DayExercise[]>([]);
@@ -581,6 +619,26 @@ export class ActiveWorkoutComponent implements OnInit {
   });
 
   collapsedExercises = new Set<string>();
+
+  /**
+   * Closes any open icon tooltip when the user clicks anywhere on the document.
+   */
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    if (this.activeIconTooltip()) {
+      this.activeIconTooltip.set(null);
+    }
+  }
+
+  /**
+   * Toggles the icon tooltip for the given key.
+   * If the same key is clicked again, the tooltip is dismissed.
+   *
+   * @param key Unique identifier combining dayExerciseId and icon type.
+   */
+  toggleIconTooltip(key: string): void {
+    this.activeIconTooltip.update(current => current === key ? null : key);
+  }
 
   toggleCollapse(exId: string) {
     if (this.collapsedExercises.has(exId)) {
@@ -899,51 +957,41 @@ export class ActiveWorkoutComponent implements OnInit {
     });
   }
 
+  /**
+   * Builds the Volume History chart data by requesting aggregated session volumes
+   * from the server, grouped by dayTemplateId.
+   *
+   * Uses a single GET /api/v1/analytics/day-volume request instead of one request
+   * per exercise, making historical bars resilient to exercises being added or removed.
+   *
+   * The current session bar is highlighted by comparing each entry's sessionId UUID
+   * against this.session()?.id — both values originate from the same session_id column,
+   * so the comparison is always an exact UUID string match with no date ambiguity.
+   */
   buildChartData() {
-    const exs = this.exercises();
-    if (exs.length === 0) return;
-    
-    const obs = exs.map(ex => this.analyticsService.getExerciseProgress(ex.exerciseId));
-    
-    forkJoin(obs).subscribe((results: ExerciseProgressEntry[][]) => {
-      const dayId = this.session()?.dayTemplateId;
-      if (!dayId) return;
+    const dayId = this.session()?.dayTemplateId;
+    if (!dayId) return;
 
-      const volumeByDate = new Map<string, number>();
-      
-      results.forEach((entries: ExerciseProgressEntry[]) => {
-        entries.forEach((entry: ExerciseProgressEntry) => {
-          if (entry.dayTemplateId === dayId) {
-            const current = volumeByDate.get(entry.sessionDate) || 0;
-            volumeByDate.set(entry.sessionDate, current + entry.totalVolumeKg);
-          }
-        });
-      });
-      
-      const sortedDates = Array.from(volumeByDate.keys()).sort();
-      if (sortedDates.length === 0) return;
-      
-      // Get the CSS variable for accent-pos or fallback
+    this.analyticsService.getDayVolume(dayId).subscribe((entries: DayVolumeEntry[]) => {
+      if (entries.length === 0) return;
+
+      // UUID of the session currently being viewed — used to highlight its bar.
+      // Sourced from WorkoutSessionResponse.id (same UUID as session_id in DB).
+      const currentSessionId = this.session()?.id;
+
       let accentColor = '#8b5cf6';
       if (typeof window !== 'undefined') {
-        accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+        accentColor = getComputedStyle(document.documentElement)
+          .getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
       }
-      
-      const currentSessionAt = this.session()?.startedAt;
-      let currentSessionDate: string | null = null;
-      if (currentSessionAt) {
-        currentSessionDate = currentSessionAt.substring(0, 10);
-      }
-      
-      const bgColors = sortedDates.map(d => 
-        d === currentSessionDate ? accentColor : 'rgba(128, 128, 128, 0.3)'
-      );
 
       this.chartData = {
-        labels: sortedDates,
+        labels: entries.map(e => e.sessionDate),
         datasets: [{
-          data: sortedDates.map(d => volumeByDate.get(d)!),
-          backgroundColor: bgColors,
+          data: entries.map(e => e.totalVolumeKg),
+          backgroundColor: entries.map(e =>
+            e.sessionId === currentSessionId ? accentColor : 'rgba(128, 128, 128, 0.3)'
+          ),
           borderRadius: 4
         }]
       };
@@ -971,6 +1019,17 @@ export class ActiveWorkoutComponent implements OnInit {
 
   hasPrForExercise(exerciseId: string): boolean {
     return this.getSetsForExercise(exerciseId).some(set => set.isNewPr);
+  }
+
+  /**
+   * Returns true if any set logged in the current session for the given session-exercise
+   * has a CRITICAL performance status (i.e. a "Perf Drop"), meaning the athlete's
+   * output fell below 75 % of their best set this session.
+   */
+  hasPerfDropForExercise(sessionExerciseId: string): boolean {
+    return this.getSetsForExercise(sessionExerciseId).some(
+      set => set.performanceStatus === 'CRITICAL'
+    );
   }
 
   getSuggestion(dayExerciseId: string) {

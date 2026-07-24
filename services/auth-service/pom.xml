@@ -51,6 +51,12 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Prometheus Metrics -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
         <!-- Flyway core + PostgreSQL support (split in Flyway 10.x) -->
         <dependency>
             <groupId>org.flywaydb</groupId>
