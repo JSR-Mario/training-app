@@ -24,4 +24,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
     @EntityGraph(attributePaths = "targets")
     @Query("SELECT e FROM Exercise e WHERE (e.userId = :userId OR e.isPublic = true) AND e.isDeleted = false AND LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Exercise> searchExercises(@Param("userId") UUID userId, @Param("name") String name, Pageable pageable);
+
+    @EntityGraph(attributePaths = "targets")
+    @Query("SELECT e FROM Exercise e WHERE e.isPublic = true AND e.isDeleted = false")
+    List<Exercise> findByIsPublicTrueAndIsDeletedFalse();
+
+    @EntityGraph(attributePaths = "targets")
+    @Query("SELECT e FROM Exercise e WHERE e.userId = :userId AND e.isDeleted = false")
+    List<Exercise> findByUserIdAndIsDeletedFalse(@Param("userId") UUID userId);
 }

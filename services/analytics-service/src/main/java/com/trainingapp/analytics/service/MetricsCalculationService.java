@@ -30,11 +30,22 @@ public class MetricsCalculationService {
 
     private final WeeklyVolumeRepository volumeRepository;
     private final ExerciseProgressRepository progressRepository;
+    private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
 
     public MetricsCalculationService(WeeklyVolumeRepository volumeRepository,
-                                     ExerciseProgressRepository progressRepository) {
+                                     ExerciseProgressRepository progressRepository,
+                                     org.springframework.data.redis.core.StringRedisTemplate redisTemplate) {
         this.volumeRepository = volumeRepository;
         this.progressRepository = progressRepository;
+        this.redisTemplate = redisTemplate;
+    }
+
+    private void invalidateUserCaches(UUID userId) {
+        String pattern = "analytics:cache:v1:*" + userId.toString() + "*";
+        java.util.Set<String> keys = redisTemplate.keys(pattern);
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
     }
 
     /**
@@ -140,6 +151,8 @@ public class MetricsCalculationService {
             snapshot.setTotalSets(snapshot.getTotalSets().add(addedVolume));
             volumeRepository.save(snapshot);
         });
+
+        invalidateUserCaches(event.userId());
     }
 
     /**
@@ -185,5 +198,7 @@ public class MetricsCalculationService {
                     volumeRepository.save(snapshot);
                 })
         );
+        
+        invalidateUserCaches(event.userId());
     }
 }

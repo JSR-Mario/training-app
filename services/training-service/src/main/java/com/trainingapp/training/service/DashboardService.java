@@ -66,6 +66,7 @@ public class DashboardService {
      * @param timezone user's time zone ID (e.g. "America/Mexico_City"). Defaults to UTC if null or invalid.
      * @return a populated {@link DashboardSummaryResponse}
      */
+    @org.springframework.cache.annotation.Cacheable(value = "dashboardSummary:v1", key = "#userId.toString() + ':' + (#timezone != null ? #timezone : 'UTC')")
     public DashboardSummaryResponse getSummary(UUID userId, String timezone) {
         ZoneId zoneId;
         if (timezone != null && !timezone.isBlank()) {

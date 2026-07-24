@@ -46,6 +46,7 @@ public class AnalyticsController {
      * @return list of body-part volume snapshots
      */
     @GetMapping("/volume")
+    @org.springframework.cache.annotation.Cacheable(value = "weeklyVolume:v1", key = "T(com.trainingapp.analytics.config.UserContext).getCurrentUserId().toString() + ':' + #programId + ':' + #weekNumber")
     public List<WeeklyVolumeResponse> getWeeklyVolume(
             @RequestParam UUID programId,
             @RequestParam int weekNumber) {
@@ -66,6 +67,7 @@ public class AnalyticsController {
      * @return list of progress snapshots ordered by session date ascending
      */
     @GetMapping("/progress/{exerciseId}")
+    @org.springframework.cache.annotation.Cacheable(value = "exerciseProgress:v1", key = "T(com.trainingapp.analytics.config.UserContext).getCurrentUserId().toString() + ':' + #exerciseId")
     public List<ExerciseProgressResponse> getExerciseProgress(@PathVariable UUID exerciseId) {
 
         UUID userId = UserContext.getCurrentUserId();
@@ -97,6 +99,7 @@ public class AnalyticsController {
      * @return list of aggregated day-volume entries ordered by session date ascending
      */
     @GetMapping("/day-volume")
+    @org.springframework.cache.annotation.Cacheable(value = "dayVolume:v1", key = "T(com.trainingapp.analytics.config.UserContext).getCurrentUserId().toString() + ':' + #dayTemplateId")
     public List<DayVolumeResponse> getDayVolume(@RequestParam UUID dayTemplateId) {
 
         UUID userId = UserContext.getCurrentUserId();

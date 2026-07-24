@@ -48,11 +48,71 @@ public class ExerciseService {
         this.dayExerciseRepository = dayExerciseRepository;
     }
 
+    /** Caches and returns all public exercises as basic responses (without user-specific PRs/ratings). */
+    @org.springframework.cache.annotation.Cacheable(value = "exercisesCatalog:global:v1")
+    public List<ExerciseResponse> getCachedGlobalExercises() {
+        return exerciseRepository.findByIsPublicTrueAndIsDeletedFalse().stream()
+                .map(e -> toResponse(e, 5.0, List.of()))
+                .toList();
+    }
+
+    /** Caches and returns user-specific PRs and ratings for all exercises. */
+    @org.springframework.cache.annotation.Cacheable(value = "userExerciseProjections:v1", key = "#userId")
+    public UserExerciseProjections getUserProjections(UUID userId) {
+        // Fetch all exercise IDs this user has access to (public + owned) to calculate ratings
+        List<UUID> exerciseIds = exerciseRepository.findByUserIdOrIsPublic(userId).stream()
+                                    .map(Exercise::getId)
+                                    .toList();
+        
+        List<Object[]> rawRatings = ratingRepository.getAverageRatingsForExercises(exerciseIds);
+        Map<UUID, Double> ratingsMap = rawRatings.stream()
+                .collect(Collectors.toMap(row -> (UUID) row[0], row -> (Double) row[1]));
+                
+        List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserId(userId);
+        Map<UUID, List<com.trainingapp.training.dto.ExercisePrResponse>> prMap = prs.stream()
+                .collect(Collectors.groupingBy(
+                        com.trainingapp.training.dto.ExercisePrProjection::getExerciseId,
+                        Collectors.mapping(
+                            pr -> new com.trainingapp.training.dto.ExercisePrResponse(pr.getPrWeight(), pr.getPrReps(), pr.getBucket()),
+                            Collectors.toList()
+                        )
+                ));
+        
+        return new UserExerciseProjections(ratingsMap, prMap);
+    }
+
+    public record UserExerciseProjections(
+        Map<UUID, Double> ratingsMap,
+        Map<UUID, List<com.trainingapp.training.dto.ExercisePrResponse>> prMap
+    ) {}
+
     /** Returns all exercises belonging to the given user or public exercises. */
     @Transactional(readOnly = true)
     public List<ExerciseResponse> findAll(UUID userId) {
-        List<Exercise> exercises = exerciseRepository.findByUserIdOrIsPublic(userId);
-        return mapExercisesWithRatingsAndPrs(exercises, userId);
+        // 1. Fetch global public exercises from cache
+        List<ExerciseResponse> globalResponses = getCachedGlobalExercises();
+        
+        // 2. Fetch user's private exercises from DB (fast, small dataset)
+        List<Exercise> privateExercises = exerciseRepository.findByUserIdAndIsDeletedFalse(userId);
+        List<ExerciseResponse> privateResponses = privateExercises.stream()
+                .map(e -> toResponse(e, 5.0, List.of()))
+                .toList();
+                
+        // 3. Fetch user's cached projections
+        UserExerciseProjections projections = getUserProjections(userId);
+        
+        // 4. Merge and apply projections
+        List<ExerciseResponse> combined = new java.util.ArrayList<>();
+        combined.addAll(globalResponses);
+        combined.addAll(privateResponses);
+        
+        return combined.stream()
+            .map(r -> new ExerciseResponse(
+                r.id(), r.name(), r.equipmentBrand(), r.unilateral(), r.isBodyweight(), r.isPublic(), r.spinalLoading(), r.createdAt(), r.targets(),
+                projections.ratingsMap().getOrDefault(r.id(), 5.0),
+                projections.prMap().getOrDefault(r.id(), List.of())
+            ))
+            .toList();
     }
 
     /** Returns up to 3 exercises matching the query for autocomplete. */
@@ -64,6 +124,7 @@ public class ExerciseService {
 
     /** Creates a new exercise. Only admins can create public exercises. */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "userExerciseProjections:v1", key = "#userId")
     public ExerciseResponse create(UUID userId, ExerciseRequest request) {
         boolean duplicate = exerciseRepository.findByUserIdOrIsPublic(userId).stream()
                 .anyMatch(e -> e.getName().equalsIgnoreCase(request.name()));
@@ -88,11 +149,17 @@ public class ExerciseService {
             exercise.setIsPublic(false);
         }
         
-        return toResponse(exerciseRepository.save(exercise), 5.0, null);
+        Exercise saved = exerciseRepository.save(exercise);
+        if (saved.getIsPublic()) {
+            evictGlobalExercisesCache();
+        }
+        
+        return toResponse(saved, 5.0, null);
     }
 
     /** Updates exercise fields. Validates ownership and public roles. */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "userExerciseProjections:v1", key = "#userId")
     public ExerciseResponse update(UUID userId, UUID exerciseId, ExerciseRequest request) {
         Exercise exercise = findOwnedOrPublicAdmin(userId, exerciseId);
 
@@ -115,11 +182,23 @@ public class ExerciseService {
             exercise.setIsPublic(request.isPublic());
         }
         
-        return mapExercisesWithRatingsAndPrs(List.of(exerciseRepository.save(exercise)), userId).get(0);
+        Exercise saved = exerciseRepository.save(exercise);
+        
+        if (saved.getIsPublic()) {
+            evictGlobalExercisesCache();
+        }
+        
+        return mapExercisesWithRatingsAndPrs(List.of(saved), userId).get(0);
+    }
+
+    @org.springframework.cache.annotation.CacheEvict(value = "exercisesCatalog:global:v1", allEntries = true)
+    public void evictGlobalExercisesCache() {
+        // Intentionally blank. Used to evict global cache when an admin edits a public exercise.
     }
 
     /** Deletes the exercise. Validates ownership and public roles. Cascades to targets. */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "userExerciseProjections:v1", key = "#userId")
     public void delete(UUID userId, UUID exerciseId) {
         Exercise exercise = findOwnedOrPublicAdmin(userId, exerciseId);
         exercise.setDeleted(true);
@@ -127,6 +206,10 @@ public class ExerciseService {
         
         // Remove this exercise from any future templates so it doesn't appear in schedules
         dayExerciseRepository.deleteByExerciseId(exerciseId);
+        
+        if (exercise.getIsPublic()) {
+            evictGlobalExercisesCache();
+        }
     }
 
     /** Returns all body-part targets for the given exercise. Validates ownership. */
@@ -140,33 +223,50 @@ public class ExerciseService {
 
     /** Creates a new body-part target for the given exercise. Validates ownership and public roles. */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "userExerciseProjections:v1", key = "#userId")
     public ExerciseTargetResponse createTarget(UUID userId, UUID exerciseId, ExerciseTargetRequest request) {
         Exercise exercise = findOwnedOrPublicAdmin(userId, exerciseId);
         ExerciseBodyPartTarget target = new ExerciseBodyPartTarget();
         target.setExercise(exercise);
         target.setBodyPart(request.bodyPart());
         target.setTargetValue(request.targetValue());
+        
+        if (exercise.getIsPublic()) {
+            evictGlobalExercisesCache();
+        }
+        
         return toTargetResponse(targetRepository.save(target));
     }
 
     /** Updates an existing body-part target. Validates exercise ownership and public roles. */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "userExerciseProjections:v1", key = "#userId")
     public ExerciseTargetResponse updateTarget(UUID userId, UUID targetId, ExerciseTargetRequest request) {
         ExerciseBodyPartTarget target = targetRepository.findById(targetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Exercise target not found."));
-        findOwnedOrPublicAdmin(userId, target.getExercise().getId());
+        Exercise exercise = findOwnedOrPublicAdmin(userId, target.getExercise().getId());
         target.setBodyPart(request.bodyPart());
         target.setTargetValue(request.targetValue());
+        
+        if (exercise.getIsPublic()) {
+            evictGlobalExercisesCache();
+        }
+        
         return toTargetResponse(targetRepository.save(target));
     }
 
     /** Deletes a body-part target. Validates exercise ownership. */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "userExerciseProjections:v1", key = "#userId")
     public void deleteTarget(UUID userId, UUID targetId) {
         ExerciseBodyPartTarget target = targetRepository.findById(targetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Exercise target not found."));
-        findOwnedOrPublicAdmin(userId, target.getExercise().getId());
+        Exercise exercise = findOwnedOrPublicAdmin(userId, target.getExercise().getId());
         targetRepository.delete(target);
+        
+        if (exercise.getIsPublic()) {
+            evictGlobalExercisesCache();
+        }
     }
 
     /**
