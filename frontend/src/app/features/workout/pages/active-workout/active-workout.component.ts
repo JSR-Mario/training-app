@@ -95,7 +95,7 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
                           </svg>
                         </span>
                       }
-                      @if (getSuggestion(ex.id)?.suggestAddWeight) {
+                      @if (getSuggestion(ex.id)?.suggestAddWeight && !hasPerfDropForExercise(ex.id) && !getSuggestion(ex.id)?.hadFatigueLastWeek) {
                         <span title="Ready for heavier weights!" class="text-accent-pos bg-accent-pos/10 border border-accent-pos/20 p-0.5 rounded flex items-center justify-center cursor-help ml-2">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -971,6 +971,17 @@ export class ActiveWorkoutComponent implements OnInit {
 
   hasPrForExercise(exerciseId: string): boolean {
     return this.getSetsForExercise(exerciseId).some(set => set.isNewPr);
+  }
+
+  /**
+   * Returns true if any set logged in the current session for the given session-exercise
+   * has a CRITICAL performance status (i.e. a "Perf Drop"), meaning the athlete's
+   * output fell below 75 % of their best set this session.
+   */
+  hasPerfDropForExercise(sessionExerciseId: string): boolean {
+    return this.getSetsForExercise(sessionExerciseId).some(
+      set => set.performanceStatus === 'CRITICAL'
+    );
   }
 
   getSuggestion(dayExerciseId: string) {
