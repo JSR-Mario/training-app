@@ -96,7 +96,7 @@
         "y": 0
       },
       "id": 3,
-      "title": "JVM Heap Memory Usage",
+      "title": "Total JVM Heap Memory Usage",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -109,8 +109,8 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "jvm_memory_used_bytes{area=\"heap\"}",
-          "legendFormat": "{{application}} used",
+          "expr": "sum(jvm_memory_used_bytes{area=\"heap\"})",
+          "legendFormat": "Total Heap Used",
           "range": true,
           "refId": "A"
         }
