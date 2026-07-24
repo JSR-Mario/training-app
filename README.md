@@ -39,13 +39,16 @@ docker-compose up -d
 
 - **Frontend:** `http://localhost:3000`
 - **API Gateway (Swagger UI):** `http://localhost:8080/swagger-ui.html`
-- **Grafana (Internal Monitoring):** `http://localhost:3000` (or host port when mapped)
+- **Grafana Monitoring:**
+  - **Local/SSH Tunnel:** `http://localhost:3000` (`ssh -L 3000:127.0.0.1:3000 user@ec2-host`)
+  - **Production Access:** Routed via Cloudflare Tunnel (`grafana.yourdomain.com`) and secured behind Cloudflare Zero Trust (Email OTP Access Policy).
 
 ## Infrastructure & Security Highlights
 
 - **Authentication:** Stateless JWT design with 15-minute access tokens and 7-day secure refresh cookies.
 - **Rate Limiting & Caching:** Gateway limits authentication endpoints via Redis; L2 read-caching accelerates exercise catalog lookups.
-- **Observability Stack:** Strict resource-budgeted monitoring (~850MB limit) via Prometheus, Loki, Promtail, and Grafana.
+- **Observability & Security:** Strict resource-budgeted monitoring (~850MB cap) via Prometheus, Loki, Promtail, and Grafana. Exposed in production exclusively through Cloudflare Tunnel with Zero Trust Access protection.
 - **Automated Backups:** Host-level cron scripts push daily database snapshots to AWS S3.
 - **Deployment:** Hosted on AWS EC2 behind Cloudflare Tunnels to securely expose the application without opening public server ports.
+
 
