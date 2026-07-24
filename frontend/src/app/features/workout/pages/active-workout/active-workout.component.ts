@@ -20,7 +20,7 @@ import { BodyWeightService } from '../../../analytics/services/body-weight.servi
 import { AnalyticsService } from '../../../analytics/services/analytics.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
-import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
+import { DayVolumeEntry } from '../../../../core/types/analytics.types';
 
 @Component({
   standalone: true,
@@ -957,51 +957,41 @@ export class ActiveWorkoutComponent implements OnInit {
     });
   }
 
+  /**
+   * Builds the Volume History chart data by requesting aggregated session volumes
+   * from the server, grouped by dayTemplateId.
+   *
+   * Uses a single GET /api/v1/analytics/day-volume request instead of one request
+   * per exercise, making historical bars resilient to exercises being added or removed.
+   *
+   * The current session bar is highlighted by comparing each entry's sessionId UUID
+   * against this.session()?.id — both values originate from the same session_id column,
+   * so the comparison is always an exact UUID string match with no date ambiguity.
+   */
   buildChartData() {
-    const exs = this.exercises();
-    if (exs.length === 0) return;
-    
-    const obs = exs.map(ex => this.analyticsService.getExerciseProgress(ex.exerciseId));
-    
-    forkJoin(obs).subscribe((results: ExerciseProgressEntry[][]) => {
-      const dayId = this.session()?.dayTemplateId;
-      if (!dayId) return;
+    const dayId = this.session()?.dayTemplateId;
+    if (!dayId) return;
 
-      const volumeByDate = new Map<string, number>();
-      
-      results.forEach((entries: ExerciseProgressEntry[]) => {
-        entries.forEach((entry: ExerciseProgressEntry) => {
-          if (entry.dayTemplateId === dayId) {
-            const current = volumeByDate.get(entry.sessionDate) || 0;
-            volumeByDate.set(entry.sessionDate, current + entry.totalVolumeKg);
-          }
-        });
-      });
-      
-      const sortedDates = Array.from(volumeByDate.keys()).sort();
-      if (sortedDates.length === 0) return;
-      
-      // Get the CSS variable for accent-pos or fallback
+    this.analyticsService.getDayVolume(dayId).subscribe((entries: DayVolumeEntry[]) => {
+      if (entries.length === 0) return;
+
+      // UUID of the session currently being viewed — used to highlight its bar.
+      // Sourced from WorkoutSessionResponse.id (same UUID as session_id in DB).
+      const currentSessionId = this.session()?.id;
+
       let accentColor = '#8b5cf6';
       if (typeof window !== 'undefined') {
-        accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+        accentColor = getComputedStyle(document.documentElement)
+          .getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
       }
-      
-      const currentSessionAt = this.session()?.startedAt;
-      let currentSessionDate: string | null = null;
-      if (currentSessionAt) {
-        currentSessionDate = currentSessionAt.substring(0, 10);
-      }
-      
-      const bgColors = sortedDates.map(d => 
-        d === currentSessionDate ? accentColor : 'rgba(128, 128, 128, 0.3)'
-      );
 
       this.chartData = {
-        labels: sortedDates,
+        labels: entries.map(e => e.sessionDate),
         datasets: [{
-          data: sortedDates.map(d => volumeByDate.get(d)!),
-          backgroundColor: bgColors,
+          data: entries.map(e => e.totalVolumeKg),
+          backgroundColor: entries.map(e =>
+            e.sessionId === currentSessionId ? accentColor : 'rgba(128, 128, 128, 0.3)'
+          ),
           borderRadius: 4
         }]
       };
