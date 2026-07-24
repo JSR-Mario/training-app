@@ -72,4 +72,6 @@ jobs:
             git checkout main
             git reset --hard origin/main
             docker compose down
-            docker compose up -d --build
+            docker system prune -af
+            docker compose pull
+            docker compose up -d
