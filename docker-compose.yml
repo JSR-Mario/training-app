@@ -211,6 +211,13 @@ services:
   # -----------------------------------------------------------
   # Loki — Centralized Log Aggregation
   # -----------------------------------------------------------
+  loki-init:
+    image: alpine
+    restart: "no"
+    command: chown -R 10001:10001 /tmp/loki
+    volumes:
+      - loki_data:/tmp/loki
+
   loki:
     image: grafana/loki:3.0.0
     restart: unless-stopped
@@ -221,6 +228,9 @@ services:
           memory: 300m
         reservations:
           memory: 150m
+    depends_on:
+      loki-init:
+        condition: service_completed_successfully
     volumes:
       - ./docs/observability/loki-config.yml:/etc/loki/loki-config.yml:ro
       - loki_data:/tmp/loki
