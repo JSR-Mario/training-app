@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { WeeklyVolumeSnapshot, ExerciseProgressEntry } from '../../../core/types/analytics.types';
+import { WeeklyVolumeSnapshot, ExerciseProgressEntry, DayVolumeEntry } from '../../../core/types/analytics.types';
 
 @Injectable({
   providedIn: 'root'
@@ -21,5 +21,15 @@ export class AnalyticsService {
 
   getExerciseProgress(exerciseId: string): Observable<ExerciseProgressEntry[]> {
     return this.http.get<ExerciseProgressEntry[]>(`${this.apiUrl}/progress/${exerciseId}`);
+  }
+
+  /**
+   * Returns aggregated total volume per completed session for a given workout day.
+   * Results are ordered by session date ascending.
+   * The sessionId in each entry is used to highlight the current session bar in the chart.
+   */
+  getDayVolume(dayTemplateId: string): Observable<DayVolumeEntry[]> {
+    const params = new HttpParams().set('dayTemplateId', dayTemplateId);
+    return this.http.get<DayVolumeEntry[]>(`${this.apiUrl}/day-volume`, { params });
   }
 }
