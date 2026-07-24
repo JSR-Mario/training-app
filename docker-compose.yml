@@ -184,6 +184,72 @@ services:
     depends_on:
       - caddy
 
+  # -----------------------------------------------------------
+  # Prometheus — Metrics Collection
+  # -----------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=48h'
+    mem_limit: 250m
+    mem_reservation: 150m
+    volumes:
+      - ./docs/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  # -----------------------------------------------------------
+  # Loki — Centralized Log Aggregation
+  # -----------------------------------------------------------
+  loki:
+    image: grafana/loki:3.0.0
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    mem_limit: 300m
+    mem_reservation: 150m
+    volumes:
+      - ./docs/observability/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/tmp/loki
+
+  # -----------------------------------------------------------
+  # Promtail — Docker Container Log Scraper
+  # -----------------------------------------------------------
+  promtail:
+    image: grafana/promtail:3.0.0
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    mem_limit: 50m
+    volumes:
+      - ./docs/observability/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  # -----------------------------------------------------------
+  # Grafana — Visualization & Dashboards
+  # -----------------------------------------------------------
+  grafana:
+    image: grafana/grafana:10.4.2
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    mem_limit: 250m
+    mem_reservation: 150m
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./docs/observability/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./docs/observability/grafana/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./docs/observability/grafana/dashboards/system-health.json:/var/lib/grafana/dashboards/system-health.json:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+
 volumes:
   postgres_data:
     driver: local
@@ -193,3 +259,10 @@ volumes:
     driver: local
   caddy_config:
     driver: local
+  prometheus_data:
+    driver: local
+  loki_data:
+    driver: local
+  grafana_data:
+    driver: local
+
