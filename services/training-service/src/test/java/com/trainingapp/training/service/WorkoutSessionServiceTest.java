@@ -197,4 +197,52 @@ class WorkoutSessionServiceTest {
         assertThat(suggestions.get(0).hadFatigueLastWeek()).isTrue();
         assertThat(suggestions.get(0).previousSets()).hasSize(3);
     }
+
+    @Test
+    void getExerciseSuggestions_UsesHeaviestPrAcrossOverlappingBuckets() {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setUserId(userId);
+        session.setPerformedOn(LocalDate.now());
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", UUID.randomUUID());
+        ex.setBodyweight(false);
+
+        // Exercise with rep range 10-20 → midpoint = 15 → old bucket "11-15"
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", UUID.randomUUID());
+        se.setExercise(ex);
+        se.setReps(10);
+        se.setRepsMax(20);
+        se.setSession(session);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(se));
+
+        // PR in bucket "11-15" at 17kg, PR in bucket "21-25" at 19.3kg
+        com.trainingapp.training.dto.ExercisePrProjection prLow = mock(com.trainingapp.training.dto.ExercisePrProjection.class);
+        when(prLow.getExerciseId()).thenReturn(ex.getId());
+        when(prLow.getBucket()).thenReturn("11-15");
+        when(prLow.getPrWeight()).thenReturn(java.math.BigDecimal.valueOf(17));
+
+        com.trainingapp.training.dto.ExercisePrProjection prHigh = mock(com.trainingapp.training.dto.ExercisePrProjection.class);
+        when(prHigh.getExerciseId()).thenReturn(ex.getId());
+        when(prHigh.getBucket()).thenReturn("21-25");
+        when(prHigh.getPrWeight()).thenReturn(java.math.BigDecimal.valueOf(19.3));
+
+        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of(prLow, prHigh));
+        when(bodyWeightRepository.findFirstByUserIdOrderByDateDesc(userId)).thenReturn(Optional.empty());
+        when(setRepository.findHistoricalSetsForExercise(ex.getId(), userId, session.getPerformedOn()))
+            .thenReturn(Collections.emptyList());
+
+        List<com.trainingapp.training.dto.ExerciseSuggestionResponse> suggestions = sessionService.getExerciseSuggestions(sessionId, userId);
+
+        assertThat(suggestions).hasSize(1);
+        // Should pick the heaviest PR (19.3) across all overlapping buckets, not just the midpoint bucket (17)
+        assertThat(suggestions.get(0).suggestedWeightKg()).isEqualByComparingTo(java.math.BigDecimal.valueOf(19.3));
+        // Suggested reps should still be the midpoint of the goal range
+        assertThat(suggestions.get(0).suggestedReps()).isEqualTo(15);
+    }
 }
