@@ -64,6 +64,7 @@ Key configurations:
 - **`ALLOWED_ORIGIN` & `DOMAIN_NAME`**: Public domain configuration for CORS and proxy rules.
 - **`S3_BUCKET`**: Target AWS S3 bucket URI for automated database snapshots 
 - **`CLOUDFLARE_TUNNEL_TOKEN`**: Tunnel authentication token for secure ingress.
+- **`GRAFANA_PASSWORD`**: Admin password for Grafana UI. Defaults to `admin` if not provided.
 
 ## Hosting on a New Server
 
