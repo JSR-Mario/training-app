@@ -352,19 +352,53 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                       <div class="space-y-4">
                         <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
                           <span class="font-medium text-gray-700 dark:text-gray-300">Unit</span>
-                          <button (click)="toggleUnit(ex.id)" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-sm font-bold transition-colors uppercase w-16">
+                          <button (click)="toggleUnit(ex.id)" class="px-4 py-2 bg-accent-pos/10 text-accent-pos border border-accent-pos/30 hover:bg-accent-pos/20 rounded-lg text-sm font-bold transition-colors uppercase w-16">
                             {{ getUnit(ex.id) }}
                           </button>
                         </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl flex flex-col gap-2">
-                          <span class="font-medium text-gray-700 dark:text-gray-300 mb-1">Reorder</span>
-                          <div class="flex gap-2">
-                            <button (click)="moveExercise(ex.id, -1)" [disabled]="i === 0" class="flex-1 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-bold transition-colors text-black dark:text-white">
-                              &uarr; Move Up
-                            </button>
-                            <button (click)="moveExercise(ex.id, 1)" [disabled]="i === exercises().length - 1" class="flex-1 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-bold transition-colors text-black dark:text-white">
-                              &darr; Move Down
-                            </button>
+                        <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl flex flex-col gap-3">
+                          <div class="flex items-center justify-between">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Workout Order</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Live preview</span>
+                          </div>
+                          <div class="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                            @for (item of exercises(); track item.id; let idx = $index) {
+                              <div 
+                                class="flex items-center justify-between p-2 rounded-lg text-sm transition-colors text-black dark:text-white"
+                                [class.bg-accent-pos/15]="item.id === ex.id"
+                                [class.border]="item.id === ex.id"
+                                [class.border-accent-pos/40]="item.id === ex.id"
+                                [class.font-semibold]="item.id === ex.id"
+                                [class.bg-white]="item.id !== ex.id"
+                                [class.dark:bg-gray-900/60]="item.id !== ex.id">
+                                
+                                <div class="flex items-center gap-2 min-w-0 pr-2">
+                                  <span class="text-xs font-bold px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shrink-0">
+                                    {{ idx + 1 }}
+                                  </span>
+                                  <span class="truncate" [class.text-accent-pos]="item.id === ex.id">
+                                    {{ item.exerciseName }}
+                                  </span>
+                                </div>
+                                
+                                <div class="flex items-center gap-1 shrink-0">
+                                  <button 
+                                    (click)="moveExercise(item.id, -1)" 
+                                    [disabled]="idx === 0" 
+                                    title="Move Up"
+                                    class="w-7 h-7 flex items-center justify-center rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition-colors text-black dark:text-white">
+                                    &uarr;
+                                  </button>
+                                  <button 
+                                    (click)="moveExercise(item.id, 1)" 
+                                    [disabled]="idx === exercises().length - 1" 
+                                    title="Move Down"
+                                    class="w-7 h-7 flex items-center justify-center rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition-colors text-black dark:text-white">
+                                    &darr;
+                                  </button>
+                                </div>
+                              </div>
+                            }
                           </div>
                         </div>
                         <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl flex flex-col gap-2">
