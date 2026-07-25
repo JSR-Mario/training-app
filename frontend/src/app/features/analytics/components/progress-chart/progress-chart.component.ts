@@ -328,6 +328,7 @@ export class ProgressChartComponent implements OnInit {
     );
 
     const weekSet = new Set<number>();
+    const uniqueDaysPerWeek = new Map<number, Set<string>>();
     
     for (const bp of bodyParts) {
       if (!bp.checked) continue;
@@ -336,6 +337,12 @@ export class ProgressChartComponent implements OnInit {
         data.forEach(entry => {
           if (validDayIds.has(entry.dayTemplateId) || (!entry.dayTemplateId && filter === 'All')) {
             weekSet.add(entry.weekNumber);
+            if (!uniqueDaysPerWeek.has(entry.weekNumber)) {
+              uniqueDaysPerWeek.set(entry.weekNumber, new Set());
+            }
+            if (entry.dayTemplateId) {
+              uniqueDaysPerWeek.get(entry.weekNumber)!.add(entry.dayTemplateId);
+            }
           }
         });
       }
@@ -346,8 +353,19 @@ export class ProgressChartComponent implements OnInit {
       return;
     }
 
+    let maxDaysInAWeek = 0;
+    uniqueDaysPerWeek.forEach(days => {
+      if (days.size > maxDaysInAWeek) {
+        maxDaysInAWeek = days.size;
+      }
+    });
+
     const sortedWeeks = Array.from(weekSet).sort((a,b) => a - b);
-    const datasets = [];
+    const latestWeek = sortedWeeks[sortedWeeks.length - 1];
+    const latestWeekDays = uniqueDaysPerWeek.get(latestWeek)?.size || 0;
+    const isLatestWeekIncomplete = latestWeekDays > 0 && latestWeekDays < maxDaysInAWeek;
+
+    const datasets: ChartConfiguration['data']['datasets'] = [];
 
     if (this.miniMode()) {
       const dataPoints = sortedWeeks.map(week => {
@@ -369,7 +387,8 @@ export class ProgressChartComponent implements OnInit {
         datasets.push({
           type: 'line' as const,
           label: 'Trend',
-          data: dataPoints,
+          data: dataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? null : val),
+          spanGaps: false,
           borderColor: this.getCssVariableValue('--color-accent-pos'),
           borderWidth: 3,
           fill: false,
@@ -396,10 +415,14 @@ export class ProgressChartComponent implements OnInit {
         const dataPoints = sortedWeeks.map(week => volumeByWeek.get(week) || 0);
 
         if (dataPoints.some(v => v >= 0)) {
+          const bgColors = dataPoints.map((val, i) => 
+            (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? bp.color + '55' : bp.color + 'CC'
+          );
+
           datasets.push({
             label: bp.name,
             data: dataPoints,
-            backgroundColor: bp.color + 'CC',
+            backgroundColor: bgColors,
             borderColor: bp.color,
             borderWidth: 1,
             stack: 'Volume',
@@ -414,20 +437,26 @@ export class ProgressChartComponent implements OnInit {
         datasets.push({
           type: 'line' as const,
           label: 'Total Trend',
-          data: totalDataPoints,
+          data: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? null : val),
+          spanGaps: false,
           borderColor: '#ffffff',
           borderWidth: 2,
           fill: false,
           tension: 0,
           pointBackgroundColor: '#ffffff',
-          pointRadius: 4,
-          pointHoverRadius: 6,
+          pointRadius: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? 0 : 4),
+          pointHoverRadius: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? 0 : 6),
           order: 0
         });
       }
     }
 
-    const labels = sortedWeeks.map(w => 'Week ' + w);
+    const labels = sortedWeeks.map(w => {
+      if (isLatestWeekIncomplete && w === latestWeek) {
+        return 'Week ' + w + ' (in progress)';
+      }
+      return 'Week ' + w;
+    });
 
     this.chartData = {
       labels,
