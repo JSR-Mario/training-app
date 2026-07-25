@@ -8,11 +8,10 @@ import {
   WorkoutSetResponse,
   DayExercise 
 } from '../../../../core/types/training.types';
-import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
+import { DayVolumeEntry } from '../../../../core/types/analytics.types';
 import { AnalyticsService } from '../../../analytics/services/analytics.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
-import { forkJoin } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -209,52 +208,47 @@ export class WorkoutSummaryComponent implements OnInit {
   }
 
   buildChartData() {
-    const exs = this.exercises();
-    if (exs.length === 0) return;
-    
-    const obs = exs.map(ex => this.analyticsService.getExerciseProgress(ex.exerciseId));
-    
-    forkJoin(obs).subscribe((results: ExerciseProgressEntry[][]) => {
-      const dayId = this.session()?.dayTemplateId;
-      if (!dayId) return;
+    const dayId = this.session()?.dayTemplateId;
+    const currentSessionId = this.session()?.id;
+    if (!dayId) return;
 
-      const volumeByDate = new Map<string, number>();
-      
-      results.forEach((entries: ExerciseProgressEntry[]) => {
-        entries.forEach((entry: ExerciseProgressEntry) => {
-          if (entry.dayTemplateId === dayId) {
-            const current = volumeByDate.get(entry.sessionDate) || 0;
-            volumeByDate.set(entry.sessionDate, current + entry.totalVolumeKg);
+    this.analyticsService.getDayVolume(dayId).subscribe({
+      next: (entries: DayVolumeEntry[]) => {
+        // Check if current session is in the response (might not be due to race condition with analytics backend processing)
+        const hasCurrentSession = entries.some(e => e.sessionId === currentSessionId);
+        
+        const finalEntries = [...entries];
+        if (!hasCurrentSession && currentSessionId) {
+          const volume = this.totalVolumeKg();
+          if (volume > 0) {
+            finalEntries.push({
+              sessionDate: this.session()?.performedOn || new Date().toISOString().split('T')[0],
+              sessionId: currentSessionId,
+              weekNumber: this.session()?.weekNumber || 1,
+              totalVolumeKg: volume
+            });
+            finalEntries.sort((a, b) => a.sessionDate.localeCompare(b.sessionDate));
           }
-        });
-      });
-      
-      const sortedDates = Array.from(volumeByDate.keys()).sort();
-      if (sortedDates.length === 0) return;
-      
-      // Get the CSS variable for accent-pos or fallback
-      const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
-      
-      const currentSessionAt = this.session()?.startedAt;
-      let currentSessionDate: string | null = null;
-      if (currentSessionAt) {
-        // Safely extract YYYY-MM-DD in local or UTC depending on how it's stored.
-        // Assuming sessionDate is YYYY-MM-DD and startedAt is ISO 8601.
-        currentSessionDate = currentSessionAt.substring(0, 10);
-      }
-      
-      const bgColors = sortedDates.map(d => 
-        d === currentSessionDate ? accentColor : 'rgba(128, 128, 128, 0.3)'
-      );
+        }
 
-      this.chartData = {
-        labels: sortedDates,
-        datasets: [{
-          data: sortedDates.map(d => volumeByDate.get(d)!),
-          backgroundColor: bgColors,
-          borderRadius: 4
-        }]
-      };
+        if (finalEntries.length === 0) return;
+
+        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+        
+        const bgColors = finalEntries.map(e => 
+          e.sessionId === currentSessionId ? accentColor : 'rgba(128, 128, 128, 0.3)'
+        );
+
+        this.chartData = {
+          labels: finalEntries.map(e => e.sessionDate),
+          datasets: [{
+            data: finalEntries.map(e => e.totalVolumeKg),
+            backgroundColor: bgColors,
+            borderRadius: 4
+          }]
+        };
+      },
+      error: (err) => console.error('Failed to load chart data', err)
     });
   }
 
