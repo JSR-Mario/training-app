@@ -343,7 +343,7 @@ export class WorkoutDashboardComponent implements OnInit {
   }
 
   scrollToNextUnstartedDay() {
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       const days = this.combinedDays();
       const nextDay = days.find(d => !d.session);
       if (nextDay) {
@@ -352,7 +352,7 @@ export class WorkoutDashboardComponent implements OnInit {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }
-    }, 100);
+    });
   }
 
   dropDay(event: CdkDragDrop<unknown[]>) {

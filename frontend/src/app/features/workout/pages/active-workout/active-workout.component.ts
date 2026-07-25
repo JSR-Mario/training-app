@@ -689,12 +689,12 @@ export class ActiveWorkoutComponent implements OnInit {
       const setsDone = this.getSetsForExercise(ex.id).length;
       const setsExpected = ex.sets || 1;
       if (setsDone < setsExpected && !this.isCollapsed(ex.id)) {
-        setTimeout(() => {
+        requestAnimationFrame(() => {
           const el = document.getElementById('exercise-' + ex.id);
           if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
-        }, 100);
+        });
         return;
       }
     }
@@ -933,7 +933,7 @@ export class ActiveWorkoutComponent implements OnInit {
             }
 
             this.isLoading.set(false);
-            setTimeout(() => this.scrollToFirstIncompleteExercise(), 300);
+            this.scrollToFirstIncompleteExercise();
           },
           error: (err) => {
             console.error('Failed to load workout data', err);
