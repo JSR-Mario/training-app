@@ -351,21 +351,20 @@ public class WorkoutSessionService {
         
         List<ExerciseSuggestionResponse> suggestions = new java.util.ArrayList<>();
         for (SessionExercise se : sessionExercises) {
-            int targetReps = se.getReps() != null ? se.getReps() : 10;
-            if (se.getReps() != null && se.getRepsMax() != null) {
-                targetReps = (se.getReps() + se.getRepsMax()) / 2;
-            }
+            int minReps = se.getReps() != null ? se.getReps() : 10;
+            int maxReps = se.getRepsMax() != null ? se.getRepsMax() : minReps;
+            int targetReps = (minReps + maxReps) / 2;
             
-            String targetBucket = getBucketForReps(targetReps);
+            java.util.Set<String> relevantBuckets = getOverlappingBuckets(minReps, maxReps);
             java.math.BigDecimal suggestedWeight = null;
             Integer suggestedReps = targetReps;
             
-            // Find PR for this exercise and bucket
+            // Find heaviest PR across all buckets that overlap with the exercise's rep range
             for (com.trainingapp.training.dto.ExercisePrProjection pr : prs) {
-                if (pr.getExerciseId().equals(se.getExercise().getId()) && targetBucket.equals(pr.getBucket())) {
-                    suggestedWeight = pr.getPrWeight();
-                    suggestedReps = pr.getPrReps();
-                    break;
+                if (pr.getExerciseId().equals(se.getExercise().getId()) && relevantBuckets.contains(pr.getBucket())) {
+                    if (suggestedWeight == null || pr.getPrWeight().compareTo(suggestedWeight) > 0) {
+                        suggestedWeight = pr.getPrWeight();
+                    }
                 }
             }
             
@@ -457,6 +456,38 @@ public class WorkoutSessionService {
         if (reps >= 21 && reps <= 25) return "21-25";
         if (reps >= 26 && reps <= 30) return "26-30";
         return "31+";
+    }
+
+    /** Bucket boundary definitions: each entry is {lowerBound, upperBound}. */
+    private static final int[][] BUCKET_RANGES = {
+        {1, 5}, {6, 10}, {11, 15}, {16, 20}, {21, 25}, {26, 30}
+    };
+    private static final String[] BUCKET_LABELS = {
+        "1-5", "6-10", "11-15", "16-20", "21-25", "26-30"
+    };
+
+    /**
+     * Returns all rep-range bucket labels that overlap with [{@code minReps}, {@code maxReps}],
+     * plus one bucket above {@code maxReps} to catch slight overruns (e.g. doing 21 reps
+     * on a 10-20 goal). This ensures weight suggestions consider PRs from every
+     * bucket the athlete might realistically hit within their programmed range.
+     *
+     * @param minReps lower bound of the exercise's rep range (inclusive)
+     * @param maxReps upper bound of the exercise's rep range (inclusive)
+     * @return set of bucket label strings (e.g. "6-10", "11-15", …)
+     */
+    private java.util.Set<String> getOverlappingBuckets(int minReps, int maxReps) {
+        int extendedMax = maxReps + 5;
+        java.util.Set<String> result = new java.util.HashSet<>();
+        for (int i = 0; i < BUCKET_RANGES.length; i++) {
+            if (BUCKET_RANGES[i][1] >= minReps && BUCKET_RANGES[i][0] <= extendedMax) {
+                result.add(BUCKET_LABELS[i]);
+            }
+        }
+        if (extendedMax >= 31) {
+            result.add("31+");
+        }
+        return result;
     }
 
     private WorkoutSession getSessionEntity(UUID id, UUID userId) {
