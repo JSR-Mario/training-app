@@ -556,7 +556,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                   (click)="logSet(activeEx)"
                   [disabled]="getForm(activeEx.id).invalid || isLoggingSet()"
                   class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
-                  style="box-shadow: 0 0 20px var(--color-accent-pos);"
+                  style="box-shadow: 0 0 20px rgb(var(--color-accent-pos));"
                   >
                   <span>{{ isLoggingSet() ? 'Logging...' : 'Log Set' }}</span>
                 </button>
@@ -565,7 +565,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                   (click)="completeWorkout()"
                   [disabled]="isCompleting()"
                   class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
-                  style="box-shadow: 0 0 20px var(--color-accent-pos);"
+                  style="box-shadow: 0 0 20px rgb(var(--color-accent-pos));"
                   >
                   <span>{{ isCompleting() ? 'Completing...' : 'Finish Workout' }}</span>
                 </button>
@@ -1017,6 +1017,9 @@ export class ActiveWorkoutComponent implements OnInit {
       if (typeof window !== 'undefined') {
         accentColor = getComputedStyle(document.documentElement)
           .getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+        if (/^\d+\s+\d+\s+\d+$/.test(accentColor)) {
+          accentColor = `rgb(${accentColor.split(/\s+/).join(', ')})`;
+        }
       }
 
       this.chartData = {

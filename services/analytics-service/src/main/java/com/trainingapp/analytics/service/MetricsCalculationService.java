@@ -8,6 +8,8 @@ import com.trainingapp.analytics.repository.ExerciseProgressRepository;
 import com.trainingapp.analytics.repository.WeeklyVolumeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -28,6 +30,8 @@ import java.util.UUID;
 @Service
 public class MetricsCalculationService {
 
+    private static final Logger log = LoggerFactory.getLogger(MetricsCalculationService.class);
+
     private final WeeklyVolumeRepository volumeRepository;
     private final ExerciseProgressRepository progressRepository;
     private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
@@ -41,10 +45,14 @@ public class MetricsCalculationService {
     }
 
     private void invalidateUserCaches(UUID userId) {
-        String pattern = "analytics:cache:v1:*" + userId.toString() + "*";
-        java.util.Set<String> keys = redisTemplate.keys(pattern);
-        if (keys != null && !keys.isEmpty()) {
-            redisTemplate.delete(keys);
+        try {
+            String pattern = "analytics:cache:v1:*" + userId.toString() + "*";
+            java.util.Set<String> keys = redisTemplate.keys(pattern);
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to invalidate caches for user {}, Redis might be unavailable. Continuing...", userId, e);
         }
     }
 

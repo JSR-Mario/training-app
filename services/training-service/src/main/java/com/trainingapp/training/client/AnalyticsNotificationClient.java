@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.util.retry.Retry;
+import java.time.Duration;
 
 /**
  * Client for sending fire-and-forget notifications to the analytics service.
@@ -39,6 +41,7 @@ public class AnalyticsNotificationClient {
             .bodyValue(event)
             .retrieve()
             .toBodilessEntity()
+            .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
             .doOnSuccess(res -> log.info("Successfully notified analytics service for session: {}", event.sessionId()))
             .doOnError(e -> log.error("Failed to notify analytics service for session: {}. Error: {}", event.sessionId(), e.getMessage()))
             .subscribe(); // Fire and forget
@@ -58,6 +61,7 @@ public class AnalyticsNotificationClient {
             .bodyValue(event)
             .retrieve()
             .toBodilessEntity()
+            .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
             .doOnSuccess(res -> log.info("Successfully notified analytics service for uncompleted session: {}", event.sessionId()))
             .doOnError(e -> log.error("Failed to notify analytics service for uncompleted session: {}. Error: {}", event.sessionId(), e.getMessage()))
             .subscribe(); // Fire and forget
