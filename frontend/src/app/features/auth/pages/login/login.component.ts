@@ -1,20 +1,19 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
-
 
 @Component({
   standalone: true,
-    selector: 'app-login',
-    imports: [ReactiveFormsModule],
-    template: `
-    <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
+  selector: 'app-login',
+  imports: [ReactiveFormsModule, RouterLink],
+  template: `
+    <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 relative overflow-hidden px-4">
       <!-- Decorative background elements -->
       <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-accent-pos/10 rounded-full blur-3xl"></div>
       <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-accent-neg/10 rounded-full blur-3xl"></div>
     
-      <div class="solid-card w-full max-w-md p-8 relative z-10 transition-transform duration-500 hover:scale-[1.02] border border-gray-300 dark:border-gray-700">
+      <div class="solid-card w-full max-w-md p-8 relative z-10 transition-transform duration-500 border border-gray-300 dark:border-gray-700 rounded-2xl shadow-xl bg-white dark:bg-gray-800">
         <div class="text-center mb-8">
           <h1 class="text-3xl font-bold text-accent-pos">
             Yes App
@@ -22,7 +21,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
           <p class="text-gray-500 dark:text-gray-400 mt-2">Sign in to continue</p>
         </div>
     
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" action="#" method="post" class="space-y-6">
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" action="#" method="post" class="space-y-5">
           <div>
             <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
             <input
@@ -84,9 +83,28 @@ import { AuthService } from '../../../../core/auth/auth.service';
             }
           </button>
         </form>
+
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200 dark:border-gray-700"></div></div>
+          <div class="relative flex justify-center text-xs uppercase"><span class="bg-white dark:bg-gray-800 px-2 text-gray-500">Or</span></div>
+        </div>
+
+        <button
+          type="button"
+          (click)="onDemoLogin()"
+          [disabled]="isLoading()"
+          class="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold rounded-xl transition-all text-center border border-gray-300 dark:border-gray-600"
+        >
+          Try Demo
+        </button>
+
+        <div class="text-center mt-6">
+          <span class="text-sm text-gray-500 dark:text-gray-400">Don't have an account? </span>
+          <a routerLink="/auth/register" class="text-sm font-semibold text-accent-pos hover:underline">Sign Up</a>
+        </div>
       </div>
     </div>
-    `
+  `
 })
 export class LoginComponent {
   private fb = inject(FormBuilder);
@@ -119,8 +137,10 @@ export class LoginComponent {
         },
         error: (err) => {
           this.isLoading.set(false);
-          if (err.status === 401 || err.status === 403) {
-            this.error.set('Invalid username or password');
+          if (err.status === 403) {
+            this.error.set('Your email address is not verified. Please check your inbox.');
+          } else if (err.status === 401) {
+            this.error.set('Invalid username or password.');
           } else {
             this.error.set('Service unavailable. Please try again later.');
           }
@@ -129,5 +149,20 @@ export class LoginComponent {
     } else {
       this.loginForm.markAllAsTouched();
     }
+  }
+
+  onDemoLogin() {
+    this.isLoading.set(true);
+    this.error.set('');
+
+    this.authService.loginAsDemo().subscribe({
+      next: () => {
+        this.router.navigateByUrl('/dashboard');
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.error.set('Could not log in as Demo user. Please try again.');
+      }
+    });
   }
 }

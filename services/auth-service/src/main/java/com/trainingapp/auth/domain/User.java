@@ -47,6 +47,9 @@ public class User {
     @Column(nullable = false, length = 50)
     private Role role = Role.ROLE_USER;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
+
     @Column(name = "theme_mode", length = 20)
     private String themeMode = "light";
 
@@ -98,6 +101,9 @@ public class User {
 
     /** Sets the user role. */
     public void setRole(Role role) { this.role = role; }
+
+    public boolean isEmailVerified() { return emailVerified; }
+    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
 
     public String getThemeMode() { return themeMode; }
     public void setThemeMode(String themeMode) { this.themeMode = themeMode; }
