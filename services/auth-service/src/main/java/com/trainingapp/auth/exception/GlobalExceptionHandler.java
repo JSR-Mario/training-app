@@ -71,6 +71,13 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(DemoUserProtectionException.class)
+    public ProblemDetail handleDemoUserProtection(DemoUserProtectionException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problem.setTitle("Demo User Read-Only");
+        return problem;
+    }
+
     @ExceptionHandler(RateLimitExceededException.class)
     public ProblemDetail handleRateLimitExceeded(RateLimitExceededException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
