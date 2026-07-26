@@ -117,9 +117,13 @@ export class LoginComponent {
           const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
           this.router.navigateByUrl(returnUrl);
         },
-        error: () => {
+        error: (err) => {
           this.isLoading.set(false);
-          this.error.set('Invalid username or password');
+          if (err.status === 401 || err.status === 403) {
+            this.error.set('Invalid username or password');
+          } else {
+            this.error.set('Service unavailable. Please try again later.');
+          }
         }
       });
     } else {
