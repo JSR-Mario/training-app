@@ -19,6 +19,7 @@ public record UserResponse(
         String email,
         Instant createdAt,
         String role,
+        boolean emailVerified,
         String themeMode,
         String themePos,
         String themeNeg

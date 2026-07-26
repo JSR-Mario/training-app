@@ -11,6 +11,20 @@ export const routes: Routes = [
     canMatch: [() => typeof window !== 'undefined' ? window.location.hostname.startsWith('app.') : true]
   },
   {
+    path: 'auth/register',
+    loadComponent: () => import('./features/auth/pages/register/register.component').then(m => m.RegisterComponent),
+    canMatch: [() => typeof window !== 'undefined' ? window.location.hostname.startsWith('app.') : true]
+  },
+  {
+    path: 'auth/verify-email',
+    loadComponent: () => import('./features/auth/pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent),
+    canMatch: [() => typeof window !== 'undefined' ? window.location.hostname.startsWith('app.') : true]
+  },
+  {
+    path: 'verify-email',
+    loadComponent: () => import('./features/auth/pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent)
+  },
+  {
     path: '',
     canMatch: [() => typeof window !== 'undefined' ? !window.location.hostname.startsWith('app.') : true],
     loadComponent: () => import('./features/portfolio/pages/portfolio/portfolio.component').then(m => m.PortfolioComponent),
