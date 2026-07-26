@@ -7,6 +7,7 @@ import com.trainingapp.training.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import java.util.*;
  * Seeds rich English sample workout data for the Demo User account on application startup.
  */
 @Component
+@Profile("!test")
 public class DemoTrainingDataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DemoTrainingDataInitializer.class);
@@ -316,15 +318,15 @@ public class DemoTrainingDataInitializer implements CommandLineRunner {
 
         boolean success = false;
         int attempts = 0;
-        while (!success && attempts < 10) {
+        while (!success && attempts < 3) {
             try {
                 analyticsClient.notifySessionCompletedSync(event);
                 success = true;
             } catch (Exception e) {
                 attempts++;
-                log.warn("Could not notify analytics for demo session (attempt {}/10): {}. Retrying in 3s...", attempts, e.getMessage());
+                log.warn("Could not notify analytics for demo session (attempt {}/3): {}. Retrying in 500ms...", attempts, e.getMessage());
                 try {
-                    Thread.sleep(3000);
+                    Thread.sleep(500);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     break;
