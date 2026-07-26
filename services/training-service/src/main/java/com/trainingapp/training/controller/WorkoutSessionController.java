@@ -23,6 +23,12 @@ public class WorkoutSessionController {
         this.sessionService = sessionService;
     }
 
+    @PostMapping("/resync-analytics")
+    public ResponseEntity<Void> resyncAnalytics() {
+        sessionService.resyncAllAnalytics();
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping
     public List<WorkoutSessionResponse> listByProgramAndWeek(@RequestParam UUID programId, @RequestParam int weekNumber) {
         return sessionService.getSessions(UserContext.getCurrentUserId(), programId, weekNumber);

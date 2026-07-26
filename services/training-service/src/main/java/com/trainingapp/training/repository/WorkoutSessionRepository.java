@@ -14,6 +14,8 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
     
     Optional<WorkoutSession> findByIdAndUserId(UUID id, UUID userId);
     
+    List<WorkoutSession> findByCompletedAtIsNotNull();
+    
     List<WorkoutSession> findByUserIdAndCompletedAtIsNull(UUID userId);
 
     @Query("SELECT ws FROM WorkoutSession ws JOIN ws.dayTemplate dt JOIN dt.weekTemplate wt JOIN wt.program p WHERE ws.userId = :userId AND p.id = :programId AND ws.weekNumber = :weekNumber")
