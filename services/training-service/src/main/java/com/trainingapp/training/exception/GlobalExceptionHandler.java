@@ -34,6 +34,13 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(DemoUserProtectionException.class)
+    public ProblemDetail handleDemoUserProtection(DemoUserProtectionException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problem.setTitle("Demo User Read-Only");
+        return problem;
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
         String detail = ex.getBindingResult().getFieldErrors().stream()
