@@ -233,11 +233,11 @@ export class WorkoutDashboardComponent implements OnInit {
   private loadDaysAndSessions(programId: string) {
     this.isLoading.set(true);
     
-    // To get DayTemplates, we need the first WeekTemplate of the program
     this.programService.getWeeks(programId).pipe(
       switchMap(weeks => {
         if (weeks.length === 0) return of([]);
-        return this.programService.getDays(weeks[0].id);
+        const targetIndex = Math.min(Math.max(this.displayedWeek() - 1, 0), weeks.length - 1);
+        return this.programService.getDays(weeks[targetIndex].id);
       })
     ).subscribe({
       next: (days) => {
@@ -271,8 +271,10 @@ export class WorkoutDashboardComponent implements OnInit {
   prevWeek() {
     if (this.displayedWeek() > 1) {
       this.displayedWeek.update(w => w - 1);
-      this.isLoading.set(true);
-      this.loadSessionsOnly();
+      const prog = this.activeProgram();
+      if (prog) {
+        this.loadDaysAndSessions(prog.id);
+      }
     }
   }
 
@@ -280,8 +282,7 @@ export class WorkoutDashboardComponent implements OnInit {
     const prog = this.activeProgram();
     if (prog && this.displayedWeek() < prog.durationWeeks) {
       this.displayedWeek.update(w => w + 1);
-      this.isLoading.set(true);
-      this.loadSessionsOnly();
+      this.loadDaysAndSessions(prog.id);
     }
   }
 
