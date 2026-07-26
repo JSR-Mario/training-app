@@ -304,19 +304,32 @@ public class DemoTrainingDataInitializer implements CommandLineRunner {
     }
 
     private void notifyAnalytics(WorkoutSession session, UUID programId, List<SessionCompletedEvent.SetData> sets) {
-        try {
-            SessionCompletedEvent event = new SessionCompletedEvent(
-                session.getId(),
-                session.getUserId(),
-                programId,
-                session.getWeekNumber(),
-                session.getDayTemplate().getId(),
-                session.getPerformedOn(),
-                sets
-            );
-            analyticsClient.notifySessionCompleted(event);
-        } catch (Exception e) {
-            log.warn("Could not notify analytics for demo session: {}", e.getMessage());
+        SessionCompletedEvent event = new SessionCompletedEvent(
+            session.getId(),
+            session.getUserId(),
+            programId,
+            session.getWeekNumber(),
+            session.getDayTemplate().getId(),
+            session.getPerformedOn(),
+            sets
+        );
+
+        boolean success = false;
+        int attempts = 0;
+        while (!success && attempts < 10) {
+            try {
+                analyticsClient.notifySessionCompletedSync(event);
+                success = true;
+            } catch (Exception e) {
+                attempts++;
+                log.warn("Could not notify analytics for demo session (attempt {}/10): {}. Retrying in 3s...", attempts, e.getMessage());
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
         }
     }
 }

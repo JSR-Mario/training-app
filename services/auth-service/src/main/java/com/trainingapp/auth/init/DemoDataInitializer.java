@@ -23,10 +23,12 @@ public class DemoDataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
-    public DemoDataInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public DemoDataInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder, org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public static final java.util.UUID DEMO_USER_ID = java.util.UUID.nameUUIDFromBytes("demo".getBytes(java.nio.charset.StandardCharsets.UTF_8));
@@ -39,23 +41,21 @@ public class DemoDataInitializer implements CommandLineRunner {
             return;
         }
 
-        User demoUser = new User();
-        // Set deterministic UUID so downstream services can recognize demo data
-        try {
-            java.lang.reflect.Field idField = User.class.getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(demoUser, DEMO_USER_ID);
-        } catch (Exception e) {
-            log.warn("Could not set explicit UUID on demo user, falling back to auto-generation");
-        }
-
-        demoUser.setUsername("demo");
-        demoUser.setEmail("demo@trainingapp.local");
-        demoUser.setPasswordHash(passwordEncoder.encode("demo"));
-        demoUser.setRole(Role.ROLE_USER);
-        demoUser.setEmailVerified(true);
-
-        userRepository.save(demoUser);
+        String sql = "INSERT INTO auth.users (id, username, email, password_hash, created_at, role, email_verified, theme_mode, theme_pos, theme_neg) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(
+            sql,
+            DEMO_USER_ID,
+            "demo",
+            "demo@trainingapp.local",
+            passwordEncoder.encode("demo"),
+            java.time.Instant.now(),
+            Role.ROLE_USER.name(),
+            true,
+            "light",
+            "blue",
+            "red"
+        );
         log.info("Demo user 'demo' created successfully with ID: {} and emailVerified=true.", DEMO_USER_ID);
     }
 }
