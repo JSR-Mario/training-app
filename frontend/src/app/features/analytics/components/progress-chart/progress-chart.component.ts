@@ -470,7 +470,11 @@ export class ProgressChartComponent implements OnInit {
 
   private getCssVariableValue(variableName: string): string {
     if (typeof window === 'undefined') return '#3b82f6';
-    const val = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
-    return val || '#3b82f6';
+    let val = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+    if (!val) return '#3b82f6';
+    if (/^\d+\s+\d+\s+\d+$/.test(val)) {
+      val = `rgb(${val.split(/\s+/).join(', ')})`;
+    }
+    return val;
   }
 }
