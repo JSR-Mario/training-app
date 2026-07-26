@@ -6,6 +6,8 @@ server:
   port: 0
 
 spring:
+  profiles:
+    active: test
   datasource:
     url: "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;INIT=CREATE SCHEMA IF NOT EXISTS \"auth\""
     driver-class-name: org.h2.Driver

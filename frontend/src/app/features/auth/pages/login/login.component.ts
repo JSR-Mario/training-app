@@ -59,8 +59,23 @@ import { AuthService } from '../../../../core/auth/auth.service';
           </div>
     
           @if (error()) {
-            <div class="p-3 bg-accent-neg/10 border border-accent-neg/20 rounded-lg text-accent-neg text-sm text-center font-medium">
-              {{ error() }}
+            <div class="p-3 bg-accent-neg/10 border border-accent-neg/20 rounded-lg text-accent-neg text-sm text-center font-medium space-y-2">
+              <div>{{ error() }}</div>
+              @if (isUnverified()) {
+                <div class="pt-1 border-t border-accent-neg/20 text-xs">
+                  @if (resendStatus()) {
+                    <div class="text-accent-pos font-semibold mb-1">{{ resendStatus() }}</div>
+                  }
+                  <button
+                    type="button"
+                    (click)="onResendVerification()"
+                    [disabled]="isResending()"
+                    class="text-accent-pos underline font-semibold hover:opacity-80 disabled:opacity-50"
+                  >
+                    @if (isResending()) { Sending... } @else { Click here to resend verification email }
+                  </button>
+                </div>
+              }
             </div>
           }
     
@@ -119,11 +134,17 @@ export class LoginComponent {
 
   isLoading = signal(false);
   error = signal('');
+  isUnverified = signal(false);
+  isResending = signal(false);
+  resendStatus = signal('');
+  unverifiedEmail = '';
 
   onSubmit() {
     if (this.loginForm.valid) {
       this.isLoading.set(true);
       this.error.set('');
+      this.isUnverified.set(false);
+      this.resendStatus.set('');
       
       const credentials: Record<string, string> = {
         username: this.loginForm.value.username ?? '',
@@ -138,6 +159,7 @@ export class LoginComponent {
         error: (err) => {
           this.isLoading.set(false);
           if (err.status === 403) {
+            this.isUnverified.set(true);
             this.error.set('Your email address is not verified. Please check your inbox.');
           } else if (err.status === 401) {
             this.error.set('Invalid username or password.');
@@ -149,6 +171,41 @@ export class LoginComponent {
     } else {
       this.loginForm.markAllAsTouched();
     }
+  }
+
+  onResendVerification() {
+    const username = this.loginForm.value.username;
+    if (!username) return;
+
+    this.isResending.set(true);
+    this.resendStatus.set('');
+
+    // Fetch user or pass email if we have it, or use resend endpoint
+    // resendVerification expects email.
+    // If username is entered, let's call resendVerification with email or show prompt.
+    // Wait, resendVerification API requires email. Let's ask user for email or use username if it looks like an email.
+    const emailCandidate = username.includes('@') ? username : '';
+    
+    if (!emailCandidate) {
+      this.isResending.set(false);
+      this.router.navigate(['/auth/verify-email']);
+      return;
+    }
+
+    this.authService.resendVerification(emailCandidate).subscribe({
+      next: () => {
+        this.isResending.set(false);
+        this.resendStatus.set('Verification link sent! Check your inbox.');
+      },
+      error: (err) => {
+        this.isResending.set(false);
+        if (err.status === 429) {
+          this.resendStatus.set('Please wait 60 seconds before requesting another email.');
+        } else {
+          this.resendStatus.set('Could not resend email. Try again later.');
+        }
+      }
+    });
   }
 
   onDemoLogin() {
