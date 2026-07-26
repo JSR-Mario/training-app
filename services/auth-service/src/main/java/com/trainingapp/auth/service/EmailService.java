@@ -8,17 +8,22 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 /**
  * Service for sending account verification emails.
  *
- * <p>If SMTP is not configured (e.g., in local development), the verification link
- * is logged to the console so developers and testers can verify accounts without needing a real SMTP server.
+ * <p>If SMTP is not configured (e.g., in local development or when {@code SPRING_MAIL_HOST}
+ * is absent), the verification link is logged to the console so developers and testers can
+ * verify accounts without needing a real SMTP server. The {@link JavaMailSender} dependency
+ * is optional — Spring Boot only auto-configures it when {@code spring.mail.host} is set.
  */
 @Service
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
+    /** Null when {@code spring.mail.host} is not configured. */
     private final JavaMailSender mailSender;
 
     @Value("${spring.mail.host:}")
@@ -27,23 +32,33 @@ public class EmailService {
     @Value("${app.frontend.url:http://localhost:4200}")
     private String frontendUrl;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    /**
+     * Constructs the service with an optional {@link JavaMailSender}.
+     * Spring Boot only auto-configures this bean when {@code spring.mail.host} is set.
+     * When absent, {@code mailSender} is {@code null} and the service falls back to
+     * console-logging verification links.
+     *
+     * @param mailSender optional Spring Mail sender bean
+     */
+    public EmailService(Optional<JavaMailSender> mailSender) {
+        this.mailSender = mailSender.orElse(null);
     }
 
     /**
      * Sends an email verification link to the specified user.
      *
-     * @param toEmail recipient email address
+     * <p>Falls back to console logging if SMTP is not configured.
+     *
+     * @param toEmail  recipient email address
      * @param username recipient username
-     * @param token verification token
+     * @param token    verification token
      */
     public void sendVerificationEmail(String toEmail, String username, String token) {
         String verificationUrl = frontendUrl + "/verify-email?token=" + token;
 
-        if (mailHost == null || mailHost.isBlank()) {
+        if (mailSender == null || mailHost == null || mailHost.isBlank()) {
             log.info("=================================================================");
-            log.info("LOCAL DEV EMAIL VERIFICATION (No SMTP host configured)");
+            log.info("EMAIL VERIFICATION LINK (No SMTP host configured)");
             log.info("User: {} ({})", username, toEmail);
             log.info("Verification Link: {}", verificationUrl);
             log.info("=================================================================");
@@ -76,7 +91,6 @@ public class EmailService {
             log.info("Verification email successfully sent to {}", toEmail);
         } catch (Exception e) {
             log.error("Failed to send verification email to {}: {}", toEmail, e.getMessage(), e);
-            // Fallback console log in case of SMTP error
             log.info("FALLBACK VERIFICATION LINK for {}: {}", toEmail, verificationUrl);
         }
     }
