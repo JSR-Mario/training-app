@@ -449,16 +449,17 @@ export class ProgressChartComponent implements OnInit {
       }
 
       if (totalDataPoints.some(v => v > 0)) {
+        const accentColor = this.getCssVariableValue('--color-accent-pos');
         datasets.push({
           type: 'line' as const,
           label: 'Total Trend',
           data: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? null : val),
           spanGaps: false,
-          borderColor: '#6366f1',
+          borderColor: accentColor,
           borderWidth: 3,
           fill: false,
           tension: 0.2,
-          pointBackgroundColor: '#818cf8',
+          pointBackgroundColor: accentColor,
           pointBorderColor: '#0f172a',
           pointBorderWidth: 2,
           pointRadius: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? 0 : 5),

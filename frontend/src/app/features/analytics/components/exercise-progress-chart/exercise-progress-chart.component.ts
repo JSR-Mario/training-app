@@ -30,86 +30,97 @@ import { finalize } from 'rxjs';
         </div>
 
         <div class="w-full sm:w-72">
-          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+          <label for="exercise-select" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
             Select Exercise
           </label>
           <select 
+            id="exercise-select"
             [ngModel]="selectedExerciseId()" 
             (ngModelChange)="onExerciseChange($event)"
             class="w-full text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-accent-pos focus:outline-none transition-all">
             <option value="" disabled>-- Select an exercise --</option>
-            <option *ngFor="let ex of exercises()" [value]="ex.id">
-              {{ ex.name }} {{ ex.equipmentBrand ? '(' + ex.equipmentBrand + ')' : '' }}
-            </option>
+            @for (ex of exercises(); track ex.id) {
+              <option [value]="ex.id">
+                {{ ex.name }} {{ ex.equipmentBrand ? '(' + ex.equipmentBrand + ')' : '' }}
+              </option>
+            }
           </select>
         </div>
       </div>
 
       <!-- Stat Badges -->
-      <div *ngIf="selectedExerciseId() && !isLoading()" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3.5 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold text-sm">
-            PR
-          </div>
-          <div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">All-Time Weight PR</div>
-            <div class="text-lg font-bold text-slate-900 dark:text-white">
-              {{ maxWeightPR() }} <span class="text-xs text-slate-500 font-normal">kg</span>
+      @if (selectedExerciseId() && !isLoading()) {
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3.5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold text-sm">
+              PR
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">All-Time Weight PR</div>
+              <div class="text-lg font-bold text-slate-900 dark:text-white">
+                {{ maxWeightPR() }} <span class="text-xs text-slate-500 font-normal">kg</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3.5 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm">
-            VOL
-          </div>
-          <div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Peak Session Volume</div>
-            <div class="text-lg font-bold text-slate-900 dark:text-white">
-              {{ peakVolume() }} <span class="text-xs text-slate-500 font-normal">kg</span>
+          <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3.5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm">
+              VOL
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Peak Session Volume</div>
+              <div class="text-lg font-bold text-slate-900 dark:text-white">
+                {{ peakVolume() }} <span class="text-xs text-slate-500 font-normal">kg</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3.5 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
-            SESS
-          </div>
-          <div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Sessions Logged</div>
-            <div class="text-lg font-bold text-slate-900 dark:text-white">
-              {{ totalSessions() }}
+          <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3.5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
+              SESS
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Sessions Logged</div>
+              <div class="text-lg font-bold text-slate-900 dark:text-white">
+                {{ totalSessions() }}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      }
 
       <!-- Chart Container -->
       <div class="relative min-h-[320px] flex items-center justify-center">
         <!-- Loading Spinner -->
-        <div *ngIf="isLoading()" class="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-slate-900/70 z-10 rounded-lg">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-pos"></div>
-        </div>
+        @if (isLoading()) {
+          <div class="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-slate-900/70 z-10 rounded-lg">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-pos"></div>
+          </div>
+        }
 
         <!-- Empty State -->
-        <div *ngIf="!isLoading() && (!selectedExerciseId() || progressData().length === 0)" class="text-center py-12 px-4 text-slate-400 dark:text-slate-500">
-          <svg class="w-12 h-12 mx-auto mb-3 stroke-current opacity-40" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-          <p class="text-sm font-medium text-slate-600 dark:text-slate-300">
-            {{ selectedExerciseId() ? 'No workout history found for this exercise' : 'Select an exercise above to view progression' }}
-          </p>
-        </div>
+        @if (!isLoading() && (!selectedExerciseId() || progressData().length === 0)) {
+          <div class="text-center py-12 px-4 text-slate-400 dark:text-slate-500">
+            <svg class="w-12 h-12 mx-auto mb-3 stroke-current opacity-40" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <p class="text-sm font-medium text-slate-600 dark:text-slate-300">
+              {{ selectedExerciseId() ? 'No workout history found for this exercise' : 'Select an exercise above to view progression' }}
+            </p>
+          </div>
+        }
 
         <!-- Canvas Chart -->
-        <div *ngIf="!isLoading() && selectedExerciseId() && progressData().length > 0" class="w-full h-[340px]">
-          <canvas 
-            baseChart
-            [data]="chartData"
-            [options]="chartOptions"
-            [type]="chartType">
-          </canvas>
-        </div>
+        @if (!isLoading() && selectedExerciseId() && progressData().length > 0) {
+          <div class="w-full h-[340px]">
+            <canvas 
+              baseChart
+              [data]="chartData"
+              [options]="chartOptions"
+              [type]="chartType">
+            </canvas>
+          </div>
+        }
       </div>
     </div>
   `,
@@ -240,6 +251,8 @@ export class ExerciseProgressChartComponent implements OnInit {
     const maxWeights = entries.map(e => e.maxWeightKg);
     const volumes = entries.map(e => e.totalVolumeKg);
 
+    const accentColor = this.getCssVariableValue('--color-accent-pos');
+
     this.chartData = {
       labels,
       datasets: [
@@ -247,12 +260,12 @@ export class ExerciseProgressChartComponent implements OnInit {
           label: 'Max Weight (kg)',
           data: maxWeights,
           yAxisID: 'yWeight',
-          borderColor: '#8b5cf6',
+          borderColor: accentColor,
           backgroundColor: 'rgba(139, 92, 246, 0.1)',
           borderWidth: 3,
           tension: 0.3,
           fill: true,
-          pointBackgroundColor: '#8b5cf6',
+          pointBackgroundColor: accentColor,
           pointBorderColor: '#0f172a',
           pointBorderWidth: 2,
           pointRadius: 5,
@@ -276,5 +289,15 @@ export class ExerciseProgressChartComponent implements OnInit {
         }
       ]
     };
+  }
+
+  private getCssVariableValue(variableName: string): string {
+    if (typeof window === 'undefined') return '#8b5cf6';
+    let val = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+    if (!val) return '#8b5cf6';
+    if (/^\d+\s+\d+\s+\d+$/.test(val)) {
+      val = `rgb(${val.split(/\s+/).join(', ')})`;
+    }
+    return val;
   }
 }

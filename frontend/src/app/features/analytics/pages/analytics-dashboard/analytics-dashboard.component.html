@@ -47,8 +47,12 @@
   </header>
  
   <div class="mt-4">
-    <app-progress-chart *ngIf="activeTab() === 'volume'"></app-progress-chart>
-    <app-exercise-progress-chart *ngIf="activeTab() === 'exercise'"></app-exercise-progress-chart>
+    @if (activeTab() === 'volume') {
+      <app-progress-chart></app-progress-chart>
+    }
+    @if (activeTab() === 'exercise') {
+      <app-exercise-progress-chart></app-exercise-progress-chart>
+    }
   </div>
  
 </div>
