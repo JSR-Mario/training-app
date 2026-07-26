@@ -400,9 +400,24 @@ export class ProgressChartComponent implements OnInit {
     } else {
       const totalDataPoints = sortedWeeks.map(() => 0);
 
+      // Sort body parts by total volume descending so largest volumes sit at the bottom of the stack
+      const bodyPartTotals = new Map<string, number>();
       for (const bp of bodyParts) {
         if (!bp.checked) continue;
-        
+        const raw = this.bodyPartData.get(bp.id) || [];
+        let total = 0;
+        for (const entry of raw) {
+          if (!validDayIds.has(entry.dayTemplateId) && !(!entry.dayTemplateId && filter === 'All')) continue;
+          total += entry.volume;
+        }
+        bodyPartTotals.set(bp.id, total);
+      }
+
+      const sortedBodyParts = [...bodyParts]
+        .filter(bp => bp.checked)
+        .sort((a, b) => (bodyPartTotals.get(b.id) || 0) - (bodyPartTotals.get(a.id) || 0));
+
+      for (const bp of sortedBodyParts) {
         const raw = this.bodyPartData.get(bp.id) || [];
         const volumeByWeek = new Map<number, number>();
         
@@ -439,13 +454,15 @@ export class ProgressChartComponent implements OnInit {
           label: 'Total Trend',
           data: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? null : val),
           spanGaps: false,
-          borderColor: '#ffffff',
-          borderWidth: 2,
+          borderColor: '#6366f1',
+          borderWidth: 3,
           fill: false,
-          tension: 0,
-          pointBackgroundColor: '#ffffff',
-          pointRadius: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? 0 : 4),
-          pointHoverRadius: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? 0 : 6),
+          tension: 0.2,
+          pointBackgroundColor: '#818cf8',
+          pointBorderColor: '#0f172a',
+          pointBorderWidth: 2,
+          pointRadius: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? 0 : 5),
+          pointHoverRadius: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? 0 : 7),
           order: 0
         });
       }
