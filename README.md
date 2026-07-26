@@ -65,6 +65,8 @@ Key configurations:
 - **`S3_BUCKET`**: Target AWS S3 bucket URI for automated database snapshots 
 - **`CLOUDFLARE_TUNNEL_TOKEN`**: Tunnel authentication token for secure ingress.
 - **`GRAFANA_PASSWORD`**: Admin password for Grafana UI. Defaults to `admin` if not provided.
+- **`SPRING_MAIL_*` & `APP_FRONTEND_URL`**: SMTP credentials (`SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`) and public web URL for email verification links.
+
 
 ## Hosting on a New Server
 

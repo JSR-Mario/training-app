@@ -10,6 +10,7 @@ import com.trainingapp.auth.exception.DuplicateResourceException;
 import com.trainingapp.auth.exception.InvalidTokenException;
 import com.trainingapp.auth.exception.ResourceNotFoundException;
 import com.trainingapp.auth.repository.UserRepository;
+import com.trainingapp.auth.repository.VerificationTokenRepository;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,30 +31,29 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final VerificationTokenRepository verificationTokenRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
-    /**
-     * Constructs an {@code AuthService} with its required collaborators.
-     *
-     * @param userRepository  JPA repository for user persistence
-     * @param jwtService      service for JWT generation and validation
-     * @param passwordEncoder BCrypt encoder for password hashing and verification
-     */
     public AuthService(UserRepository userRepository,
+                       VerificationTokenRepository verificationTokenRepository,
                        JwtService jwtService,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       EmailService emailService) {
         this.userRepository = userRepository;
+        this.verificationTokenRepository = verificationTokenRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     /**
      * Registers a new user account.
      *
      * <p>Validates that neither the username nor the email is already taken,
-     * hashes the password with BCrypt (cost 12), persists the user, and returns
-     * a sanitized view of the newly created account.
+     * hashes the password with BCrypt (cost 12), persists the user with {@code emailVerified = false},
+     * generates a 1-hour verification token, and sends a verification email.
      *
      * @param request the registration payload (username, email, password)
      * @return a {@link UserResponse} for the newly created user
@@ -72,22 +72,80 @@ public class AuthService {
         user.setUsername(request.username());
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setEmailVerified(false);
 
         User saved = userRepository.save(user);
+        createAndSendVerificationToken(saved);
+
         return toResponse(saved);
+    }
+
+    /**
+     * Verifies a user's email address using a valid verification token.
+     *
+     * @param token the 64-character verification token
+     */
+    @Transactional
+    public void verifyEmail(String token) {
+        com.trainingapp.auth.domain.VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid verification token."));
+
+        if (verificationToken.isExpired()) {
+            throw new InvalidTokenException("Verification token has expired. Please request a new one.");
+        }
+
+        User user = verificationToken.getUser();
+        user.setEmailVerified(true);
+        userRepository.save(user);
+        verificationTokenRepository.deleteByUser(user);
+    }
+
+    /**
+     * Resends a verification email to the specified user address with a 60-second cooldown rate limit.
+     *
+     * @param email user's email address
+     */
+    @Transactional
+    public void resendVerification(String email) {
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null || user.isEmailVerified()) {
+            return;
+        }
+
+        java.util.Optional<com.trainingapp.auth.domain.VerificationToken> existingOpt = verificationTokenRepository.findByUser(user);
+        if (existingOpt.isPresent()) {
+            com.trainingapp.auth.domain.VerificationToken existing = existingOpt.get();
+            if (java.time.Instant.now().isBefore(existing.getLastSentAt().plusSeconds(60))) {
+                throw new com.trainingapp.auth.exception.RateLimitExceededException("Please wait 60 seconds before requesting another verification email.");
+            }
+            existing.setToken(java.util.UUID.randomUUID().toString().replace("-", ""));
+            existing.setExpiresAt(java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
+            existing.setLastSentAt(java.time.Instant.now());
+            verificationTokenRepository.save(existing);
+            emailService.sendVerificationEmail(user.getEmail(), user.getUsername(), existing.getToken());
+        } else {
+            createAndSendVerificationToken(user);
+        }
+    }
+
+    private void createAndSendVerificationToken(User user) {
+        com.trainingapp.auth.domain.VerificationToken token = new com.trainingapp.auth.domain.VerificationToken();
+        token.setUser(user);
+        token.setToken(java.util.UUID.randomUUID().toString().replace("-", ""));
+        token.setExpiresAt(java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
+        token.setLastSentAt(java.time.Instant.now());
+        verificationTokenRepository.save(token);
+
+        emailService.sendVerificationEmail(user.getEmail(), user.getUsername(), token.getToken());
     }
 
     /**
      * Authenticates a user and returns a new pair of tokens.
      *
-     * <p>The access token is included in the returned {@link AuthResponse}.
-     * The refresh token is returned separately so the controller can set it
-     * as an HttpOnly cookie.
-     *
      * @param request the login payload (username, password)
      * @return an {@link AuthResponse} containing the access token
-     * @throws BadCredentialsException if the username is not found or the
-     *                                 password does not match
+     * @throws BadCredentialsException if authentication fails
+     * @throws com.trainingapp.auth.exception.EmailNotVerifiedException if user email is not verified
      */
     @Transactional(readOnly = true)
     public LoginResult login(LoginRequest request) {
@@ -96,6 +154,10 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BadCredentialsException("Invalid username or password.");
+        }
+
+        if (!user.isEmailVerified()) {
+            throw new com.trainingapp.auth.exception.EmailNotVerifiedException("Your email address is not verified. Please verify your account before logging in.");
         }
 
         String accessToken = jwtService.generateAccessToken(user);
@@ -123,15 +185,17 @@ public class AuthService {
         UUID userId = jwtService.extractUserId(refreshToken);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new InvalidTokenException("User associated with refresh token not found."));
+
+        if (!user.isEmailVerified()) {
+            throw new com.trainingapp.auth.exception.EmailNotVerifiedException("Your email address is not verified.");
+        }
+
         String newAccessToken = jwtService.generateAccessToken(user);
         return new AuthResponse(newAccessToken, "Bearer", jwtService.accessExpirySeconds());
     }
 
     /**
      * Returns the profile of the user identified by the given ID.
-     *
-     * <p>The {@code userId} is always sourced from the {@code X-User-Id} header
-     * injected by the API gateway after JWT validation — never from the client body.
      *
      * @param userId the authenticated user's UUID
      * @return a {@link UserResponse} with the user's public profile
@@ -175,6 +239,7 @@ public class AuthService {
                 user.getEmail(), 
                 user.getCreatedAt(), 
                 user.getRole().name(),
+                user.isEmailVerified(),
                 user.getThemeMode(),
                 user.getThemePos(),
                 user.getThemeNeg()

@@ -32,6 +32,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByUsername(String username);
 
     /**
+     * Finds a user by their unique email address.
+     *
+     * @param email the email address to search for
+     * @return an {@link Optional} containing the user, or empty if not found
+     */
+    Optional<User> findByEmail(String email);
+
+    /**
      * Checks whether a user with the given email address already exists.
      *
      * @param email the email address to check

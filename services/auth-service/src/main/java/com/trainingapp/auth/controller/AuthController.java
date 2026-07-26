@@ -67,6 +67,20 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "Verify user email using token")
+    @GetMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(@org.springframework.web.bind.annotation.RequestParam("token") String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Resend verification email")
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Void> resendVerification(@Valid @RequestBody com.trainingapp.auth.dto.ResendVerificationRequest request) {
+        authService.resendVerification(request.email());
+        return ResponseEntity.ok().build();
+    }
+
     /**
      * Authenticates a user and returns an access token.
      * Sets the refresh token as an HttpOnly cookie.

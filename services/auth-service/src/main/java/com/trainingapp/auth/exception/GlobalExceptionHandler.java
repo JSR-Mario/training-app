@@ -64,6 +64,20 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ProblemDetail handleEmailNotVerified(EmailNotVerifiedException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problem.setTitle("Email Verification Required");
+        return problem;
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ProblemDetail handleRateLimitExceeded(RateLimitExceededException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+        problem.setTitle("Rate Limit Exceeded");
+        return problem;
+    }
+
     /**
      * Handles invalid username or password on login.
      *

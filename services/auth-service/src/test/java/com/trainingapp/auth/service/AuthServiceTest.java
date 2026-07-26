@@ -9,6 +9,7 @@ import com.trainingapp.auth.exception.DuplicateResourceException;
 import com.trainingapp.auth.exception.InvalidTokenException;
 import com.trainingapp.auth.exception.ResourceNotFoundException;
 import com.trainingapp.auth.repository.UserRepository;
+import com.trainingapp.auth.repository.VerificationTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,8 +41,10 @@ import static org.mockito.Mockito.when;
 class AuthServiceTest {
 
     @Mock private UserRepository userRepository;
+    @Mock private VerificationTokenRepository verificationTokenRepository;
     @Mock private JwtService jwtService;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private EmailService emailService;
 
     @InjectMocks
     private AuthService authService;
@@ -58,6 +61,7 @@ class AuthServiceTest {
         sampleUser.setEmail("test@example.com");
         sampleUser.setPasswordHash("hashed");
         sampleUser.setRole(com.trainingapp.auth.domain.Role.ROLE_USER);
+        sampleUser.setEmailVerified(true);
     }
 
     // ----------------------------------------------------------------

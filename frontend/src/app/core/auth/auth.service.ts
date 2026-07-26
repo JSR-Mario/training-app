@@ -103,6 +103,22 @@ export class AuthService {
     });
   }
 
+  register(data: Record<string, string>): Observable<UserResponse> {
+    return this.http.post<UserResponse>('/api/v1/auth/register', data);
+  }
+
+  verifyEmail(token: string): Observable<void> {
+    return this.http.get<void>(`/api/v1/auth/verify-email?token=${token}`);
+  }
+
+  resendVerification(email: string): Observable<void> {
+    return this.http.post<void>('/api/v1/auth/resend-verification', { email });
+  }
+
+  loginAsDemo(): Observable<AuthResponse> {
+    return this.login({ username: 'demo', password: 'demo' });
+  }
+
   getMe(): Observable<UserResponse> {
     return this.http.get<UserResponse>('/api/v1/auth/me');
   }
