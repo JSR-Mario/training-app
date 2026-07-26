@@ -59,7 +59,7 @@ public class DemoDataInitializer implements CommandLineRunner {
             "demo",
             "demo@trainingapp.local",
             passwordEncoder.encode("demo"),
-            java.time.Instant.now(),
+            java.sql.Timestamp.from(java.time.Instant.now()),
             Role.ROLE_USER.name(),
             true,
             "light",
