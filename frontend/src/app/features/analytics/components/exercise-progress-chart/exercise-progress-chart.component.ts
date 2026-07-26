@@ -344,13 +344,14 @@ export class ExerciseProgressChartComponent implements OnInit {
 
     // Update chart scales title and tick colors to match line colors
     if (this.chartOptions && this.chartOptions.scales) {
-      if (this.chartOptions.scales['yWeight']) {
-        this.chartOptions.scales['yWeight'].ticks = { ...this.chartOptions.scales['yWeight'].ticks, color: posColor };
-        this.chartOptions.scales['yWeight'].title = { ...this.chartOptions.scales['yWeight'].title, color: posColor };
+      const scalesMap = this.chartOptions.scales as Record<string, { ticks?: Record<string, unknown>; title?: Record<string, unknown> }>;
+      if (scalesMap['yWeight']) {
+        scalesMap['yWeight'].ticks = { ...scalesMap['yWeight'].ticks, color: posColor };
+        scalesMap['yWeight'].title = { ...scalesMap['yWeight'].title, color: posColor };
       }
-      if (this.chartOptions.scales['yVolume']) {
-        this.chartOptions.scales['yVolume'].ticks = { ...this.chartOptions.scales['yVolume'].ticks, color: negColor };
-        this.chartOptions.scales['yVolume'].title = { ...this.chartOptions.scales['yVolume'].title, color: negColor };
+      if (scalesMap['yVolume']) {
+        scalesMap['yVolume'].ticks = { ...scalesMap['yVolume'].ticks, color: negColor };
+        scalesMap['yVolume'].title = { ...scalesMap['yVolume'].title, color: negColor };
       }
     }
 
