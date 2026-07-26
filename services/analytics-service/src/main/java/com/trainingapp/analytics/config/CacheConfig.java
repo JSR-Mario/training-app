@@ -44,9 +44,9 @@ public class CacheConfig implements CachingConfigurer {
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)
-                .withCacheConfiguration("weeklyVolume", config.entryTtl(Duration.ofHours(24)))
-                .withCacheConfiguration("exerciseProgress", config.entryTtl(Duration.ofHours(24)))
-                .withCacheConfiguration("dayVolume", config.entryTtl(Duration.ofHours(24)))
+                .withCacheConfiguration("weeklyVolume:v1", config.entryTtl(Duration.ofHours(24)))
+                .withCacheConfiguration("exerciseProgress:v1", config.entryTtl(Duration.ofHours(24)))
+                .withCacheConfiguration("dayVolume:v1", config.entryTtl(Duration.ofHours(24)))
                 .build();
     }
 

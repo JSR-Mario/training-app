@@ -233,7 +233,10 @@ export class WorkoutSummaryComponent implements OnInit {
 
         if (finalEntries.length === 0) return;
 
-        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+        let accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+        if (/^\d+\s+\d+\s+\d+$/.test(accentColor)) {
+          accentColor = `rgb(${accentColor.split(/\s+/).join(', ')})`;
+        }
         
         const bgColors = finalEntries.map(e => 
           e.sessionId === currentSessionId ? accentColor : 'rgba(128, 128, 128, 0.3)'

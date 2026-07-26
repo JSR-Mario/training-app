@@ -129,7 +129,10 @@ export class BodyWeightTrackerComponent implements OnInit {
             this.periodChangePercent.set(0);
           }
 
-          const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+          let accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-pos').trim() || '#8b5cf6';
+          if (/^\d+\s+\d+\s+\d+$/.test(accentColor)) {
+            accentColor = `rgb(${accentColor.split(/\s+/).join(', ')})`;
+          }
           
           this.lineChartData = {
             labels,
