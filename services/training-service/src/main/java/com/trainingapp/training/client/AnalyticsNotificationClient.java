@@ -66,4 +66,26 @@ public class AnalyticsNotificationClient {
             .doOnError(e -> log.error("Failed to notify analytics service for uncompleted session: {}. Error: {}", event.sessionId(), e.getMessage()))
             .subscribe(); // Fire and forget
     }
+
+    public void notifySessionUncompletedSync(SessionUncompletedEvent event) {
+        String url = analyticsServiceUrl + "/internal/events/session-uncompleted";
+        webClient.post()
+            .uri(url)
+            .bodyValue(event)
+            .retrieve()
+            .toBodilessEntity()
+            .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
+            .block();
+    }
+
+    public void notifySessionCompletedSync(SessionCompletedEvent event) {
+        String url = analyticsServiceUrl + "/internal/events/session-completed";
+        webClient.post()
+            .uri(url)
+            .bodyValue(event)
+            .retrieve()
+            .toBodilessEntity()
+            .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
+            .block();
+    }
 }

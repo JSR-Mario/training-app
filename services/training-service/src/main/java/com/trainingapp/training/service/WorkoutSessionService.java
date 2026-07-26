@@ -640,4 +640,77 @@ public class WorkoutSessionService {
             se.isAmrap()
         );
     }
+
+    @Transactional
+    public void resyncAllAnalytics() {
+        List<WorkoutSession> completedSessions = sessionRepository.findByCompletedAtIsNotNull();
+        for (WorkoutSession session : completedSessions) {
+            List<WorkoutSet> sets = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId());
+            Set<UUID> exerciseIds = sets.stream()
+                .map(s -> s.getSessionExercise().getExercise().getId())
+                .collect(Collectors.toSet());
+
+            Map<UUID, Map<String, java.math.BigDecimal>> targetsByExerciseId = targetRepository.findByExerciseIdIn(exerciseIds).stream()
+                .collect(Collectors.groupingBy(
+                    t -> t.getExercise().getId(),
+                    Collectors.toMap(
+                        t -> t.getBodyPart().name(),
+                        t -> t.getTargetValue()
+                    )
+                ));
+
+            List<SessionCompletedEvent.SetData> setDatas = sets.stream()
+                .map(s -> {
+                    UUID exId = s.getSessionExercise().getExercise().getId();
+                    return new SessionCompletedEvent.SetData(
+                        exId,
+                        s.getRepsCompleted() != null ? s.getRepsCompleted() : 0,
+                        s.getRepsCompletedRight(),
+                        s.getWeightKg() != null ? s.getWeightKg() : java.math.BigDecimal.ZERO,
+                        targetsByExerciseId.getOrDefault(exId, Map.of())
+                    );
+                })
+                .collect(Collectors.toList());
+
+            List<com.trainingapp.training.dto.SessionUncompletedEvent.SetData> uncompletedSetDatas = sets.stream()
+                .map(s -> {
+                    UUID exId = s.getSessionExercise().getExercise().getId();
+                    return new com.trainingapp.training.dto.SessionUncompletedEvent.SetData(
+                        exId,
+                        s.getRepsCompleted() != null ? s.getRepsCompleted() : 0,
+                        s.getRepsCompletedRight(),
+                        s.getWeightKg() != null ? s.getWeightKg() : java.math.BigDecimal.ZERO,
+                        targetsByExerciseId.getOrDefault(exId, Map.of())
+                    );
+                })
+                .collect(Collectors.toList());
+
+            com.trainingapp.training.dto.SessionUncompletedEvent uncompletedEvent = new com.trainingapp.training.dto.SessionUncompletedEvent(
+                session.getId(),
+                session.getUserId(),
+                session.getDayTemplate().getWeekTemplate().getProgram().getId(),
+                session.getWeekNumber(),
+                session.getDayTemplate().getId(),
+                session.getPerformedOn(),
+                uncompletedSetDatas
+            );
+
+            SessionCompletedEvent completedEvent = new SessionCompletedEvent(
+                session.getId(),
+                session.getUserId(),
+                session.getDayTemplate().getWeekTemplate().getProgram().getId(),
+                session.getWeekNumber(),
+                session.getDayTemplate().getId(),
+                session.getPerformedOn(),
+                setDatas
+            );
+
+            try {
+                analyticsClient.notifySessionUncompletedSync(uncompletedEvent);
+            } catch (Exception e) {
+                // Ignore if it was not present
+            }
+            analyticsClient.notifySessionCompletedSync(completedEvent);
+        }
+    }
 }
