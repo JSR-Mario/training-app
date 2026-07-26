@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  appVersion: 'v0.31.1',
-  apiUrl: 'http://localhost:8080'
+  appVersion: 'v0.32.0',
+  apiUrl: '/api/v1'
 };
