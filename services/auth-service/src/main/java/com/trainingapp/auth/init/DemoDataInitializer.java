@@ -38,8 +38,16 @@ public class DemoDataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        userRepository.findByUsername("demo").ifPresent(user -> {
+            if (!DEMO_USER_ID.equals(user.getId())) {
+                log.info("Outdated demo user found with wrong UUID {}. Deleting to recreate with correct UUID...", user.getId());
+                userRepository.delete(user);
+                userRepository.flush();
+            }
+        });
+
         if (userRepository.existsByUsername("demo")) {
-            log.info("Demo user 'demo' already exists — skipping seed.");
+            log.info("Demo user 'demo' already exists with correct UUID — skipping seed.");
             return;
         }
 
