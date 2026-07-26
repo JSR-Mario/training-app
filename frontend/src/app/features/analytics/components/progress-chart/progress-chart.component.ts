@@ -10,6 +10,7 @@ import { ExerciseProgressEntry } from '../../../../core/types/analytics.types';
 import { finalize, forkJoin, map, switchMap, of, Subject } from 'rxjs';
 
 import { Exercise, ExerciseTarget, DayTemplate, getBodyPartPath } from '../../../../core/types/training.types';
+import { ThemeService } from '../../../../core/services/theme.service';
 
 interface ProgramBodyPart {
   id: string;
@@ -29,6 +30,7 @@ export class ProgressChartComponent implements OnInit {
   private analyticsService = inject(AnalyticsService);
   private programService = inject(ProgramService);
   private exerciseService = inject(ExerciseService);
+  private themeService = inject(ThemeService);
 
   // Use Angular 17.1+ input signal for miniMode
   miniMode = input<boolean>(false);
@@ -114,8 +116,11 @@ export class ProgressChartComponent implements OnInit {
   private destroy$ = new Subject<void>();
 
   constructor() {
-    // When selected filters change, recalculate the chart data
+    // When selected filters or theme signals change, recalculate the chart data
     effect(() => {
+      this.themeService.themeMode();
+      this.themeService.positiveColor();
+      this.themeService.negativeColor();
       this.updateChart();
     });
     
