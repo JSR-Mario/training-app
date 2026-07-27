@@ -246,4 +246,56 @@ class WorkoutSessionServiceTest {
         // Suggested reps should still be the midpoint of the goal range
         assertThat(suggestions.get(0).suggestedReps()).isEqualTo(15);
     }
+
+    @Test
+    void getExerciseSuggestions_BilateralExerciseEvaluatesLimitingSideAndIncludesRepsRight() {
+        UUID sessionId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setPerformedOn(LocalDate.now());
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", UUID.randomUUID());
+        ex.setUnilateral(true);
+
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", UUID.randomUUID());
+        se.setExercise(ex);
+        se.setReps(10);
+        se.setRepsMax(15);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(se));
+
+        // 5 sets where only set 1 right side hit 15 reps (14/15, 14/14, 14/14, 14/14, 13/14)
+        WorkoutSession prevSession = new WorkoutSession();
+        ReflectionTestUtils.setField(prevSession, "id", UUID.randomUUID());
+
+        com.trainingapp.training.domain.WorkoutSet set1 = new com.trainingapp.training.domain.WorkoutSet();
+        set1.setSession(prevSession);
+        set1.setSetNumber(1);
+        set1.setWeightKg(java.math.BigDecimal.valueOf(21.6));
+        set1.setRepsCompleted(14);
+        set1.setRepsCompletedRight(15);
+
+        com.trainingapp.training.domain.WorkoutSet set2 = new com.trainingapp.training.domain.WorkoutSet();
+        set2.setSession(prevSession);
+        set2.setSetNumber(2);
+        set2.setWeightKg(java.math.BigDecimal.valueOf(21.6));
+        set2.setRepsCompleted(14);
+        set2.setRepsCompletedRight(14);
+
+        when(setRepository.findHistoricalSetsForExercise(ex.getId(), userId, session.getPerformedOn()))
+            .thenReturn(List.of(set1, set2));
+
+        List<com.trainingapp.training.dto.ExerciseSuggestionResponse> suggestions = sessionService.getExerciseSuggestions(sessionId, userId);
+
+        assertThat(suggestions).hasSize(1);
+        // Limiting side (14) didn't reach repsMax (15), so suggestAddWeight should be false
+        assertThat(suggestions.get(0).suggestAddWeight()).isFalse();
+        assertThat(suggestions.get(0).previousSets()).hasSize(2);
+        assertThat(suggestions.get(0).previousSets().get(0).reps()).isEqualTo(14);
+        assertThat(suggestions.get(0).previousSets().get(0).repsRight()).isEqualTo(15);
+    }
 }

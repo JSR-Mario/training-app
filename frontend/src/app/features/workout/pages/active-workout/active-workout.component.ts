@@ -283,7 +283,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                           </div>
                           @if (getSuggestionForNextSet(ex.id)) {
                             <div class="text-xs text-gray-500 dark:text-gray-400">
-                              Last week: <span class="font-bold text-gray-700 dark:text-gray-300">{{ getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg, ex.id) }}{{ getUnit(ex.id) }} &times; {{ getSuggestionForNextSet(ex.id)?.reps }}</span>
+                              Last week: <span class="font-bold text-gray-700 dark:text-gray-300">{{ getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg, ex.id) }}{{ getUnit(ex.id) }} &times; @if (ex.unilateral) { {{ getSuggestionForNextSet(ex.id)?.reps }} / {{ getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps }} } @else { {{ getSuggestionForNextSet(ex.id)?.reps }} }</span>
                             </div>
                           }
                         </div>
@@ -299,7 +299,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                             @if (ex.unilateral) {
                               <div class="flex-1 min-w-[70px]">
                                 <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Reps (R)</label>
-                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
+                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                               </div>
                             }
 

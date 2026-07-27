@@ -220,6 +220,7 @@ export interface PreviousSetSuggestion {
   setNumber: number;
   weightKg?: number;
   reps?: number;
+  repsRight?: number;
 }
 
 export interface ExerciseSuggestionResponse {
