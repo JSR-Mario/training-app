@@ -73,6 +73,7 @@ logged, never propagated — session data is never lost, metrics can be recalcul
 - Merges to `main` are strictly handled via Pull Requests to ensure the CI/CD pipeline is executed properly.
 - Maven: no `LATEST`, no version ranges — pin everything in parent `pom.xml`.
 - npm: no `^`/`~` prefixes in `package.json` — exact versions only.
+- **Lockfile Synchronization**: Whenever `package.json` is modified (adding dependencies, overrides, or updating versions), you MUST run `npm install --package-lock-only` (or `npm install`) to update `package-lock.json` and commit both files together. NEVER push `package.json` changes without updating `package-lock.json`.
 
 ## Security & Best Practices (Mandatory OWASP Compliance)
 1. **Authentication & Token Management**:
