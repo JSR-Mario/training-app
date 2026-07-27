@@ -129,10 +129,23 @@ If you have an existing backup, **do not** start the full application yet. If yo
    ```
 
 ### 4. Database Backups
+
+**Manual Backup:**
 To trigger a manual database snapshot to your configured `S3_BUCKET`:
 ```bash
 ./scripts/backup-s3.sh
 ```
 
+**Automated Backups (Cron):**
+To automate backups (e.g., every day at 3:00 AM), set up a cron job on your server:
 
-
+1. Open the crontab editor:
+   ```bash
+   crontab -e
+   ```
+2. Add the following line at the bottom (replace `/path/to/training-app` with your actual project path):
+   ```cron
+   # Run AWS S3 Database Backup every day at 03:00 AM
+   0 3 * * * cd /path/to/training-app && ./scripts/backup-s3.sh >> /path/to/training-app/db-backup.log 2>&1
+   ```
+*(Note: Ensure the AWS CLI is configured with the correct permissions on the user running the cronjob).*
