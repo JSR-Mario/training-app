@@ -5,5 +5,6 @@ import java.math.BigDecimal;
 public record PreviousSetSuggestion(
     Integer setNumber,
     BigDecimal weightKg,
-    Integer reps
+    Integer reps,
+    Integer repsRight
 ) {}
