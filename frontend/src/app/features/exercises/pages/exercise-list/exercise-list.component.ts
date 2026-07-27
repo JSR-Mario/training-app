@@ -5,11 +5,12 @@ import { ExerciseService } from '../../services/exercise.service';
 import { Exercise, BODY_PARTS_HIERARCHY } from '../../../../core/types/training.types';
 import { ExerciseFormComponent } from '../../components/exercise-form/exercise-form.component';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 @Component({
   standalone: true,
     selector: 'app-exercise-list',
-    imports: [CommonModule, ExerciseFormComponent, FormsModule],
+    imports: [CommonModule, ExerciseFormComponent, FormsModule, RouterModule],
     template: `
     <div class="max-w-7xl mx-auto space-y-8">
     
@@ -213,6 +214,14 @@ import { FormsModule } from '@angular/forms';
                 </div>
               </div>
               <div class="flex gap-4 mt-auto pt-4 border-t border-gray-200 dark:border-gray-700/50">
+                <a
+                  [routerLink]="['/analytics']" [queryParams]="{ exerciseId: exercise.id }"
+                  (click)="$event.stopPropagation()"
+                  class="flex items-center gap-1.5 text-accent-pos hover:opacity-80 transition-colors text-sm font-semibold mr-auto"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                  Analytics
+                </a>
                 <button
                   (click)="editExercise(exercise); $event.stopPropagation()"
                   class="flex items-center gap-1.5 text-accent-pos hover:opacity-80 transition-colors text-sm font-semibold"

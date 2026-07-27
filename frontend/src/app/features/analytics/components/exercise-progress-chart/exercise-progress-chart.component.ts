@@ -1,6 +1,7 @@
 import { Component, OnInit, ElementRef, HostListener, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { AnalyticsService } from '../../services/analytics.service';
@@ -166,6 +167,7 @@ export class ExerciseProgressChartComponent implements OnInit {
   private exerciseService = inject(ExerciseService);
   private themeService = inject(ThemeService);
   private elementRef = inject(ElementRef);
+  private route = inject(ActivatedRoute);
 
   exercises = signal<Exercise[]>([]);
   selectedExerciseId = signal<string>('');
@@ -306,6 +308,16 @@ export class ExerciseProgressChartComponent implements OnInit {
       next: (exercises) => {
         const sorted = [...exercises].sort((a, b) => a.name.localeCompare(b.name));
         this.exercises.set(sorted);
+        
+        const queryParams = this.route.snapshot.queryParams;
+        if (queryParams['exerciseId']) {
+          const found = sorted.find(e => e.id === queryParams['exerciseId']);
+          if (found) {
+            this.selectExercise(found);
+            return;
+          }
+        }
+        
         if (sorted.length > 0) {
           this.selectExercise(sorted[0]);
         }
