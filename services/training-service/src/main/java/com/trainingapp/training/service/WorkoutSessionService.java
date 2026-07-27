@@ -358,12 +358,17 @@ public class WorkoutSessionService {
             java.util.Set<String> relevantBuckets = getOverlappingBuckets(minReps, maxReps);
             java.math.BigDecimal suggestedWeight = null;
             Integer suggestedReps = targetReps;
+            double maxVolume = -1;
             
-            // Find heaviest PR across all buckets that overlap with the exercise's rep range
+            // Find PR with the highest volume across all buckets that overlap with the exercise's rep range
             for (com.trainingapp.training.dto.ExercisePrProjection pr : prs) {
                 if (pr.getExerciseId().equals(se.getExercise().getId()) && relevantBuckets.contains(pr.getBucket())) {
-                    if (suggestedWeight == null || pr.getPrWeight().compareTo(suggestedWeight) > 0) {
-                        suggestedWeight = pr.getPrWeight();
+                    if (pr.getPrWeight() != null && pr.getPrReps() != null) {
+                        double currentVolume = pr.getPrWeight().doubleValue() * pr.getPrReps();
+                        if (suggestedWeight == null || currentVolume > maxVolume) {
+                            suggestedWeight = pr.getPrWeight();
+                            maxVolume = currentVolume;
+                        }
                     }
                 }
             }
