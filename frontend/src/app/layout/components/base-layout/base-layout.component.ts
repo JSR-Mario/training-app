@@ -183,7 +183,13 @@ import { filter } from 'rxjs/operators';
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-bold text-black dark:text-white">Theme Mode</span>
                   <button (click)="themeService.toggleMode()" class="px-3 py-1 text-xs font-bold border-2 border-black dark:border-white active:translate-y-px active:translate-x-px text-black dark:text-white">
-                    {{ themeService.themeMode() === 'light' ? 'Dark' : 'Light' }}
+                    @if (themeService.themeMode() === 'light') {
+                      Light
+                    } @else if (themeService.themeMode() === 'dark') {
+                      Dark
+                    } @else {
+                      Auto ({{ themeService.resolvedThemeMode() === 'dark' ? 'Dark' : 'Light' }})
+                    }
                   </button>
                 </div>
 
