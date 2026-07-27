@@ -416,26 +416,30 @@ public class WorkoutSessionService {
                     }
                     
                     if (s.getRepsCompleted() != null) {
-                        int r = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
-                        if (se.getReps() != null && r < se.getReps()) {
+                        int effectiveReps = (se.getExercise().isUnilateral() && s.getRepsCompletedRight() != null)
+                                ? Math.min(s.getRepsCompleted(), s.getRepsCompletedRight())
+                                : s.getRepsCompleted();
+                        if (se.getReps() != null && effectiveReps < se.getReps()) {
                             setsBelowMinReps++;
                         }
-                        if (se.getRepsMax() != null && r >= se.getRepsMax()) {
+                        if (se.getRepsMax() != null && effectiveReps >= se.getRepsMax()) {
                             setsAboveMaxReps++;
-                        } else if (se.getRepsMax() == null && se.getReps() != null && r > se.getReps()) {
+                        } else if (se.getRepsMax() == null && se.getReps() != null && effectiveReps > se.getReps()) {
                             setsAboveMaxReps++;
                         }
                     }
                 }
                 
                 hadFatigueLastWeek = criticals >= 1 || warnings >= 2 || setsBelowMinReps > 0;
-                suggestAddWeight = setsAboveMaxReps >= 3;
+                int requiredSetsAboveMax = Math.min(2, recentSets.size());
+                suggestAddWeight = setsAboveMaxReps >= requiredSetsAboveMax;
                 
                 for (WorkoutSet s : recentSets) {
                     previousSets.add(new com.trainingapp.training.dto.PreviousSetSuggestion(
                         s.getSetNumber(),
                         s.getWeightKg(),
-                        s.getRepsCompleted()
+                        s.getRepsCompleted(),
+                        s.getRepsCompletedRight()
                     ));
                 }
             }

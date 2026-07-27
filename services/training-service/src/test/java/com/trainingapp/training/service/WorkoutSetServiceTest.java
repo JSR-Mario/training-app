@@ -120,4 +120,36 @@ class WorkoutSetServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Exercise does not belong to this session");
     }
+
+    @Test
+    void logSet_DoesNotMarkNewPr_WhenRepsFewerThanExistingPrAtSameWeight() {
+        WorkoutSetRequest request = new WorkoutSetRequest(sessionExerciseId, 1, 14, null, BigDecimal.valueOf(99.0));
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(sessionExercise));
+
+        WorkoutSet savedSet = new WorkoutSet();
+        ReflectionTestUtils.setField(savedSet, "id", UUID.randomUUID());
+        savedSet.setSession(session);
+        savedSet.setSessionExercise(sessionExercise);
+        savedSet.setSetNumber(1);
+        savedSet.setRepsCompleted(14);
+        savedSet.setWeightKg(BigDecimal.valueOf(99.0));
+
+        when(setRepository.save(any(WorkoutSet.class))).thenReturn(savedSet);
+
+        // Existing PR in bucket "11-15" is 99kg x 15 reps
+        com.trainingapp.training.dto.ExercisePrProjection existingPr = mock(com.trainingapp.training.dto.ExercisePrProjection.class);
+        when(existingPr.getExerciseId()).thenReturn(exercise.getId());
+        when(existingPr.getBucket()).thenReturn("11-15");
+        when(existingPr.getPrWeight()).thenReturn(BigDecimal.valueOf(99.0));
+        when(existingPr.getPrReps()).thenReturn(15);
+
+        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(java.util.List.of(existingPr));
+
+        WorkoutSetResponse response = setService.logSet(sessionId, userId, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.isNewPr()).isFalse();
+    }
 }

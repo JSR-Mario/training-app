@@ -1,7 +1,7 @@
 import { Injectable, signal, effect, inject } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark' | 'auto';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +13,9 @@ export class ThemeService {
   positiveColor = signal<string>('blue');
   negativeColor = signal<string>('red');
 
+  // Resolved theme ('light' or 'dark') actually applied to DOM
+  resolvedThemeMode = signal<'light' | 'dark'>('light');
+
   // Flag to avoid updating the server during the initial sync from the server
   private isSyncingFromServer = false;
   // Flag to avoid overwriting backend with local storage defaults on startup
@@ -23,25 +26,49 @@ export class ThemeService {
 
     // Effect to reactively update the DOM when signals change
     effect(() => {
-      this.applyTheme(this.themeMode(), this.positiveColor(), this.negativeColor());
+      const currentMode = this.themeMode();
+      const pos = this.positiveColor();
+      const neg = this.negativeColor();
+
+      const effectiveMode = currentMode === 'auto' ? this.getAutoTheme() : currentMode;
+      this.resolvedThemeMode.set(effectiveMode);
+      this.applyTheme(effectiveMode, pos, neg);
       
       if (this.initialEffectRun) {
         this.initialEffectRun = false;
         // Only save to local storage on the initial run
-        localStorage.setItem('themeMode', this.themeMode());
-        localStorage.setItem('themePos', this.positiveColor());
-        localStorage.setItem('themeNeg', this.negativeColor());
+        localStorage.setItem('themeMode', currentMode);
+        localStorage.setItem('themePos', pos);
+        localStorage.setItem('themeNeg', neg);
         return;
       }
       
       this.savePreferences();
     });
+
+    // Periodically recheck time for auto mode (every 60s)
+    if (typeof window !== 'undefined') {
+      setInterval(() => {
+        if (this.themeMode() === 'auto') {
+          const effectiveMode = this.getAutoTheme();
+          if (this.resolvedThemeMode() !== effectiveMode) {
+            this.resolvedThemeMode.set(effectiveMode);
+            this.applyTheme(effectiveMode, this.positiveColor(), this.negativeColor());
+          }
+        }
+      }, 60000);
+    }
+  }
+
+  getAutoTheme(): 'light' | 'dark' {
+    const hour = new Date().getHours();
+    return (hour >= 19 || hour < 7) ? 'dark' : 'light';
   }
 
   syncFromServer(prefs: {themeMode?: string, themePos?: string, themeNeg?: string}) {
     this.isSyncingFromServer = true;
-    if (prefs.themeMode === 'light' || prefs.themeMode === 'dark') {
-      this.themeMode.set(prefs.themeMode);
+    if (prefs.themeMode === 'light' || prefs.themeMode === 'dark' || prefs.themeMode === 'auto') {
+      this.themeMode.set(prefs.themeMode as ThemeMode);
     }
     if (prefs.themePos) this.positiveColor.set(prefs.themePos);
     if (prefs.themeNeg) this.negativeColor.set(prefs.themeNeg);
@@ -54,7 +81,7 @@ export class ThemeService {
     const savedPos = localStorage.getItem('themePos');
     const savedNeg = localStorage.getItem('themeNeg');
 
-    if (savedMode === 'dark' || savedMode === 'light') {
+    if (savedMode === 'dark' || savedMode === 'light' || savedMode === 'auto') {
       this.themeMode.set(savedMode);
     } else {
       this.themeMode.set('light');
@@ -80,7 +107,7 @@ export class ThemeService {
     }
   }
 
-  private applyTheme(mode: ThemeMode, pos: string, neg: string) {
+  private applyTheme(mode: 'light' | 'dark', pos: string, neg: string) {
     const html = document.documentElement;
 
     // Apply dark mode class
@@ -96,7 +123,15 @@ export class ThemeService {
   }
 
   toggleMode() {
-    this.themeMode.update(m => m === 'light' ? 'dark' : 'light');
+    this.themeMode.update(m => {
+      if (m === 'light') return 'dark';
+      if (m === 'dark') return 'auto';
+      return 'light';
+    });
+  }
+
+  setThemeMode(mode: ThemeMode) {
+    this.themeMode.set(mode);
   }
 
   setPositiveColor(color: string) {

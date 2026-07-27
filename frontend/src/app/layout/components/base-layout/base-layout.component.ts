@@ -30,7 +30,7 @@ import { filter } from 'rxjs/operators';
 
       <!-- Sidebar (Desktop & Mobile Drawer) -->
       <aside 
-        class="fixed md:relative inset-y-0 left-0 z-50 md:z-0 flex flex-col bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800 transition-all duration-300 overflow-hidden h-full"
+        class="fixed md:relative inset-y-0 left-0 z-50 md:z-0 flex flex-col bg-white dark:bg-[#121212] border-r border-gray-200 dark:border-gray-800 transition-all duration-300 overflow-hidden h-full"
         [class.-translate-x-full]="!isSidebarOpen() && isMobile()"
         [class.w-64]="isSidebarOpen() || isMobile()"
         [class.md:w-0]="!isSidebarOpen()"
@@ -157,7 +157,7 @@ import { filter } from 'rxjs/operators';
             </button>
             
             @if (dropdownOpen()) {
-              <div class="absolute right-0 mt-2 w-64 bg-white dark:bg-black border-2 border-black dark:border-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,1)] z-50 p-4 space-y-4">
+              <div class="absolute right-0 mt-2 w-64 bg-white dark:bg-[#1e1e1e] border-2 border-black dark:border-[#333333] shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,0.08)] z-50 p-4 space-y-4">
                 
                 <!-- XP Progress -->
                 @if (level() > 0) {
@@ -183,7 +183,13 @@ import { filter } from 'rxjs/operators';
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-bold text-black dark:text-white">Theme Mode</span>
                   <button (click)="themeService.toggleMode()" class="px-3 py-1 text-xs font-bold border-2 border-black dark:border-white active:translate-y-px active:translate-x-px text-black dark:text-white">
-                    {{ themeService.themeMode() === 'light' ? 'Dark' : 'Light' }}
+                    @if (themeService.themeMode() === 'light') {
+                      Light
+                    } @else if (themeService.themeMode() === 'dark') {
+                      Dark
+                    } @else {
+                      Auto ({{ themeService.resolvedThemeMode() === 'dark' ? 'Dark' : 'Light' }})
+                    }
                   </button>
                 </div>
 
@@ -250,7 +256,7 @@ import { filter } from 'rxjs/operators';
       </main>
 
       <!-- Mobile Bottom Navigation -->
-      <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 z-30">
+      <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-[#121212] border-t border-gray-200 dark:border-gray-800 z-30">
         <div class="flex justify-around items-center h-16">
           <a routerLink="/dashboard" routerLinkActive="text-accent-pos font-bold" class="flex flex-col items-center justify-center w-full h-full text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
