@@ -5,6 +5,7 @@
 @layer base {
   body {
     font-family: 'Inter', sans-serif;
+    @apply bg-gray-50 text-gray-900 dark:bg-[#121212] dark:text-[#e6e6e6];
   }
 }
 
@@ -30,12 +31,12 @@
 
 @layer utilities {
   .solid-card {
-    @apply bg-white dark:bg-black border-2 border-black dark:border-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,1)];
+    @apply bg-white dark:bg-[#1e1e1e] border-2 border-black dark:border-[#333333] shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,0.08)];
   }
   .solid-input {
-    @apply bg-white dark:bg-black border-2 border-black dark:border-white outline-none focus:ring-0 focus:border-accent-pos text-black dark:text-white transition-colors;
+    @apply bg-white dark:bg-[#1e1e1e] border-2 border-black dark:border-[#333333] outline-none focus:ring-0 focus:border-accent-pos text-black dark:text-[#e6e6e6] transition-colors;
   }
   .solid-btn {
-    @apply font-bold border-2 border-black dark:border-white transition-all active:translate-y-1 active:translate-x-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,1)] active:shadow-none;
+    @apply font-bold border-2 border-black dark:border-[#333333] transition-all active:translate-y-1 active:translate-x-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,0.08)] active:shadow-none;
   }
 }
