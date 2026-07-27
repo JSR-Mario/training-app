@@ -405,7 +405,11 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                           <button (click)="startReplaceExercise(ex.id)" class="w-full py-2 bg-accent-neg/10 text-accent-neg hover:bg-accent-neg/20 border border-accent-neg/20 rounded-lg text-sm font-bold transition-colors">
                             Replace Exercise
                           </button>
-                          <p class="text-xs text-gray-500 text-center mt-1">Logged sets for this exercise will be removed.</p>
+                          <p class="text-xs text-gray-500 text-center mt-1 mb-2">Logged sets for this exercise will be removed.</p>
+                          
+                          <a [routerLink]="['/analytics']" [queryParams]="{ exerciseId: ex.exerciseId }" class="w-full py-2 bg-accent-pos/10 text-accent-pos hover:bg-accent-pos/20 border border-accent-pos/30 rounded-lg text-sm font-bold transition-colors text-center block">
+                            View Analytics
+                          </a>
                         </div>
                       </div>
                     </div>
