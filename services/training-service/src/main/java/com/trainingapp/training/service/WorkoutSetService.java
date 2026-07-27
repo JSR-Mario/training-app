@@ -151,15 +151,25 @@ public class WorkoutSetService {
 
     private boolean isNewPr(UUID userId, WorkoutSet set) {
         if (set.getWeightKg() == null || set.getRepsCompleted() == null) return false;
-        // Check suggestions for this exercise and bucket
-        int reps = set.getRepsCompleted() + (set.getRepsCompletedRight() != null ? set.getRepsCompletedRight() : 0);
-        String bucket = getBucketForReps(reps);
         
+        boolean isUnilateral = set.getSessionExercise().getExercise().isUnilateral();
+        int effectiveReps = isUnilateral 
+            ? set.getRepsCompleted() 
+            : (set.getRepsCompleted() + (set.getRepsCompletedRight() != null ? set.getRepsCompletedRight() : 0));
+            
+        String bucket = getBucketForReps(effectiveReps);
         List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserId(userId);
         
         for (com.trainingapp.training.dto.ExercisePrProjection pr : prs) {
             if (pr.getExerciseId().equals(set.getSessionExercise().getExercise().getId()) && pr.getBucket().equals(bucket)) {
-                return set.getWeightKg().compareTo(pr.getPrWeight()) >= 0;
+                int weightComp = set.getWeightKg().compareTo(pr.getPrWeight());
+                if (weightComp > 0) {
+                    return true;
+                } else if (weightComp == 0) {
+                    return pr.getPrReps() != null && effectiveReps > pr.getPrReps();
+                } else {
+                    return false;
+                }
             }
         }
         // If there was no PR in this bucket before, this is a new PR
