@@ -345,8 +345,8 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                 }
                 
                 @if (optionsModalOpen() === ex.id) {
-                  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-black/80 backdrop-blur-sm">
-                    <div class="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative p-6">
+                  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
+                    <div class="solid-card rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative p-6">
                       <button (click)="closeOptionsModal()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white">✕</button>
                       <h3 class="text-xl font-bold mb-6 text-black dark:text-white">{{ ex.exerciseName }} Options</h3>
                       <div class="space-y-4">
@@ -417,8 +417,8 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                 }
                 
                 @if (replacingExerciseId() === ex.id) {
-                  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-black/80 backdrop-blur-sm">
-                    <div class="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative p-6 h-[80vh] flex flex-col">
+                  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
+                    <div class="solid-card rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative p-6 h-[80vh] flex flex-col">
                       <button (click)="cancelReplace()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white z-10">✕</button>
                       <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0">Replace {{ ex.exerciseName }}</h3>
                       <div class="flex-1 overflow-y-auto min-h-0">
@@ -546,7 +546,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
     </div>
       <!-- Fixed Bottom Action Bar -->
       @if (!isLoading() && session()) {
-        <div class="fixed bottom-16 md:bottom-6 left-0 right-0 md:left-1/2 md:-translate-x-1/2 w-full md:max-w-2xl mx-auto p-4 md:p-6 bg-white/90 dark:bg-black/90 backdrop-blur-md border-t md:border border-gray-300 dark:border-gray-800 rounded-t-2xl md:rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40 flex flex-col items-center">
+        <div class="fixed bottom-16 md:bottom-6 left-0 right-0 md:left-1/2 md:-translate-x-1/2 w-full md:max-w-2xl mx-auto p-4 md:p-6 bg-white/90 dark:bg-[#121212]/90 backdrop-blur-md border-t md:border border-gray-300 dark:border-gray-800 rounded-t-2xl md:rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40 flex flex-col items-center">
           <div class="w-full max-w-sm mb-3">
             <div class="w-full h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
               <div class="h-full bg-accent-pos transition-all duration-500 ease-out"

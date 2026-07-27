@@ -156,8 +156,8 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
     
     <!-- Quick Add Modal -->
     @if (addingExerciseToDayId()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-black/80 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
+        <div class="solid-card rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
           <button (click)="cancelQuickAdd()" class="absolute top-4 right-4 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white text-xl">✕</button>
           <h2 class="text-2xl font-bold text-black dark:text-white mb-6">Quick Add Exercise</h2>
           @if (!selectedExercise()) {
