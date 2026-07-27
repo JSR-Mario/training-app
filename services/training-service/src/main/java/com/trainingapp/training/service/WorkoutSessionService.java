@@ -431,7 +431,8 @@ public class WorkoutSessionService {
                 }
                 
                 hadFatigueLastWeek = criticals >= 1 || warnings >= 2 || setsBelowMinReps > 0;
-                suggestAddWeight = setsAboveMaxReps >= 3;
+                int requiredSetsAboveMax = Math.min(2, recentSets.size());
+                suggestAddWeight = setsAboveMaxReps >= requiredSetsAboveMax;
                 
                 for (WorkoutSet s : recentSets) {
                     previousSets.add(new com.trainingapp.training.dto.PreviousSetSuggestion(
