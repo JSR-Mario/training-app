@@ -82,7 +82,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
               </div>
             }
             @for (ex of exercises(); track ex; let i = $index) {
-              <div [id]="'exercise-' + ex.id" class="solid-card p-4 sm:p-6 overflow-hidden relative">
+              <div [id]="'exercise-' + ex.id" class="solid-card p-4 sm:p-6 relative" [class.z-20]="activeIconTooltip()?.startsWith(ex.id)">
                 <!-- Exercise Header -->
                 <div class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4">
                   <div class="flex-1 pr-4">
@@ -99,9 +99,9 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                             </svg>
                           </button>
                           @if (activeIconTooltip() === ex.id + '-fatigue') {
-                            <div class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
+                            <div class="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
                               High fatigue detected last session. Maintain current weight and focus on form.
-                              <div class="absolute top-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900 dark:border-t-white"></div>
+                              <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white"></div>
                             </div>
                           }
                         </div>
@@ -117,9 +117,9 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                             </svg>
                           </button>
                           @if (activeIconTooltip() === ex.id + '-weight') {
-                            <div class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
+                            <div class="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
                               You crushed your rep targets last session! Consider adding weight this week.
-                              <div class="absolute top-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900 dark:border-t-white"></div>
+                              <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white"></div>
                             </div>
                           }
                         </div>
@@ -133,9 +133,9 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                             PR!
                           </button>
                           @if (activeIconTooltip() === ex.id + '-pr') {
-                            <div class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
+                            <div class="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
                               Personal Record! You lifted heavier than ever on this exercise.
-                              <div class="absolute top-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900 dark:border-t-white"></div>
+                              <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white"></div>
                             </div>
                           }
                         </div>
