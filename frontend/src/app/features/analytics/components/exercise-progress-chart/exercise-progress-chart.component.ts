@@ -151,19 +151,6 @@ import { finalize } from 'rxjs';
             </div>
           </div>
         }
-
-          <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3.5 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
-              SESS
-            </div>
-            <div>
-              <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Sessions Logged</div>
-              <div class="text-lg font-bold text-slate-900 dark:text-white">
-                {{ totalSessions() }}
-              </div>
-            </div>
-          </div>
-        </div>
       }
 
       <!-- Chart Container -->
@@ -176,7 +163,7 @@ import { finalize } from 'rxjs';
         }
 
         <!-- Empty State -->
-        @if (!isLoading() && (!selectedExerciseId() || progressData().length === 0)) {
+        @if (!isLoading() && (!selectedExerciseId() || filteredProgressData().length === 0)) {
           <div class="text-center py-12 px-4 text-slate-400 dark:text-slate-500">
             <svg class="w-12 h-12 mx-auto mb-3 stroke-current opacity-40" fill="none" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -188,7 +175,7 @@ import { finalize } from 'rxjs';
         }
 
         <!-- Canvas Chart -->
-        @if (!isLoading() && selectedExerciseId() && progressData().length > 0) {
+        @if (!isLoading() && selectedExerciseId() && filteredProgressData().length > 0) {
           <div class="w-full h-[340px]">
             <canvas 
               baseChart
