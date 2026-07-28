@@ -16,7 +16,7 @@ import { finalize } from 'rxjs';
   standalone: true,
   imports: [CommonModule, FormsModule, BaseChartDirective],
   template: `
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-6">
+    <div class="solid-card p-6 rounded-2xl animate-fade-in relative border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm space-y-6">
       <!-- Top Bar: Title & Searchable Exercise Selector -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-4">
         <div>
@@ -26,9 +26,6 @@ import { finalize } from 'rxjs';
             </svg>
             Exercise Progression
           </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Track weight PRs, volume, and sets over time for any exercise
-          </p>
         </div>
 
         <!-- Custom Searchable Dropdown -->
@@ -82,34 +79,78 @@ import { finalize } from 'rxjs';
             </div>
           }
         </div>
+        
+        <!-- Time Filter Dropdown -->
+        <div class="w-full sm:w-40 relative">
+          <label for="time-filter-select" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+            Time Range
+          </label>
+          <select
+            id="time-filter-select"
+            [ngModel]="selectedTimeRange()"
+            (ngModelChange)="onTimeRangeChange($event)"
+            class="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm rounded-lg pl-3 pr-8 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-accent-pos transition-all cursor-pointer">
+            <option value="1W">Last Week</option>
+            <option value="1M">Last Month</option>
+            <option value="3M">Last 3 Months</option>
+            <option value="6M">Last 6 Months</option>
+            <option value="1Y">Last Year</option>
+            <option value="ALL">All Time</option>
+          </select>
+          <div class="absolute right-2.5 top-[26px] flex items-center gap-1 text-slate-400 pointer-events-none">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
       </div>
 
-      <!-- Stat Badges -->
+      <!-- Stat Badges & PRs -->
       @if (selectedExerciseId() && !isLoading()) {
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3.5 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-accent-pos/10 text-accent-pos flex items-center justify-center font-bold text-sm">
-              PR
+            <div class="w-10 h-10 rounded-lg bg-accent-neg/10 text-accent-neg flex items-center justify-center font-bold text-sm">
+              BEST
             </div>
             <div>
-              <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">All-Time Weight PR</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Best Set Volume</div>
               <div class="text-lg font-bold text-slate-900 dark:text-white">
-                {{ maxWeightPR() }} <span class="text-xs text-slate-500 font-normal">kg</span>
+                {{ bestSetVolumeWeight() }}<span class="text-xs text-slate-500 font-normal">kg</span> &times; {{ bestSetVolumeReps() }}
               </div>
             </div>
           </div>
 
           <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3.5 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-accent-neg/10 text-accent-neg flex items-center justify-center font-bold text-sm">
-              VOL
+            <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
+              SESS
             </div>
             <div>
-              <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Peak Session Volume</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Sessions Logged</div>
               <div class="text-lg font-bold text-slate-900 dark:text-white">
-                {{ peakVolume() }} <span class="text-xs text-slate-500 font-normal">kg</span>
+                {{ totalSessions() }}
               </div>
             </div>
           </div>
+        </div>
+
+        @if (selectedExercise()?.personalRecords?.length) {
+          <div class="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl p-4 mt-3">
+            <h3 class="text-sm font-bold text-yellow-800 dark:text-yellow-500 mb-2 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              Personal Records
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              @for (pr of selectedExercise()?.personalRecords; track pr.bucket) {
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-2.5 border border-yellow-100 dark:border-yellow-500/10 text-center shadow-sm">
+                  <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">{{ pr.bucket }} Reps</div>
+                  <div class="font-bold text-gray-900 dark:text-white">{{ pr.weightKg }}kg &times; {{ pr.reps }}</div>
+                </div>
+              }
+            </div>
+          </div>
+        }
 
           <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3.5 flex items-center gap-3">
             <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
@@ -141,7 +182,7 @@ import { finalize } from 'rxjs';
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <p class="text-sm font-medium text-slate-600 dark:text-slate-300">
-              {{ selectedExerciseId() ? 'No workout history found for this exercise' : 'Select an exercise above to view progression' }}
+              {{ selectedExerciseId() ? 'No workout history found for this time range' : 'Select an exercise above to view progression' }}
             </p>
           </div>
         }
@@ -173,9 +214,33 @@ export class ExerciseProgressChartComponent implements OnInit {
   selectedExerciseId = signal<string>('');
   searchTerm = signal<string>('');
   isDropdownOpen = signal<boolean>(false);
+  selectedTimeRange = signal<string>('ALL');
 
   progressData = signal<ExerciseProgressEntry[]>([]);
+  filteredProgressData = computed(() => {
+    const data = this.progressData();
+    const range = this.selectedTimeRange();
+    if (range === 'ALL') return data;
+
+    const now = new Date();
+    let cutoff = new Date();
+    
+    switch (range) {
+      case '1W': cutoff.setDate(now.getDate() - 7); break;
+      case '1M': cutoff.setMonth(now.getMonth() - 1); break;
+      case '3M': cutoff.setMonth(now.getMonth() - 3); break;
+      case '6M': cutoff.setMonth(now.getMonth() - 6); break;
+      case '1Y': cutoff.setFullYear(now.getFullYear() - 1); break;
+    }
+    
+    return data.filter(d => new Date(d.sessionDate).getTime() >= cutoff.getTime());
+  });
+
   isLoading = signal<boolean>(false);
+
+  selectedExercise = computed(() => {
+    return this.exercises().find(e => e.id === this.selectedExerciseId());
+  });
 
   filteredExercises = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
@@ -197,19 +262,43 @@ export class ExerciseProgressChartComponent implements OnInit {
     return found.equipmentBrand ? `${found.name} (${found.equipmentBrand})` : found.name;
   });
 
-  maxWeightPR = computed(() => {
-    const data = this.progressData();
+  bestSetVolumeWeight = computed(() => {
+    const data = this.filteredProgressData();
     if (!data.length) return 0;
-    return Math.max(...data.map(d => d.maxWeightKg));
+    
+    let bestWeight = 0;
+    let bestReps = 0;
+    let maxVol = 0;
+    for (const d of data) {
+      const vol = d.bestSetVolumeWeightKg * d.bestSetVolumeReps;
+      if (vol > maxVol) {
+        maxVol = vol;
+        bestWeight = d.bestSetVolumeWeightKg;
+        bestReps = d.bestSetVolumeReps;
+      }
+    }
+    return bestWeight;
   });
 
-  peakVolume = computed(() => {
-    const data = this.progressData();
+  bestSetVolumeReps = computed(() => {
+    const data = this.filteredProgressData();
     if (!data.length) return 0;
-    return Math.max(...data.map(d => d.totalVolumeKg));
+    
+    let bestWeight = 0;
+    let bestReps = 0;
+    let maxVol = 0;
+    for (const d of data) {
+      const vol = d.bestSetVolumeWeightKg * d.bestSetVolumeReps;
+      if (vol > maxVol) {
+        maxVol = vol;
+        bestWeight = d.bestSetVolumeWeightKg;
+        bestReps = d.bestSetVolumeReps;
+      }
+    }
+    return bestReps;
   });
 
-  totalSessions = computed(() => this.progressData().length);
+  totalSessions = computed(() => this.filteredProgressData().length);
 
   chartType: ChartType = 'line';
   chartData: ChartConfiguration['data'] = { labels: [], datasets: [] };
@@ -246,13 +335,13 @@ export class ExerciseProgressChartComponent implements OnInit {
         ticks: { color: '#ec4899' },
         title: { display: true, text: 'Max Weight (kg)', color: '#ec4899' }
       },
-      yVolume: {
+      yReps: {
         type: 'linear',
         display: true,
         position: 'right',
         grid: { display: false },
         ticks: { color: '#10b981' },
-        title: { display: true, text: 'Total Volume (kg)', color: '#10b981' }
+        title: { display: true, text: 'Reps', color: '#10b981' }
       }
     },
     interaction: {
@@ -268,7 +357,7 @@ export class ExerciseProgressChartComponent implements OnInit {
       this.themeService.positiveColor();
       this.themeService.negativeColor();
       
-      const current = this.progressData();
+      const current = this.filteredProgressData();
       if (current.length > 0) {
         this.updateChart(current);
       }
@@ -303,6 +392,11 @@ export class ExerciseProgressChartComponent implements OnInit {
     this.fetchExerciseProgress(ex.id);
   }
 
+  onTimeRangeChange(range: string) {
+    this.selectedTimeRange.set(range);
+    this.updateChart(this.filteredProgressData());
+  }
+
   private loadExercises() {
     this.exerciseService.getExercises().subscribe({
       next: (exercises) => {
@@ -335,7 +429,8 @@ export class ExerciseProgressChartComponent implements OnInit {
       next: (entries) => {
         const sorted = [...entries].sort((a, b) => new Date(a.sessionDate).getTime() - new Date(b.sessionDate).getTime());
         this.progressData.set(sorted);
-        this.updateChart(sorted);
+        // The effect or computed change will trigger an update if needed, but we explicitly update the chart here
+        this.updateChart(this.filteredProgressData());
       },
       error: (err) => {
         console.error('Error loading exercise progress', err);
@@ -361,9 +456,9 @@ export class ExerciseProgressChartComponent implements OnInit {
         scalesMap['yWeight'].ticks = { ...scalesMap['yWeight'].ticks, color: posColor };
         scalesMap['yWeight'].title = { ...scalesMap['yWeight'].title, color: posColor };
       }
-      if (scalesMap['yVolume']) {
-        scalesMap['yVolume'].ticks = { ...scalesMap['yVolume'].ticks, color: negColor };
-        scalesMap['yVolume'].title = { ...scalesMap['yVolume'].title, color: negColor };
+      if (scalesMap['yReps']) {
+        scalesMap['yReps'].ticks = { ...scalesMap['yReps'].ticks, color: negColor };
+        scalesMap['yReps'].title = { ...scalesMap['yReps'].title, color: negColor };
       }
     }
 
@@ -373,7 +468,7 @@ export class ExerciseProgressChartComponent implements OnInit {
     });
 
     const maxWeights = entries.map(e => e.maxWeightKg);
-    const volumes = entries.map(e => e.totalVolumeKg);
+    const reps = entries.map(e => e.maxWeightReps);
 
     this.chartData = {
       labels,
@@ -394,9 +489,9 @@ export class ExerciseProgressChartComponent implements OnInit {
           pointHoverRadius: 7
         },
         {
-          label: 'Total Volume (kg)',
-          data: volumes,
-          yAxisID: 'yVolume',
+          label: 'Reps',
+          data: reps,
+          yAxisID: 'yReps',
           borderColor: negColor,
           backgroundColor: this.hexToRgba(negColor, 0.08),
           borderWidth: 2.5,

@@ -47,6 +47,15 @@ public class ExerciseProgressEntry {
     @Column(name = "total_sets", nullable = false)
     private int totalSets = 0;
 
+    @Column(name = "max_weight_reps", nullable = false)
+    private int maxWeightReps = 0;
+
+    @Column(name = "best_set_volume_weight_kg", nullable = false, precision = 6, scale = 2)
+    private BigDecimal bestSetVolumeWeightKg = BigDecimal.ZERO;
+
+    @Column(name = "best_set_volume_reps", nullable = false)
+    private int bestSetVolumeReps = 0;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public UUID getUserId() { return userId; }
@@ -61,6 +70,12 @@ public class ExerciseProgressEntry {
     public void setTotalVolumeKg(BigDecimal totalVolumeKg) { this.totalVolumeKg = totalVolumeKg; }
     public int getTotalSets() { return totalSets; }
     public void setTotalSets(int totalSets) { this.totalSets = totalSets; }
+    public int getMaxWeightReps() { return maxWeightReps; }
+    public void setMaxWeightReps(int maxWeightReps) { this.maxWeightReps = maxWeightReps; }
+    public BigDecimal getBestSetVolumeWeightKg() { return bestSetVolumeWeightKg; }
+    public void setBestSetVolumeWeightKg(BigDecimal bestSetVolumeWeightKg) { this.bestSetVolumeWeightKg = bestSetVolumeWeightKg; }
+    public int getBestSetVolumeReps() { return bestSetVolumeReps; }
+    public void setBestSetVolumeReps(int bestSetVolumeReps) { this.bestSetVolumeReps = bestSetVolumeReps; }
     public Integer getWeekNumber() { return weekNumber; }
     public void setWeekNumber(Integer weekNumber) { this.weekNumber = weekNumber; }
     public UUID getDayTemplateId() { return dayTemplateId; }
