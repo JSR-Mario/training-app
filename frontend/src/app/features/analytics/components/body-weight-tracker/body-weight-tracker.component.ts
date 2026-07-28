@@ -82,6 +82,7 @@ export class BodyWeightTrackerComponent implements OnInit {
         type: 'linear',
         display: true,
         position: 'left',
+        beginAtZero: false,
         grid: { color: 'rgba(128, 128, 128, 0.1)' },
         ticks: { color: '#8b5cf6' },
         title: { display: true, text: 'Weight (kg)', color: '#8b5cf6' }
@@ -94,7 +95,7 @@ export class BodyWeightTrackerComponent implements OnInit {
     }
   };
 
-  public lineChartType: ChartType = 'line';
+  public lineChartType: ChartType = 'bar';
   
   public lineChartData: ChartConfiguration['data'] = {
     labels: [],
@@ -182,23 +183,20 @@ export class BodyWeightTrackerComponent implements OnInit {
             labels,
             datasets: [
               {
+                type: 'bar',
                 data: weights,
                 label: `Avg Weight (${this.aggregationUnit()})`,
-                backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                backgroundColor: this.hexToRgba(accentColor, 0.5),
                 borderColor: accentColor,
-                pointBackgroundColor: accentColor,
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: accentColor,
-                fill: 'origin',
-                tension: 0.4,
-                spanGaps: true,
+                borderWidth: 1.5,
+                borderRadius: 6,
+                borderSkipped: false,
                 order: 1
               },
               {
+                type: 'line',
                 data: trendData,
                 label: 'Trend',
-                type: 'line',
                 borderColor: '#6b7280',
                 borderWidth: 2,
                 borderDash: [5, 5],
@@ -211,6 +209,22 @@ export class BodyWeightTrackerComponent implements OnInit {
           };
         }
       });
+  }
+
+  private hexToRgba(color: string, alpha: number): string {
+    if (color.startsWith('rgb')) {
+      return color.replace('rgb', 'rgba').replace(')', `, ${alpha})`);
+    }
+    if (color.startsWith('#')) {
+      let hex = color.slice(1);
+      if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+      const num = parseInt(hex, 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    return color;
   }
 
   public aggregateEntries(entries: BodyWeightEntry[], range: TimeRange): AggregatedBucket[] {
