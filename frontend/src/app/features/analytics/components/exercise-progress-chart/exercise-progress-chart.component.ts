@@ -210,7 +210,7 @@ export class ExerciseProgressChartComponent implements OnInit {
     if (range === 'ALL') return data;
 
     const now = new Date();
-    let cutoff = new Date();
+    const cutoff = new Date();
     
     switch (range) {
       case '1W': cutoff.setDate(now.getDate() - 7); break;
@@ -254,7 +254,6 @@ export class ExerciseProgressChartComponent implements OnInit {
     if (!data.length) return 0;
     
     let bestWeight = 0;
-    let bestReps = 0;
     let maxVol = 0;
     for (const d of data) {
       const weight = d.bestSetVolumeWeightKg ?? 0;
@@ -263,7 +262,6 @@ export class ExerciseProgressChartComponent implements OnInit {
       if (vol > maxVol) {
         maxVol = vol;
         bestWeight = weight;
-        bestReps = reps;
       }
     }
     return bestWeight;
@@ -273,7 +271,6 @@ export class ExerciseProgressChartComponent implements OnInit {
     const data = this.filteredProgressData();
     if (!data.length) return 0;
     
-    let bestWeight = 0;
     let bestReps = 0;
     let maxVol = 0;
     for (const d of data) {
@@ -282,7 +279,6 @@ export class ExerciseProgressChartComponent implements OnInit {
       const vol = weight * reps;
       if (vol > maxVol) {
         maxVol = vol;
-        bestWeight = weight;
         bestReps = reps;
       }
     }
