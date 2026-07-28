@@ -15,5 +15,7 @@ public record WorkoutSetResponse(
     BigDecimal weightKg,
     Instant loggedAt,
     String performanceStatus,
-    boolean isNewPr
+    boolean isNewPr,
+    BigDecimal previousPrWeight,
+    Integer previousPrReps
 ) {}

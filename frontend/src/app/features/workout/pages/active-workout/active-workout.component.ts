@@ -100,7 +100,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                           </button>
                           @if (activeIconTooltip() === ex.id + '-fatigue') {
                             <div class="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
-                              High fatigue detected last session. Maintain current weight and focus on form.
+                              Fatigue detected in the last session.
                               <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white"></div>
                             </div>
                           }
@@ -118,7 +118,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                           </button>
                           @if (activeIconTooltip() === ex.id + '-weight') {
                             <div class="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
-                              You crushed your rep targets last session! Consider adding weight this week.
+                              Increase reps
                               <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white"></div>
                             </div>
                           }
@@ -134,7 +134,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                           </button>
                           @if (activeIconTooltip() === ex.id + '-pr') {
                             <div class="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
-                              Personal Record! You lifted heavier than ever on this exercise.
+                              {{ getPrTooltipText(ex.id) }}
                               <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white"></div>
                             </div>
                           }
@@ -1060,6 +1060,23 @@ export class ActiveWorkoutComponent implements OnInit {
 
   hasPrForExercise(exerciseId: string): boolean {
     return this.getSetsForExercise(exerciseId).some(set => set.isNewPr);
+  }
+
+  getPrTooltipText(exerciseId: string): string {
+    const prSet = this.getSetsForExercise(exerciseId).find(set => set.isNewPr);
+    if (!prSet) return 'Personal Record!';
+    
+    const unit = this.getUnit(exerciseId);
+    let currentReps = prSet.repsCompleted?.toString() || '';
+    if (prSet.repsCompletedRight) currentReps += ' / ' + prSet.repsCompletedRight;
+    
+    const currentText = `${this.getDisplayWeight(prSet.weightKg, exerciseId)}${unit} × ${currentReps}`;
+    
+    if (prSet.previousPrWeight != null && prSet.previousPrReps != null) {
+      return `Previous PR: ${this.getDisplayWeight(prSet.previousPrWeight, exerciseId)}${unit} × ${prSet.previousPrReps} → Current PR: ${currentText}`;
+    }
+    
+    return `New PR! ${currentText}`;
   }
 
   /**
