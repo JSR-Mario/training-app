@@ -59,7 +59,7 @@ class WorkoutSetControllerTest {
         UUID sessionId = UUID.randomUUID();
         UUID sessionExerciseId = UUID.randomUUID();
         WorkoutSetRequest request = new WorkoutSetRequest(sessionExerciseId, 1, 10, null, BigDecimal.valueOf(50.5));
-        WorkoutSetResponse response = new WorkoutSetResponse(UUID.randomUUID(), sessionExerciseId, sessionId, 1, 10, null, BigDecimal.valueOf(50.5), Instant.now(), "GOOD", false);
+        WorkoutSetResponse response = new WorkoutSetResponse(UUID.randomUUID(), sessionExerciseId, sessionId, 1, 10, null, BigDecimal.valueOf(50.5), Instant.now(), "GOOD", false, null, null);
 
         when(setService.logSet(eq(sessionId), eq(userId), any(WorkoutSetRequest.class))).thenReturn(response);
 
