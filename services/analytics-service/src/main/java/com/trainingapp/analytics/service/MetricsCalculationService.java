@@ -79,21 +79,40 @@ public class MetricsCalculationService {
             .collect(java.util.stream.Collectors.groupingBy(SessionCompletedEvent.SetData::exerciseId))
             .forEach((exerciseId, setsForExercise) -> {
 
-                BigDecimal maxWeight = setsForExercise.stream()
-                        .map(s -> s.weightKg() != null ? s.weightKg() : BigDecimal.ZERO)
-                        .max(BigDecimal::compareTo)
-                        .orElse(BigDecimal.ZERO);
+                BigDecimal maxWeight = BigDecimal.ZERO;
+                int maxWeightReps = 0;
+                
+                BigDecimal bestSetVolume = BigDecimal.ZERO;
+                BigDecimal bestSetVolumeWeightKg = BigDecimal.ZERO;
+                int bestSetVolumeReps = 0;
+                
+                BigDecimal sessionVolume = BigDecimal.ZERO;
 
-                BigDecimal sessionVolume = setsForExercise.stream()
-                    .map(s -> {
-                        int totalReps = s.repsCompleted();
-                        if (s.repsCompletedRight() != null) {
-                            totalReps += s.repsCompletedRight();
-                        }
-                        BigDecimal weight = s.weightKg() != null ? s.weightKg() : BigDecimal.ZERO;
-                        return weight.multiply(BigDecimal.valueOf(totalReps));
-                    })
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                for (SessionCompletedEvent.SetData s : setsForExercise) {
+                    BigDecimal weight = s.weightKg() != null ? s.weightKg() : BigDecimal.ZERO;
+                    int reps = s.repsCompleted();
+                    if (s.repsCompletedRight() != null) {
+                        reps += s.repsCompletedRight();
+                    }
+                    
+                    // Session volume accumulation
+                    BigDecimal setVolume = weight.multiply(BigDecimal.valueOf(reps));
+                    sessionVolume = sessionVolume.add(setVolume);
+                    
+                    // Best set volume tracking
+                    if (setVolume.compareTo(bestSetVolume) > 0) {
+                        bestSetVolume = setVolume;
+                        bestSetVolumeWeightKg = weight;
+                        bestSetVolumeReps = reps;
+                    }
+                    
+                    // Max weight and associated reps tracking
+                    int cmp = weight.compareTo(maxWeight);
+                    if (cmp > 0 || (cmp == 0 && reps > maxWeightReps)) {
+                        maxWeight = weight;
+                        maxWeightReps = reps;
+                    }
+                }
 
                 int totalSets = setsForExercise.size();
 
@@ -117,6 +136,9 @@ public class MetricsCalculationService {
                 progress.setMaxWeightKg(maxWeight);
                 progress.setTotalVolumeKg(sessionVolume);
                 progress.setTotalSets(totalSets);
+                progress.setMaxWeightReps(maxWeightReps);
+                progress.setBestSetVolumeWeightKg(bestSetVolumeWeightKg);
+                progress.setBestSetVolumeReps(bestSetVolumeReps);
 
                 progressRepository.save(progress);
             });
