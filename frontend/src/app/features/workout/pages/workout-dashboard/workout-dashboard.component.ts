@@ -111,12 +111,12 @@ import { switchMap, of } from 'rxjs';
                   </div>
                   <div class="flex items-center gap-3">
                   
-                  @if (day.session?.completedAt) {
-                    <span class="px-2 py-0.5 bg-accent-pos/10 text-accent-pos text-xs rounded border border-accent-pos/20 font-bold">Completed</span>
-                  } @else if (day.session) {
-                    <span class="px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 text-xs rounded border border-gray-300 dark:border-gray-600 font-bold">In Progress</span>
-                  } @else {
-                    <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 text-xs rounded border border-gray-200 dark:border-gray-700 font-bold">Not Started</span>
+                  @if (!day.session?.completedAt) {
+                    @if (day.session) {
+                      <span class="px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 text-xs rounded border border-gray-300 dark:border-gray-600 font-bold">In Progress</span>
+                    } @else {
+                      <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 text-xs rounded border border-gray-200 dark:border-gray-700 font-bold">Not Started</span>
+                    }
                   }
                   </div>
                 </div>
@@ -137,7 +137,7 @@ import { switchMap, of } from 'rxjs';
                     [routerLink]="['/workout', day.session.id]"
                     class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white rounded-lg transition-colors text-sm font-medium w-full sm:w-auto text-center solid-btn"
                     >
-                    {{ day.session.completedAt ? 'View Summary' : 'Resume Workout' }} &rarr;
+                    {{ day.session.completedAt ? 'View Summary' : 'Resume Workout' }}
                   </a>
                 } @else {
                   <button
