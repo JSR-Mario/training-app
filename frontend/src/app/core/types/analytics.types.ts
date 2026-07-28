@@ -8,10 +8,10 @@ export interface ExerciseProgressEntry {
   weekNumber: number;
   dayTemplateId: string;
   maxWeightKg: number;
-  maxWeightReps: number;
+  maxWeightReps?: number;
   totalVolumeKg: number;
-  bestSetVolumeWeightKg: number;
-  bestSetVolumeReps: number;
+  bestSetVolumeWeightKg?: number;
+  bestSetVolumeReps?: number;
   totalSets: number;
 }
 

@@ -270,11 +270,13 @@ export class ExerciseProgressChartComponent implements OnInit {
     let bestReps = 0;
     let maxVol = 0;
     for (const d of data) {
-      const vol = d.bestSetVolumeWeightKg * d.bestSetVolumeReps;
+      const weight = d.bestSetVolumeWeightKg ?? 0;
+      const reps = d.bestSetVolumeReps ?? 0;
+      const vol = weight * reps;
       if (vol > maxVol) {
         maxVol = vol;
-        bestWeight = d.bestSetVolumeWeightKg;
-        bestReps = d.bestSetVolumeReps;
+        bestWeight = weight;
+        bestReps = reps;
       }
     }
     return bestWeight;
@@ -288,11 +290,13 @@ export class ExerciseProgressChartComponent implements OnInit {
     let bestReps = 0;
     let maxVol = 0;
     for (const d of data) {
-      const vol = d.bestSetVolumeWeightKg * d.bestSetVolumeReps;
+      const weight = d.bestSetVolumeWeightKg ?? 0;
+      const reps = d.bestSetVolumeReps ?? 0;
+      const vol = weight * reps;
       if (vol > maxVol) {
         maxVol = vol;
-        bestWeight = d.bestSetVolumeWeightKg;
-        bestReps = d.bestSetVolumeReps;
+        bestWeight = weight;
+        bestReps = reps;
       }
     }
     return bestReps;
@@ -468,7 +472,7 @@ export class ExerciseProgressChartComponent implements OnInit {
     });
 
     const maxWeights = entries.map(e => e.maxWeightKg);
-    const reps = entries.map(e => e.maxWeightReps);
+    const reps = entries.map(e => e.maxWeightReps ?? 0);
 
     this.chartData = {
       labels,
