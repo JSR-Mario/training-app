@@ -93,6 +93,12 @@ import { filter } from 'rxjs/operators';
             </svg>
             <span class="font-medium">Analytics</span>
           </a>
+          <a routerLink="/habits" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            <span class="font-medium">Habits</span>
+          </a>
         </nav>
         
         <!-- Bottom Sidebar Links -->
@@ -281,6 +287,12 @@ import { filter } from 'rxjs/operators';
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
             <span class="text-[10px] font-medium mt-1">Cardio</span>
+          </a>
+          <a routerLink="/habits" routerLinkActive="text-accent-pos font-bold" class="flex flex-col items-center justify-center w-full h-full text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            <span class="text-[10px] font-medium mt-1">Habits</span>
           </a>
         </div>
       </nav>

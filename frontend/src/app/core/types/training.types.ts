@@ -177,7 +177,7 @@ export interface WorkoutSetResponse {
   repsCompletedRight?: number;
   weightKg?: number;
   loggedAt: string;
-  performanceStatus?: 'GOOD' | 'WARNING' | 'CRITICAL';
+  performanceStatus?: 'GOOD' | 'WARNING' | 'CRITICAL' | 'WARMUP';
   isNewPr?: boolean;
   previousPrWeight?: number;
   previousPrReps?: number;

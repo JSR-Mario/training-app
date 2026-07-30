@@ -64,7 +64,7 @@ public class WorkoutSetService {
         WorkoutSet saved = setRepository.save(set);
         
         List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId());
-        double maxPerf = calculateMaxPerf(allSets, sessionExercise.getId());
+        MaxPerfResult maxPerf = calculateMaxPerf(allSets, sessionExercise.getId());
         
         // Calculate if it's a PR by looking at past suggestions
         PrResult prResult = checkPr(session.getUserId(), saved);
@@ -80,7 +80,7 @@ public class WorkoutSetService {
         List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId);
         return allSets.stream()
             .map(set -> {
-                double maxPerf = calculateMaxPerf(allSets, set.getSessionExercise().getId());
+                MaxPerfResult maxPerf = calculateMaxPerf(allSets, set.getSessionExercise().getId());
                 PrResult prResult = checkPr(userId, set);
                 return mapToResponse(set, maxPerf, prResult);
             })
@@ -110,7 +110,7 @@ public class WorkoutSetService {
         set.setWeightKg(request.weightKg());
         WorkoutSet saved = setRepository.save(set);
         List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(set.getSession().getId());
-        double maxPerf = calculateMaxPerf(allSets, sessionExercise.getId());
+        MaxPerfResult maxPerf = calculateMaxPerf(allSets, sessionExercise.getId());
         PrResult prResult = checkPr(userId, saved);
         return mapToResponse(saved, maxPerf, prResult);
     }
@@ -127,25 +127,37 @@ public class WorkoutSetService {
         setRepository.delete(set);
     }
 
-    private double calculateMaxPerf(List<WorkoutSet> sets, UUID sessionExerciseId) {
+    private record MaxPerfResult(double maxPerf, Integer maxPerfSetNumber) {}
+
+    private MaxPerfResult calculateMaxPerf(List<WorkoutSet> sets, UUID sessionExerciseId) {
         double max = 0;
+        Integer maxSetNum = null;
         for (WorkoutSet s : sets) {
             if (s.getSessionExercise().getId().equals(sessionExerciseId) && s.getWeightKg() != null && s.getRepsCompleted() != null) {
                 int reps = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
                 double perf = s.getWeightKg().doubleValue() * reps;
-                if (perf > max) max = perf;
+                if (perf > max) {
+                    max = perf;
+                    maxSetNum = s.getSetNumber();
+                }
             }
         }
-        return max;
+        return new MaxPerfResult(max, maxSetNum);
     }
 
-    private String calculatePerformanceStatus(WorkoutSet set, double maxPerf) {
-        if (set.getWeightKg() == null || set.getRepsCompleted() == null || maxPerf == 0) return "GOOD";
+    private String calculatePerformanceStatus(WorkoutSet set, MaxPerfResult maxPerfResult) {
+        if (set.getWeightKg() == null || set.getRepsCompleted() == null || maxPerfResult.maxPerf() == 0) return "GOOD";
         int reps = set.getRepsCompleted() + (set.getRepsCompletedRight() != null ? set.getRepsCompletedRight() : 0);
         double perf = set.getWeightKg().doubleValue() * reps;
-        double ratio = perf / maxPerf;
-        if (ratio < 0.75) return "CRITICAL";
-        if (ratio < 0.90) return "WARNING";
+        double ratio = perf / maxPerfResult.maxPerf();
+        
+        if (ratio < 0.80) {
+            if (maxPerfResult.maxPerfSetNumber() != null && set.getSetNumber() < maxPerfResult.maxPerfSetNumber()) {
+                return "WARMUP";
+            }
+            if (ratio < 0.70) return "CRITICAL";
+            return "WARNING";
+        }
         return "GOOD";
     }
 
@@ -188,7 +200,7 @@ public class WorkoutSetService {
         return "31+";
     }
 
-    private WorkoutSetResponse mapToResponse(WorkoutSet set, double maxPerf, PrResult prResult) {
+    private WorkoutSetResponse mapToResponse(WorkoutSet set, MaxPerfResult maxPerf, PrResult prResult) {
         return new WorkoutSetResponse(
             set.getId(),
             set.getSession().getId(),
