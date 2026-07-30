@@ -27,7 +27,7 @@ public class HabitService {
 
     @Transactional(readOnly = true)
     public List<HabitResponse> getHabits(LocalDate today) {
-        UUID userId = UserContext.getUserId();
+        UUID userId = UserContext.getCurrentUserId();
         return habitRepository.findByUserId(userId).stream()
                 .map(habit -> mapToResponse(habit, today))
                 .collect(Collectors.toList());
@@ -36,7 +36,7 @@ public class HabitService {
     @Transactional
     public HabitResponse createHabit(HabitRequest request) {
         Habit habit = new Habit();
-        habit.setUserId(UserContext.getUserId());
+        habit.setUserId(UserContext.getCurrentUserId());
         habit.setTitle(request.getTitle());
         habit.setDescription(request.getDescription());
         habit.setFrequency(request.getFrequency());
@@ -84,7 +84,7 @@ public class HabitService {
     private Habit getHabitByIdAndUser(UUID id) {
         Habit habit = habitRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Habit not found"));
-        if (!habit.getUserId().equals(UserContext.getUserId())) {
+        if (!habit.getUserId().equals(UserContext.getCurrentUserId())) {
             throw new RuntimeException("Not authorized");
         }
         return habit;
