@@ -25,12 +25,12 @@ import { Habit, HabitFrequency, HabitRequest } from '../../models/habit.model';
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
             <div>
               <label for="habit-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-              <input id="habit-title" type="text" formControlName="title" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos focus:outline-none dark:text-white" placeholder="e.g. Read 10 pages">
+              <input id="habit-title" type="text" formControlName="title" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos focus:outline-none text-gray-900 dark:text-white" placeholder="e.g. Read 10 pages">
             </div>
             
             <div>
               <label for="habit-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (Optional)</label>
-              <textarea id="habit-description" formControlName="description" rows="2" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos focus:outline-none dark:text-white" placeholder="Any extra details"></textarea>
+              <textarea id="habit-description" formControlName="description" rows="2" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos focus:outline-none text-gray-900 dark:text-white" placeholder="Any extra details"></textarea>
             </div>
             
             <div>
