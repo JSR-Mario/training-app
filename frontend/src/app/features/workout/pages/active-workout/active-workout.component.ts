@@ -242,6 +242,9 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                                 @if (set.performanceStatus === 'WARNING') {
                                   <span class="ml-2 text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 border border-accent-pos/20 px-1.5 py-0.5 rounded">Fatigue</span>
                                 }
+                                @if (set.performanceStatus === 'WARMUP') {
+                                  <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 px-1.5 py-0.5 rounded" title="Build-up Set">!</span>
+                                }
                             </div>
                           </div>
                           @if (!session()?.completedAt) {
@@ -1095,30 +1098,34 @@ export class ActiveWorkoutComponent implements OnInit {
     return targetSet;
   }
 
-  getPerfContainerClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
+  getPerfContainerClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | 'WARMUP' | undefined): string {
     if (status === 'CRITICAL') return 'border-accent-neg/50 bg-accent-neg/10';
     if (status === 'WARNING') return 'border-accent-pos/50 bg-accent-pos/10';
+    if (status === 'WARMUP') return 'border-gray-300 dark:border-gray-600';
     if (status === 'GOOD') return 'border-gray-300 dark:border-gray-600';
     return 'border-gray-300 dark:border-gray-600';
   }
 
-  getPerfBadgeClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
+  getPerfBadgeClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | 'WARMUP' | undefined): string {
     if (status === 'CRITICAL') return 'bg-accent-neg/20 text-accent-neg border-accent-neg/30';
     if (status === 'WARNING') return 'bg-accent-pos/20 text-accent-pos border-accent-pos/30';
+    if (status === 'WARMUP') return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600';
     if (status === 'GOOD') return 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600';
     return 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600';
   }
 
-  getPerfTextClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
+  getPerfTextClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | 'WARMUP' | undefined): string {
     if (status === 'CRITICAL') return 'text-accent-neg';
     if (status === 'WARNING') return 'text-accent-pos';
+    if (status === 'WARMUP') return 'text-gray-600 dark:text-gray-400 font-medium';
     if (status === 'GOOD') return 'text-gray-800 dark:text-gray-200';
     return 'text-gray-800 dark:text-gray-200';
   }
 
-  getPerfSubtextClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | undefined): string {
+  getPerfSubtextClass(status: 'GOOD' | 'WARNING' | 'CRITICAL' | 'WARMUP' | undefined): string {
     if (status === 'CRITICAL') return 'text-accent-neg/70';
     if (status === 'WARNING') return 'text-accent-pos/70';
+    if (status === 'WARMUP') return 'text-gray-400 dark:text-gray-500';
     if (status === 'GOOD') return 'text-gray-500';
     return 'text-gray-500';
   }
