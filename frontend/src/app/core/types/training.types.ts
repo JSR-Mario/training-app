@@ -179,6 +179,8 @@ export interface WorkoutSetResponse {
   loggedAt: string;
   performanceStatus?: 'GOOD' | 'WARNING' | 'CRITICAL';
   isNewPr?: boolean;
+  previousPrWeight?: number;
+  previousPrReps?: number;
 }
 
 export interface ActivitySummary {

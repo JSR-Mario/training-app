@@ -41,7 +41,7 @@ class AuthControllerTest {
 
     @Test
     void register_Success() throws Exception {
-        RegisterRequest req = new RegisterRequest("testuser", "test@example.com", "password123");
+        RegisterRequest req = new RegisterRequest("testuser", "test@example.com", "Password123");
         UserResponse resp = new UserResponse(UUID.randomUUID(), "testuser", "test@example.com", java.time.Instant.now(), "ROLE_USER", true, "light", "blue", "red");
 
         Mockito.when(authService.register(any())).thenReturn(resp);
@@ -55,7 +55,7 @@ class AuthControllerTest {
 
     @Test
     void login_Success() throws Exception {
-        LoginRequest req = new LoginRequest("testuser", "password123");
+        LoginRequest req = new LoginRequest("testuser", "Password123");
         AuthResponse authResp = new AuthResponse("access-token-123", "Bearer", 900L);
         AuthService.LoginResult resp = new AuthService.LoginResult(authResp, "refresh-token-456");
 

@@ -67,9 +67,9 @@ public class WorkoutSetService {
         double maxPerf = calculateMaxPerf(allSets, sessionExercise.getId());
         
         // Calculate if it's a PR by looking at past suggestions
-        boolean isNewPr = isNewPr(session.getUserId(), saved);
+        PrResult prResult = checkPr(session.getUserId(), saved);
         
-        return mapToResponse(saved, maxPerf, isNewPr);
+        return mapToResponse(saved, maxPerf, prResult);
     }
 
     public List<WorkoutSetResponse> getSetsForSession(UUID sessionId, UUID userId) {
@@ -81,8 +81,8 @@ public class WorkoutSetService {
         return allSets.stream()
             .map(set -> {
                 double maxPerf = calculateMaxPerf(allSets, set.getSessionExercise().getId());
-                boolean isNewPr = isNewPr(userId, set);
-                return mapToResponse(set, maxPerf, isNewPr);
+                PrResult prResult = checkPr(userId, set);
+                return mapToResponse(set, maxPerf, prResult);
             })
             .collect(Collectors.toList());
     }
@@ -111,8 +111,8 @@ public class WorkoutSetService {
         WorkoutSet saved = setRepository.save(set);
         List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(set.getSession().getId());
         double maxPerf = calculateMaxPerf(allSets, sessionExercise.getId());
-        boolean isNewPr = isNewPr(userId, saved);
-        return mapToResponse(saved, maxPerf, isNewPr);
+        PrResult prResult = checkPr(userId, saved);
+        return mapToResponse(saved, maxPerf, prResult);
     }
 
     @Transactional
@@ -149,8 +149,10 @@ public class WorkoutSetService {
         return "GOOD";
     }
 
-    private boolean isNewPr(UUID userId, WorkoutSet set) {
-        if (set.getWeightKg() == null || set.getRepsCompleted() == null) return false;
+    private record PrResult(boolean isNewPr, java.math.BigDecimal previousWeight, Integer previousReps) {}
+
+    private PrResult checkPr(UUID userId, WorkoutSet set) {
+        if (set.getWeightKg() == null || set.getRepsCompleted() == null) return new PrResult(false, null, null);
         
         boolean isUnilateral = set.getSessionExercise().getExercise().isUnilateral();
         int effectiveReps = isUnilateral 
@@ -158,22 +160,22 @@ public class WorkoutSetService {
             : (set.getRepsCompleted() + (set.getRepsCompletedRight() != null ? set.getRepsCompletedRight() : 0));
             
         String bucket = getBucketForReps(effectiveReps);
-        List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserId(userId);
+        List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserIdExcludingSession(userId, set.getSession().getId());
         
         for (com.trainingapp.training.dto.ExercisePrProjection pr : prs) {
             if (pr.getExerciseId().equals(set.getSessionExercise().getExercise().getId()) && pr.getBucket().equals(bucket)) {
                 int weightComp = set.getWeightKg().compareTo(pr.getPrWeight());
                 if (weightComp > 0) {
-                    return true;
+                    return new PrResult(true, pr.getPrWeight(), pr.getPrReps());
                 } else if (weightComp == 0) {
-                    return pr.getPrReps() != null && effectiveReps > pr.getPrReps();
+                    return new PrResult(pr.getPrReps() != null && effectiveReps > pr.getPrReps(), pr.getPrWeight(), pr.getPrReps());
                 } else {
-                    return false;
+                    return new PrResult(false, pr.getPrWeight(), pr.getPrReps());
                 }
             }
         }
         // If there was no PR in this bucket before, this is a new PR
-        return true;
+        return new PrResult(true, null, null);
     }
 
     private String getBucketForReps(int reps) {
@@ -186,7 +188,7 @@ public class WorkoutSetService {
         return "31+";
     }
 
-    private WorkoutSetResponse mapToResponse(WorkoutSet set, double maxPerf, boolean isNewPr) {
+    private WorkoutSetResponse mapToResponse(WorkoutSet set, double maxPerf, PrResult prResult) {
         return new WorkoutSetResponse(
             set.getId(),
             set.getSession().getId(),
@@ -197,7 +199,9 @@ public class WorkoutSetService {
             set.getWeightKg(),
             set.getLoggedAt(),
             calculatePerformanceStatus(set, maxPerf),
-            isNewPr
+            prResult.isNewPr(),
+            prResult.previousWeight(),
+            prResult.previousReps()
         );
     }
 }

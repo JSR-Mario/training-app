@@ -189,6 +189,10 @@ public class WorkoutSessionService {
         SessionExercise sessionExercise = sessionExerciseRepository.findById(sessionExerciseId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session exercise not found"));
 
+        if (!sessionExercise.getSession().getId().equals(session.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your session exercise");
+        }
+
         SessionExerciseRating rating = ratingRepository.findBySessionIdAndSessionExerciseId(session.getId(), sessionExerciseId)
             .orElse(new SessionExerciseRating());
         
