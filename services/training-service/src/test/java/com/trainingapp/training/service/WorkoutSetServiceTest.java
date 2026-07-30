@@ -25,6 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -145,7 +146,7 @@ class WorkoutSetServiceTest {
         when(existingPr.getPrWeight()).thenReturn(BigDecimal.valueOf(99.0));
         when(existingPr.getPrReps()).thenReturn(15);
 
-        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(java.util.List.of(existingPr));
+        when(setRepository.findPersonalRecordsByUserIdExcludingSession(eq(userId), any())).thenReturn(java.util.List.of(existingPr));
 
         WorkoutSetResponse response = setService.logSet(sessionId, userId, request);
 
