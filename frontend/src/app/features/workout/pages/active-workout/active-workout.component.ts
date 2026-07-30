@@ -970,21 +970,6 @@ export class ActiveWorkoutComponent implements OnInit {
         }
         defaultReps = lastSet.repsCompleted || '';
         defaultRepsRight = lastSet.repsCompletedRight || '';
-      } else {
-        const suggestion = this.getSuggestion(ex.id);
-        let baseWeightKg: number | null = null;
-        if (suggestion?.suggestedWeightKg != null) {
-          baseWeightKg = suggestion.suggestedWeightKg;
-        } else if (ex.isBodyweight && this.latestBodyWeight() !== null) {
-          baseWeightKg = this.latestBodyWeight()!;
-        }
-        
-        if (baseWeightKg != null) {
-          const unit = this.getUnit(ex.id);
-          defaultWeight = unit === 'lb' 
-            ? (baseWeightKg * 2.20462).toFixed(1).replace(/\.0$/, '') 
-            : baseWeightKg.toString();
-        }
       }
 
       this.forms.set(ex.id, this.fb.group({
