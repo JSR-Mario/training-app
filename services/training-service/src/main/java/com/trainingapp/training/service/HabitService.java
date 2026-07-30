@@ -8,7 +8,6 @@ import com.trainingapp.training.dto.HabitRequest;
 import com.trainingapp.training.dto.HabitResponse;
 import com.trainingapp.training.repository.HabitLogRepository;
 import com.trainingapp.training.repository.HabitRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,11 +18,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class HabitService {
 
     private final HabitRepository habitRepository;
     private final HabitLogRepository habitLogRepository;
+
+    public HabitService(HabitRepository habitRepository, HabitLogRepository habitLogRepository) {
+        this.habitRepository = habitRepository;
+        this.habitLogRepository = habitLogRepository;
+    }
 
     @Transactional(readOnly = true)
     public List<HabitResponse> getHabits(LocalDate today) {

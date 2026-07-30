@@ -4,7 +4,6 @@ import com.trainingapp.training.dto.HabitRequest;
 import com.trainingapp.training.dto.HabitResponse;
 import com.trainingapp.training.service.HabitService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +15,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/habits")
-@RequiredArgsConstructor
 public class HabitController {
 
     private final HabitService habitService;
+
+    public HabitController(HabitService habitService) {
+        this.habitService = habitService;
+    }
 
     @GetMapping
     public ResponseEntity<List<HabitResponse>> getHabits(
