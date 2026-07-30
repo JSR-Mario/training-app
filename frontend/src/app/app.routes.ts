@@ -7,18 +7,15 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   {
     path: 'auth/login',
-    component: LoginComponent,
-    canMatch: [() => typeof window !== 'undefined' ? window.location.hostname.startsWith('app.') : true]
+    component: LoginComponent
   },
   {
     path: 'auth/register',
-    loadComponent: () => import('./features/auth/pages/register/register.component').then(m => m.RegisterComponent),
-    canMatch: [() => typeof window !== 'undefined' ? window.location.hostname.startsWith('app.') : true]
+    loadComponent: () => import('./features/auth/pages/register/register.component').then(m => m.RegisterComponent)
   },
   {
     path: 'auth/verify-email',
-    loadComponent: () => import('./features/auth/pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent),
-    canMatch: [() => typeof window !== 'undefined' ? window.location.hostname.startsWith('app.') : true]
+    loadComponent: () => import('./features/auth/pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent)
   },
   {
     path: 'verify-email',
@@ -26,14 +23,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    canMatch: [() => typeof window !== 'undefined' ? !window.location.hostname.startsWith('app.') : true],
-    loadComponent: () => import('./features/portfolio/pages/portfolio/portfolio.component').then(m => m.PortfolioComponent),
-    pathMatch: 'full'
-  },
-  {
-    path: '',
     component: BaseLayoutComponent,
-    canMatch: [() => typeof window !== 'undefined' ? window.location.hostname.startsWith('app.') : true],
     canActivate: [authGuard],
     children: [
       {
