@@ -44,9 +44,9 @@ import { Title } from '@angular/platform-browser';
             <app-habit-card
               [habit]="habit"
               [isCompletedToday]="isCompletedToday(habit)"
-              (onToggle)="toggleHabit($event)"
-              (onEdit)="openForm($event)"
-              (onDelete)="deleteHabit($event)">
+              (toggleAction)="toggleHabit($event)"
+              (editAction)="openForm($event)"
+              (deleteAction)="deleteHabit($event)">
             </app-habit-card>
           }
         </div>
@@ -56,8 +56,8 @@ import { Title } from '@angular/platform-browser';
     @if (showForm()) {
       <app-habit-form
         [habit]="editingHabit()"
-        (onSave)="saveHabit($event)"
-        (onCancel)="closeForm()">
+        (saveAction)="saveHabit($event)"
+        (cancelAction)="closeForm()">
       </app-habit-form>
     }
   `
