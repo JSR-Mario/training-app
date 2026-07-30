@@ -18,3 +18,7 @@ Whenever I am working on this project, I must adhere to the following workflow c
 4. **Testing and Validation**:
    - **Always** run backend and frontend tests and linting before considering a task complete.
    - **Never skip testing**. If local tools (like `npm` or `mvn`) are unavailable, use alternative methods such as Docker (`docker run ...`) or `docker-compose` to execute the test suites.
+
+5. **Java Coding Standards**:
+   - **Do not use Lombok** (e.g., `@Data`, `@Getter`, `@Setter`, etc.) for generating boilerplate code.
+   - Always write explicit getters, setters, constructors, and `equals`/`hashCode` methods for Entities and DTOs.
