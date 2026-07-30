@@ -85,6 +85,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/analytics/pages/cardio-dashboard/cardio-dashboard.component').then(m => m.CardioDashboardComponent)
       },
       {
+        path: 'habits',
+        loadComponent: () => import('./features/habits/pages/habit-list/habit-list.component').then(m => m.HabitListComponent)
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'
