@@ -67,7 +67,7 @@ spring:
         - id: training-service
           uri: ${TRAINING_SERVICE_URL:http://localhost:8082}
           predicates:
-            - Path=/api/v1/training/**
+            - Path=/api/v1/training/**, /api/v1/habits/**
           filters:
             - JwtValidationFilter
             - name: RequestRateLimiter
