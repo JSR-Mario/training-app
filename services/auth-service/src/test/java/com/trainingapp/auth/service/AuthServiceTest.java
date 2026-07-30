@@ -72,7 +72,7 @@ class AuthServiceTest {
     void register_success_returnsUserResponse() {
         when(userRepository.existsByUsername("testuser")).thenReturn(false);
         when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("hashed");
+        when(passwordEncoder.encode("Password123")).thenReturn("hashed");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
             u.setUsername("testuser");
@@ -82,7 +82,7 @@ class AuthServiceTest {
         });
 
         UserResponse response = authService.register(
-                new RegisterRequest("testuser", "test@example.com", "password123"));
+                new RegisterRequest("testuser", "test@example.com", "Password123"));
 
         assertThat(response.username()).isEqualTo("testuser");
         assertThat(response.email()).isEqualTo("test@example.com");
@@ -94,7 +94,7 @@ class AuthServiceTest {
         when(userRepository.existsByUsername("testuser")).thenReturn(true);
 
         assertThatThrownBy(() ->
-                authService.register(new RegisterRequest("testuser", "new@example.com", "password123")))
+                authService.register(new RegisterRequest("testuser", "new@example.com", "Password123")))
                 .isInstanceOf(DuplicateResourceException.class)
                 .hasMessageContaining("Username");
 
@@ -107,7 +107,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
 
         assertThatThrownBy(() ->
-                authService.register(new RegisterRequest("newuser", "test@example.com", "password123")))
+                authService.register(new RegisterRequest("newuser", "test@example.com", "Password123")))
                 .isInstanceOf(DuplicateResourceException.class)
                 .hasMessageContaining("Email");
 
@@ -121,12 +121,12 @@ class AuthServiceTest {
     @Test
     void login_success_returnsLoginResult() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(sampleUser));
-        when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
+        when(passwordEncoder.matches("Password123", "hashed")).thenReturn(true);
         when(jwtService.generateAccessToken(any(User.class))).thenReturn("access-token-123");
         when(jwtService.generateRefreshToken(any(User.class))).thenReturn("refresh-token-456");
         when(jwtService.accessExpirySeconds()).thenReturn(900L);
 
-        AuthService.LoginResult result = authService.login(new LoginRequest("testuser", "password123"));
+        AuthService.LoginResult result = authService.login(new LoginRequest("testuser", "Password123"));
 
         assertThat(result.authResponse().accessToken()).isEqualTo("access-token-123");
         assertThat(result.authResponse().tokenType()).isEqualTo("Bearer");
@@ -137,7 +137,7 @@ class AuthServiceTest {
     void login_unknownUser_throwsBadCredentialsException() {
         when(userRepository.findByUsername("nobody")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> authService.login(new LoginRequest("nobody", "password123")))
+        assertThatThrownBy(() -> authService.login(new LoginRequest("nobody", "Password123")))
                 .isInstanceOf(BadCredentialsException.class);
     }
 
