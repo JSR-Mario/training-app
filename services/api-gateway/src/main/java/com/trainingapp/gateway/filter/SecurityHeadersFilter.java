@@ -25,6 +25,7 @@ public class SecurityHeadersFilter implements GlobalFilter, Ordered {
             headers.set("X-Frame-Options", "DENY");
             headers.set("X-Content-Type-Options", "nosniff");
             headers.set("Referrer-Policy", "no-referrer");
+            headers.set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; sandbox");
             return Mono.empty();
         });
         return chain.filter(exchange);

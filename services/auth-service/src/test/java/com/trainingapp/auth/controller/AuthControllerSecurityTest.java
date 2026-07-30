@@ -30,7 +30,7 @@ class AuthControllerSecurityTest {
 
     @Test
     void register_PublicEndpoint_AllowsRegistration() throws Exception {
-        RegisterRequest req = new RegisterRequest("publicuser", "publicuser@example.com", "password123");
+        RegisterRequest req = new RegisterRequest("publicuser", "publicuser@example.com", "Password123");
 
         mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
