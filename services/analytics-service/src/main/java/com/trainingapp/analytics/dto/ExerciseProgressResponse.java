@@ -8,6 +8,9 @@ public record ExerciseProgressResponse(
     Integer weekNumber,
     java.util.UUID dayTemplateId,
     BigDecimal maxWeightKg,
+    Integer maxWeightReps,
     BigDecimal totalVolumeKg,
+    BigDecimal bestSetVolumeWeightKg,
+    Integer bestSetVolumeReps,
     int totalSets
 ) {}
