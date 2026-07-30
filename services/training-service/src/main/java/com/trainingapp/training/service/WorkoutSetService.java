@@ -160,7 +160,7 @@ public class WorkoutSetService {
             : (set.getRepsCompleted() + (set.getRepsCompletedRight() != null ? set.getRepsCompletedRight() : 0));
             
         String bucket = getBucketForReps(effectiveReps);
-        List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserId(userId);
+        List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserIdExcludingSession(userId, set.getSession().getId());
         
         for (com.trainingapp.training.dto.ExercisePrProjection pr : prs) {
             if (pr.getExerciseId().equals(set.getSessionExercise().getExercise().getId()) && pr.getBucket().equals(bucket)) {
