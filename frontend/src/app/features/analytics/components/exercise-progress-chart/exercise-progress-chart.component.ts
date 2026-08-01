@@ -28,8 +28,10 @@ import { finalize } from 'rxjs';
           </h3>
         </div>
 
-        <!-- Custom Searchable Dropdown -->
-        <div class="w-full sm:w-80 relative">
+        <!-- Right Side Controls -->
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto">
+          <!-- Custom Searchable Dropdown -->
+          <div class="w-full sm:w-80 relative">
           <label for="exercise-search-input" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
             Select Exercise
           </label>
@@ -102,6 +104,7 @@ import { finalize } from 'rxjs';
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
+        </div>
         </div>
       </div>
 
