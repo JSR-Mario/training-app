@@ -19,7 +19,7 @@ interface MonthLabel {
   imports: [CommonModule],
   template: `
     <div class="solid-card p-6 w-full overflow-x-auto">
-      <h3 class="text-base font-medium text-gray-500 dark:text-gray-400 mb-4">Activity (Last 365 Days)</h3>
+      <h3 class="text-base font-medium text-gray-500 dark:text-gray-400 mb-4">{{ title || 'Activity (Last 365 Days)' }}</h3>
       
       <div class="flex items-start w-full overflow-x-auto pb-2">
         <div class="flex min-w-max">
@@ -91,6 +91,7 @@ interface MonthLabel {
 })
 export class ActivityCalendarComponent implements OnChanges, OnInit {
   @Input() data: ActivitySummary[] = [];
+  @Input() title?: string;
 
   weeks = signal<(CalendarCell | null)[][]>([]);
   monthLabels = signal<MonthLabel[]>([]);
