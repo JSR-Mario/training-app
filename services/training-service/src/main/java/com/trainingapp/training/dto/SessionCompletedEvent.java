@@ -18,10 +18,10 @@ public record SessionCompletedEvent(
 ) {
     /** Simplified set data needed for analytics calculation. */
     public record SetData(
-        UUID exerciseId,
-        int repsCompleted,
-        Integer repsCompletedRight,
-        java.math.BigDecimal weightKg,
-        java.util.Map<String, java.math.BigDecimal> bodyPartMultipliers
+        @com.fasterxml.jackson.annotation.JsonProperty("exerciseId") UUID exerciseId,
+        @com.fasterxml.jackson.annotation.JsonProperty("repsCompleted") int repsCompleted,
+        @com.fasterxml.jackson.annotation.JsonProperty("repsCompletedRight") Integer repsCompletedRight,
+        @com.fasterxml.jackson.annotation.JsonProperty("weightKg") java.math.BigDecimal weightKg,
+        @com.fasterxml.jackson.annotation.JsonProperty("bodyPartMultipliers") java.util.Map<String, java.math.BigDecimal> bodyPartMultipliers
     ) {}
 }
