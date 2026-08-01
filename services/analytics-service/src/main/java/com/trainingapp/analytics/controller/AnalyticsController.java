@@ -79,7 +79,10 @@ public class AnalyticsController {
                         p.getWeekNumber(),
                         p.getDayTemplateId(),
                         p.getMaxWeightKg(),
+                        p.getMaxWeightReps(),
                         p.getTotalVolumeKg(),
+                        p.getBestSetVolumeWeightKg(),
+                        p.getBestSetVolumeReps(),
                         p.getTotalSets()
                 ))
                 .collect(Collectors.toList());
