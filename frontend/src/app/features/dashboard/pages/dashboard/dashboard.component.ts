@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ProgressChartComponent } from '../../../analytics/components/progress-chart/progress-chart.component';
 import { ActivityCalendarComponent } from '../../components/activity-calendar/activity-calendar.component';
 import { DashboardService, DashboardSummaryResponse } from '../../services/dashboard.service';
+import { TutorialService } from '../../../../core/services/tutorial.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,7 +17,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
       </div>
       
       <!-- Activity Calendar -->
-      <div class="w-full mb-6 mt-4">
+      <div id="tutorial-activity-calendar" class="w-full mb-6 mt-4">
         @if (!isLoading() && summary()?.activityCalendar) {
           <app-activity-calendar [data]="summary()!.activityCalendar"></app-activity-calendar>
         } @else {
@@ -228,6 +229,7 @@ import { DashboardService, DashboardSummaryResponse } from '../../services/dashb
 export class DashboardComponent implements OnInit {
   private router = inject(Router);
   private dashboardService = inject(DashboardService);
+  private tutorialService = inject(TutorialService);
 
   summary = signal<DashboardSummaryResponse | null>(null);
   isLoading = signal(true);
@@ -256,6 +258,7 @@ export class DashboardComponent implements OnInit {
       next: (res) => {
         this.summary.set(res);
         this.isLoading.set(false);
+        this.tutorialService.triggerDashboardTutorial();
       },
       error: (err) => {
         console.error('Failed to load dashboard summary', err);

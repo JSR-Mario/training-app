@@ -6,6 +6,7 @@ import { WorkoutService } from '../../services/workout.service';
 import { ProgramService } from '../../../programs/services/program.service';
 import { TrainingProgram, WorkoutSessionResponse, DayTemplate } from '../../../../core/types/training.types';
 import { switchMap, of } from 'rxjs';
+import { TutorialService } from '../../../../core/services/tutorial.service';
 
 @Component({
   standalone: true,
@@ -92,7 +93,7 @@ import { switchMap, of } from 'rxjs';
         </div>
  
         <!-- Days Grid -->
-        <div class="space-y-4" cdkDropList [cdkDropListDisabled]="!reorderModeActive()" (cdkDropListDropped)="dropDay($event)">
+        <div id="tutorial-workout-days" class="space-y-4" cdkDropList [cdkDropListDisabled]="!reorderModeActive()" (cdkDropListDropped)="dropDay($event)">
           @for (day of combinedDays(); track day.template.id; let i = $index) {
             <div cdkDrag [id]="'day-' + day.template.id" class="solid-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:border-gray-400 dark:hover:border-gray-600 transition-colors border border-gray-300 dark:border-gray-700">
               <div class="mb-4 sm:mb-0 flex-1 w-full">
@@ -160,6 +161,7 @@ import { switchMap, of } from 'rxjs';
 export class WorkoutDashboardComponent implements OnInit {
   private workoutService = inject(WorkoutService);
   private programService = inject(ProgramService);
+  private tutorialService = inject(TutorialService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -260,6 +262,15 @@ export class WorkoutDashboardComponent implements OnInit {
         this.sessions.set(data);
         this.isLoading.set(false);
         this.scrollToNextUnstartedDay();
+        this.tutorialService.triggerSectionTutorial({
+          targetId: 'tutorial-workout-days',
+          title: 'Weekly Schedule',
+          description:
+            'These are the training days for your active program. ' +
+            'Click "Start Session" on any day to begin logging your sets.',
+          section: 'workout',
+          position: 'bottom'
+        });
       },
       error: (err) => {
         console.error('Failed to load sessions', err);

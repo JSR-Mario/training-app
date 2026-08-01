@@ -6,6 +6,7 @@ import { ProgressChartComponent } from '../../components/progress-chart/progress
 import { ExerciseProgressChartComponent } from '../../components/exercise-progress-chart/exercise-progress-chart.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { TutorialService } from '../../../../core/services/tutorial.service';
 
 @Component({
   standalone: true,
@@ -17,6 +18,7 @@ import { environment } from '../../../../../environments/environment';
 export class AnalyticsDashboardComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
+  private tutorialService = inject(TutorialService);
   authService = inject(AuthService);
   
   activeTab = signal<'volume' | 'exercise'>('volume');
@@ -29,6 +31,15 @@ export class AnalyticsDashboardComponent implements OnInit {
       if (params['exerciseId']) {
         this.activeTab.set('exercise');
       }
+    });
+    this.tutorialService.triggerSectionTutorial({
+      targetId: 'tutorial-analytics-tabs',
+      title: 'Analytics Tabs',
+      description:
+        'Switch between Program Volume (sets per muscle group per week) and ' +
+        'Exercise Progression (strength gains over time) to analyze your training.',
+      section: 'analytics',
+      position: 'bottom'
     });
   }
 

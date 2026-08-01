@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { BodyWeightTrackerComponent } from '../../components/body-weight-tracker/body-weight-tracker.component';
+import { TutorialService } from '../../../../core/services/tutorial.service';
 
 @Component({
   standalone: true,
@@ -13,10 +14,24 @@ import { BodyWeightTrackerComponent } from '../../components/body-weight-tracker
         </h1>
       </header>
 
-      <div class="mt-6">
+      <div id="tutorial-body-weight" class="mt-6">
         <app-body-weight-tracker></app-body-weight-tracker>
       </div>
     </div>
   `
 })
-export class BodyWeightDashboardComponent {}
+export class BodyWeightDashboardComponent implements OnInit {
+  private tutorialService = inject(TutorialService);
+
+  ngOnInit() {
+    this.tutorialService.triggerSectionTutorial({
+      targetId: 'tutorial-body-weight',
+      title: 'Body Weight Tracking',
+      description:
+        'Log your weight with a date to track your trend over time. ' +
+        'The chart below aggregates entries by week, month, or year.',
+      section: 'body-weight',
+      position: 'bottom'
+    });
+  }
+}
