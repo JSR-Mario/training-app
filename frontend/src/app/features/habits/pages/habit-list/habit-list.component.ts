@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HabitService } from '../../services/habit.service';
 import { Habit, HabitRequest } from '../../models/habit.model';
@@ -11,11 +11,10 @@ import { Title } from '@angular/platform-browser';
   standalone: true,
   imports: [CommonModule, HabitCardComponent, HabitFormComponent],
   template: `
-    <div class="max-w-5xl mx-auto space-y-6">
-      <div class="flex justify-between items-end mb-8">
+    <div class="max-w-5xl mx-auto space-y-8 pb-20">
+      <div class="flex justify-between items-center mb-6">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Habits</h1>
-          <p class="text-gray-500 dark:text-gray-400">Track your daily, weekly, and monthly routines.</p>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Habits</h1>
         </div>
         <button (click)="openForm()" class="solid-btn bg-accent-pos text-white px-5 py-2.5 rounded-xl font-bold flex items-center hover:opacity-90 transition-opacity">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -39,17 +38,65 @@ import { Title } from '@angular/platform-browser';
           <button (click)="openForm()" class="text-accent-pos font-bold hover:underline">Create first habit</button>
         </div>
       } @else {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          @for (habit of habits(); track habit.id) {
-            <app-habit-card
-              [habit]="habit"
-              [isCompletedToday]="isCompletedToday(habit)"
-              (toggleAction)="toggleHabit($event)"
-              (editAction)="openForm($event)"
-              (deleteAction)="deleteHabit($event)">
-            </app-habit-card>
-          }
-        </div>
+        <!-- Daily Habits Section -->
+        @if (dailyHabits().length > 0) {
+          <section class="space-y-3">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-800 pb-2">Daily</h2>
+            <div class="space-y-2">
+              @for (habit of dailyHabits(); track habit.id) {
+                <app-habit-card
+                  [habit]="habit"
+                  [isCompletedToday]="isCompletedToday(habit)"
+                  [isExpanded]="expandedHabitId() === habit.id"
+                  (toggleExpand)="toggleExpand(habit.id)"
+                  (toggleAction)="toggleHabit($event)"
+                  (editAction)="openForm($event)"
+                  (deleteAction)="deleteHabit($event)">
+                </app-habit-card>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- Weekly Habits Section -->
+        @if (weeklyHabits().length > 0) {
+          <section class="space-y-3">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-800 pb-2">Weekly</h2>
+            <div class="space-y-2">
+              @for (habit of weeklyHabits(); track habit.id) {
+                <app-habit-card
+                  [habit]="habit"
+                  [isCompletedToday]="isCompletedToday(habit)"
+                  [isExpanded]="expandedHabitId() === habit.id"
+                  (toggleExpand)="toggleExpand(habit.id)"
+                  (toggleAction)="toggleHabit($event)"
+                  (editAction)="openForm($event)"
+                  (deleteAction)="deleteHabit($event)">
+                </app-habit-card>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- Monthly Habits Section -->
+        @if (monthlyHabits().length > 0) {
+          <section class="space-y-3">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-800 pb-2">Monthly</h2>
+            <div class="space-y-2">
+              @for (habit of monthlyHabits(); track habit.id) {
+                <app-habit-card
+                  [habit]="habit"
+                  [isCompletedToday]="isCompletedToday(habit)"
+                  [isExpanded]="expandedHabitId() === habit.id"
+                  (toggleExpand)="toggleExpand(habit.id)"
+                  (toggleAction)="toggleHabit($event)"
+                  (editAction)="openForm($event)"
+                  (deleteAction)="deleteHabit($event)">
+                </app-habit-card>
+              }
+            </div>
+          </section>
+        }
       }
     </div>
 
@@ -71,6 +118,16 @@ export class HabitListComponent implements OnInit {
   
   showForm = signal(false);
   editingHabit = signal<Habit | null>(null);
+
+  dailyHabits = computed(() => this.habits().filter(h => h.frequency === 'DAILY'));
+  weeklyHabits = computed(() => this.habits().filter(h => h.frequency === 'WEEKLY'));
+  monthlyHabits = computed(() => this.habits().filter(h => h.frequency === 'MONTHLY'));
+
+  expandedHabitId = signal<string | null>(null);
+
+  toggleExpand(habitId: string) {
+    this.expandedHabitId.update(current => current === habitId ? null : habitId);
+  }
 
   private getTodayString(): string {
     const d = new Date();
