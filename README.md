@@ -1,173 +1,91 @@
-# Yes App - Personal Training Platform
+# Yes App — Cloud-Native Personal Training Platform
 
-A cloud-native, microservices-based platform for tracking workout sessions, managing exercise programs, and analyzing fitness progress.
+Yes App is a comprehensive, microservices-based platform designed for tracking workout sessions, managing exercise programs, and analyzing fitness progress. Built with a modern cloud-native approach, it focuses on scalability, security, and developer experience.
 
-## Architecture
+## 🚀 Tech Stack
 
-![Architecture Diagram](docs/architecture.drawio.png)
+**Backend**
+- **Java 21 & Spring Boot 3.3:** Core microservices framework utilizing Virtual Threads.
+- **Spring Cloud Gateway:** Centralized entry point, rate limiting, and stateless JWT validation.
+- **Spring Security & Hibernate / JPA:** Robust authentication and ORM.
 
-> **Note:** The architecture diagram is currently being updated to reflect the latest infrastructure additions (Cloudflare Tunnel ingress, Caddy internal proxy, Redis L2 caching, and the Centralized Observability Stack).
+**Frontend**
+- **Angular 21:** Standalone components and modern Angular features.
+- **TypeScript & RxJS:** Reactive programming for state and data streams.
+- **PWA (Progressive Web App):** Installable, native-like user experience.
 
-## Tech Stack
+**Database, Cache & Observability**
+- **PostgreSQL 16:** Relational data storage with per-service isolated schemas.
+- **Redis 7:** Rate limiting and L2 query caching.
+- **Flyway:** Automated, version-controlled database migrations.
+- **Prometheus, Grafana, Loki & Promtail:** Centralized observability, log aggregation, and metrics.
 
-- **Backend:** Java 21, Spring Boot 3.3, Spring Cloud Gateway, Spring Security, Hibernate / JPA
-- **Frontend:** Angular 21, TypeScript, RxJS, PWA
-- **Database & Cache:** PostgreSQL 16 (per-service schemas), Redis (Rate Limiting & L2 Caching), Flyway (Migrations)
-- **Observability:** Prometheus, Grafana, Loki, Promtail, Micrometer
-- **Infrastructure:** Docker, Docker Compose, GitHub Actions (CI/CD), AWS EC2, Cloudflare Tunnels
+**Infrastructure & DevOps**
+- **Docker & Docker Compose:** Containerized environments for consistent development and production.
+- **GitHub Actions (CI/CD):** Automated testing and multi-stage container builds.
+- **AWS Lightsail/EC2 & Cloudflare Tunnels:** Secure deployment without exposed public ports.
 
-## Key Technical Features
+## ✨ Key Technical Highlights
 
-- **Microservices Architecture:** Independently scalable services for Authentication, Training, and Analytics.
-- **API Gateway Pattern:** Centralized entry point handling stateless JWT validation, CORS, and IP-based rate limiting.
-- **Centralized Observability:** Proactive system monitoring with Prometheus (metrics collection), Loki & Promtail (docker container log aggregation), and Grafana dashboards tracking 500 errors, response times (p95), and CPU/RAM memory usage.
-- **Event-Driven Metrics:** Asynchronous cross-service communication for volume and progress tracking.
-- **Progressive Web App (PWA):** Installable web frontend providing a native-like experience.
-- **Automated CI/CD:** Continuous Integration and Deployment pipelines using GitHub Actions for testing and multi-stage container builds.
-- **Security First:** Short-lived access tokens, HttpOnly refresh cookies, BCrypt password hashing, and isolated internal networks.
+- **Microservices Architecture:** Independently scalable domains (Authentication, Training, Analytics).
+- **API Gateway Pattern:** A single ingress point that intercepts traffic to validate JWTs, enforce CORS, and apply IP-based rate limiting via Redis.
+- **Event-Driven Analytics:** Asynchronous cross-service communication (fire-and-forget) to track volume and progress without blocking main business flows.
+- **Security First:** Short-lived access tokens (15m), HttpOnly refresh cookies (7d), BCrypt password hashing (cost 12), and zero hardcoded credentials.
+- **Automated CI/CD:** Continuous Integration pipelines ensure every pull request passes unit tests and builds multi-stage, optimized Docker containers.
+- **Centralized Observability:** Proactive system monitoring collecting logs and metrics (500 errors, p95 response times, CPU/RAM usage) within a strict memory budget.
+- **Optimized Developer Experience:** Custom bash scripts orchestrate a hybrid local environment that blends Docker for databases with native JVM/Node execution for sub-2-second hot-reloads.
 
-## Local Setup
+## 💻 Local Development Setup
 
-### Option A: Local Development (Hybrid) - Recommended for Coding
-For active development, we use a hybrid approach. Docker runs only the static infrastructure (Postgres, Redis), while the microservices and Angular frontend run natively on your host. 
-**Why?** Running 12+ containers (including the observability stack) locally is extremely resource-heavy. More importantly, rebuilding Docker images for every code change takes minutes. Running natively provides **instant Hot-Reload** for both Java and Angular.
+To provide the best developer experience, we use a **Hybrid Approach** for local development. Running 12+ containers locally consumes significant resources and slows down iteration. Instead, we run Postgres and Redis in Docker, while the microservices and Angular frontend run natively with instant hot-reload.
 
-**Prerequisites:** Docker, Docker Compose, NodeJS 24+, Java 21+, Maven
+**Prerequisites:** Docker, NodeJS 24+, Java 21+, Maven
 
-```bash
-git clone https://github.com/JSR-Mario/training-app.git
-cd training-app
-# Ensure you have a populated .env.local file in the root (credentials for dev)
-./scripts/start-local.sh
-```
-The `./scripts/start-local.sh` script will:
-1. Start Postgres and Redis via `docker-compose.local-infra.yml`.
-2. Launch all 4 Spring Boot microservices simultaneously using `concurrently` with colored logs.
-3. Start the Angular frontend (`ng serve`), proxying `/api` requests to avoid CORS issues.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/JSR-Mario/training-app.git
+   cd training-app
+   ```
 
-- **Frontend (Hot-Reload):** `http://localhost:4200`
-- **API Gateway (Swagger UI):** `http://localhost:8080/swagger-ui.html`
+2. **Configure Environment:**
+   Copy `.env.example` to `.env.local` and populate the required development credentials. Ensure `JWT_SECRET` is a valid 64-character hexadecimal string.
 
-**To Stop the Environment:**
-Simply press `Ctrl+C` in the terminal where the script is running. This will automatically kill all microservices and gracefully stop the Docker containers in the background. 
-*(Alternatively, you can manually run `./scripts/stop-local.sh` to stop the Docker containers).*
+3. **Start the Environment:**
+   ```bash
+   ./scripts/start-local.sh
+   ```
+   *This script launches Docker containers for the database/cache, waits for initialization, and uses `concurrently` to boot all 4 Spring Boot services and the Angular frontend in a single terminal with color-coded logs.*
 
-### Option B: Production Replica (Full Docker)
-If you want to test the exact infrastructure that runs on the server (including Caddy, Cloudflare Tunnel, Prometheus, Grafana, etc.), use the full compose file. 
+4. **Access the App:**
+   - **Frontend (Hot-Reload):** `http://localhost:4200`
+   - **API Gateway (Swagger UI):** `http://localhost:8080/swagger-ui.html`
 
-```bash
-# Ensure you have a populated .env file in the root
-docker compose up -d
-```
-- **Frontend (Production):** `https://app.jsr-mario.com` (Local dev: `http://localhost:3000`)
-- **API Gateway (Swagger UI):** `http://localhost:8080/swagger-ui.html`
-- **Grafana Monitoring:**
-  - **Production Access:** `https://grafana.jsr-mario.com` (Secured behind Cloudflare Zero Trust Email OTP Policy).
-  - **Local / SSH Tunnel:** `http://localhost:3000` (`ssh -L 3000:127.0.0.1:3000 user@ec2-host`).
+5. **Stop the Environment:**
+   Press `Ctrl+C` in the terminal to gracefully shut down the JVM/Node processes and automatically stop the Docker containers. You can also run `./scripts/stop-local.sh` to forcefully clean up orphaned processes and ports.
 
-## Infrastructure & Security Highlights
+## 🐳 Production Replica (Full Docker)
 
-- **Authentication:** Stateless JWT design with 15-minute access tokens and 7-day secure refresh cookies.
-- **Rate Limiting & Caching:** Gateway limits authentication endpoints via Redis; L2 read-caching accelerates exercise catalog lookups.
-- **Observability & Security:** Strict resource-budgeted monitoring (~850MB cap) via Prometheus, Loki, Promtail, and Grafana. Exposed in production exclusively through Cloudflare Tunnel with Zero Trust Access protection.
-- **Automated Backups:** Host-level cron scripts push daily database snapshots to AWS S3.
-- **Deployment:** Hosted on AWS EC2 / Lightsail behind Cloudflare Tunnels to securely expose the application without opening public server ports.
+To test the exact infrastructure that runs on the production server (including Prometheus, Grafana, and internal routing), use the full compose file. Ensure you have a populated `.env` file in the root.
 
-## Environment Variables
-
-Copy `.env.example` to `.env` in the project root directory before running the application. **Never commit `.env` to version control.**
-
-Key configurations:
-- **`POSTGRES_*`**: Database credentials and connection parameters (`POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`).
-- **`REDIS_*`**: Cache and rate-limiting connection parameters (`REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`).
-- **`JWT_SECRET`**: 256-bit random hex string for signing JWT tokens (`openssl rand -hex 32`).
-- **`JWT_ACCESS_EXPIRY_MINUTES` / `JWT_REFRESH_EXPIRY_DAYS`**: Token lifetime configuration.
-- **`ADMIN_*`**: Initial administrative account parameters (`ADMIN_USERNAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`).
-- **`ALLOWED_ORIGIN` & `DOMAIN_NAME`**: Public domain configuration for CORS and proxy rules.
-- **`S3_BUCKET`**: Target AWS S3 bucket URI for automated database snapshots 
-- **`CLOUDFLARE_TUNNEL_TOKEN`**: Tunnel authentication token for secure ingress.
-- **`GRAFANA_PASSWORD`**: Admin password for Grafana UI. Defaults to `admin` if not provided.
-- **`SPRING_MAIL_*` & `APP_FRONTEND_URL`**: SMTP credentials (`SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`) and public web URL for email verification links.
-
-
-## Hosting on a New Server
-
-To deploy the application on a fresh Linux instance (e.g., AWS Lightsail, EC2), follow these steps:
-
-### 1. Initial Server Dependencies
-- **Install Docker (Official):** Avoid older OS repositories. The official script installs Docker and the latest `docker-compose-plugin`.
-  ```bash
-  curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
-  sudo usermod -aG docker $USER
-  newgrp docker
-  ```
-- **Install AWS CLI v2:** (Required if using S3 backups).
-  ```bash
-  sudo apt update && sudo apt install -y unzip curl
-  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-  unzip awscliv2.zip && sudo ./aws/install && rm -rf aws awscliv2.zip
-  ```
-- **Allocate 4GB Swap Space:** Protect against out-of-memory errors.
-  ```bash
-  sudo fallocate -l 4G /swapfile
-  sudo chmod 600 /swapfile
-  sudo mkswap /swapfile
-  sudo swapon /swapfile
-  echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-  sudo sysctl vm.swappiness=10
-  echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
-  ```
-
-### 2. Application Setup & CI/CD Reminders
-1. Clone the repository and navigate to the project root.
-2. Create your `.env` file based on `.env.example` and fill in all production variables.
-3. Configure AWS credentials via `aws configure` to grant S3 access.
-4. **CI/CD Reminder:** If you are migrating servers, remember to update the corresponding secrets in your GitHub repository settings (e.g., `CLOUDFLARE_TUNNEL_TOKEN`, SSH Keys, Server IPs) so that your GitHub Actions pipelines deploy to the new environment successfully.
-
-### 3. Database Initialization (Fresh vs Restore)
-
-**Option A: Start Fresh**
-If you are starting completely from scratch:
 ```bash
 docker compose up -d
 ```
-*Flyway will automatically create all required schemas and tables on startup.*
+- **Frontend (Production Bundle):** `http://localhost:3000` (or your configured domain)
+- **Grafana Monitoring:** `http://localhost:3000` via SSH Tunnel if deployed remotely.
 
-**Option B: Restore from an S3 Backup**
-If you have an existing backup, **do not** start the full application yet. If you already ran `docker compose up -d`, you must wipe the database volumes first (`docker compose down -v`) to prevent Flyway from creating conflicting schemas.
+## ⚙️ Environment Variables
 
-1. Start ONLY the database container:
-   ```bash
-   docker compose up -d postgres
-   ```
-2. Wait a few seconds for Postgres to initialize, then restore the dump:
-   ```bash
-   # Use the specific backup date (YYYY-MM-DD)
-   ./scripts/restore-from-s3.sh 2026-07-25
-   ```
-3. Once the restore completes without `already exists` errors, launch the full stack:
-   ```bash
-   docker compose up -d
-   ```
+The application relies strictly on environment variables for all secrets and configurations. Key parameters include:
 
-### 4. Database Backups
+- `POSTGRES_*` / `REDIS_*`: Database and cache connection details.
+- `JWT_SECRET`: 256-bit hexadecimal string for token signing.
+- `ADMIN_*`: Credentials to idempotently seed the initial admin user.
+- `ALLOWED_ORIGIN`: Strict CORS origin enforcement at the Gateway.
+- `CLOUDFLARE_TUNNEL_TOKEN`: Secure ingress token for production deployment.
 
-**Manual Backup:**
-To trigger a manual database snapshot to your configured `S3_BUCKET`:
-```bash
-./scripts/backup-s3.sh
-```
+## ☁️ Deployment & Infrastructure
 
-**Automated Backups (Cron):**
-To automate backups (e.g., every day at 3:00 AM), set up a cron job on your server:
+The production environment is designed to be hosted on an AWS Linux instance, secured entirely behind Cloudflare Tunnels (Zero Trust Access). No application ports are exposed to the public internet.
 
-1. Open the crontab editor:
-   ```bash
-   crontab -e
-   ```
-2. Add the following line at the bottom (replace `/path/to/training-app` with your actual project path):
-   ```cron
-   # Run AWS S3 Database Backup every day at 03:00 AM
-   0 3 * * * cd /path/to/training-app && ./scripts/backup-s3.sh >> /path/to/training-app/db-backup.log 2>&1
-   ```
-*(Note: Ensure the AWS CLI is configured with the correct permissions on the user running the cronjob).*
+**Automated Backups:**
+Host-level cron scripts (`scripts/backup-s3.sh`) push daily Postgres database snapshots to an encrypted AWS S3 bucket. A companion script (`scripts/restore-from-s3.sh`) is provided for disaster recovery and seamless migration across instances.
