@@ -29,9 +29,7 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
             maxAge: 3600
-      default-filters:
-        - RemoveRequestHeader=X-User-Id
-        - RemoveRequestHeader=X-User-Role
+
       routes:
         - id: auth-service-login
           uri: ${AUTH_SERVICE_URL:http://localhost:8081}
