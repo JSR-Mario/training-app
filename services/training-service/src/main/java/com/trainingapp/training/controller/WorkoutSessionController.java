@@ -25,6 +25,10 @@ public class WorkoutSessionController {
 
     @PostMapping("/resync-analytics")
     public ResponseEntity<Void> resyncAnalytics() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         sessionService.resyncAllAnalytics();
         return ResponseEntity.ok().build();
     }

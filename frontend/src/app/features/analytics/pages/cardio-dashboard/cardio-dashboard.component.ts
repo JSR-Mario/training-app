@@ -1,9 +1,10 @@
-import { Component, inject, ViewChild, signal } from '@angular/core';
+import { Component, inject, ViewChild, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CardioChartComponent } from '../../components/cardio-chart/cardio-chart.component';
 import { CardioLogService } from '../../services/cardio-log.service';
 import { CARDIO_TYPES } from '../../../../core/constants/cardio-types';
+import { TutorialService } from '../../../../core/services/tutorial.service';
 
 @Component({
   standalone: true,
@@ -19,7 +20,7 @@ import { CARDIO_TYPES } from '../../../../core/constants/cardio-types';
       </header>
 
       <!-- Logging Form & Chart Container -->
-      <div class="solid-card border border-gray-300 dark:border-gray-700 p-6 mb-6">
+      <div id="tutorial-cardio-form" class="solid-card border border-gray-300 dark:border-gray-700 p-6 mb-6">
         
         <form [formGroup]="cardioForm" (ngSubmit)="onSubmit()" class="flex flex-col sm:flex-row items-end gap-4 mb-6">
           
@@ -61,9 +62,22 @@ import { CARDIO_TYPES } from '../../../../core/constants/cardio-types';
     </div>
   `
 })
-export class CardioDashboardComponent {
+export class CardioDashboardComponent implements OnInit {
   private fb = inject(FormBuilder);
   private cardioService = inject(CardioLogService);
+  private tutorialService = inject(TutorialService);
+
+  ngOnInit() {
+    this.tutorialService.triggerSectionTutorial({
+      targetId: 'tutorial-cardio-form',
+      title: 'Log Cardio',
+      description:
+        'Enter the date, duration in minutes, and optionally the type of cardio. ' +
+        'Sessions appear in the chart below grouped by day.',
+      section: 'cardio',
+      position: 'bottom'
+    });
+  }
 
   cardioTypes = CARDIO_TYPES;
 

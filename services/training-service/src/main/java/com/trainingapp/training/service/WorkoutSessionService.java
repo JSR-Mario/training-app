@@ -515,11 +515,11 @@ public class WorkoutSessionService {
             .collect(Collectors.toList());
 
         String previousNotes = null;
-        if (session.getDayTemplate() != null) {
-            Optional<WorkoutSession> previous = sessionRepository.findFirstByUserIdAndDayTemplateIdAndNotesIsNotNullOrderByPerformedOnDesc(
-                    session.getUserId(), session.getDayTemplate().getId());
-            if (previous.isPresent() && !previous.get().getId().equals(session.getId())) {
-                previousNotes = previous.get().getNotes();
+        if (session.getDayTemplate() != null && session.getDayTemplate().getName() != null) {
+            List<WorkoutSession> previous = sessionRepository.findPreviousSessionsWithNotesByDayName(
+                    session.getUserId(), session.getId(), session.getDayTemplate().getName(), org.springframework.data.domain.PageRequest.of(0, 1));
+            if (!previous.isEmpty()) {
+                previousNotes = previous.get(0).getNotes();
             }
         }
 
