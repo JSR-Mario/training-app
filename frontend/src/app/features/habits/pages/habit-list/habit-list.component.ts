@@ -42,7 +42,7 @@ import { Title } from '@angular/platform-browser';
         @if (dailyHabits().length > 0) {
           <section class="space-y-3">
             <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-800 pb-2">Daily</h2>
-            <div class="space-y-2">
+            <div class="flex flex-col gap-3.5">
               @for (habit of dailyHabits(); track habit.id) {
                 <app-habit-card
                   [habit]="habit"
@@ -62,7 +62,7 @@ import { Title } from '@angular/platform-browser';
         @if (weeklyHabits().length > 0) {
           <section class="space-y-3">
             <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-800 pb-2">Weekly</h2>
-            <div class="space-y-2">
+            <div class="flex flex-col gap-3.5">
               @for (habit of weeklyHabits(); track habit.id) {
                 <app-habit-card
                   [habit]="habit"
@@ -82,7 +82,7 @@ import { Title } from '@angular/platform-browser';
         @if (monthlyHabits().length > 0) {
           <section class="space-y-3">
             <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-800 pb-2">Monthly</h2>
-            <div class="space-y-2">
+            <div class="flex flex-col gap-3.5">
               @for (habit of monthlyHabits(); track habit.id) {
                 <app-habit-card
                   [habit]="habit"
