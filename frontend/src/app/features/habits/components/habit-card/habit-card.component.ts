@@ -8,6 +8,9 @@ import { ActivitySummary } from '../../../../core/types/training.types';
   selector: 'app-habit-card',
   standalone: true,
   imports: [CommonModule, ActivityCalendarComponent],
+  host: {
+    class: 'block'
+  },
   template: `
     <div class="solid-card p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all">
       <!-- Collapsed Header Row -->
