@@ -67,12 +67,20 @@ public class DataInitializer implements CommandLineRunner {
 
         User admin = userRepository.findByUsername(adminUsername).orElse(null);
         if (admin != null) {
+            boolean changed = false;
             if (admin.getRole() != Role.ROLE_ADMIN) {
                 admin.setRole(Role.ROLE_ADMIN);
+                changed = true;
+            }
+            if (!admin.isEmailVerified()) {
+                admin.setEmailVerified(true);
+                changed = true;
+            }
+            if (changed) {
                 userRepository.save(admin);
-                log.info("Admin user '{}' role updated to ROLE_ADMIN.", adminUsername);
+                log.info("Admin user '{}' updated (ROLE_ADMIN / email verified).", adminUsername);
             } else {
-                log.info("Admin user '{}' already exists and has ROLE_ADMIN — skipping seed.", adminUsername);
+                log.info("Admin user '{}' already exists and is fully seeded.", adminUsername);
             }
             return;
         }
@@ -82,6 +90,7 @@ public class DataInitializer implements CommandLineRunner {
         admin.setEmail(adminEmail);
         admin.setPasswordHash(passwordEncoder.encode(adminPassword));
         admin.setRole(Role.ROLE_ADMIN);
+        admin.setEmailVerified(true);
         userRepository.save(admin);
 
         log.info("Admin user '{}' created successfully with ROLE_ADMIN.", adminUsername);
