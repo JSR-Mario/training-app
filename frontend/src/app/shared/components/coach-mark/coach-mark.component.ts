@@ -135,9 +135,9 @@ export class CoachMarkComponent implements OnDestroy {
     });
   }
 
-  @HostListener('window:scroll', ['$event'])
-  @HostListener('window:resize', ['$event'])
-  updateTargetRect(_event?: Event) {
+  @HostListener('window:scroll')
+  @HostListener('window:resize')
+  updateTargetRect() {
     const step = this.tutorialService.activeStep();
     if (!step) return;
     const el = document.getElementById(step.targetId);

@@ -15,6 +15,6 @@ public record WorkoutSessionResponse(
     Instant startedAt,
     Instant completedAt,
     String notes,
-    String previousSessionNotes,
+    String previousNotes,
     List<SessionRatingResponse> ratings
 ) {}

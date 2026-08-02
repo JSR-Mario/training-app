@@ -508,7 +508,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
               placeholder="Type your notes here..."
               class="w-full h-32 px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm resize-none placeholder-gray-400"
             ></textarea>
-            @if (session()?.previousNotes) {
+            @if (session()?.previousNotes && !hasCurrentNotes()) {
               <div class="mt-4 p-4 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
                 <p class="text-xs text-gray-500 font-bold uppercase mb-1">Previous Session Notes</p>
                 <p class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{{ session()?.previousNotes }}</p>
@@ -643,7 +643,15 @@ export class ActiveWorkoutComponent implements OnInit {
     repsCompletedRight: [null, [Validators.min(0)]]
   });
 
+  hasCurrentNotes = signal<boolean>(false);
+
   notesControl = new FormControl('');
+
+  constructor() {
+    this.notesControl.valueChanges.subscribe(val => {
+      this.hasCurrentNotes.set(!!(val && val.trim().length > 0));
+    });
+  }
 
   // Map of exerciseId -> FormGroup
   forms = new Map<string, FormGroup>();
@@ -889,6 +897,10 @@ export class ActiveWorkoutComponent implements OnInit {
         this.session.set(sess);
         if (sess.notes) {
           this.notesControl.setValue(sess.notes, { emitEvent: false });
+          this.hasCurrentNotes.set(!!(sess.notes && sess.notes.trim().length > 0));
+        } else {
+          this.notesControl.setValue('', { emitEvent: false });
+          this.hasCurrentNotes.set(false);
         }
         
         forkJoin({
