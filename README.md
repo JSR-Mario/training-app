@@ -4,9 +4,8 @@ I built Yes App to track my own workouts, manage fitness programs, and analyze l
 
 ## Architecture
 
-![Architecture Diagram](docs/architecture.drawio.png)
+![Architecture Diagram](docs/architecture.svg)
 
-> **Note:** The architecture diagram is currently being updated to reflect the latest infrastructure additions.
 
 ## Tech Stack
 
