@@ -2,6 +2,12 @@
 
 I built Yes App to track my own workouts, manage fitness programs, and analyze long-term progress without relying on third-party subscriptions. It is a personal project architected as a set of backend microservices with an Angular PWA on top, designed from the ground up to be scalable, secure, and easy to iterate on locally.
 
+## Architecture
+
+![Architecture Diagram](docs/architecture.drawio.png)
+
+> **Note:** The architecture diagram is currently being updated to reflect the latest infrastructure additions.
+
 ## Tech Stack
 
 **Backend**
@@ -74,15 +80,166 @@ docker compose up -d
 - **Frontend (Production Bundle):** Accessible via your configured `DOMAIN_NAME` (routed through Cloudflare Tunnel).
 - **Grafana Monitoring:** `http://localhost:3000` (accessible locally or via SSH Tunnel if deployed remotely).
 
+## Hosting on a New Server
+
+When setting up a fresh Linux instance (e.g., AWS Lightsail, EC2), here is everything needed to get the stack running.
+
+### 1. Initial Server Dependencies
+
+**Install Docker (Official):** Avoid older OS repositories -- the official script installs Docker and the latest `docker-compose-plugin`.
+```bash
+curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+**Install AWS CLI v2** (required if using S3 backups):
+```bash
+sudo apt update && sudo apt install -y unzip curl
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip && sudo ./aws/install && rm -rf aws awscliv2.zip
+```
+
+**Allocate 4 GB Swap Space** to protect against OOM errors on small instances:
+```bash
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+sudo sysctl vm.swappiness=10
+echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
+```
+
+### 2. Application Setup & CI/CD Reminders
+
+1. Clone the repository and navigate to the project root.
+2. Create your `.env` file from `.env.example` and fill in all production values.
+3. Run `aws configure` to grant S3 access to the backup scripts.
+4. **If migrating from another server:** update the corresponding secrets in your GitHub repository settings (`CLOUDFLARE_TUNNEL_TOKEN`, SSH keys, server IPs) so that your GitHub Actions pipelines target the new environment correctly.
+
+### 3. Database Initialization (Fresh vs Restore)
+
+**Option A: Start Fresh**
+
+If you are starting from scratch:
+```bash
+docker compose up -d
+```
+*Flyway will automatically create all required schemas and tables on first startup.*
+
+**Option B: Restore from an S3 Backup**
+
+If you have an existing backup, do **not** start the full stack yet. If you already ran `docker compose up -d`, wipe the database volumes first (`docker compose down -v`) to prevent Flyway from creating conflicting schemas.
+
+1. Start only the database container:
+   ```bash
+   docker compose up -d postgres
+   ```
+2. Wait a few seconds for Postgres to initialize, then restore the dump:
+   ```bash
+   # Use the specific backup date (YYYY-MM-DD)
+   ./scripts/restore-from-s3.sh 2026-07-25
+   ```
+3. Once the restore completes without `already exists` errors, bring up the full stack:
+   ```bash
+   docker compose up -d
+   ```
+
+### 4. Database Backups
+
+**Manual backup** -- push a snapshot to your configured `S3_BUCKET` on demand:
+```bash
+./scripts/backup-s3.sh
+```
+
+**Automated backups via cron** -- run a snapshot every day at 3:00 AM:
+
+1. Open the crontab editor:
+   ```bash
+   crontab -e
+   ```
+2. Add the following line (replace `/path/to/training-app` with your actual project path):
+   ```cron
+   # Run AWS S3 Database Backup every day at 03:00 AM
+   0 3 * * * cd /path/to/training-app && ./scripts/backup-s3.sh >> /path/to/training-app/db-backup.log 2>&1
+   ```
+   *Ensure the AWS CLI is configured with the correct permissions for the user running the cron job.*
+
 ## Environment Variables
 
-The application relies strictly on environment variables for all secrets and configurations. Key parameters include:
+The application relies strictly on environment variables for all secrets and configuration. Copy `.env.example` to `.env` in the project root -- **never commit `.env` to version control.**
 
-- `POSTGRES_*` / `REDIS_*`: Database and cache connection details.
-- `JWT_SECRET`: 256-bit hexadecimal string for token signing.
-- `ADMIN_*`: Credentials to idempotently seed the initial admin user.
-- `ALLOWED_ORIGIN`: Strict CORS origin enforcement at the Gateway.
-- `CLOUDFLARE_TUNNEL_TOKEN`: Secure ingress token for production deployment.
+### Variable Reference
+
+- **`POSTGRES_HOST` / `POSTGRES_PORT` / `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD`**: Database connection details.
+- **`REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD`**: Cache and rate-limiting connection parameters.
+- **`JWT_SECRET`**: 256-bit random hex string for signing JWT tokens (`openssl rand -hex 32`).
+- **`JWT_ACCESS_EXPIRY_MINUTES` / `JWT_REFRESH_EXPIRY_DAYS`**: Token lifetime configuration.
+- **`ADMIN_USERNAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD`**: Initial admin account seeded idempotently on startup.
+- **`ALLOWED_ORIGIN`**: Strict CORS origin enforced at the Gateway.
+- **`DOMAIN_NAME`**: Public domain used for Cloudflare routing and proxy rules.
+- **`CLOUDFLARE_TUNNEL_TOKEN`**: Tunnel authentication token for secure ingress.
+- **`COOKIE_SECURE`**: Set to `true` in production to enforce `Secure` on refresh token cookies.
+- **`AUTH_SERVICE_URL` / `TRAINING_SERVICE_URL` / `ANALYTICS_SERVICE_URL`**: Internal service base URLs used by the Gateway for routing.
+- **`S3_BUCKET`**: Target AWS S3 bucket URI for automated database snapshots.
+- **`SPRING_MAIL_HOST` / `SPRING_MAIL_PORT` / `SPRING_MAIL_USERNAME` / `SPRING_MAIL_PASSWORD`**: SMTP credentials for outgoing email (e.g., verification links).
+- **`APP_FRONTEND_URL`**: Public-facing web URL included in email verification links.
+- **`GRAFANA_PASSWORD`**: Admin password for the Grafana UI. Defaults to `admin` if not set.
+
+### Example `.env`
+
+The block below shows the expected shape of each variable. **All values here are fake** -- replace every entry with your actual credentials before running the application.
+
+```env
+# ─── Database ─────────────────────────────────────────────
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=training_db
+POSTGRES_USER=training_user
+POSTGRES_PASSWORD=changeme_secure_pw
+
+# ─── Redis ────────────────────────────────────────────────
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=changeme_redis_pw
+
+# ─── Auth / JWT ───────────────────────────────────────────
+JWT_SECRET=<64-char-hex-generated-with-openssl-rand-hex-32>
+JWT_ACCESS_EXPIRY_MINUTES=15
+JWT_REFRESH_EXPIRY_DAYS=7
+COOKIE_SECURE=true
+
+# ─── Admin seed ───────────────────────────────────────────
+ADMIN_USERNAME=admin
+ADMIN_EMAIL=admin@yourdomain.example.com
+ADMIN_PASSWORD=changeme_admin_pw
+
+# ─── CORS & Domain ────────────────────────────────────────
+ALLOWED_ORIGIN=https://yourdomain.example.com
+DOMAIN_NAME=yourdomain.example.com
+
+# ─── Internal service routing ─────────────────────────────
+AUTH_SERVICE_URL=http://auth-service:8081
+TRAINING_SERVICE_URL=http://training-service:8082
+ANALYTICS_SERVICE_URL=http://analytics-service:8083
+
+# ─── Cloudflare ───────────────────────────────────────────
+CLOUDFLARE_TUNNEL_TOKEN=<from-cloudflare-zero-trust-dashboard>
+
+# ─── AWS S3 Backups ───────────────────────────────────────
+S3_BUCKET=s3://your-bucket-name/backups
+
+# ─── Email (SMTP) ─────────────────────────────────────────
+SPRING_MAIL_HOST=smtp.example.com
+SPRING_MAIL_PORT=587
+SPRING_MAIL_USERNAME=noreply@yourdomain.example.com
+SPRING_MAIL_PASSWORD=changeme_smtp_pw
+APP_FRONTEND_URL=https://yourdomain.example.com
+
+# ─── Observability ────────────────────────────────────────
+GRAFANA_PASSWORD=changeme_grafana_pw
+```
 
 ## Deployment & Infrastructure
 
