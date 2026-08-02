@@ -1,11 +1,11 @@
-# Yes App — Cloud-Native Personal Training Platform
+# Yes App - Personal Training Platform
 
-Yes App is a comprehensive, microservices-based platform designed for tracking workout sessions, managing exercise programs, and analyzing fitness progress. Built with a modern cloud-native approach, it focuses on scalability, security, and developer experience.
+I built Yes App to track my own workouts, manage fitness programs, and analyze long-term progress without relying on third-party subscriptions. It is a personal project architected as a set of backend microservices with an Angular PWA on top, designed from the ground up to be scalable, secure, and easy to iterate on locally.
 
-## 🚀 Tech Stack
+## Tech Stack
 
 **Backend**
-- **Java 21 & Spring Boot 3.3:** Core microservices framework utilizing Virtual Threads.
+- **Java 21 & Spring Boot 3.3:** Core microservices framework taking advantage of modern Java features.
 - **Spring Cloud Gateway:** Centralized entry point, rate limiting, and stateless JWT validation.
 - **Spring Security & Hibernate / JPA:** Robust authentication and ORM.
 
@@ -23,21 +23,21 @@ Yes App is a comprehensive, microservices-based platform designed for tracking w
 **Infrastructure & DevOps**
 - **Docker & Docker Compose:** Containerized environments for consistent development and production.
 - **GitHub Actions (CI/CD):** Automated testing and multi-stage container builds.
-- **AWS Lightsail/EC2 & Cloudflare Tunnels:** Secure deployment without exposed public ports.
+- **AWS EC2 & Cloudflare Tunnels:** Secure deployment without exposed public ports.
 
-## ✨ Key Technical Highlights
+## Key Technical Highlights
 
-- **Microservices Architecture:** Independently scalable domains (Authentication, Training, Analytics).
-- **API Gateway Pattern:** A single ingress point that intercepts traffic to validate JWTs, enforce CORS, and apply IP-based rate limiting via Redis.
-- **Event-Driven Analytics:** Asynchronous cross-service communication (fire-and-forget) to track volume and progress without blocking main business flows.
-- **Security First:** Short-lived access tokens (15m), HttpOnly refresh cookies (7d), BCrypt password hashing (cost 12), and zero hardcoded credentials.
-- **Automated CI/CD:** Continuous Integration pipelines ensure every pull request passes unit tests and builds multi-stage, optimized Docker containers.
-- **Centralized Observability:** Proactive system monitoring collecting logs and metrics (500 errors, p95 response times, CPU/RAM usage) within a strict memory budget.
-- **Optimized Developer Experience:** Custom bash scripts orchestrate a hybrid local environment that blends Docker for databases with native JVM/Node execution for sub-2-second hot-reloads.
+- The application is split into independently scalable microservices (Authentication, Training, Analytics) rather than a monolith.
+- All external traffic flows through a single Spring Cloud API Gateway, which handles JWT validation statelessly and enforces IP-based rate limiting via Redis.
+- Cross-service communication relies on asynchronous fire-and-forget events; for instance, the training service notifies the analytics engine of a completed workout without blocking the user's flow.
+- Security is strictly enforced via short-lived access tokens (15m), HttpOnly refresh cookies (7d), and BCrypt password hashing, utilizing environment variables to avoid any hardcoded credentials.
+- Automated GitHub Actions pipelines ensure every pull request passes unit tests before building and deploying multi-stage, optimized Docker containers.
+- To keep infrastructure costs low, system monitoring collects logs and critical metrics (like p95 response times) efficiently within a strict memory footprint using Prometheus and Loki.
+- Custom bash scripts orchestrate a hybrid local development environment, blending Dockerized databases with native JVM/Node execution to enable fast iteration and rapid hot-reloads.
 
-## 💻 Local Development Setup
+## Local Development Setup
 
-To provide the best developer experience, we use a **Hybrid Approach** for local development. Running 12+ containers locally consumes significant resources and slows down iteration. Instead, we run Postgres and Redis in Docker, while the microservices and Angular frontend run natively with instant hot-reload.
+To provide the best developer experience, we use a **Hybrid Approach** for local development. Running 12+ containers locally consumes significant resources and slows down iteration. Instead, we run Postgres and Redis in Docker, while the microservices and Angular frontend run natively for immediate feedback.
 
 **Prerequisites:** Docker, NodeJS 24+, Java 21+, Maven
 
@@ -54,29 +54,27 @@ To provide the best developer experience, we use a **Hybrid Approach** for local
    ```bash
    ./scripts/start-local.sh
    ```
-   *This script launches Docker containers for the database/cache, waits for initialization, and uses `concurrently` to boot all 4 Spring Boot services and the Angular frontend in a single terminal with color-coded logs.*
+   *This launches Postgres/Redis via Docker, waits for initialization, and boots all 4 Spring Boot services and the Angular frontend simultaneously with color-coded logs.*
+   *Note: For testing data, create your own test account locally or use the built-in admin seed.*
 
 4. **Access the App:**
    - **Frontend (Hot-Reload):** `http://localhost:4200`
    - **API Gateway (Swagger UI):** `http://localhost:8080/swagger-ui.html`
 
 5. **Stop the Environment:**
-   Press `Ctrl+C` in the terminal to gracefully shut down the JVM/Node processes and automatically stop the Docker containers. You can also run `./scripts/stop-local.sh` to forcefully clean up orphaned processes and ports.
+   Press `Ctrl+C` in the terminal to gracefully shut down the JVM/Node processes and automatically stop the Docker containers. If processes become orphaned, run `./scripts/stop-local.sh` to forcefully clean up the ports.
 
-6. **Sync Production Data (Optional):**
-   If you want to test with real data instead of an empty database, run `./scripts/sync-prod-db.sh`. This script will automatically find the latest AWS S3 database backup, download it, wipe your local Postgres volume, and restore the production data.
-
-## 🐳 Production Replica (Full Docker)
+## Production Replica (Full Docker)
 
 To test the exact infrastructure that runs on the production server (including Prometheus, Grafana, and internal routing), use the full compose file. Ensure you have a populated `.env` file in the root.
 
 ```bash
 docker compose up -d
 ```
-- **Frontend (Production Bundle):** `http://localhost:3000` (or your configured domain)
-- **Grafana Monitoring:** `http://localhost:3000` via SSH Tunnel if deployed remotely.
+- **Frontend (Production Bundle):** Accessible via your configured `DOMAIN_NAME` (routed through Cloudflare Tunnel).
+- **Grafana Monitoring:** `http://localhost:3000` (accessible locally or via SSH Tunnel if deployed remotely).
 
-## ⚙️ Environment Variables
+## Environment Variables
 
 The application relies strictly on environment variables for all secrets and configurations. Key parameters include:
 
@@ -86,9 +84,9 @@ The application relies strictly on environment variables for all secrets and con
 - `ALLOWED_ORIGIN`: Strict CORS origin enforcement at the Gateway.
 - `CLOUDFLARE_TUNNEL_TOKEN`: Secure ingress token for production deployment.
 
-## ☁️ Deployment & Infrastructure
+## Deployment & Infrastructure
 
-The production environment is designed to be hosted on an AWS Linux instance, secured entirely behind Cloudflare Tunnels (Zero Trust Access). No application ports are exposed to the public internet.
+The production environment is hosted on an AWS EC2 instance, secured entirely behind Cloudflare Tunnels (Zero Trust Access). No application ports are exposed to the public internet.
 
 **Automated Backups:**
 Host-level cron scripts (`scripts/backup-s3.sh`) push daily Postgres database snapshots to an encrypted AWS S3 bucket. A companion script (`scripts/restore-from-s3.sh`) is provided for disaster recovery and seamless migration across instances.
