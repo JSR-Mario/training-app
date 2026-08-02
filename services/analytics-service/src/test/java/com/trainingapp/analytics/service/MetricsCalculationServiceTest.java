@@ -201,6 +201,37 @@ class MetricsCalculationServiceTest {
 
     // ── processSessionUncompleted ────────────────────────────────────────────
 
+    @Test
+    void processSessionCompleted_SetsRepsMetricsCorrectly() {
+        // set1: 50kg x 10 -> volume 500 (best by volume)
+        // set2: 55kg x 8  -> volume 440 (heaviest)
+        UUID dayTemplateId = UUID.randomUUID();
+        SessionCompletedEvent.SetData set1 = new SessionCompletedEvent.SetData(
+            exerciseId, 10, null, new BigDecimal("50.00"), Map.of()
+        );
+        SessionCompletedEvent.SetData set2 = new SessionCompletedEvent.SetData(
+            exerciseId, 8, null, new BigDecimal("55.00"), Map.of()
+        );
+
+        SessionCompletedEvent event = new SessionCompletedEvent(
+            sessionId, userId, programId, 1, dayTemplateId, sessionDate, List.of(set1, set2)
+        );
+
+        when(progressRepository.findByUserIdAndExerciseIdAndSessionId(userId, exerciseId, sessionId))
+            .thenReturn(Optional.empty());
+
+        metricsCalculationService.processSessionCompleted(event);
+
+        ArgumentCaptor<ExerciseProgressEntry> captor = ArgumentCaptor.forClass(ExerciseProgressEntry.class);
+        verify(progressRepository).save(captor.capture());
+        ExerciseProgressEntry saved = captor.getValue();
+
+        assertThat(saved.getMaxWeightKg()).isEqualByComparingTo("55.00");
+        assertThat(saved.getMaxWeightReps()).isEqualTo(8);           // reps at max weight
+        assertThat(saved.getBestSetVolumeWeightKg()).isEqualByComparingTo("50.00");
+        assertThat(saved.getBestSetVolumeReps()).isEqualTo(10);       // best volume set
+    }
+
     /**
      * Verifies Bug 2 is fixed: uncomplete deletes ALL entries for the session
      * in a single bulk call rather than per-exercise date-based lookups.
