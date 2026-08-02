@@ -158,11 +158,13 @@ export class LoginComponent {
         },
         error: (err) => {
           this.isLoading.set(false);
-          if (err.status === 403) {
+          if (err.status === 403 && err.error?.title === 'Email Verification Required') {
             this.isUnverified.set(true);
-            this.error.set('Your email address is not verified. Please check your inbox.');
+            this.error.set(err.error?.detail || 'Your email address is not verified. Please check your inbox.');
           } else if (err.status === 401) {
-            this.error.set('Invalid username or password.');
+            this.error.set(err.error?.detail || 'Invalid username or password.');
+          } else if (err.status === 403) {
+            this.error.set('Access denied (CORS or Security configuration).');
           } else {
             this.error.set('Service unavailable. Please try again later.');
           }
