@@ -48,6 +48,10 @@ The `./scripts/start-local.sh` script will:
 - **Frontend (Hot-Reload):** `http://localhost:4200`
 - **API Gateway (Swagger UI):** `http://localhost:8080/swagger-ui.html`
 
+**To Stop the Environment:**
+Simply press `Ctrl+C` in the terminal where the script is running. This will automatically kill all microservices and gracefully stop the Docker containers in the background. 
+*(Alternatively, you can manually run `./scripts/stop-local.sh` to stop the Docker containers).*
+
 ### Option B: Production Replica (Full Docker)
 If you want to test the exact infrastructure that runs on the server (including Caddy, Cloudflare Tunnel, Prometheus, Grafana, etc.), use the full compose file. 
 

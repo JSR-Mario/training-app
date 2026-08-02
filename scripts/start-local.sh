@@ -18,6 +18,15 @@ fi
 # Activar perfil de desarrollo de Spring Boot
 export SPRING_PROFILES_ACTIVE=dev
 
+# Función para apagar Docker automáticamente al detener el script
+cleanup() {
+    echo ""
+    echo "🛑 Deteniendo infraestructura Docker (Postgres y Redis)..."
+    docker compose -f docker-compose.local-infra.yml stop
+    echo "👋 Entorno local detenido por completo."
+}
+trap cleanup EXIT
+
 # 2. Levantar Infraestructura Docker (Postgres y Redis)
 echo "🐳 Levantando Postgres y Redis (Docker)..."
 docker compose -f docker-compose.local-infra.yml up -d
