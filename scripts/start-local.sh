@@ -3,37 +3,37 @@
 # Salir inmediatamente si ocurre un error
 set -e
 
-echo "🚀 Iniciando Entorno de Desarrollo Local Híbrido..."
+echo "[START] Iniciando Entorno de Desarrollo Local Hibrido..."
 
-# 1. Cargar variables de entorno automáticamente
+# 1. Cargar variables de entorno automaticamente
 if [ -f ".env.local" ]; then
-    echo "📦 Cargando .env.local..."
+    echo "[INFO] Cargando .env.local..."
     set -a
     source .env.local
     set +a
 else
-    echo "⚠️  No se encontró .env.local. Los servicios podrían fallar si faltan credenciales."
+    echo "[WARN] No se encontro .env.local. Los servicios podrian fallar si faltan credenciales."
 fi
 
 # Activar perfil de desarrollo de Spring Boot
 export SPRING_PROFILES_ACTIVE=dev
 
-# Función para apagar Docker automáticamente al detener el script
+# Funcion para apagar Docker automaticamente al detener el script
 cleanup() {
     echo ""
-    echo "🛑 Deteniendo infraestructura Docker (Postgres y Redis)..."
+    echo "[STOP] Deteniendo infraestructura Docker (Postgres y Redis)..."
     docker compose -f docker-compose.local-infra.yml stop
-    echo "👋 Entorno local detenido por completo."
+    echo "[DONE] Entorno local detenido por completo."
 }
 trap cleanup EXIT
 
 # 2. Levantar Infraestructura Docker (Postgres y Redis)
-echo "🐳 Levantando Postgres y Redis (Docker)..."
+echo "[DOCKER] Levantando Postgres y Redis..."
 docker compose -f docker-compose.local-infra.yml up -d
 
 # 3. Usar 'concurrently' para correr los 5 procesos y agrupar los logs con colores
-echo "🔥 Arrancando microservicios y frontend..."
-echo "💡 (Presiona Ctrl+C en cualquier momento para detener todos los servicios a la vez)"
+echo "[RUN] Arrancando microservicios y frontend..."
+echo "[INFO] (Presiona Ctrl+C en cualquier momento para detener todos los servicios a la vez)"
 echo ""
 
 npx concurrently \
