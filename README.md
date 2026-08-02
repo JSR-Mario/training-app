@@ -63,6 +63,9 @@ To provide the best developer experience, we use a **Hybrid Approach** for local
 5. **Stop the Environment:**
    Press `Ctrl+C` in the terminal to gracefully shut down the JVM/Node processes and automatically stop the Docker containers. You can also run `./scripts/stop-local.sh` to forcefully clean up orphaned processes and ports.
 
+6. **Sync Production Data (Optional):**
+   If you want to test with real data instead of an empty database, run `./scripts/sync-prod-db.sh`. This script will automatically find the latest AWS S3 database backup, download it, wipe your local Postgres volume, and restore the production data.
+
 ## 🐳 Production Replica (Full Docker)
 
 To test the exact infrastructure that runs on the production server (including Prometheus, Grafana, and internal routing), use the full compose file. Ensure you have a populated `.env` file in the root.
