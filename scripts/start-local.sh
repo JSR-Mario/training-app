@@ -31,6 +31,9 @@ trap cleanup EXIT
 echo "[DOCKER] Levantando Postgres y Redis..."
 docker compose -f docker-compose.local-infra.yml up -d
 
+echo "[WAIT] Dando 5 segundos para que Postgres inicialice..."
+sleep 5
+
 # 3. Usar 'concurrently' para correr los 5 procesos y agrupar los logs con colores
 echo "[RUN] Arrancando microservicios y frontend..."
 echo "[INFO] (Presiona Ctrl+C en cualquier momento para detener todos los servicios a la vez)"
