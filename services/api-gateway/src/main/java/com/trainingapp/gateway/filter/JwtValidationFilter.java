@@ -68,8 +68,10 @@ public class JwtValidationFilter extends AbstractGatewayFilterFactory<JwtValidat
 
                 // Mutate request to add X-User-Id and X-User-Role headers
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", role != null ? role : "ROLE_USER")
+                        .headers(headers -> {
+                            headers.set("X-User-Id", userId);
+                            headers.set("X-User-Role", role != null ? role : "ROLE_USER");
+                        })
                         .build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());

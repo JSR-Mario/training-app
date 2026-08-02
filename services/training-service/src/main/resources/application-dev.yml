@@ -1,0 +1,12 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+app:
+  jwt:
+    cookie-secure: false
+
+# Override memory (Spring Boot DevTools restart can take more memory)
+# We set this via JAVA_TOOL_OPTIONS in docker-compose or start scripts, 
+# but application-dev.yml serves as the marker for the dev profile.
