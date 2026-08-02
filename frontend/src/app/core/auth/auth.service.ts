@@ -75,6 +75,11 @@ export class AuthService {
     }
   }
 
+  get isDemoUser(): boolean {
+    const un = this.username;
+    return un.toLowerCase().trim() === 'demo';
+  }
+
   login(credentials: Record<string, string>): Observable<AuthResponse> {
     return this.http.post<AuthResponse>('/api/v1/auth/login', credentials).pipe(
       tap(response => {

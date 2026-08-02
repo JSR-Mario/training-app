@@ -357,4 +357,30 @@ class WorkoutSessionServiceTest {
         // 2 sets reached repsMax (15), so suggestAddWeight should be true
         assertThat(suggestions.get(0).suggestAddWeight()).isTrue();
     }
+
+    @Test
+    void startSession_WithPreviousNotesByDayName() {
+        WorkoutSessionRequest request = new WorkoutSessionRequest(dayTemplateId, LocalDate.now(), 1);
+        when(dayTemplateRepository.findById(dayTemplateId)).thenReturn(Optional.of(dayTemplate));
+
+        UUID currentSessionId = UUID.randomUUID();
+        WorkoutSession savedSession = new WorkoutSession();
+        ReflectionTestUtils.setField(savedSession, "id", currentSessionId);
+        savedSession.setDayTemplate(dayTemplate);
+        savedSession.setUserId(userId);
+
+        WorkoutSession previousSession = new WorkoutSession();
+        ReflectionTestUtils.setField(previousSession, "id", UUID.randomUUID());
+        previousSession.setNotes("Heavy bench press 100kg");
+
+        when(sessionRepository.save(any(WorkoutSession.class))).thenReturn(savedSession);
+        when(ratingRepository.findBySessionId(any())).thenReturn(Collections.emptyList());
+        when(sessionRepository.findPreviousSessionsWithNotesByDayName(eq(userId), eq(currentSessionId), eq("Push Day"), any()))
+                .thenReturn(List.of(previousSession));
+
+        WorkoutSessionResponse response = sessionService.startSession(userId, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.previousNotes()).isEqualTo("Heavy bench press 100kg");
+    }
 }

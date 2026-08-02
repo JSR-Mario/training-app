@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,4 +26,20 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
     List<WorkoutSession> findByUserIdAndPerformedOnBetween(UUID userId, java.time.LocalDate startDate, java.time.LocalDate endDate);
 
     Optional<WorkoutSession> findFirstByUserIdAndDayTemplateIdAndNotesIsNotNullOrderByPerformedOnDesc(UUID userId, UUID dayTemplateId);
+
+    @Query("""
+        SELECT ws FROM WorkoutSession ws 
+        WHERE ws.userId = :userId 
+          AND ws.id <> :sessionId 
+          AND LOWER(TRIM(ws.dayTemplate.name)) = LOWER(TRIM(:dayName)) 
+          AND ws.notes IS NOT NULL 
+          AND TRIM(ws.notes) <> '' 
+        ORDER BY ws.performedOn DESC, ws.startedAt DESC
+    """)
+    List<WorkoutSession> findPreviousSessionsWithNotesByDayName(
+        @Param("userId") UUID userId,
+        @Param("sessionId") UUID sessionId,
+        @Param("dayName") String dayName,
+        Pageable pageable
+    );
 }

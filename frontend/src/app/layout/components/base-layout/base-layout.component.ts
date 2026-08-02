@@ -6,10 +6,11 @@ import { DashboardService } from '../../../features/dashboard/services/dashboard
 import { ThemeService } from '../../../core/services/theme.service';
 import { environment } from '../../../../environments/environment';
 import { filter } from 'rxjs/operators';
+import { CoachMarkComponent } from '../../../shared/components/coach-mark/coach-mark.component';
 @Component({
   standalone: true,
   selector: 'app-base-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, CoachMarkComponent],
   template: `
     <style>
       @keyframes levelUpGlow {
@@ -22,6 +23,7 @@ import { filter } from 'rxjs/operators';
       }
     </style>
     <div class="h-screen w-screen bg-gray-50 dark:bg-gray-950 flex flex-col md:flex-row overflow-hidden">
+      <app-coach-mark></app-coach-mark>
       
       <!-- Mobile Drawer Overlay -->
       @if (isSidebarOpen() && isMobile()) {
@@ -140,7 +142,7 @@ import { filter } from 'rxjs/operators';
           </button>
           
           <div class="relative user-dropdown-container">
-            <button (click)="dropdownOpen.set(!dropdownOpen())" 
+            <button id="tutorial-user-profile" (click)="dropdownOpen.set(!dropdownOpen())" 
               class="flex items-center space-x-3 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white focus:outline-none p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               [class.bg-gray-200]="dropdownOpen()"
               [class.dark:bg-gray-800]="dropdownOpen()"
