@@ -4,7 +4,7 @@ I built Yes App to track my own workouts, manage fitness programs, and analyze l
 
 ## Architecture
 
-![Architecture Diagram](docs/architecture.png)
+![Architecture Diagram](docs/architecture.svg)
 
 
 ## Tech Stack
