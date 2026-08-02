@@ -23,7 +23,7 @@ I built Yes App to track my own workouts, manage fitness programs, and analyze l
 **Infrastructure & DevOps**
 - **Docker & Docker Compose:** Containerized environments for consistent development and production.
 - **GitHub Actions (CI/CD):** Automated testing and multi-stage container builds.
-- **AWS EC2 & Cloudflare Tunnels:** Secure deployment without exposed public ports.
+- **AWS Lightsail & Cloudflare Tunnels:** Secure deployment without exposed public ports.
 
 ## Key Technical Highlights
 
@@ -86,7 +86,7 @@ The application relies strictly on environment variables for all secrets and con
 
 ## Deployment & Infrastructure
 
-The production environment is hosted on an AWS EC2 instance, secured entirely behind Cloudflare Tunnels (Zero Trust Access). No application ports are exposed to the public internet.
+The production environment is hosted on an AWS Lightsail instance, secured entirely behind Cloudflare Tunnels (Zero Trust Access). No application ports are exposed to the public internet.
 
 **Automated Backups:**
 Host-level cron scripts (`scripts/backup-s3.sh`) push daily Postgres database snapshots to an encrypted AWS S3 bucket. A companion script (`scripts/restore-from-s3.sh`) is provided for disaster recovery and seamless migration across instances.
