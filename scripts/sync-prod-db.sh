@@ -22,6 +22,17 @@ if [ -z "$S3_BUCKET" ]; then
   exit 1
 fi
 
+if ! command -v aws &> /dev/null; then
+    echo "[ERROR] AWS CLI no esta instalado. Es necesario para descargar desde S3."
+    echo "Instalalo con los siguientes comandos:"
+    echo "  curl \"https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip\" -o \"awscliv2.zip\""
+    echo "  unzip awscliv2.zip"
+    echo "  sudo ./aws/install"
+    echo "  rm -rf aws awscliv2.zip"
+    echo "Despues, ejecuta 'aws configure' para iniciar sesion."
+    exit 1
+fi
+
 echo "[AWS] Buscando el respaldo mas reciente en S3 (${S3_BUCKET})..."
 # List files, filter by prefix, sort alphabetically (which sorts by date), take the last one
 LATEST_FILE=$(aws s3 ls "${S3_BUCKET}/" | grep "db-backup-" | sort | tail -n 1 | awk '{print $4}')
