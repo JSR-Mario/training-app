@@ -28,15 +28,33 @@ A cloud-native, microservices-based platform for tracking workout sessions, mana
 
 ## Local Setup
 
-**Prerequisites:** Docker, Docker Compose
+### Option A: Local Development (Hybrid) - Recommended for Coding
+For active development, we use a hybrid approach. Docker runs only the static infrastructure (Postgres, Redis), while the microservices and Angular frontend run natively on your host. 
+**Why?** Running 12+ containers (including the observability stack) locally is extremely resource-heavy. More importantly, rebuilding Docker images for every code change takes minutes. Running natively provides **instant Hot-Reload** for both Java and Angular.
+
+**Prerequisites:** Docker, Docker Compose, NodeJS 24+, Java 21+, Maven
 
 ```bash
 git clone https://github.com/JSR-Mario/training-app.git
 cd training-app
-# Ensure you have a populated .env file in the root
-docker-compose up -d
+# Ensure you have a populated .env.local file in the root (credentials for dev)
+./scripts/start-local.sh
 ```
+The `./scripts/start-local.sh` script will:
+1. Start Postgres and Redis via `docker-compose.local-infra.yml`.
+2. Launch all 4 Spring Boot microservices simultaneously using `concurrently` with colored logs.
+3. Start the Angular frontend (`ng serve`), proxying `/api` requests to avoid CORS issues.
 
+- **Frontend (Hot-Reload):** `http://localhost:4200`
+- **API Gateway (Swagger UI):** `http://localhost:8080/swagger-ui.html`
+
+### Option B: Production Replica (Full Docker)
+If you want to test the exact infrastructure that runs on the server (including Caddy, Cloudflare Tunnel, Prometheus, Grafana, etc.), use the full compose file. 
+
+```bash
+# Ensure you have a populated .env file in the root
+docker compose up -d
+```
 - **Frontend (Production):** `https://app.jsr-mario.com` (Local dev: `http://localhost:3000`)
 - **API Gateway (Swagger UI):** `http://localhost:8080/swagger-ui.html`
 - **Grafana Monitoring:**
