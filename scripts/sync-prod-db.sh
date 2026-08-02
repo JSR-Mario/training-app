@@ -48,16 +48,19 @@ LOCAL_FILE="/tmp/latest-db.sql.gz"
 echo "[AWS] Descargando el respaldo mas reciente: ${LATEST_FILE}..."
 aws s3 cp "${S3_URI}" "${LOCAL_FILE}"
 
-echo "[DOCKER] Reiniciando y limpiando el volumen de Postgres local..."
-docker compose -f docker-compose.local-infra.yml stop postgres 2>/dev/null || true
-docker compose -f docker-compose.local-infra.yml rm -f -v postgres 2>/dev/null || true
+echo "[DOCKER] Limpiando la base de datos local y su volumen..."
+docker compose -f docker-compose.local-infra.yml down -v 2>/dev/null || true
 docker compose -f docker-compose.local-infra.yml up -d postgres
 
-echo "[WAIT] Dando 5 segundos para que Postgres inicialice..."
-sleep 5
+echo "[WAIT] Esperando a que Postgres este completamente listo..."
+until docker compose -f docker-compose.local-infra.yml exec -T postgres pg_isready -U "${POSTGRES_USER:-user}" -d "${POSTGRES_DB:-trainingapp}" > /dev/null 2>&1; do
+    sleep 1
+done
+
+echo "[DB] Creando roles secundarios por si existen en el dump de produccion..."
+docker compose -f docker-compose.local-infra.yml exec -T postgres psql -U "${POSTGRES_USER:-user}" -d postgres -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'trainingapp_user') THEN CREATE ROLE trainingapp_user WITH SUPERUSER LOGIN; END IF; END \$\$;" 2>/dev/null || true
 
 echo "[DB] Restaurando la base de datos..."
-# Se usa -T para evitar problemas de TTY en el script
 gunzip -c "${LOCAL_FILE}" | docker compose -f docker-compose.local-infra.yml exec -T postgres psql -U "${POSTGRES_USER:-user}" -d "${POSTGRES_DB:-trainingapp}"
 
 echo "[CLEAN] Eliminando archivo temporal..."
