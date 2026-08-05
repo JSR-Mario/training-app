@@ -1,6 +1,5 @@
 export const environment = {
   production: false,
   apiUrl: '',
-  appVersion: 'v1.0.0'
+  appVersion: 'v1.0.4'
 };
-

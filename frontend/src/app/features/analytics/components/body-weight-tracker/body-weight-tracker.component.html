@@ -11,23 +11,27 @@
           </div>
 
           <div class="flex items-center text-sm">
-            @if (periodChangePercent() === 0) {
+            @if (!hasEnoughData()) {
+              <span class="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2.5 py-1 rounded-lg font-medium text-xs">
+                Not enough data
+              </span>
+            } @else if (periodChangePercent() === 0) {
               <span class="text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700/60 px-2.5 py-1 rounded-lg font-medium text-xs">
-                0.0 kg (0.0%)
+                0.0 kg (0.0%) since {{ startDateLabel() }}
               </span>
             } @else if (periodChangePercent() < 0) {
               <span class="text-accent-pos flex items-center bg-accent-pos/10 border border-accent-pos/20 px-2.5 py-1 rounded-lg font-semibold text-xs">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
-                {{ periodChangeKg() | number:'1.1-1' }} kg ({{ periodChangePercent() | number:'1.1-1' }}%)
+                {{ periodChangeKg() | number:'1.1-1' }} kg ({{ periodChangePercent() | number:'1.1-1' }}%) since {{ startDateLabel() }}
               </span>
             } @else {
               <span class="text-accent-neg flex items-center bg-accent-neg/10 border border-accent-neg/20 px-2.5 py-1 rounded-lg font-semibold text-xs">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                 </svg>
-                +{{ periodChangeKg() | number:'1.1-1' }} kg (+{{ periodChangePercent() | number:'1.1-1' }}%)
+                +{{ periodChangeKg() | number:'1.1-1' }} kg (+{{ periodChangePercent() | number:'1.1-1' }}%) since {{ startDateLabel() }}
               </span>
             }
           </div>

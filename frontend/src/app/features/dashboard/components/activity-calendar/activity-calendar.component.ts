@@ -18,28 +18,42 @@ interface MonthLabel {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="solid-card p-6 w-full overflow-x-auto">
-      <h3 class="text-base font-medium text-gray-500 dark:text-gray-400 mb-4">{{ title || 'Activity (Last 365 Days)' }}</h3>
+    <div [ngClass]="embedded ? 'w-full p-2' : 'solid-card p-6 w-full'">
+      @if (title) {
+        <h3 class="text-base font-medium text-gray-500 dark:text-gray-400 mb-4">{{ title }}</h3>
+      } @else if (!embedded) {
+        <h3 class="text-base font-medium text-gray-500 dark:text-gray-400 mb-4">Activity (Last 365 Days)</h3>
+      }
       
-      <div class="flex items-start w-full overflow-x-auto pb-2">
-        <div class="flex min-w-max">
-          <!-- Day labels (Mon, Wed, Fri) -->
-          <div class="flex flex-col text-xs text-gray-500 mr-2 justify-between" style="height: 112px; padding-top: 16px; padding-bottom: 16px; margin-top: 20px;">
-            <span style="line-height: 14px;">Mon</span>
-            <span style="line-height: 14px;">Wed</span>
-            <span style="line-height: 14px;">Fri</span>
+      <div 
+        class="w-full overflow-x-auto pb-2 scrollbar-thin"
+        (wheel)="onWheelScroll($event)"
+      >
+        <div class="flex items-start min-w-max">
+          <!-- Day labels (Mon, Wed, Fri) sticky column -->
+          <div 
+            class="sticky left-0 z-10 flex flex-col text-[10px] text-gray-500 dark:text-gray-400 mr-2 shrink-0 gap-1 pt-5"
+            [ngClass]="embedded ? 'bg-white dark:bg-gray-800' : 'bg-white dark:bg-[#1e1e1e]'"
+          >
+            <div class="h-3.5 flex items-center"></div>
+            <div class="h-3.5 flex items-center justify-end pr-1">Mon</div>
+            <div class="h-3.5 flex items-center"></div>
+            <div class="h-3.5 flex items-center justify-end pr-1">Wed</div>
+            <div class="h-3.5 flex items-center"></div>
+            <div class="h-3.5 flex items-center justify-end pr-1">Fri</div>
+            <div class="h-3.5 flex items-center"></div>
           </div>
 
-          <div class="flex flex-col">
+          <div class="flex flex-col min-w-max">
             <!-- Month labels row -->
-            <div class="relative w-full h-4 mb-1 text-xs text-gray-500">
+            <div class="relative w-full h-4 mb-1 text-[11px] font-medium text-gray-500 dark:text-gray-400">
               @for (month of monthLabels(); track $index) {
-                <span class="absolute" [style.left.px]="month.colIndex * 18">{{ month.label }}</span>
+                <span class="absolute whitespace-nowrap" [style.left.px]="month.colIndex * 18">{{ month.label }}</span>
               }
             </div>
 
             <!-- Grid of weeks and days -->
-            <div class="flex gap-1" style="height: 112px;">
+            <div class="flex gap-1">
               @for (week of weeks(); track $index) {
                 <div class="flex flex-col gap-1">
                   @for (day of week; track day?.date || $index) {
@@ -61,7 +75,7 @@ interface MonthLabel {
       </div>
       
       <!-- Legend -->
-      <div class="flex items-center justify-end mt-4 text-xs text-gray-600 dark:text-gray-400 space-x-2">
+      <div class="flex items-center justify-end mt-3 text-xs text-gray-600 dark:text-gray-400 space-x-2">
         <span>Less</span>
         <div class="flex gap-1">
           <div class="w-3.5 h-3.5 rounded-sm bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700"></div>
@@ -74,24 +88,39 @@ interface MonthLabel {
     </div>
   `,
   styles: [`
-    .solid-card {
-      /* Uses global .solid-card class */
-    }
-    .overflow-x-auto::-webkit-scrollbar {
+    .scrollbar-thin::-webkit-scrollbar {
       height: 6px;
     }
-    .overflow-x-auto::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .overflow-x-auto::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
       border-radius: 4px;
+    }
+    .dark .scrollbar-thin::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+    .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.35);
+    }
+    .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+    .scrollbar-thin {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(150, 150, 150, 0.4) transparent;
     }
   `]
 })
 export class ActivityCalendarComponent implements OnChanges, OnInit {
   @Input() data: ActivitySummary[] = [];
   @Input() title?: string;
+  @Input() embedded = false;
 
   weeks = signal<(CalendarCell | null)[][]>([]);
   monthLabels = signal<MonthLabel[]>([]);
@@ -104,6 +133,14 @@ export class ActivityCalendarComponent implements OnChanges, OnInit {
   @HostListener('window:resize')
   onResize() {
     this.checkScreenSize();
+  }
+
+  onWheelScroll(event: WheelEvent) {
+    if (event.deltaY !== 0 && Math.abs(event.deltaX) < Math.abs(event.deltaY)) {
+      const element = event.currentTarget as HTMLElement;
+      element.scrollLeft += event.deltaY;
+      event.preventDefault();
+    }
   }
 
   private checkScreenSize() {

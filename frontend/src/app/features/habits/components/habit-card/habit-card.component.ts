@@ -26,7 +26,7 @@ import { ActivitySummary } from '../../../../core/types/training.types';
             [class.text-gray-400]="!isCompletedToday"
             [class.border-transparent]="!isCompletedToday"
             class="w-7 h-7 flex items-center justify-center rounded-lg border-2 transition-all duration-200 hover:scale-105 active:scale-95 shrink-0"
-            [title]="isCompletedToday ? 'Completed today' : 'Mark as completed'"
+            [title]="isCompletedToday ? 'Completed' : 'Mark as completed'"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -68,11 +68,11 @@ import { ActivitySummary } from '../../../../core/types/training.types';
             <div class="flex gap-4 text-xs">
               <div>
                 <span class="text-[10px] text-gray-500 dark:text-gray-400 block">Current Streak</span>
-                <span class="font-bold text-accent-pos text-xs">{{ habit.currentStreak }} days</span>
+                <span class="font-bold text-accent-pos text-xs">{{ habit.currentStreak }} {{ getStreakUnit(habit.frequency, habit.currentStreak) }}</span>
               </div>
               <div>
                 <span class="text-[10px] text-gray-500 dark:text-gray-400 block">Best Streak</span>
-                <span class="font-bold text-gray-700 dark:text-gray-300 text-xs">{{ habit.longestStreak }} days</span>
+                <span class="font-bold text-gray-700 dark:text-gray-300 text-xs">{{ habit.longestStreak }} {{ getStreakUnit(habit.frequency, habit.longestStreak) }}</span>
               </div>
             </div>
 
@@ -93,7 +93,7 @@ import { ActivitySummary } from '../../../../core/types/training.types';
           <!-- Heatmap calendar for DAILY habits -->
           @if (habit.frequency === 'DAILY') {
             <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700/40">
-              <app-activity-calendar [data]="calendarData" [title]="'Completion History'"></app-activity-calendar>
+              <app-activity-calendar [data]="calendarData" [title]="'Completion History'" [embedded]="true"></app-activity-calendar>
             </div>
           }
         </div>
@@ -117,6 +117,16 @@ export class HabitCardComponent implements OnChanges {
     if (changes['habit']) {
       this.calendarData = this.buildCalendarData();
     }
+  }
+
+  getStreakUnit(frequency: string, count: number): string {
+    if (frequency === 'WEEKLY') {
+      return count === 1 ? 'week' : 'weeks';
+    }
+    if (frequency === 'MONTHLY') {
+      return count === 1 ? 'month' : 'months';
+    }
+    return count === 1 ? 'day' : 'days';
   }
 
   private buildCalendarData(): ActivitySummary[] {
