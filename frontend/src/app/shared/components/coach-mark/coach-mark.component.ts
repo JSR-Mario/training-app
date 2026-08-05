@@ -117,6 +117,11 @@ export class CoachMarkComponent implements OnDestroy {
       const poll = () => {
         const el = document.getElementById(step.targetId);
         if (el) {
+          try {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } catch {
+            // ignore if not supported
+          }
           this.targetRect.set(el.getBoundingClientRect());
           this.cdr.markForCheck();
           this.clearPollTimer();

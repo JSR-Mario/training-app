@@ -9,8 +9,10 @@ describe('TutorialService', () => {
 
   beforeEach(() => {
     sessionStorage.clear();
+    localStorage.clear();
     authServiceSpy = jasmine.createSpyObj('AuthService', [], {
-      isDemoUser: true
+      isDemoUser: false,
+      username: 'testuser'
     });
 
     TestBed.configureTestingModule({
@@ -26,28 +28,29 @@ describe('TutorialService', () => {
 
   afterEach(() => {
     sessionStorage.clear();
+    localStorage.clear();
   });
 
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should trigger dashboard tutorial for demo user if section not seen', () => {
+  it('should trigger dashboard tutorial for any user if section not seen', () => {
     service.triggerDashboardTutorial();
 
     expect(service.activeStep()).not.toBeNull();
-    expect(service.activeStep()?.targetId).toBe('tutorial-activity-calendar');
+    expect(service.activeStep()?.targetId).toBe('tutorial-hamburger-toggle');
     expect(service.hasNextStep()).toBeTrue();
   });
 
   it('should advance to next step on nextStep call', () => {
     service.triggerDashboardTutorial();
-    expect(service.activeStep()?.targetId).toBe('tutorial-activity-calendar');
+    expect(service.activeStep()?.targetId).toBe('tutorial-hamburger-toggle');
 
     service.nextStep();
 
-    expect(service.activeStep()?.targetId).toBe('tutorial-user-profile');
-    expect(service.hasNextStep()).toBeFalse();
+    expect(service.activeStep()?.targetId).toBe('tutorial-nav-dashboard');
+    expect(service.hasNextStep()).toBeTrue();
   });
 
   it('should clear steps and set skip key on skipAll', () => {
@@ -58,14 +61,6 @@ describe('TutorialService', () => {
 
     expect(service.activeStep()).toBeNull();
     expect(service.isSeen('workout')).toBeTrue();
-  });
-
-  it('should not trigger tutorial if user is not demo user', () => {
-    Object.defineProperty(authServiceSpy, 'isDemoUser', { get: () => false });
-
-    service.triggerDashboardTutorial();
-
-    expect(service.activeStep()).toBeNull();
   });
 
   it('should not trigger tutorial for seen section', () => {
@@ -90,3 +85,4 @@ describe('TutorialService', () => {
     expect(service.hasNextStep()).toBeFalse();
   });
 });
+

@@ -35,20 +35,25 @@ export class TutorialService {
     });
   }
 
+  private getUserKey(key: string): string {
+    const user = this.authService.username || 'default';
+    return `${key}_${user}`;
+  }
+
   private isSkipped(): boolean {
-    return sessionStorage.getItem(SKIP_KEY) === 'true';
+    return localStorage.getItem(this.getUserKey(SKIP_KEY)) === 'true' || sessionStorage.getItem(SKIP_KEY) === 'true';
   }
 
   isSeen(section: TutorialSection): boolean {
-    return this.isSkipped() || sessionStorage.getItem(sectionKey(section)) === 'true';
+    return this.isSkipped() || localStorage.getItem(this.getUserKey(sectionKey(section))) === 'true' || sessionStorage.getItem(sectionKey(section)) === 'true';
   }
 
   private markSeen(section: TutorialSection): void {
-    sessionStorage.setItem(sectionKey(section), 'true');
+    localStorage.setItem(this.getUserKey(sectionKey(section)), 'true');
   }
 
   skipAll(): void {
-    sessionStorage.setItem(SKIP_KEY, 'true');
+    localStorage.setItem(this.getUserKey(SKIP_KEY), 'true');
     this.stepQueue.set([]);
   }
 
@@ -57,24 +62,83 @@ export class TutorialService {
   }
 
   triggerDashboardTutorial(): void {
-    if (!this.isDemoUser() || this.isSeen('dashboard')) return;
+    if (this.isSeen('dashboard')) return;
     this.markSeen('dashboard');
     this.stepQueue.set([
       {
-        targetId: 'tutorial-activity-calendar',
-        title: 'Activity Heatmap',
-        description:
-          'Each square is a day. The brighter it glows, the more activity you logged ' +
-          '(workouts, cardio, habits). It updates in real time.',
+        targetId: 'tutorial-hamburger-toggle',
+        title: 'Navigation Menu',
+        description: 'Toggle the sidebar menu anytime to navigate between app features.',
         section: 'dashboard',
         position: 'bottom'
       },
       {
+        targetId: 'tutorial-nav-dashboard',
+        title: 'Dashboard',
+        description: 'Your home base for summary stats, XP level progress, and daily activity calendar.',
+        section: 'dashboard',
+        position: 'right'
+      },
+      {
+        targetId: 'tutorial-nav-workout',
+        title: 'Workout',
+        description: 'Log training sessions, track active sets, and record exercise reps and weights.',
+        section: 'dashboard',
+        position: 'right'
+      },
+      {
+        targetId: 'tutorial-nav-body-weight',
+        title: 'Body Weight',
+        description: 'Track your daily body weight entries and monitor weight trends over time.',
+        section: 'dashboard',
+        position: 'right'
+      },
+      {
+        targetId: 'tutorial-nav-cardio',
+        title: 'Cardio',
+        description: 'Record cardio activities like running, cycling, or swimming with duration and distance.',
+        section: 'dashboard',
+        position: 'right'
+      },
+      {
+        targetId: 'tutorial-nav-programs',
+        title: 'Programs',
+        description: 'Design custom training programs with weekly schedules and daily templates.',
+        section: 'dashboard',
+        position: 'right'
+      },
+      {
+        targetId: 'tutorial-nav-exercises',
+        title: 'Exercises',
+        description: 'Browse and manage your exercise library, target muscle groups, and view personal records.',
+        section: 'dashboard',
+        position: 'right'
+      },
+      {
+        targetId: 'tutorial-nav-analytics',
+        title: 'Analytics',
+        description: 'Analyze muscle volume distribution and progression charts across exercises.',
+        section: 'dashboard',
+        position: 'right'
+      },
+      {
+        targetId: 'tutorial-nav-habits',
+        title: 'Habits',
+        description: 'Build daily routines, check off completed habits, and maintain consistency streaks.',
+        section: 'dashboard',
+        position: 'right'
+      },
+      {
         targetId: 'tutorial-user-profile',
-        title: 'Level & XP',
-        description:
-          'Every logged workout, cardio session, or habit earns XP. Accumulate enough ' +
-          'to level up. Open this menu to see your progress bar.',
+        title: 'Level, XP & Preferences',
+        description: 'View your current level progress bar, customize theme mode and accent colors, or sign out.',
+        section: 'dashboard',
+        position: 'bottom'
+      },
+      {
+        targetId: 'tutorial-activity-calendar',
+        title: 'Activity Heatmap',
+        description: 'Each square represents a day. Color intensity shows your logged activity level in real time.',
         section: 'dashboard',
         position: 'bottom'
       }
@@ -82,8 +146,9 @@ export class TutorialService {
   }
 
   triggerSectionTutorial(step: TutorialStep): void {
-    if (!this.isDemoUser() || this.isSeen(step.section)) return;
+    if (this.isSeen(step.section)) return;
     this.markSeen(step.section);
     this.stepQueue.set([step]);
   }
 }
+
