@@ -93,7 +93,7 @@ import { ActivitySummary } from '../../../../core/types/training.types';
           <!-- Heatmap calendar for DAILY habits -->
           @if (habit.frequency === 'DAILY') {
             <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700/40">
-              <app-activity-calendar [data]="calendarData" [title]="'Completion History'"></app-activity-calendar>
+              <app-activity-calendar [data]="calendarData" [title]="'Completion History'" [embedded]="true"></app-activity-calendar>
             </div>
           }
         </div>
