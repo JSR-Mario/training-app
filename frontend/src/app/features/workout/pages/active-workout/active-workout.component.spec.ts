@@ -62,7 +62,7 @@ describe('ActiveWorkoutComponent', () => {
       height: 24,
       x: 10,
       y: 100,
-      toJSON: () => {}
+      toJSON: () => ({})
     });
 
     const mockEvent = { currentTarget: mockButton } as unknown as Event;
@@ -87,7 +87,7 @@ describe('ActiveWorkoutComponent', () => {
       height: 24,
       x: screenWidth - 20,
       y: 100,
-      toJSON: () => {}
+      toJSON: () => ({})
     });
 
     const mockEvent = { currentTarget: mockButton } as unknown as Event;
