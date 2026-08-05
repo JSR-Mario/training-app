@@ -1,0 +1,1 @@
+ALTER TABLE training.programs ADD COLUMN is_public BOOLEAN NOT NULL DEFAULT FALSE;

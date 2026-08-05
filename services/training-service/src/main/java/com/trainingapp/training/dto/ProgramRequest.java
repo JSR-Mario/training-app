@@ -15,5 +15,6 @@ public record ProgramRequest(
         LocalDate startDate,
         boolean isActive,
         @Min(1) @Max(52) Integer currentWeek,
-        @NotNull ProgramGoal goal
+        @NotNull ProgramGoal goal,
+        boolean isPublic
 ) {}

@@ -19,16 +19,28 @@ export class ProgramService {
     return this.http.get<TrainingProgram[]>('/api/v1/training/programs');
   }
 
+  getPublicPrograms(): Observable<TrainingProgram[]> {
+    return this.http.get<TrainingProgram[]>('/api/v1/training/programs/public');
+  }
+
   getProgram(id: string): Observable<TrainingProgram> {
     return this.http.get<TrainingProgram>(`/api/v1/training/programs/${id}`);
   }
 
-  createProgram(name: string, durationWeeks: number, goal = 'MAINTENANCE'): Observable<TrainingProgram> {
-    return this.http.post<TrainingProgram>('/api/v1/training/programs', { name, durationWeeks, goal, isActive: false });
+  createProgram(name: string, durationWeeks: number, goal = 'MAINTENANCE', isPublic = false): Observable<TrainingProgram> {
+    return this.http.post<TrainingProgram>('/api/v1/training/programs', { name, durationWeeks, goal, isActive: true, isPublic });
   }
 
-  updateProgram(id: string, name: string, durationWeeks: number, isActive: boolean, goal = 'MAINTENANCE'): Observable<TrainingProgram> {
-    return this.http.put<TrainingProgram>(`/api/v1/training/programs/${id}`, { name, durationWeeks, isActive, goal });
+  copyPublicProgram(id: string): Observable<TrainingProgram> {
+    return this.http.post<TrainingProgram>(`/api/v1/training/programs/public/${id}/copy`, {});
+  }
+
+  updateProgram(id: string, name: string, durationWeeks: number, isActive: boolean, goal = 'MAINTENANCE', isPublic = false): Observable<TrainingProgram> {
+    return this.http.put<TrainingProgram>(`/api/v1/training/programs/${id}`, { name, durationWeeks, isActive, goal, isPublic });
+  }
+
+  deactivateProgram(id: string): Observable<TrainingProgram> {
+    return this.http.post<TrainingProgram>(`/api/v1/training/programs/${id}/deactivate`, {});
   }
 
   deleteProgram(id: string): Observable<void> {

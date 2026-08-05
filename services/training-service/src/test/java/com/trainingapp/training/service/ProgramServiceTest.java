@@ -52,13 +52,13 @@ class ProgramServiceTest {
     @Test
     void create_savesAndReturns() {
         when(programRepository.save(any())).thenReturn(sampleProgram);
-        ProgramResponse result = programService.create(userId, new ProgramRequest("PPL", 8, null, false, 1, ProgramGoal.MAINTENANCE));
+        ProgramResponse result = programService.create(userId, new ProgramRequest("PPL", 8, null, false, 1, ProgramGoal.MAINTENANCE, false));
         assertThat(result.name()).isEqualTo("PPL");
     }
 
     @Test
     void findById_notOwned_throwsNotFound() {
-        when(programRepository.findByIdAndUserId(programId, userId)).thenReturn(Optional.empty());
+        when(programRepository.findById(programId)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> programService.findById(userId, programId))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
