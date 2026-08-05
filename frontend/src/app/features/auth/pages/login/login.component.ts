@@ -42,15 +42,34 @@ import { AuthService } from '../../../../core/auth/auth.service';
     
           <div>
             <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              autocomplete="current-password"
-              formControlName="password"
-              class="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos focus:border-transparent transition-all outline-none text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 solid-input"
-              placeholder="••••••••"
+            <div class="relative">
+              <input
+                [type]="showPassword() ? 'text' : 'password'"
+                id="password"
+                name="password"
+                autocomplete="current-password"
+                formControlName="password"
+                class="w-full px-4 py-3 pr-12 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos focus:border-transparent transition-all outline-none text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 solid-input"
+                placeholder="••••••••"
               >
+              <button
+                type="button"
+                (click)="togglePasswordVisibility()"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none p-1"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              >
+                @if (showPassword()) {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.02 10.02 0 013.674-.838c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m-6.855-1.921A3.001 3.001 0 0112 9a2.99 2.99 0 011.758.583m-1.758 5.417a3 3 0 002.83-2.83m-2.83 2.83L3 3l18 18" />
+                  </svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                }
+              </button>
+            </div>
             @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
               <div class="text-accent-neg text-xs mt-1">
                 Password is required
@@ -133,11 +152,16 @@ export class LoginComponent {
   });
 
   isLoading = signal(false);
+  showPassword = signal(false);
   error = signal('');
   isUnverified = signal(false);
   isResending = signal(false);
   resendStatus = signal('');
   unverifiedEmail = '';
+
+  togglePasswordVisibility() {
+    this.showPassword.update(show => !show);
+  }
 
   onSubmit() {
     if (this.loginForm.valid) {

@@ -76,9 +76,13 @@ public class DataInitializer implements CommandLineRunner {
                 admin.setEmailVerified(true);
                 changed = true;
             }
+            if (!passwordEncoder.matches(adminPassword, admin.getPasswordHash())) {
+                admin.setPasswordHash(passwordEncoder.encode(adminPassword));
+                changed = true;
+            }
             if (changed) {
                 userRepository.save(admin);
-                log.info("Admin user '{}' updated (ROLE_ADMIN / email verified).", adminUsername);
+                log.info("Admin user '{}' updated (ROLE_ADMIN / email verified / password synced).", adminUsername);
             } else {
                 log.info("Admin user '{}' already exists and is fully seeded.", adminUsername);
             }
