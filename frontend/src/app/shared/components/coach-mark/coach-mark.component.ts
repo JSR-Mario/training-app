@@ -124,19 +124,15 @@ export class CoachMarkComponent implements OnDestroy {
           }
           this.targetRect.set(el.getBoundingClientRect());
           this.cdr.markForCheck();
+        }
+        attempts++;
+        if (attempts >= maxAttempts) {
           this.clearPollTimer();
-        } else {
-          attempts++;
-          if (attempts >= maxAttempts) {
-            this.clearPollTimer();
-          }
         }
       };
 
       poll();
-      if (!this.targetRect()) {
-        this.pollTimer = setInterval(poll, 100);
-      }
+      this.pollTimer = setInterval(poll, 50);
     });
   }
 

@@ -341,10 +341,14 @@ export class BaseLayoutComponent {
   constructor() {
     effect(() => {
       const step = this.tutorialService.activeStep();
-      if (step && (step.targetId.startsWith('tutorial-nav-') || step.targetId === 'tutorial-hamburger-toggle')) {
+      if (!step) return;
+
+      if (step.targetId.startsWith('tutorial-nav-')) {
         if (!this.isSidebarOpen()) {
           this.isSidebarOpen.set(true);
         }
+      } else if (this.isMobile() && this.isSidebarOpen()) {
+        this.isSidebarOpen.set(false);
       }
     });
 
