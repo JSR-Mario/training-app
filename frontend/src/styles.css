@@ -34,7 +34,7 @@
     @apply bg-white dark:bg-[#1e1e1e] border-2 border-black dark:border-[#333333] shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,0.08)];
   }
   .solid-input {
-    @apply bg-white dark:bg-[#1e1e1e] border-2 border-black dark:border-[#333333] outline-none focus:ring-0 focus:border-accent-pos text-black dark:text-[#e6e6e6] transition-colors;
+    @apply bg-white dark:bg-[#1e1e1e] border-2 border-black dark:border-[#333333] outline-none focus:ring-0 focus:border-accent-pos text-black dark:text-[#e6e6e6] transition-colors px-3.5 py-2 h-[42px];
   }
   .solid-btn {
     @apply font-bold border-2 border-black dark:border-[#333333] transition-all active:translate-y-1 active:translate-x-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,0.08)] active:shadow-none;
