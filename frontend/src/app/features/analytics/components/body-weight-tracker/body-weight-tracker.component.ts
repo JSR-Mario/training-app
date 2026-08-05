@@ -101,7 +101,7 @@ export class BodyWeightTrackerComponent implements OnInit {
   
   public lineChartData: ChartConfiguration['data'] = {
     labels: [],
-    datasets: []
+    datasets: [{ data: [] }]
   };
 
   ngOnInit() {
@@ -130,7 +130,7 @@ export class BodyWeightTrackerComponent implements OnInit {
             this.hasEnoughData.set(false);
             this.startDateLabel.set(null);
             this.currentBuckets = [];
-            this.lineChartData = { labels: [], datasets: [] };
+            this.lineChartData = { labels: [], datasets: [{ data: [] }] };
             return;
           }
 
