@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
@@ -18,7 +19,7 @@ interface AggregatedBucket {
 @Component({
   standalone: true,
   selector: 'app-body-weight-tracker',
-  imports: [ReactiveFormsModule, BaseChartDirective],
+  imports: [CommonModule, ReactiveFormsModule, BaseChartDirective],
   templateUrl: './body-weight-tracker.component.html',
   styles: ``
 })
