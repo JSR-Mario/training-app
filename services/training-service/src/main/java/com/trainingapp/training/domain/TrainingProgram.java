@@ -54,6 +54,9 @@ public class TrainingProgram {
     @Column(name = "goal", nullable = false)
     private ProgramGoal goal = ProgramGoal.MAINTENANCE;
 
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic = false;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
@@ -75,4 +78,6 @@ public class TrainingProgram {
     public Instant getCreatedAt() { return createdAt; }
     public ProgramGoal getGoal() { return goal; }
     public void setGoal(ProgramGoal goal) { this.goal = goal; }
+    public boolean getIsPublic() { return isPublic; }
+    public void setIsPublic(boolean isPublic) { this.isPublic = isPublic; }
 }

@@ -86,7 +86,7 @@
       </div>
     }
 
-    @if (lineChartData.datasets[0].data.length > 0) {
+    @if (lineChartData.datasets[0]?.data?.length) {
       <canvas
         baseChart
         [data]="lineChartData"
@@ -95,7 +95,7 @@
       </canvas>
     }
 
-    @if (!isLoading() && lineChartData.datasets[0].data.length === 0) {
+    @if (!isLoading() && !lineChartData.datasets[0]?.data?.length) {
       <div
         class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
         <svg class="w-12 h-12 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">

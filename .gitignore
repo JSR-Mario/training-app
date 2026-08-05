@@ -68,6 +68,8 @@ frontend/.angular/
 # Agent Rules & Configuration
 # ============================================================
 .agents/
+.antigravitycli/
+.gemini/
 
 # ============================================================
 # Local Docs

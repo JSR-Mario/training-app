@@ -20,7 +20,7 @@ export interface ExerciseFormData {
     imports: [ReactiveFormsModule],
   template: `
     <div class="solid-card p-6 w-full max-w-2xl mx-auto">
-      <h2 class="text-2xl font-bold mb-6 text-black dark:text-white">{{ exercise() ? 'Edit Exercise' : 'New Exercise' }}</h2>
+      <h2 class="text-2xl font-bold mb-6 text-black dark:text-white">{{ isFormReadOnly ? 'Exercise Details' : (exercise() ? 'Edit Exercise' : 'New Exercise') }}</h2>
     
       @if (exercise()?.personalRecords?.length) {
         <div class="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl p-4 mb-6">
@@ -173,13 +173,15 @@ export interface ExerciseFormData {
           <div>
             <div class="flex justify-between items-center mb-2">
               <h3 class="block text-sm font-medium text-gray-700 dark:text-gray-300">Body Part Targets</h3>
-              <button
-                type="button"
-                (click)="addTarget()"
-                class="text-xs px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-black dark:text-white transition-colors border border-gray-300 dark:border-gray-600"
-                >
-                + Add Target
-              </button>
+              @if (!isFormReadOnly) {
+                <button
+                  type="button"
+                  (click)="addTarget()"
+                  class="text-xs px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-black dark:text-white transition-colors border border-gray-300 dark:border-gray-600"
+                  >
+                  + Add Target
+                </button>
+              }
             </div>
             <div formArrayName="targets" class="space-y-3">
               @for (targetForm of targets.controls; track targetForm; let i = $index) {
@@ -230,14 +232,16 @@ export interface ExerciseFormData {
                       placeholder="0.0-1.0"
                       >
                   </div>
-                  <button
-                    type="button"
-                    (click)="removeTarget(i)"
-                    class="p-2 bg-accent-neg/10 text-accent-neg hover:bg-accent-neg/20 rounded-lg transition-colors border border-accent-neg/20"
-                    title="Remove Target"
-                    >
-                    X
-                  </button>
+                  @if (!isFormReadOnly) {
+                    <button
+                      type="button"
+                      (click)="removeTarget(i)"
+                      class="p-2 bg-accent-neg/10 text-accent-neg hover:bg-accent-neg/20 rounded-lg transition-colors border border-accent-neg/20"
+                      title="Remove Target"
+                      >
+                      X
+                    </button>
+                  }
                 </div>
               }
               @if (targets.length === 0) {
@@ -249,20 +253,30 @@ export interface ExerciseFormData {
           </div>
  
         <div class="flex justify-end gap-3 pt-4 border-t border-gray-300 dark:border-gray-800">
-          <button
-            type="button"
-            (click)="cancelForm.emit()"
-            class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
-            >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            [disabled]="form.invalid"
-            class="px-6 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl disabled:opacity-50 transition-colors solid-btn"
-            >
-            Save Exercise
-          </button>
+          @if (isFormReadOnly) {
+            <button
+              type="button"
+              (click)="cancelForm.emit()"
+              class="px-6 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white font-semibold rounded-xl transition-colors"
+              >
+              Close
+            </button>
+          } @else {
+            <button
+              type="button"
+              (click)="cancelForm.emit()"
+              class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
+              >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="form.invalid"
+              class="px-6 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl disabled:opacity-50 transition-colors solid-btn"
+              >
+              Save Exercise
+            </button>
+          }
         </div>
       </form>
     </div>
@@ -270,6 +284,7 @@ export interface ExerciseFormData {
 })
 export class ExerciseFormComponent implements OnInit {
   readonly exercise = input<Exercise | null>(null);
+  readonly initialName = input<string>('');
   readonly saveExercise = output<ExerciseFormData>();
   readonly cancelForm = output<void>();
 
@@ -298,6 +313,14 @@ export class ExerciseFormComponent implements OnInit {
     return this.form.get('targets') as FormArray;
   }
 
+  readonly isReadOnly = input<boolean>(false);
+
+  get isFormReadOnly(): boolean {
+    if (this.isReadOnly()) return true;
+    const ex = this.exercise();
+    return !!(ex?.isPublic && !this.authService.isAdmin);
+  }
+
   ngOnInit() {
     const exercise = this.exercise();
     if (exercise) {
@@ -320,6 +343,14 @@ export class ExerciseFormComponent implements OnInit {
           targetValue: [target.targetValue, [Validators.required, Validators.min(0.1), Validators.max(1)]]
         }));
       });
+    } else if (this.initialName()) {
+      this.form.patchValue({
+        name: this.initialName()
+      });
+    }
+
+    if (this.isFormReadOnly) {
+      this.form.disable();
     }
 
     // Set up autocomplete debounce

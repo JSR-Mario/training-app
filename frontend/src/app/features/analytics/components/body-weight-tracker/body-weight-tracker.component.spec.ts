@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { BodyWeightEntry } from '../../../../core/types/training.types';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 describe('BodyWeightTrackerComponent', () => {
   let component: BodyWeightTrackerComponent;
@@ -28,12 +29,14 @@ describe('BodyWeightTrackerComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideCharts(withDefaultRegisterables()),
         { provide: BodyWeightService, useValue: bodyWeightServiceSpy }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(BodyWeightTrackerComponent);
     component = fixture.componentInstance;
+    fixture.detectChanges();
   });
 
   it('should create component', () => {

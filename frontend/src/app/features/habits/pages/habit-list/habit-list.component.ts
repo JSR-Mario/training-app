@@ -4,7 +4,6 @@ import { HabitService } from '../../services/habit.service';
 import { Habit, HabitRequest } from '../../models/habit.model';
 import { HabitCardComponent } from '../../components/habit-card/habit-card.component';
 import { HabitFormComponent } from '../../components/habit-form/habit-form.component';
-import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-habit-list',
@@ -24,6 +23,16 @@ import { Title } from '@angular/platform-browser';
         </button>
       </div>
 
+      <!-- Habit Form Modal -->
+      @if (showForm()) {
+        <app-habit-form
+          [habit]="editingHabit()"
+          (saveAction)="saveHabit($event)"
+          (cancelAction)="closeForm()"
+        ></app-habit-form>
+      }
+
+      <!-- Loading State -->
       @if (loading()) {
         <div class="flex justify-center py-12">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-pos"></div>
@@ -31,7 +40,7 @@ import { Title } from '@angular/platform-browser';
       } @else if (habits().length === 0) {
         <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 022 2h2a2 2 0 022-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
           </svg>
           <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">No habits yet</h3>
           <p class="text-gray-500 dark:text-gray-400 mb-6">Create a habit to start tracking your streak.</p>
@@ -99,19 +108,10 @@ import { Title } from '@angular/platform-browser';
         }
       }
     </div>
-
-    @if (showForm()) {
-      <app-habit-form
-        [habit]="editingHabit()"
-        (saveAction)="saveHabit($event)"
-        (cancelAction)="closeForm()">
-      </app-habit-form>
-    }
   `
 })
 export class HabitListComponent implements OnInit {
   private habitService = inject(HabitService);
-  private titleService = inject(Title);
 
   habits = signal<Habit[]>([]);
   loading = signal(true);
@@ -138,7 +138,6 @@ export class HabitListComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.titleService.setTitle('Habits | Yes');
     this.loadHabits();
   }
 

@@ -30,12 +30,38 @@ import { TutorialService } from '../../../../core/services/tutorial.service';
     @if (!isLoading()) {
       <!-- No Active Program -->
       @if (!activeProgram()) {
-        <div class="text-center py-12 solid-card border border-gray-300 dark:border-gray-700 border-dashed">
-          <p class="text-black dark:text-white font-medium text-lg mb-2">You don't have an active program.</p>
-          <p class="text-gray-500 dark:text-gray-400 mb-6">Go to the Programs tab to build one and set it as active to start working out.</p>
-          <a routerLink="/programs" class="px-6 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl transition-all hover:scale-105 inline-block solid-btn">
+        <div class="text-center py-16 solid-card border border-dashed border-gray-300 dark:border-gray-700">
+          <div class="w-16 h-16 bg-accent-pos/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent-pos" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-black dark:text-white mb-2">No active program</h3>
+          <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
+            To start logging workout sessions, you need an active program. Create a new program or import a public template.
+          </p>
+          <a routerLink="/programs" class="px-6 py-2.5 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl transition-all inline-block solid-btn">
             Go to Programs
           </a>
+
+          <!-- Quick Start Steps -->
+          <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 max-w-lg mx-auto">
+            <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-semibold mb-4">Quick start guide</p>
+            <div class="space-y-3 text-left">
+              <div class="flex items-start gap-4">
+                <span class="w-7 h-7 rounded-full bg-accent-pos/20 text-accent-pos text-sm font-bold flex items-center justify-center shrink-0">1</span>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Go to <span class="text-black dark:text-white font-medium">Programs</span> and create a new program (or copy a public template).</p>
+              </div>
+              <div class="flex items-start gap-4">
+                <span class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-500 text-sm font-bold flex items-center justify-center shrink-0">2</span>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Add <span class="text-black dark:text-white font-medium">training days</span> and assign exercises to each day.</p>
+              </div>
+              <div class="flex items-start gap-4">
+                <span class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-500 text-sm font-bold flex items-center justify-center shrink-0">3</span>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Return here and click <span class="text-black dark:text-white font-medium">Start Session</span> on your scheduled day.</p>
+              </div>
+            </div>
+          </div>
         </div>
       }
       
