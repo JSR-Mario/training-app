@@ -29,4 +29,13 @@ describe('HabitCardComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should return correct streak unit labels for DAILY, WEEKLY, and MONTHLY habits', () => {
+    expect(component.getStreakUnit('DAILY', 1)).toBe('day');
+    expect(component.getStreakUnit('DAILY', 5)).toBe('days');
+    expect(component.getStreakUnit('WEEKLY', 1)).toBe('week');
+    expect(component.getStreakUnit('WEEKLY', 3)).toBe('weeks');
+    expect(component.getStreakUnit('MONTHLY', 1)).toBe('month');
+    expect(component.getStreakUnit('MONTHLY', 12)).toBe('months');
+  });
 });

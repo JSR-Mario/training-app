@@ -123,15 +123,16 @@ public class HabitService {
         int longestStreak = 0;
         int tempStreak = 0;
 
-        // Sort dates ascending for streak calculation
-        List<LocalDate> sortedDates = new ArrayList<>(completedDates);
-        Collections.sort(sortedDates);
-        
         if (frequency == HabitFrequency.DAILY) {
+            List<LocalDate> sortedDates = completedDates.stream()
+                    .distinct()
+                    .sorted()
+                    .collect(Collectors.toList());
+
             LocalDate current = sortedDates.get(0);
             tempStreak = 1;
             longestStreak = 1;
-            
+
             for (int i = 1; i < sortedDates.size(); i++) {
                 LocalDate next = sortedDates.get(i);
                 long daysBetween = ChronoUnit.DAYS.between(current, next);
@@ -145,8 +146,7 @@ public class HabitService {
                 }
                 current = next;
             }
-            
-            // Current streak logic
+
             LocalDate lastCompleted = sortedDates.get(sortedDates.size() - 1);
             long daysFromToday = ChronoUnit.DAYS.between(lastCompleted, today);
             if (daysFromToday == 0 || daysFromToday == 1) {
@@ -154,81 +154,67 @@ public class HabitService {
             } else {
                 currentStreak = 0;
             }
-            
+
         } else if (frequency == HabitFrequency.WEEKLY) {
-            // Simplified weekly streak logic (consecutive weeks)
-            WeekFields weekFields = WeekFields.of(Locale.getDefault());
-            int prevWeek = sortedDates.get(0).get(weekFields.weekOfWeekBasedYear());
-            int prevYear = sortedDates.get(0).get(weekFields.weekBasedYear());
+            WeekFields weekFields = WeekFields.ISO;
+            List<LocalDate> weekStartDates = completedDates.stream()
+                    .map(date -> date.with(weekFields.dayOfWeek(), 1))
+                    .distinct()
+                    .sorted()
+                    .collect(Collectors.toList());
+
             tempStreak = 1;
             longestStreak = 1;
-            
-            for (int i = 1; i < sortedDates.size(); i++) {
-                LocalDate next = sortedDates.get(i);
-                int currWeek = next.get(weekFields.weekOfWeekBasedYear());
-                int currYear = next.get(weekFields.weekBasedYear());
-                
-                int weekDiff = (currYear - prevYear) * 52 + (currWeek - prevWeek);
-                
-                if (weekDiff == 0) {
-                    // Same week, ignore or handle multiple logs in a week? Just ignore for streak count
-                } else if (weekDiff == 1) {
+
+            for (int i = 1; i < weekStartDates.size(); i++) {
+                long weeksBetween = ChronoUnit.WEEKS.between(weekStartDates.get(i - 1), weekStartDates.get(i));
+                if (weeksBetween == 1) {
                     tempStreak++;
-                } else {
+                } else if (weeksBetween > 1) {
                     tempStreak = 1;
                 }
-                
                 if (tempStreak > longestStreak) {
                     longestStreak = tempStreak;
                 }
-                prevWeek = currWeek;
-                prevYear = currYear;
             }
-            
-            int todayWeek = today.get(weekFields.weekOfWeekBasedYear());
-            int todayYear = today.get(weekFields.weekBasedYear());
-            int weekDiffFromToday = (todayYear - prevYear) * 52 + (todayWeek - prevWeek);
-            
-            if (weekDiffFromToday == 0 || weekDiffFromToday == 1) {
+
+            LocalDate lastWeekStart = weekStartDates.get(weekStartDates.size() - 1);
+            LocalDate todayWeekStart = today.with(weekFields.dayOfWeek(), 1);
+            long weeksFromToday = ChronoUnit.WEEKS.between(lastWeekStart, todayWeekStart);
+
+            if (weeksFromToday == 0 || weeksFromToday == 1) {
                 currentStreak = tempStreak;
             } else {
                 currentStreak = 0;
             }
-            
+
         } else if (frequency == HabitFrequency.MONTHLY) {
-            // Monthly streak logic (consecutive months)
-            int prevMonth = sortedDates.get(0).getMonthValue();
-            int prevYear = sortedDates.get(0).getYear();
+            List<LocalDate> monthStartDates = completedDates.stream()
+                    .map(date -> date.withDayOfMonth(1))
+                    .distinct()
+                    .sorted()
+                    .collect(Collectors.toList());
+
             tempStreak = 1;
             longestStreak = 1;
-            
-            for (int i = 1; i < sortedDates.size(); i++) {
-                LocalDate next = sortedDates.get(i);
-                int currMonth = next.getMonthValue();
-                int currYear = next.getYear();
-                
-                int monthDiff = (currYear - prevYear) * 12 + (currMonth - prevMonth);
-                
-                if (monthDiff == 0) {
-                    // Same month
-                } else if (monthDiff == 1) {
+
+            for (int i = 1; i < monthStartDates.size(); i++) {
+                long monthsBetween = ChronoUnit.MONTHS.between(monthStartDates.get(i - 1), monthStartDates.get(i));
+                if (monthsBetween == 1) {
                     tempStreak++;
-                } else {
+                } else if (monthsBetween > 1) {
                     tempStreak = 1;
                 }
-                
                 if (tempStreak > longestStreak) {
                     longestStreak = tempStreak;
                 }
-                prevMonth = currMonth;
-                prevYear = currYear;
             }
-            
-            int todayMonth = today.getMonthValue();
-            int todayYear = today.getYear();
-            int monthDiffFromToday = (todayYear - prevYear) * 12 + (todayMonth - prevMonth);
-            
-            if (monthDiffFromToday == 0 || monthDiffFromToday == 1) {
+
+            LocalDate lastMonthStart = monthStartDates.get(monthStartDates.size() - 1);
+            LocalDate todayMonthStart = today.withDayOfMonth(1);
+            long monthsFromToday = ChronoUnit.MONTHS.between(lastMonthStart, todayMonthStart);
+
+            if (monthsFromToday == 0 || monthsFromToday == 1) {
                 currentStreak = tempStreak;
             } else {
                 currentStreak = 0;
