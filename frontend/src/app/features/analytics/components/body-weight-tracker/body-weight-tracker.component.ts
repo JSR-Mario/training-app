@@ -34,6 +34,8 @@ export class BodyWeightTrackerComponent implements OnInit {
   currentWeight = signal<number | null>(null);
   periodChangeKg = signal<number>(0);
   periodChangePercent = signal<number>(0);
+  hasEnoughData = signal<boolean>(false);
+  startDateLabel = signal<string | null>(null);
   aggregationUnit = signal<string>('Weekly');
   math = Math;
 
@@ -125,6 +127,8 @@ export class BodyWeightTrackerComponent implements OnInit {
             this.currentWeight.set(null);
             this.periodChangeKg.set(0);
             this.periodChangePercent.set(0);
+            this.hasEnoughData.set(false);
+            this.startDateLabel.set(null);
             this.currentBuckets = [];
             this.lineChartData = { labels: [], datasets: [] };
             return;
@@ -133,15 +137,26 @@ export class BodyWeightTrackerComponent implements OnInit {
           // Sort data by date ascending
           const sorted = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-          const startW = sorted[0].weightKg;
-          const currentW = sorted[sorted.length - 1].weightKg;
-          const diffKg = currentW - startW;
-          const diffPercent = startW > 0 ? (diffKg / startW) * 100 : 0;
+          if (sorted.length < 2) {
+            this.startWeight.set(sorted[0].weightKg);
+            this.currentWeight.set(sorted[0].weightKg);
+            this.periodChangeKg.set(0);
+            this.periodChangePercent.set(0);
+            this.hasEnoughData.set(false);
+            this.startDateLabel.set(null);
+          } else {
+            const startW = sorted[0].weightKg;
+            const currentW = sorted[sorted.length - 1].weightKg;
+            const diffKg = currentW - startW;
+            const diffPercent = startW > 0 ? (diffKg / startW) * 100 : 0;
 
-          this.startWeight.set(startW);
-          this.currentWeight.set(currentW);
-          this.periodChangeKg.set(diffKg);
-          this.periodChangePercent.set(diffPercent);
+            this.startWeight.set(startW);
+            this.currentWeight.set(currentW);
+            this.periodChangeKg.set(diffKg);
+            this.periodChangePercent.set(diffPercent);
+            this.hasEnoughData.set(true);
+            this.startDateLabel.set(this.formatSinceDate(sorted[0].date));
+          }
 
           // Aggregate entries according to activeRange
           const buckets = this.aggregateEntries(sorted, range);
@@ -322,6 +337,12 @@ export class BodyWeightTrackerComponent implements OnInit {
       startDate: this.formatDateLocal(start),
       endDate: this.formatDateLocal(end)
     };
+  }
+
+  private formatSinceDate(dateStr: string): string {
+    const parts = dateStr.split('-');
+    const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
   private formatDateLocal(date: Date): string {
