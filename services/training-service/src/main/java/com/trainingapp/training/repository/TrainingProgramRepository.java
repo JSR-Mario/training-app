@@ -13,6 +13,7 @@ import java.util.UUID;
 /** Spring Data JPA repository for {@link TrainingProgram} entities. */
 public interface TrainingProgramRepository extends JpaRepository<TrainingProgram, UUID> {
     List<TrainingProgram> findByUserId(UUID userId);
+    List<TrainingProgram> findByIsPublicTrue();
     Optional<TrainingProgram> findByIdAndUserId(UUID id, UUID userId);
     Optional<TrainingProgram> findByUserIdAndIsActiveTrue(UUID userId);
 

@@ -103,6 +103,7 @@ export interface TrainingProgram {
   isActive: boolean;
   currentWeek: number;
   goal: ProgramGoal;
+  isPublic?: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -8,6 +8,7 @@ import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-
 import { forkJoin } from 'rxjs';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { ExerciseService } from '../../../exercises/services/exercise.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   standalone: true,
@@ -23,23 +24,83 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
         }
     
         @if (!isLoading() && program()) {
-          <div class="flex justify-between items-end border-b border-gray-300 dark:border-gray-800 pb-4">
-            <div>
-              <h1 class="text-3xl font-bold text-black dark:text-white">{{ program()?.name }}</h1>
-              <p class="text-gray-500 dark:text-gray-400 mt-1">This template repeats for {{ program()?.durationWeeks }} weeks</p>
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-200 dark:border-gray-800 pb-4">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <h1 class="text-2xl sm:text-3xl font-bold text-black dark:text-white">{{ program()?.name }}</h1>
+                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                  {{ formatGoal(program()?.goal) }}
+                </span>
+                @if (program()?.isPublic) {
+                  <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-accent-pos/20 text-accent-pos border border-accent-pos/30">
+                    Public Template
+                  </span>
+                }
+              </div>
+              <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                Duration: <span class="font-medium text-black dark:text-white">{{ program()?.durationWeeks }} weeks</span>
+              </p>
             </div>
+
             @if (weekTemplateId()) {
-              <div class="flex gap-2">
-                <button 
-                  (click)="toggleReorderMode()"
-                  class="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold rounded-lg transition-all text-sm"
-                >
-                  {{ reorderModeActive() ? 'Done Reordering' : 'Reorder Days' }}
-                </button>
+              <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                @if (reorderModeActive()) {
+                  <button
+                    (click)="toggleReorderMode()"
+                    class="px-3.5 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl transition-all text-xs sm:text-sm shadow-md solid-btn flex items-center gap-1.5 shrink-0"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Done Reordering</span>
+                  </button>
+                }
+
+                <!-- Options Dropdown Menu -->
+                <div class="relative">
+                  <button 
+                    (click)="showOptionsMenu.update(v => !v)"
+                    class="px-3 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold rounded-xl transition-all text-xs sm:text-sm flex items-center gap-1.5"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg>
+                    <span>Options</span>
+                  </button>
+
+                  @if (showOptionsMenu()) {
+                    <div 
+                      class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-30 py-1"
+                      (mouseleave)="showOptionsMenu.set(false)"
+                    >
+                      <button
+                        (click)="openEditProgram(); showOptionsMenu.set(false)"
+                        class="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit Program
+                      </button>
+
+                      <button
+                        (click)="toggleReorderMode(); showOptionsMenu.set(false)"
+                        class="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                        </svg>
+                        {{ reorderModeActive() ? 'Exit Reordering' : 'Reorder Days' }}
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                <!-- Primary Action Button -->
                 <button
                   (click)="openAddDay()"
-                  class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-lg transition-colors text-sm font-medium shadow-lg solid-btn"
-                  >
+                  class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-xl transition-colors text-xs sm:text-sm font-semibold shadow-lg solid-btn shrink-0"
+                >
                   + Add Day
                 </button>
               </div>
@@ -50,38 +111,139 @@ import { ExerciseService } from '../../../exercises/services/exercise.service';
     
       @if (!isLoading() && program()) {
         <div class="space-y-6">
+          <!-- Edit Program Modal Overlay -->
+          @if (showEditProgram()) {
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+              <div class="solid-card rounded-2xl w-full max-w-lg p-6 shadow-2xl relative border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <button
+                  (click)="cancelEditProgram()"
+                  class="absolute top-4 right-4 text-gray-400 hover:text-black dark:hover:text-white text-xl transition-colors p-1"
+                  title="Close"
+                >
+                  ✕
+                </button>
+                <div class="mb-6">
+                  <h2 class="text-2xl font-bold text-black dark:text-white">Edit Program</h2>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Update your training program settings and goal.</p>
+                </div>
+
+                <form [formGroup]="programForm" (ngSubmit)="onSubmitProgram()" class="space-y-4">
+                  <div>
+                    <label for="editNameInput" class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Program Name</label>
+                    <input
+                      id="editNameInput"
+                      type="text"
+                      formControlName="name"
+                      class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
+                    >
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label for="editDurationInput" class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Duration (Weeks)</label>
+                      <input
+                        id="editDurationInput"
+                        type="number"
+                        min="1"
+                        max="52"
+                        formControlName="durationWeeks"
+                        class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
+                      >
+                    </div>
+
+                    <div>
+                      <label for="editGoalInput" class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Goal</label>
+                      <select
+                        id="editGoalInput"
+                        formControlName="goal"
+                        class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
+                      >
+                        <option value="MAINTENANCE">Maintenance</option>
+                        <option value="CUT">Cut (Lose Weight)</option>
+                        <option value="BULK">Bulk (Gain Weight)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  @if (authService.isAdmin) {
+                    <div class="flex items-center gap-3 pt-2">
+                      <input
+                        id="editIsPublicInput"
+                        type="checkbox"
+                        formControlName="isPublic"
+                        class="w-4 h-4 text-accent-pos rounded focus:ring-accent-pos border-gray-300 dark:border-gray-700"
+                      >
+                      <label for="editIsPublicInput" class="text-sm font-medium text-gray-600 dark:text-gray-300">
+                        Make this a public template
+                      </label>
+                    </div>
+                  }
+
+                  <div class="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-800 mt-6">
+                    <button
+                      type="button"
+                      (click)="cancelEditProgram()"
+                      class="px-5 py-2.5 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white font-medium text-sm transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      [disabled]="programForm.invalid"
+                      class="px-6 py-2.5 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl disabled:opacity-50 transition-colors text-sm shadow-lg solid-btn"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          }
+
           <!-- Add Day Form -->
           @if (showAddDay()) {
-            <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-300 dark:border-gray-700">
-              <form [formGroup]="dayForm" (ngSubmit)="onSubmitDay()" class="flex gap-3">
+            <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-300 dark:border-gray-700 shadow-sm">
+              <form [formGroup]="dayForm" (ngSubmit)="onSubmitDay()" class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                 <input
                   type="text"
                   formControlName="dayName"
                   placeholder="e.g., Push Day"
-                  class="flex-1 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
+                  class="flex-1 px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
+                >
+                <div class="flex items-center justify-end gap-2 shrink-0">
+                  <button
+                    type="button"
+                    (click)="showAddDay.set(false)"
+                    class="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors text-sm font-medium"
                   >
-                <button
-                  type="button"
-                  (click)="showAddDay.set(false)"
-                  class="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors text-sm"
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    [disabled]="dayForm.invalid"
+                    class="px-6 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl text-sm disabled:opacity-50 transition-colors shadow-md solid-btn shrink-0"
                   >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  [disabled]="dayForm.invalid"
-                  class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-lg text-sm disabled:opacity-50 transition-colors solid-btn"
-                  >
-                  Save
-                </button>
+                    Save Day
+                  </button>
+                </div>
               </form>
             </div>
           }
           <!-- Days Grid -->
           @if (days().length === 0 && !showAddDay()) {
-            <div class="text-center py-12 solid-card border border-dashed border-gray-400 dark:border-gray-700">
-              <p class="text-gray-500 dark:text-gray-400">No days configured for this program.</p>
-              <button (click)="openAddDay()" class="mt-4 text-accent-pos hover:opacity-80 text-sm">Add your first day</button>
+            <div class="text-center py-16 solid-card border border-dashed border-gray-300 dark:border-gray-700">
+              <div class="w-14 h-14 bg-accent-pos/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-accent-pos" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-black dark:text-white mb-2">Add your training days</h3>
+              <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
+                Each day represents a workout session in your weekly split (e.g., "Push Day", "Pull Day", "Legs", or "Upper Body").
+              </p>
+              <button (click)="openAddDay()" class="px-6 py-2.5 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl transition-all solid-btn">
+                + Add Day
+              </button>
             </div>
           }
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" cdkDropList [cdkDropListDisabled]="!reorderModeActive()" (cdkDropListDropped)="dropDay($event)">
@@ -224,6 +386,7 @@ export class ProgramDetailComponent implements OnInit {
   private exerciseService = inject(ExerciseService);
   private fb = inject(FormBuilder);
 
+  public authService = inject(AuthService);
   programId = signal<string | null>(null);
   program = signal<TrainingProgram | null>(null);
   weekTemplateId = signal<string | null>(null);
@@ -231,8 +394,65 @@ export class ProgramDetailComponent implements OnInit {
   availableExercises = signal<Exercise[]>([]);
   isLoading = signal<boolean>(true);
   showAddDay = signal<boolean>(false);
+  showEditProgram = signal<boolean>(false);
+  showOptionsMenu = signal<boolean>(false);
   reorderModeActive = signal<boolean>(false);
   isReordering = signal<boolean>(false);
+
+  programForm: FormGroup = this.fb.group({
+    name: ['', [Validators.required, Validators.maxLength(100)]],
+    durationWeeks: [4, [Validators.required, Validators.min(1), Validators.max(52)]],
+    goal: ['MAINTENANCE', Validators.required],
+    isPublic: [false]
+  });
+
+  formatGoal(goal?: string): string {
+    if (!goal) return '';
+    switch (goal) {
+      case 'MAINTENANCE': return 'Maintenance';
+      case 'CUT': return 'Cut';
+      case 'BULK': return 'Bulk';
+      default: return goal;
+    }
+  }
+
+  openEditProgram() {
+    const prog = this.program();
+    if (prog) {
+      this.programForm.patchValue({
+        name: prog.name,
+        durationWeeks: prog.durationWeeks,
+        goal: prog.goal,
+        isPublic: prog.isPublic || false
+      });
+      this.showEditProgram.set(true);
+    }
+  }
+
+  cancelEditProgram() {
+    this.showEditProgram.set(false);
+  }
+
+  onSubmitProgram() {
+    const prog = this.program();
+    if (this.programForm.valid && prog) {
+      const { name, durationWeeks, goal, isPublic } = this.programForm.value;
+      this.programService.updateProgram(
+        prog.id,
+        name,
+        durationWeeks,
+        prog.isActive,
+        goal,
+        isPublic
+      ).subscribe({
+        next: (updatedProgram) => {
+          this.program.set(updatedProgram);
+          this.showEditProgram.set(false);
+        },
+        error: (err) => console.error('Error updating program', err)
+      });
+    }
+  }
 
   toggleReorderMode() {
     this.reorderModeActive.update(v => !v);

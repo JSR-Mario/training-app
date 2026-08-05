@@ -28,6 +28,11 @@ public class ProgramController {
         return programService.findAll(UserContext.getCurrentUserId());
     }
 
+    @GetMapping("/public")
+    public List<ProgramResponse> listPublic() {
+        return programService.findPublicPrograms();
+    }
+
     @GetMapping("/{id}")
     public ProgramResponse findById(@PathVariable UUID id) {
         return programService.findById(UserContext.getCurrentUserId(), id);
@@ -39,9 +44,20 @@ public class ProgramController {
                 .body(programService.create(UserContext.getCurrentUserId(), request));
     }
 
+    @PostMapping("/public/{id}/copy")
+    public ResponseEntity<ProgramResponse> copyPublic(@PathVariable UUID id) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(programService.copyPublicProgram(UserContext.getCurrentUserId(), id));
+    }
+
     @PutMapping("/{id}")
     public ProgramResponse update(@PathVariable UUID id, @Valid @RequestBody ProgramRequest request) {
         return programService.update(UserContext.getCurrentUserId(), id, request);
+    }
+
+    @PostMapping("/{id}/deactivate")
+    public ProgramResponse deactivate(@PathVariable UUID id) {
+        return programService.deactivate(UserContext.getCurrentUserId(), id);
     }
 
     @DeleteMapping("/{id}")

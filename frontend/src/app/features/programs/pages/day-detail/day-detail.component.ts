@@ -126,9 +126,19 @@ import { forkJoin } from 'rxjs';
       @if (!isLoading() && day()) {
         <div class="space-y-6 mt-4">
           @if (exercises().length === 0 && !showAddExercise()) {
-            <div class="text-center py-12 solid-card border border-dashed border-gray-400 dark:border-gray-700">
-              <p class="text-gray-500 dark:text-gray-400">No exercises added yet.</p>
-              <button (click)="openAddExercise()" class="mt-4 text-accent-pos hover:opacity-80 text-sm">Add your first exercise</button>
+            <div class="text-center py-16 solid-card border border-dashed border-gray-300 dark:border-gray-700">
+              <div class="w-14 h-14 bg-accent-pos/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-accent-pos" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-black dark:text-white mb-2">Add exercises to this day</h3>
+              <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
+                Pick exercises from your catalog and specify target sets, target reps, or AMRAP sets for this training day.
+              </p>
+              <button (click)="openAddExercise()" class="px-6 py-2.5 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl transition-all solid-btn">
+                + Add Exercise
+              </button>
             </div>
           }
           @if (exercises().length > 0) {
