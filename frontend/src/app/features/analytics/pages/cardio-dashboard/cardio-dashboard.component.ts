@@ -86,33 +86,33 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
         } @else {
           <div class="divide-y divide-gray-200 dark:divide-gray-800">
             @for (log of logs(); track log.id) {
-              <div class="py-3.5 flex items-center justify-between gap-4 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 px-2 rounded-xl transition-colors">
-                <div class="flex items-center gap-3">
+              <div class="py-3.5 flex items-center justify-between gap-2 sm:gap-4 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 px-2 rounded-xl transition-colors min-w-0">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
                   <div class="w-10 h-10 rounded-xl bg-accent-pos/10 border border-accent-pos/20 flex items-center justify-center text-accent-pos font-bold shrink-0">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
-                  <div>
-                    <div class="font-semibold text-black dark:text-white text-sm">
+                  <div class="min-w-0 flex-1">
+                    <div class="font-semibold text-black dark:text-white text-sm truncate">
                       {{ getCardioLabel(log.cardioType) }}
                     </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {{ log.performedOn }}
                     </div>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-3">
-                  <span class="text-sm font-semibold text-accent-pos bg-accent-pos/10 px-3 py-1 rounded-full border border-accent-pos/20">
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                  <span class="shrink-0 whitespace-nowrap inline-flex items-center justify-center text-xs sm:text-sm font-semibold text-accent-pos bg-accent-pos/10 px-2.5 sm:px-3 py-1 rounded-full border border-accent-pos/20">
                     {{ log.durationMinutes }} min
                   </span>
 
-                  <div class="flex items-center gap-1">
+                  <div class="flex items-center gap-0.5 sm:gap-1 shrink-0">
                     <button
                       type="button"
                       (click)="openEditModal(log)"
-                      class="p-2 text-gray-400 hover:text-accent-pos hover:bg-accent-pos/10 rounded-lg transition-all"
+                      class="p-1.5 sm:p-2 text-gray-400 hover:text-accent-pos hover:bg-accent-pos/10 rounded-lg transition-all"
                       title="Edit session"
                     >
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
