@@ -112,7 +112,15 @@ public class ExerciseService {
                 projections.ratingsMap().getOrDefault(r.id(), 5.0),
                 projections.prMap().getOrDefault(r.id(), List.of())
             ))
-            .toList();
+            .collect(Collectors.collectingAndThen(
+                Collectors.toMap(
+                    ExerciseResponse::id,
+                    r -> r,
+                    (existing, duplicate) -> existing,
+                    java.util.LinkedHashMap::new
+                ),
+                map -> new java.util.ArrayList<>(map.values())
+            ));
     }
 
     /** Returns up to 3 exercises matching the query for autocomplete. */
@@ -296,7 +304,7 @@ public class ExerciseService {
 
     @Transactional(readOnly = true)
     public List<com.trainingapp.training.dto.ExerciseHistoryResponse> getExerciseHistory(UUID userId, UUID exerciseId) {
-        findOwnedOrPublicAdmin(userId, exerciseId); // Ensure they have access to it
+        findOwned(userId, exerciseId); // Ensure they have access to it
         List<com.trainingapp.training.domain.WorkoutSet> sets = setRepository.findHistoricalSetsForExerciseAll(exerciseId, userId);
         
         return sets.stream()
