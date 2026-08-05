@@ -270,6 +270,7 @@ export interface ExerciseFormData {
 })
 export class ExerciseFormComponent implements OnInit {
   readonly exercise = input<Exercise | null>(null);
+  readonly initialName = input<string>('');
   readonly saveExercise = output<ExerciseFormData>();
   readonly cancelForm = output<void>();
 
@@ -319,6 +320,10 @@ export class ExerciseFormComponent implements OnInit {
           bodyPart: [target.bodyPart, Validators.required],
           targetValue: [target.targetValue, [Validators.required, Validators.min(0.1), Validators.max(1)]]
         }));
+      });
+    } else if (this.initialName()) {
+      this.form.patchValue({
+        name: this.initialName()
       });
     }
 
