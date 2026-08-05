@@ -14,140 +14,141 @@ import { TrainingProgram } from '../../../../core/types/training.types';
     <div class="max-w-7xl mx-auto space-y-6">
     
       <!-- Header -->
-      @if (!showForm()) {
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 class="text-3xl font-bold text-black dark:text-white">Programs</h1>
-          </div>
-          <button
-            (click)="openForm()"
-            class="px-6 py-2.5 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl shadow-lg transition-all solid-btn shrink-0"
-          >
-            + Create Program
-          </button>
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-black dark:text-white">Programs</h1>
         </div>
+        <button
+          (click)="openForm()"
+          class="px-6 py-2.5 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl shadow-lg transition-all solid-btn shrink-0"
+        >
+          + Create Program
+        </button>
+      </div>
 
-        <!-- Navigation Tabs -->
-        <div class="flex border-b border-gray-200 dark:border-gray-800">
-          <button
-            (click)="activeTab.set('my')"
-            class="px-6 py-3 font-semibold text-sm transition-colors border-b-2 -mb-px flex items-center gap-2"
-            [class.border-accent-pos]="activeTab() === 'my'"
-            [class.text-accent-pos]="activeTab() === 'my'"
-            [class.border-transparent]="activeTab() !== 'my'"
-            [class.text-gray-500]="activeTab() !== 'my'"
-            [class.dark:text-gray-400]="activeTab() !== 'my'"
-          >
-            My Programs
-            <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 font-bold">
-              {{ programs().length }}
-            </span>
-          </button>
-          <button
-            (click)="activeTab.set('public')"
-            class="px-6 py-3 font-semibold text-sm transition-colors border-b-2 -mb-px flex items-center gap-2"
-            [class.border-accent-pos]="activeTab() === 'public'"
-            [class.text-accent-pos]="activeTab() === 'public'"
-            [class.border-transparent]="activeTab() !== 'public'"
-            [class.text-gray-500]="activeTab() !== 'public'"
-            [class.dark:text-gray-400]="activeTab() !== 'public'"
-          >
-            Public Programs
-            <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 font-bold">
-              {{ publicPrograms().length }}
-            </span>
-          </button>
-        </div>
-      }
+      <!-- Navigation Tabs -->
+      <div class="flex border-b border-gray-200 dark:border-gray-800">
+        <button
+          (click)="activeTab.set('my')"
+          class="px-6 py-3 font-semibold text-sm transition-colors border-b-2 -mb-px flex items-center gap-2"
+          [class.border-accent-pos]="activeTab() === 'my'"
+          [class.text-accent-pos]="activeTab() === 'my'"
+          [class.border-transparent]="activeTab() !== 'my'"
+          [class.text-gray-500]="activeTab() !== 'my'"
+          [class.dark:text-gray-400]="activeTab() !== 'my'"
+        >
+          My Programs
+          <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 font-bold">
+            {{ programs().length }}
+          </span>
+        </button>
+        <button
+          (click)="activeTab.set('public')"
+          class="px-6 py-3 font-semibold text-sm transition-colors border-b-2 -mb-px flex items-center gap-2"
+          [class.border-accent-pos]="activeTab() === 'public'"
+          [class.text-accent-pos]="activeTab() === 'public'"
+          [class.border-transparent]="activeTab() !== 'public'"
+          [class.text-gray-500]="activeTab() !== 'public'"
+          [class.dark:text-gray-400]="activeTab() !== 'public'"
+        >
+          Public Programs
+          <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 font-bold">
+            {{ publicPrograms().length }}
+          </span>
+        </button>
+      </div>
     
-      <!-- Form View -->
+      <!-- Create Program Modal -->
       @if (showForm()) {
-        <div class="solid-card p-6 w-full max-w-xl mx-auto">
-          <h2 class="text-2xl font-bold mb-6 text-black dark:text-white">New Program</h2>
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
-            <div>
-              <label for="nameInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Program Name</label>
-              <input
-                id="nameInput"
-                type="text"
-                formControlName="name"
-                class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
-                placeholder="e.g., Push Pull Legs 4 Days"
-              >
-              @if (form.get('name')?.invalid && form.get('name')?.touched) {
-                <div class="text-accent-neg text-xs mt-1">
-                  Name is required (max 100 chars).
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div class="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl solid-card p-6 border border-gray-200 dark:border-gray-800">
+            <h2 class="text-2xl font-bold mb-6 text-black dark:text-white">New Program</h2>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+              <div>
+                <label for="nameInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Program Name</label>
+                <input
+                  id="nameInput"
+                  type="text"
+                  formControlName="name"
+                  class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
+                  placeholder="e.g., Push Pull Legs 4 Days"
+                >
+                @if (form.get('name')?.invalid && form.get('name')?.touched) {
+                  <div class="text-accent-neg text-xs mt-1">
+                    Name is required (max 100 chars).
+                  </div>
+                }
+              </div>
+              <div>
+                <label for="durationInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Duration (Weeks)</label>
+                <input
+                  id="durationInput"
+                  type="number"
+                  min="1"
+                  max="52"
+                  formControlName="durationWeeks"
+                  class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
+                >
+                <p class="text-xs text-gray-400 mt-1">Recommended: 4 to 8 weeks per block.</p>
+              </div>
+              <div>
+                <label for="goalInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Goal</label>
+                <select
+                  id="goalInput"
+                  formControlName="goal"
+                  class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
+                >
+                  <option value="MAINTENANCE">Maintenance</option>
+                  <option value="CUT">Cut (Lose Weight)</option>
+                  <option value="BULK">Bulk (Gain Weight)</option>
+                </select>
+              </div>
+
+              @if (authService.isAdmin) {
+                <div class="flex items-center gap-3">
+                  <input
+                    id="isPublicInput"
+                    type="checkbox"
+                    formControlName="isPublic"
+                    class="w-4 h-4 text-accent-pos rounded focus:ring-accent-pos"
+                  >
+                  <label for="isPublicInput" class="text-sm font-medium text-gray-600 dark:text-gray-300">
+                    Make this program public (available to all users as a template)
+                  </label>
                 </div>
               }
-            </div>
-            <div>
-              <label for="durationInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Duration (Weeks)</label>
-              <input
-                id="durationInput"
-                type="number"
-                min="1"
-                max="52"
-                formControlName="durationWeeks"
-                class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
-              >
-              <p class="text-xs text-gray-400 mt-1">Recommended: 4 to 8 weeks per block.</p>
-            </div>
-            <div>
-              <label for="goalInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Goal</label>
-              <select
-                id="goalInput"
-                formControlName="goal"
-                class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white solid-input"
-              >
-                <option value="MAINTENANCE">Maintenance</option>
-                <option value="CUT">Cut (Lose Weight)</option>
-                <option value="BULK">Bulk (Gain Weight)</option>
-              </select>
-            </div>
 
-            @if (authService.isAdmin) {
-              <div class="flex items-center gap-3">
-                <input
-                  id="isPublicInput"
-                  type="checkbox"
-                  formControlName="isPublic"
-                  class="w-4 h-4 text-accent-pos rounded focus:ring-accent-pos"
+              <div class="flex justify-end gap-3 pt-4 border-t border-gray-300 dark:border-gray-800">
+                <button
+                  type="button"
+                  (click)="closeForm()"
+                  class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
                 >
-                <label for="isPublicInput" class="text-sm font-medium text-gray-600 dark:text-gray-300">
-                  Make this program public (available to all users as a template)
-                </label>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  [disabled]="form.invalid || isLoading()"
+                  class="px-6 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl disabled:opacity-50 transition-colors solid-btn"
+                >
+                  Create
+                </button>
               </div>
-            }
-
-            <div class="flex justify-end gap-3 pt-4 border-t border-gray-300 dark:border-gray-800">
-              <button
-                type="button"
-                (click)="closeForm()"
-                class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                [disabled]="form.invalid || isLoading()"
-                class="px-6 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl disabled:opacity-50 transition-colors solid-btn"
-              >
-                Create
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       }
     
       <!-- Loading State -->
-      @if (isLoading() && !showForm()) {
+      @if (isLoading()) {
         <div class="text-center py-12">
           <p class="text-gray-500 dark:text-gray-400">Loading programs...</p>
         </div>
       }
     
       <!-- TAB 1: My Programs List View -->
-      @if (!isLoading() && !showForm() && activeTab() === 'my') {
+      @if (!isLoading() && activeTab() === 'my') {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @if (sortedPrograms().length === 0) {
             <!-- Guided Empty State -->
@@ -265,7 +266,7 @@ import { TrainingProgram } from '../../../../core/types/training.types';
       }
 
       <!-- TAB 2: Public Programs Templates List View -->
-      @if (!isLoading() && !showForm() && activeTab() === 'public') {
+      @if (!isLoading() && activeTab() === 'public') {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @if (publicPrograms().length === 0) {
             <div class="col-span-full text-center py-16 solid-card border border-dashed border-gray-300 dark:border-gray-700">
