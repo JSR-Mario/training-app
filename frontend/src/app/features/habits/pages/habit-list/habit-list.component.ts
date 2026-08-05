@@ -154,8 +154,36 @@ export class HabitListComponent implements OnInit {
   }
 
   isCompletedToday(habit: Habit): boolean {
-    const today = this.getTodayString();
-    return habit.completedDates.includes(today);
+    const todayStr = this.getTodayString();
+    if (!habit.completedDates || habit.completedDates.length === 0) return false;
+
+    if (habit.frequency === 'WEEKLY') {
+      return habit.completedDates.some(dateStr => this.isSameISOWeek(dateStr, todayStr));
+    } else if (habit.frequency === 'MONTHLY') {
+      return habit.completedDates.some(dateStr => dateStr.substring(0, 7) === todayStr.substring(0, 7));
+    }
+
+    return habit.completedDates.includes(todayStr);
+  }
+
+  private isSameISOWeek(dateStr1: string, dateStr2: string): boolean {
+    const d1 = this.parseDate(dateStr1);
+    const d2 = this.parseDate(dateStr2);
+    return this.getISOWeekMonday(d1).getTime() === this.getISOWeekMonday(d2).getTime();
+  }
+
+  private getISOWeekMonday(d: Date): Date {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    date.setDate(diff);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  private parseDate(dateStr: string): Date {
+    const parts = dateStr.split('-');
+    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
   }
 
   toggleHabit(habit: Habit) {
