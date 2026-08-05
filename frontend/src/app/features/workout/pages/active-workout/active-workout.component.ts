@@ -92,16 +92,22 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                         <div class="relative ml-2">
                           <button
                             type="button"
-                            (click)="$event.stopPropagation(); toggleIconTooltip(ex.id + '-fatigue')"
+                            (click)="$event.stopPropagation(); toggleIconTooltip(ex.id + '-fatigue', $event)"
                             class="w-6 h-6 text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded flex items-center justify-center cursor-pointer">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                           </button>
-                          @if (activeIconTooltip() === ex.id + '-fatigue') {
-                            <div class="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
+                          @if (activeIconTooltip() === ex.id + '-fatigue' && tooltipPosition()) {
+                            <div
+                              class="fixed z-50 w-52 max-w-[calc(100vw-32px)] p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none"
+                              [style.left.px]="tooltipPosition()!.left"
+                              [style.top.px]="tooltipPosition()!.top">
                               Fatigue detected in the last session.
-                              <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white"></div>
+                              <div
+                                class="absolute bottom-full border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white -ml-1"
+                                [style.left.px]="tooltipPosition()!.arrowLeft">
+                              </div>
                             </div>
                           }
                         </div>
@@ -110,16 +116,22 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                         <div class="relative ml-2">
                           <button
                             type="button"
-                            (click)="$event.stopPropagation(); toggleIconTooltip(ex.id + '-weight')"
+                            (click)="$event.stopPropagation(); toggleIconTooltip(ex.id + '-weight', $event)"
                             class="w-6 h-6 text-accent-pos bg-accent-pos/10 border border-accent-pos/20 rounded flex items-center justify-center cursor-pointer">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                             </svg>
                           </button>
-                          @if (activeIconTooltip() === ex.id + '-weight') {
-                            <div class="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
+                          @if (activeIconTooltip() === ex.id + '-weight' && tooltipPosition()) {
+                            <div
+                              class="fixed z-50 w-52 max-w-[calc(100vw-32px)] p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none"
+                              [style.left.px]="tooltipPosition()!.left"
+                              [style.top.px]="tooltipPosition()!.top">
                               Increase reps
-                              <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white"></div>
+                              <div
+                                class="absolute bottom-full border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white -ml-1"
+                                [style.left.px]="tooltipPosition()!.arrowLeft">
+                              </div>
                             </div>
                           }
                         </div>
@@ -128,14 +140,20 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                         <div class="relative ml-2">
                           <button
                             type="button"
-                            (click)="$event.stopPropagation(); toggleIconTooltip(ex.id + '-pr')"
+                            (click)="$event.stopPropagation(); toggleIconTooltip(ex.id + '-pr', $event)"
                             class="w-6 h-6 text-accent-pos bg-accent-pos/10 border border-accent-pos/20 rounded flex items-center justify-center cursor-pointer animate-pulse text-[10px] font-bold uppercase">
                             PR!
                           </button>
-                          @if (activeIconTooltip() === ex.id + '-pr') {
-                            <div class="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-52 p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none">
+                          @if (activeIconTooltip() === ex.id + '-pr' && tooltipPosition()) {
+                            <div
+                              class="fixed z-50 w-52 max-w-[calc(100vw-32px)] p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none"
+                              [style.left.px]="tooltipPosition()!.left"
+                              [style.top.px]="tooltipPosition()!.top">
                               {{ getPrTooltipText(ex.id) }}
-                              <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white"></div>
+                              <div
+                                class="absolute bottom-full border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white -ml-1"
+                                [style.left.px]="tooltipPosition()!.arrowLeft">
+                              </div>
                             </div>
                           }
                         </div>
@@ -601,6 +619,7 @@ export class ActiveWorkoutComponent implements OnInit {
 
   /** Tracks which icon tooltip is currently visible. Key format: `${dayExerciseId}-${type}`. */
   activeIconTooltip = signal<string | null>(null);
+  tooltipPosition = signal<{ left: number; top: number; arrowLeft: number } | null>(null);
 
   sessionId = signal<string | null>(null);
   session = signal<WorkoutSessionResponse | null>(null);
@@ -670,23 +689,57 @@ export class ActiveWorkoutComponent implements OnInit {
   collapsedExercises = new Set<string>();
 
   /**
-   * Closes any open icon tooltip when the user clicks anywhere on the document.
+   * Closes any open icon tooltip when the user clicks anywhere on the document, scrolls, or resizes window.
    */
   @HostListener('document:click')
-  onDocumentClick(): void {
+  @HostListener('window:scroll')
+  @HostListener('window:resize')
+  onDocumentClickOrScroll(): void {
     if (this.activeIconTooltip()) {
       this.activeIconTooltip.set(null);
+      this.tooltipPosition.set(null);
     }
   }
 
   /**
-   * Toggles the icon tooltip for the given key.
+   * Toggles the icon tooltip for the given key and calculates viewport-safe position.
    * If the same key is clicked again, the tooltip is dismissed.
    *
    * @param key Unique identifier combining dayExerciseId and icon type.
+   * @param event Optional MouseEvent/Event from trigger button click.
    */
-  toggleIconTooltip(key: string): void {
-    this.activeIconTooltip.update(current => current === key ? null : key);
+  toggleIconTooltip(key: string, event?: Event): void {
+    if (this.activeIconTooltip() === key) {
+      this.activeIconTooltip.set(null);
+      this.tooltipPosition.set(null);
+    } else {
+      this.activeIconTooltip.set(key);
+      if (event && event.currentTarget) {
+        const button = event.currentTarget as HTMLElement;
+        const rect = button.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const tooltipWidth = Math.min(208, viewportWidth - 32);
+
+        const buttonCenter = rect.left + rect.width / 2;
+        const idealLeft = buttonCenter - tooltipWidth / 2;
+        const margin = 16;
+
+        let finalLeft = idealLeft;
+        if (idealLeft < margin) {
+          finalLeft = margin;
+        } else if (idealLeft + tooltipWidth > viewportWidth - margin) {
+          finalLeft = viewportWidth - tooltipWidth - margin;
+        }
+
+        const arrowLeft = Math.max(12, Math.min(buttonCenter - finalLeft, tooltipWidth - 12));
+
+        this.tooltipPosition.set({
+          left: finalLeft,
+          top: rect.bottom + 8,
+          arrowLeft
+        });
+      }
+    }
   }
 
   toggleCollapse(exId: string) {
