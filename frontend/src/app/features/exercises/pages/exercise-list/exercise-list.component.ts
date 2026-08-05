@@ -2,6 +2,7 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ExerciseService } from '../../services/exercise.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { Exercise, BODY_PARTS_HIERARCHY } from '../../../../core/types/training.types';
 import { ExerciseFormComponent } from '../../components/exercise-form/exercise-form.component';
 import { FormsModule } from '@angular/forms';
@@ -16,10 +17,9 @@ import { RouterModule } from '@angular/router';
     
       <!-- Header -->
       @if (!showForm()) {
-        <div class="flex justify-between items-end">
+        <div class="flex justify-between items-center">
           <div>
             <h1 class="text-4xl font-black text-black dark:text-white">Exercises</h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-2 font-medium">Manage your exercise catalog and volume targets</p>
           </div>
           <button
             (click)="openForm()"
@@ -53,18 +53,34 @@ import { RouterModule } from '@angular/router';
         <div class="space-y-6 animate-in fade-in duration-500">
           <!-- Search Bar -->
           <div class="relative group">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-focus-within:text-accent-pos transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
+            @if (!searchQuery()) {
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-focus-within:text-accent-pos transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            }
             <input
               type="text"
               placeholder="Search exercises by name or brand..."
               [ngModel]="searchQuery()"
               (ngModelChange)="onSearchChange($event)"
-              class="w-full pl-12 pr-4 py-4 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-accent-pos focus:border-accent-pos text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none transition-all solid-input"
+              [style.padding-left]="!searchQuery() ? '3rem' : '1rem'"
+              [style.padding-right]="searchQuery() ? '2.5rem' : '1rem'"
+              class="w-full py-4 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-accent-pos focus:border-accent-pos text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none transition-all solid-input"
             >
+            @if (searchQuery()) {
+              <button
+                type="button"
+                (click)="onSearchChange('')"
+                class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                title="Clear search"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            }
           </div>
  
           @if (exercises().length === 0) {
@@ -222,20 +238,30 @@ import { RouterModule } from '@angular/router';
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                   Analytics
                 </a>
-                <button
-                  (click)="editExercise(exercise); $event.stopPropagation()"
-                  class="flex items-center gap-1.5 text-accent-pos hover:opacity-80 transition-colors text-sm font-semibold"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                  Edit
-                </button>
-                <button
-                  (click)="deleteExercise(exercise.id); $event.stopPropagation()"
-                  class="flex items-center gap-1.5 text-accent-neg hover:opacity-80 transition-colors text-sm font-semibold"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                  Delete
-                </button>
+                @if (canEdit(exercise)) {
+                  <button
+                    (click)="editExercise(exercise); $event.stopPropagation()"
+                    class="flex items-center gap-1.5 text-accent-pos hover:opacity-80 transition-colors text-sm font-semibold"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Edit
+                  </button>
+                  <button
+                    (click)="deleteExercise(exercise.id); $event.stopPropagation()"
+                    class="flex items-center gap-1.5 text-accent-neg hover:opacity-80 transition-colors text-sm font-semibold"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Delete
+                  </button>
+                } @else {
+                  <button
+                    (click)="editExercise(exercise); $event.stopPropagation()"
+                    class="flex items-center gap-1.5 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm font-semibold"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    Details
+                  </button>
+                }
               </div>
             </div>
           </ng-template>
@@ -247,6 +273,7 @@ import { RouterModule } from '@angular/router';
 })
 export class ExerciseListComponent implements OnInit {
   private exerciseService = inject(ExerciseService);
+  authService = inject(AuthService);
 
   exercises = signal<Exercise[]>([]);
   isLoading = signal<boolean>(true);
@@ -401,7 +428,11 @@ export class ExerciseListComponent implements OnInit {
     this.selectedExercise.set(null);
   }
 
-  onSaveExercise(formData: { name: string; equipmentBrand: string; unilateral: boolean; isPublic: boolean; targets: { id?: string; bodyPart: string; targetValue: number }[] }) {
+  canEdit(exercise: Exercise): boolean {
+    return !exercise.isPublic || this.authService.isAdmin;
+  }
+
+  onSaveExercise(formData: { name: string; equipmentBrand: string; unilateral: boolean; spinalLoading?: boolean; isBodyweight?: boolean; isPublic: boolean; targets: { id?: string; bodyPart: string; targetValue: number }[] }) {
     this.isLoading.set(true);
     const exercise = this.selectedExercise();
     
@@ -409,6 +440,8 @@ export class ExerciseListComponent implements OnInit {
       name: formData.name,
       equipmentBrand: formData.equipmentBrand || undefined,
       unilateral: formData.unilateral,
+      spinalLoading: formData.spinalLoading || false,
+      isBodyweight: formData.isBodyweight || false,
       isPublic: formData.isPublic || false
     };
 
