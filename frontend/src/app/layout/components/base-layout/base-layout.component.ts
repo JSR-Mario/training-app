@@ -1,9 +1,10 @@
-import { Component, inject, signal, computed, ElementRef, HostListener } from '@angular/core';
+import { Component, inject, signal, computed, ElementRef, HostListener, effect } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
 import { DashboardService } from '../../../features/dashboard/services/dashboard.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { TutorialService } from '../../../core/services/tutorial.service';
 import { environment } from '../../../../environments/environment';
 import { filter } from 'rxjs/operators';
 import { CoachMarkComponent } from '../../../shared/components/coach-mark/coach-mark.component';
@@ -53,49 +54,49 @@ import { CoachMarkComponent } from '../../../shared/components/coach-mark/coach-
         </div>
         
         <nav class="flex-1 px-4 space-y-2 mt-2 overflow-y-auto">
-          <a routerLink="/dashboard" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
+          <a id="tutorial-nav-dashboard" routerLink="/dashboard" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             <span class="font-medium">Dashboard</span>
           </a>
-          <a routerLink="/workout" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
+          <a id="tutorial-nav-workout" routerLink="/workout" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             <span class="font-medium">Workout</span>
           </a>
-          <a routerLink="/body-weight" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
+          <a id="tutorial-nav-body-weight" routerLink="/body-weight" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             <span class="font-medium">Body Weight</span>
           </a>
-          <a routerLink="/cardio" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
+          <a id="tutorial-nav-cardio" routerLink="/cardio" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
             <span class="font-medium">Cardio</span>
           </a>
-          <a routerLink="/programs" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
+          <a id="tutorial-nav-programs" routerLink="/programs" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
             <span class="font-medium">Programs</span>
           </a>
-          <a routerLink="/exercises" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
+          <a id="tutorial-nav-exercises" routerLink="/exercises" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
             </svg>
             <span class="font-medium">Exercises</span>
           </a>
-          <a routerLink="/analytics" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
+          <a id="tutorial-nav-analytics" routerLink="/analytics" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <span class="font-medium">Analytics</span>
           </a>
-          <a routerLink="/habits" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
+          <a id="tutorial-nav-habits" routerLink="/habits" (click)="closeOnMobile()" routerLinkActive="bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-bold" class="flex items-center px-4 py-3 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-black dark:hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
             </svg>
@@ -132,6 +133,7 @@ import { CoachMarkComponent } from '../../../shared/components/coach-mark/coach-
         <!-- Top Bar with Hamburger and User Dropdown -->
         <header class="flex items-center justify-between px-4 md:px-6 py-4 bg-gray-50/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
           <button 
+            id="tutorial-hamburger-toggle"
             (click)="toggleSidebar()" 
             class="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800 focus:outline-none"
             title="Toggle Sidebar"
@@ -307,6 +309,7 @@ export class BaseLayoutComponent {
   authService = inject(AuthService);
   private dashboardService = inject(DashboardService);
   private router = inject(Router);
+  private tutorialService = inject(TutorialService);
   themeService = inject(ThemeService);
   appVersion = environment.appVersion;
 
@@ -336,6 +339,19 @@ export class BaseLayoutComponent {
   }
 
   constructor() {
+    effect(() => {
+      const step = this.tutorialService.activeStep();
+      if (!step) return;
+
+      if (step.targetId.startsWith('tutorial-nav-')) {
+        if (!this.isSidebarOpen()) {
+          this.isSidebarOpen.set(true);
+        }
+      } else if (this.isMobile() && this.isSidebarOpen()) {
+        this.isSidebarOpen.set(false);
+      }
+    });
+
     // We could use HostListener for resize, but window event listener is fine too.
     window.addEventListener('resize', this.onResize.bind(this));
 
