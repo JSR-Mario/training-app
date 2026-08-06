@@ -1,16 +1,11 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
+name: Improvement / Feature request
+about: Suggest an idea or improvement for this project
 title: ''
 labels: 'enhancement'
 assignees: JSR-Mario
-
 ---
 
-**Is your feature request related to a problem? Please describe.**
+### What would you like?
 
-**Describe the solution you'd like**
-
-**Describe alternatives you've considered**
-
-**Additional context**
+### How would you like it to work?
