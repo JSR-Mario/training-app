@@ -33,6 +33,11 @@ public class CardioLogController {
         return cardioLogService.getLogsForUser(UserContext.getCurrentUserId());
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<CardioLogResponse> updateLog(@PathVariable UUID id, @Valid @RequestBody CardioLogRequest request) {
+        return ResponseEntity.ok(cardioLogService.updateLog(id, UserContext.getCurrentUserId(), request));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteLog(@PathVariable UUID id) {
         cardioLogService.deleteLog(id, UserContext.getCurrentUserId());
