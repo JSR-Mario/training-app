@@ -18,6 +18,10 @@ export class CardioLogService {
     return this.http.post<CardioLogResponse>(this.apiUrl, request);
   }
 
+  updateLog(id: string, request: CardioLogRequest): Observable<CardioLogResponse> {
+    return this.http.put<CardioLogResponse>(`${this.apiUrl}/${id}`, request);
+  }
+
   deleteLog(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

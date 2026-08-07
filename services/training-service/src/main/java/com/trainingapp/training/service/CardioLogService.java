@@ -43,6 +43,23 @@ public class CardioLogService {
     }
 
     @Transactional
+    public CardioLogResponse updateLog(UUID logId, UUID userId, CardioLogRequest request) {
+        CardioLog log = cardioLogRepository.findById(logId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cardio log not found"));
+
+        if (!log.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your log");
+        }
+
+        log.setDurationMinutes(request.durationMinutes());
+        log.setCardioType(request.cardioType());
+        log.setPerformedOn(request.performedOn());
+
+        CardioLog updated = cardioLogRepository.save(log);
+        return mapToResponse(updated);
+    }
+
+    @Transactional
     public void deleteLog(UUID logId, UUID userId) {
         CardioLog log = cardioLogRepository.findById(logId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cardio log not found"));

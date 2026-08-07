@@ -39,6 +39,7 @@ public class CardioLog {
     private Instant createdAt = Instant.now();
 
     public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
     public int getDurationMinutes() { return durationMinutes; }
