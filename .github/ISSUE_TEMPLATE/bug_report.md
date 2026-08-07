@@ -1,14 +1,14 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Report a bug to help us improve
 title: ''
 labels: 'bug'
 assignees: JSR-Mario
-
 ---
 
-**Describe the bug**
+### Description
 
-**To Reproduce**
+### App Version
+<!-- Found at the top of the side (hamburger) menu -->
 
-**Additional context**
+### Screenshots (Optional)

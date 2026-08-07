@@ -11,8 +11,10 @@ describe('CoachMarkComponent', () => {
 
   beforeEach(async () => {
     sessionStorage.clear();
+    localStorage.clear();
     const authServiceSpy = jasmine.createSpyObj('AuthService', [], {
-      isDemoUser: true
+      isDemoUser: true,
+      username: 'demo'
     });
 
     await TestBed.configureTestingModule({
@@ -32,6 +34,7 @@ describe('CoachMarkComponent', () => {
 
   afterEach(() => {
     sessionStorage.clear();
+    localStorage.clear();
   });
 
   it('should create', () => {
