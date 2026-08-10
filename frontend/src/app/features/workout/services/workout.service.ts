@@ -57,6 +57,14 @@ export class WorkoutService {
     return this.http.post<void>(`${this.baseUrl}/sessions/${id}/uncomplete`, {});
   }
 
+  pauseSession(id: string): Observable<WorkoutSessionResponse> {
+    return this.http.post<WorkoutSessionResponse>(`${this.baseUrl}/sessions/${id}/pause`, {});
+  }
+
+  resumeSession(id: string): Observable<WorkoutSessionResponse> {
+    return this.http.post<WorkoutSessionResponse>(`${this.baseUrl}/sessions/${id}/resume`, {});
+  }
+
   updateSessionNotes(id: string, notes: string): Observable<WorkoutSessionResponse> {
     return this.http.patch<WorkoutSessionResponse>(`${this.baseUrl}/sessions/${id}/notes`, { notes });
   }

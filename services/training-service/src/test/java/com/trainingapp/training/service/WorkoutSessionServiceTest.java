@@ -146,6 +146,51 @@ class WorkoutSessionServiceTest {
     }
 
     @Test
+    void pauseSession_Success() {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setUserId(userId);
+        session.setDayTemplate(dayTemplate);
+        session.setStartedAt(java.time.Instant.now().minusSeconds(120));
+        session.setLastResumedAt(java.time.Instant.now().minusSeconds(120));
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionRepository.save(any())).thenReturn(session);
+        when(ratingRepository.findBySessionId(any())).thenReturn(Collections.emptyList());
+
+        WorkoutSessionResponse response = sessionService.pauseSession(sessionId, userId);
+
+        assertThat(response).isNotNull();
+        assertThat(session.getPausedAt()).isNotNull();
+        assertThat(session.getDurationSeconds()).isGreaterThanOrEqualTo(119);
+        verify(sessionRepository).save(session);
+    }
+
+    @Test
+    void resumeSession_Success() {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setUserId(userId);
+        session.setDayTemplate(dayTemplate);
+        session.setStartedAt(java.time.Instant.now().minusSeconds(300));
+        session.setPausedAt(java.time.Instant.now().minusSeconds(60));
+        session.setDurationSeconds(240);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionRepository.save(any())).thenReturn(session);
+        when(ratingRepository.findBySessionId(any())).thenReturn(Collections.emptyList());
+
+        WorkoutSessionResponse response = sessionService.resumeSession(sessionId, userId);
+
+        assertThat(response).isNotNull();
+        assertThat(session.getPausedAt()).isNull();
+        assertThat(session.getLastResumedAt()).isNotNull();
+        verify(sessionRepository).save(session);
+    }
+
+    @Test
     void getExerciseSuggestions_CalculatesFatigueCorrectly() {
         UUID sessionId = UUID.randomUUID();
         WorkoutSession session = new WorkoutSession();

@@ -17,7 +17,7 @@ describe('ActiveWorkoutComponent', () => {
 
   beforeEach(async () => {
     const workoutServiceSpy = jasmine.createSpyObj('WorkoutService', [
-      'createSession', 'getActiveSession', 'getLoggedSets', 'completeSession', 'logSet', 'deleteSet', 'updateSet', 'updateNotes', 'addExerciseToSession', 'deleteExerciseFromSession', 'updateExerciseRating', 'deleteExerciseRating'
+      'createSession', 'getActiveSession', 'getLoggedSets', 'completeSession', 'pauseSession', 'resumeSession', 'logSet', 'deleteSet', 'updateSet', 'updateNotes', 'addExerciseToSession', 'deleteExerciseFromSession', 'updateExerciseRating', 'deleteExerciseRating'
     ]);
     workoutServiceSpy.getActiveSession.and.returnValue(of(null));
     workoutServiceSpy.updateExerciseRating.and.returnValue(of({ ratings: [] }));
@@ -175,6 +175,31 @@ describe('ActiveWorkoutComponent', () => {
 
       component.loggedSets.set([set1, set2, set3]);
       expect(component.activeLoggingExercise()?.id).toBe('ex2');
+    });
+
+    it('formats active live timer display correctly when running and when paused', () => {
+      const now = new Date().toISOString();
+      component.session.set({
+        id: 'sess-1',
+        durationSeconds: 120,
+        lastResumedAt: now,
+        pausedAt: null,
+        completedAt: null
+      } as WorkoutSessionResponse);
+
+      expect(component.isPaused()).toBeFalse();
+      expect(component.formattedTimerDisplay()).toMatch(/\d{2}:\d{2}/);
+
+      component.session.set({
+        id: 'sess-1',
+        durationSeconds: 120,
+        lastResumedAt: now,
+        pausedAt: now,
+        completedAt: null
+      } as WorkoutSessionResponse);
+
+      expect(component.isPaused()).toBeTrue();
+      expect(component.formattedTimerDisplay()).toBe('02:00');
     });
   });
 });

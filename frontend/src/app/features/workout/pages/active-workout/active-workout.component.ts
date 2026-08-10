@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -47,6 +47,38 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
               <p class="text-gray-500 dark:text-gray-400 text-sm">Week {{ session()?.weekNumber }} &bull; {{ session()?.performedOn | date:'mediumDate' }}</p>
             </div>
             <div class="flex items-center gap-3">
+              @if (!session()?.completedAt) {
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-xs font-mono font-medium shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent-pos transition-transform duration-300" [class.animate-pulse]="!isPaused()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-black dark:text-white font-bold text-sm tracking-wider">{{ formattedTimerDisplay() }}</span>
+                  
+                  <button
+                    type="button"
+                    (click)="togglePauseWorkout()"
+                    [disabled]="isTimerActionLoading()"
+                    class="ml-1 px-2.5 py-1 text-xs font-semibold rounded-full flex items-center gap-1 transition-all cursor-pointer border"
+                    [class.bg-amber-500/20]="isPaused()"
+                    [class.text-amber-500]="isPaused()"
+                    [class.border-amber-500/30]="isPaused()"
+                    [class.bg-accent-pos/20]="!isPaused()"
+                    [class.text-accent-pos]="!isPaused()"
+                    [class.border-accent-pos/30]="!isPaused()">
+                    @if (isPaused()) {
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                      <span>RESUME</span>
+                    } @else {
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                      </svg>
+                      <span>PAUSE</span>
+                    }
+                  </button>
+                </div>
+              }
               @if (session()?.completedAt) {
                 <div class="px-3 py-1 bg-accent-pos/20 text-accent-pos text-xs rounded-full border border-accent-pos/30">
                   Completed
@@ -624,7 +656,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
     
     `
 })
-export class ActiveWorkoutComponent implements OnInit {
+export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private workoutService = inject(WorkoutService);
@@ -674,6 +706,43 @@ export class ActiveWorkoutComponent implements OnInit {
   isCompleting = signal<boolean>(false);
   isSavingNotes = signal<boolean>(false);
   savedNotesSuccess = signal<boolean>(false);
+
+  nowTimestamp = signal<number>(Date.now());
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
+  isTimerActionLoading = signal<boolean>(false);
+
+  isPaused = computed(() => {
+    const s = this.session();
+    return !!(s && !s.completedAt && s.pausedAt);
+  });
+
+  liveDurationSeconds = computed(() => {
+    const s = this.session();
+    if (!s) return 0;
+    if (s.completedAt) return s.durationSeconds || 0;
+    const base = s.durationSeconds || 0;
+    if (s.pausedAt) {
+      return base;
+    }
+    const lastResumedStr = s.lastResumedAt || s.startedAt;
+    if (!lastResumedStr) return base;
+    const lastResumedMs = new Date(lastResumedStr).getTime();
+    const currentMs = this.nowTimestamp();
+    const elapsedSegmentSec = Math.max(0, Math.floor((currentMs - lastResumedMs) / 1000));
+    return base + elapsedSegmentSec;
+  });
+
+  formattedTimerDisplay = computed(() => {
+    const totalSec = this.liveDurationSeconds();
+    const hours = Math.floor(totalSec / 3600);
+    const minutes = Math.floor((totalSec % 3600) / 60);
+    const seconds = totalSec % 60;
+    const pad = (num: number) => num.toString().padStart(2, '0');
+    if (hours > 0) {
+      return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    }
+    return `${pad(minutes)}:${pad(seconds)}`;
+  });
 
   chartData: ChartConfiguration['data'] | null = null;
   chartOptions: ChartConfiguration['options'] = {
@@ -972,12 +1041,59 @@ export class ActiveWorkoutComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.startTimerTicker();
     this.route.paramMap.subscribe(params => {
       this.sessionId.set(params.get('id'));
       if (this.sessionId()) {
         this.loadWorkoutData();
       }
     });
+  }
+
+  ngOnDestroy() {
+    this.stopTimerTicker();
+  }
+
+  private startTimerTicker() {
+    if (!this.timerInterval) {
+      this.nowTimestamp.set(Date.now());
+      this.timerInterval = setInterval(() => {
+        this.nowTimestamp.set(Date.now());
+      }, 1000);
+    }
+  }
+
+  private stopTimerTicker() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  }
+
+  togglePauseWorkout() {
+    const s = this.session();
+    if (!s || s.completedAt || this.isTimerActionLoading()) return;
+
+    this.isTimerActionLoading.set(true);
+    if (s.pausedAt) {
+      this.workoutService.resumeSession(s.id).subscribe({
+        next: (updated) => {
+          this.session.set(updated);
+          this.nowTimestamp.set(Date.now());
+          this.isTimerActionLoading.set(false);
+        },
+        error: () => this.isTimerActionLoading.set(false)
+      });
+    } else {
+      this.workoutService.pauseSession(s.id).subscribe({
+        next: (updated) => {
+          this.session.set(updated);
+          this.nowTimestamp.set(Date.now());
+          this.isTimerActionLoading.set(false);
+        },
+        error: () => this.isTimerActionLoading.set(false)
+      });
+    }
   }
 
   loadWorkoutData() {

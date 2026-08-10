@@ -128,6 +128,9 @@ export interface WorkoutSessionResponse {
   weekNumber: number;
   startedAt: string | null;
   completedAt: string | null;
+  lastResumedAt?: string | null;
+  pausedAt?: string | null;
+  durationSeconds?: number;
   notes?: string;
   previousNotes?: string;
   ratings?: SessionRatingResponse[];
