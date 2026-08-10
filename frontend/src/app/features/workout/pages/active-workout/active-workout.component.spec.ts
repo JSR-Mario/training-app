@@ -9,6 +9,7 @@ import { ProgramService } from '../../../programs/services/program.service';
 import { ExerciseService } from '../../../exercises/services/exercise.service';
 import { BodyWeightService } from '../../../analytics/services/body-weight.service';
 import { AnalyticsService } from '../../../analytics/services/analytics.service';
+import { DayExercise, WorkoutSetResponse, WorkoutSessionResponse } from '../../../../core/types/training.types';
 
 describe('ActiveWorkoutComponent', () => {
   let component: ActiveWorkoutComponent;
@@ -16,9 +17,11 @@ describe('ActiveWorkoutComponent', () => {
 
   beforeEach(async () => {
     const workoutServiceSpy = jasmine.createSpyObj('WorkoutService', [
-      'createSession', 'getActiveSession', 'getLoggedSets', 'completeSession', 'logSet', 'deleteSet', 'updateSet', 'updateNotes', 'addExerciseToSession', 'deleteExerciseFromSession'
+      'createSession', 'getActiveSession', 'getLoggedSets', 'completeSession', 'logSet', 'deleteSet', 'updateSet', 'updateNotes', 'addExerciseToSession', 'deleteExerciseFromSession', 'updateExerciseRating', 'deleteExerciseRating'
     ]);
     workoutServiceSpy.getActiveSession.and.returnValue(of(null));
+    workoutServiceSpy.updateExerciseRating.and.returnValue(of({ ratings: [] }));
+    workoutServiceSpy.deleteExerciseRating.and.returnValue(of({ ratings: [] }));
 
     const programServiceSpy = jasmine.createSpyObj('ProgramService', ['getDayDetail']);
     const exerciseServiceSpy = jasmine.createSpyObj('ExerciseService', ['getExercises', 'createExercise']);
@@ -108,4 +111,71 @@ describe('ActiveWorkoutComponent', () => {
     expect(component.activeIconTooltip()).toBeNull();
     expect(component.tooltipPosition()).toBeNull();
   });
+
+  describe('activeLoggingExercise — dynamic target', () => {
+    const ex1: DayExercise = {
+      id: 'ex1', exerciseName: 'Leg Extension', sets: 3, reps: 10, sortOrder: 0,
+      exerciseId: 'e1', repsMax: undefined, isAmrap: false, unilateral: false, isBodyweight: false
+    };
+    const ex2: DayExercise = {
+      id: 'ex2', exerciseName: 'Leg Curl', sets: 3, reps: 10, sortOrder: 1,
+      exerciseId: 'e2', repsMax: undefined, isAmrap: false, unilateral: false, isBodyweight: false
+    };
+
+    beforeEach(() => {
+      component.exercises.set([ex1, ex2]);
+      component.loggedSets.set([]);
+      component.activeLoggingExerciseId.set(null);
+    });
+
+    it('defaults to first incomplete exercise when nothing is touched', () => {
+      expect(component.activeLoggingExercise()?.id).toBe('ex1');
+    });
+
+    it('follows last touched exercise when user interacts with second card inputs', () => {
+      component.markExerciseTouched('ex2');
+      expect(component.activeLoggingExercise()?.id).toBe('ex2');
+    });
+
+    it('updates target exercise when rating is set for that exercise', () => {
+      component.sessionId.set('sess-1');
+      component.session.set({ id: 'sess-1' } as unknown as WorkoutSessionResponse);
+      component.setRating('ex2', 8);
+      expect(component.activeLoggingExercise()?.id).toBe('ex2');
+    });
+
+    it('retains target after logging set if exercise is not yet complete', () => {
+      component.markExerciseTouched('ex2');
+      const set1: WorkoutSetResponse = {
+        id: 's1', sessionId: 'sess-1', sessionExerciseId: 'ex2', setNumber: 1, weightKg: 50,
+        repsCompleted: 10, repsCompletedRight: undefined, loggedAt: new Date().toISOString(),
+        performanceStatus: 'GOOD', isNewPr: false, previousPrWeight: undefined, previousPrReps: undefined
+      };
+      component.loggedSets.set([set1]);
+      expect(component.activeLoggingExercise()?.id).toBe('ex2');
+    });
+
+    it('falls back to next incomplete exercise when touched exercise completes all sets', () => {
+      component.markExerciseTouched('ex1');
+      const set1: WorkoutSetResponse = {
+        id: 's1', sessionId: 'sess-1', sessionExerciseId: 'ex1', setNumber: 1, weightKg: 50,
+        repsCompleted: 10, repsCompletedRight: undefined, loggedAt: new Date().toISOString(),
+        performanceStatus: 'GOOD', isNewPr: false, previousPrWeight: undefined, previousPrReps: undefined
+      };
+      const set2: WorkoutSetResponse = {
+        id: 's2', sessionId: 'sess-1', sessionExerciseId: 'ex1', setNumber: 2, weightKg: 50,
+        repsCompleted: 10, repsCompletedRight: undefined, loggedAt: new Date().toISOString(),
+        performanceStatus: 'GOOD', isNewPr: false, previousPrWeight: undefined, previousPrReps: undefined
+      };
+      const set3: WorkoutSetResponse = {
+        id: 's3', sessionId: 'sess-1', sessionExerciseId: 'ex1', setNumber: 3, weightKg: 50,
+        repsCompleted: 10, repsCompletedRight: undefined, loggedAt: new Date().toISOString(),
+        performanceStatus: 'GOOD', isNewPr: false, previousPrWeight: undefined, previousPrReps: undefined
+      };
+
+      component.loggedSets.set([set1, set2, set3]);
+      expect(component.activeLoggingExercise()?.id).toBe('ex2');
+    });
+  });
 });
+
