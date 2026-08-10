@@ -46,19 +46,33 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
               <h1 class="text-3xl font-bold text-black dark:text-white mb-1">{{ session()?.dayTemplateName }}</h1>
               <p class="text-gray-500 dark:text-gray-400 text-sm">Week {{ session()?.weekNumber }} &bull; {{ session()?.performedOn | date:'mediumDate' }}</p>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex flex-col items-end gap-2">
+              <div class="flex items-center gap-2">
+                @if (session()?.completedAt) {
+                  <div class="px-3 py-1 bg-accent-pos/20 text-accent-pos text-xs rounded-lg border border-accent-pos/30 font-medium">
+                    Completed
+                  </div>
+                } @else {
+                  <button (click)="cancelWorkout()" class="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors" title="Cancel Workout">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                }
+              </div>
+
               @if (!session()?.completedAt) {
-                <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-xs font-mono font-medium shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent-pos transition-transform duration-300" [class.animate-pulse]="!isPaused()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="flex items-center gap-2 px-2.5 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-mono font-medium shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent-pos transition-transform duration-300 shrink-0" [class.animate-pulse]="!isPaused()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span class="text-black dark:text-white font-bold text-sm tracking-wider">{{ formattedTimerDisplay() }}</span>
+                  <span class="text-black dark:text-white font-bold text-xs sm:text-sm tracking-wider whitespace-nowrap">{{ formattedTimerDisplay() }}</span>
                   
                   <button
                     type="button"
                     (click)="togglePauseWorkout()"
                     [disabled]="isTimerActionLoading()"
-                    class="ml-1 px-2.5 py-1 text-xs font-semibold rounded-full flex items-center gap-1 transition-all cursor-pointer border"
+                    class="ml-1 px-2 py-0.5 text-xs font-semibold rounded-md flex items-center gap-1 transition-all cursor-pointer border"
                     [class.bg-amber-500/20]="isPaused()"
                     [class.text-amber-500]="isPaused()"
                     [class.border-amber-500/30]="isPaused()"
@@ -66,29 +80,18 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                     [class.text-accent-pos]="!isPaused()"
                     [class.border-accent-pos/30]="!isPaused()">
                     @if (isPaused()) {
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 fill-current" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z" />
                       </svg>
                       <span>RESUME</span>
                     } @else {
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 fill-current" viewBox="0 0 24 24">
                         <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                       </svg>
                       <span>PAUSE</span>
                     }
                   </button>
                 </div>
-              }
-              @if (session()?.completedAt) {
-                <div class="px-3 py-1 bg-accent-pos/20 text-accent-pos text-xs rounded-full border border-accent-pos/30">
-                  Completed
-                </div>
-              } @else {
-                <button (click)="cancelWorkout()" class="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-full transition-colors" title="Cancel Workout">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               }
             </div>
           </div>
