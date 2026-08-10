@@ -132,7 +132,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                               class="fixed z-50 w-52 max-w-[calc(100vw-32px)] p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none"
                               [style.left.px]="tooltipPosition()!.left"
                               [style.top.px]="tooltipPosition()!.top">
-                              Increase reps
+                              Increase weight
                               <div
                                 class="absolute bottom-full border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white -ml-1"
                                 [style.left.px]="tooltipPosition()!.arrowLeft">
