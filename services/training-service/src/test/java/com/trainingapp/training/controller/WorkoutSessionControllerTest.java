@@ -59,7 +59,7 @@ class WorkoutSessionControllerTest {
     void startSession() throws Exception {
         UUID dayTemplateId = UUID.randomUUID();
         WorkoutSessionRequest request = new WorkoutSessionRequest(dayTemplateId, LocalDate.now(), 1);
-        WorkoutSessionResponse response = new WorkoutSessionResponse(UUID.randomUUID(), dayTemplateId, "Push", LocalDate.now(), 1, null, null, null, null, java.util.List.of());
+        WorkoutSessionResponse response = new WorkoutSessionResponse(UUID.randomUUID(), dayTemplateId, "Push", LocalDate.now(), 1, null, null, null, null, 0, null, null, java.util.List.of());
 
         when(sessionService.startSession(eq(userId), any(WorkoutSessionRequest.class))).thenReturn(response);
 
@@ -68,5 +68,29 @@ class WorkoutSessionControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.dayTemplateName").value("Push"));
+    }
+
+    @Test
+    void pauseSession() throws Exception {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSessionResponse response = new WorkoutSessionResponse(sessionId, UUID.randomUUID(), "Push", LocalDate.now(), 1, Instant.now(), null, Instant.now(), Instant.now(), 120, null, null, java.util.List.of());
+
+        when(sessionService.pauseSession(eq(sessionId), eq(userId))).thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/training/sessions/" + sessionId + "/pause"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.durationSeconds").value(120));
+    }
+
+    @Test
+    void resumeSession() throws Exception {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSessionResponse response = new WorkoutSessionResponse(sessionId, UUID.randomUUID(), "Push", LocalDate.now(), 1, Instant.now(), null, Instant.now(), null, 120, null, null, java.util.List.of());
+
+        when(sessionService.resumeSession(eq(sessionId), eq(userId))).thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/training/sessions/" + sessionId + "/resume"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.durationSeconds").value(120));
     }
 }

@@ -98,7 +98,11 @@ public class WorkoutSessionService {
         session.setDayTemplate(dayTemplate);
         session.setPerformedOn(request.performedOn());
         session.setWeekNumber(request.weekNumber());
-        session.setStartedAt(Instant.now());
+        Instant now = Instant.now();
+        session.setStartedAt(now);
+        session.setLastResumedAt(now);
+        session.setPausedAt(null);
+        session.setDurationSeconds(0);
 
         WorkoutSession saved = sessionRepository.save(session);
 
@@ -214,6 +218,48 @@ public class WorkoutSessionService {
     }
 
     @Transactional
+    public WorkoutSessionResponse pauseSession(UUID id, UUID userId) {
+        WorkoutSession session = getSessionEntity(id, userId);
+
+        if (session.getCompletedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Session is already completed");
+        }
+
+        if (session.getPausedAt() != null) {
+            return mapToResponse(session);
+        }
+
+        Instant now = Instant.now();
+        Instant lastResumed = session.getLastResumedAt() != null ? session.getLastResumedAt() : session.getStartedAt();
+        if (lastResumed != null && !now.isBefore(lastResumed)) {
+            long segmentSeconds = java.time.Duration.between(lastResumed, now).getSeconds();
+            session.setDurationSeconds(session.getDurationSeconds() + (int) segmentSeconds);
+        }
+        session.setPausedAt(now);
+        WorkoutSession saved = sessionRepository.save(session);
+        return mapToResponse(saved);
+    }
+
+    @Transactional
+    public WorkoutSessionResponse resumeSession(UUID id, UUID userId) {
+        WorkoutSession session = getSessionEntity(id, userId);
+
+        if (session.getCompletedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Session is already completed");
+        }
+
+        if (session.getPausedAt() == null) {
+            return mapToResponse(session);
+        }
+
+        Instant now = Instant.now();
+        session.setLastResumedAt(now);
+        session.setPausedAt(null);
+        WorkoutSession saved = sessionRepository.save(session);
+        return mapToResponse(saved);
+    }
+
+    @Transactional
     @org.springframework.cache.annotation.Caching(evict = {
         @org.springframework.cache.annotation.CacheEvict(value = "userExerciseProjections:v1", key = "#userId"),
         @org.springframework.cache.annotation.CacheEvict(value = "dashboardSummary:v1", allEntries = true)
@@ -225,7 +271,16 @@ public class WorkoutSessionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Session is already completed");
         }
 
-        session.setCompletedAt(Instant.now());
+        Instant now = Instant.now();
+        if (session.getPausedAt() == null) {
+            Instant lastResumed = session.getLastResumedAt() != null ? session.getLastResumedAt() : session.getStartedAt();
+            if (lastResumed != null && !now.isBefore(lastResumed)) {
+                long segmentSeconds = java.time.Duration.between(lastResumed, now).getSeconds();
+                session.setDurationSeconds(session.getDurationSeconds() + (int) segmentSeconds);
+            }
+        }
+        session.setCompletedAt(now);
+        session.setPausedAt(null);
         sessionRepository.save(session);
 
         // Fire analytics event
@@ -293,6 +348,8 @@ public class WorkoutSessionService {
         }
 
         session.setCompletedAt(null);
+        session.setLastResumedAt(Instant.now());
+        session.setPausedAt(null);
         sessionRepository.save(session);
 
         // Fire analytics event
@@ -531,6 +588,9 @@ public class WorkoutSessionService {
             session.getWeekNumber(),
             session.getStartedAt(),
             session.getCompletedAt(),
+            session.getLastResumedAt(),
+            session.getPausedAt(),
+            session.getDurationSeconds(),
             session.getNotes(),
             previousNotes,
             ratings

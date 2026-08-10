@@ -54,10 +54,10 @@ import { ChartConfiguration } from 'chart.js';
               <p class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Sets Completed</p>
               <p class="text-3xl font-bold text-black dark:text-white">{{ loggedSets().length }}</p>
             </div>
-            @if (getSessionDurationMinutes()) {
+            @if (getFormattedSessionDuration()) {
               <div class="solid-card p-6 rounded-2xl border border-gray-300 dark:border-gray-700 col-span-2 md:col-span-1">
                 <p class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Duration</p>
-                <p class="text-3xl font-bold text-black dark:text-white">{{ getSessionDurationMinutes() }} <span class="text-gray-500 text-lg">min</span></p>
+                <p class="text-3xl font-bold text-black dark:text-white">{{ getFormattedSessionDuration() }}</p>
               </div>
             }
           </div>
@@ -273,11 +273,34 @@ export class WorkoutSummaryComponent implements OnInit {
 
   getSessionDurationMinutes(): number | null {
     const session = this.session();
-    if (!session || !session.startedAt || !session.completedAt) return null;
+    if (!session) return null;
+    if (session.durationSeconds && session.durationSeconds > 0) {
+      return Math.max(1, Math.round(session.durationSeconds / 60));
+    }
+    if (!session.startedAt || !session.completedAt) return null;
     const start = new Date(session.startedAt).getTime();
     const end = new Date(session.completedAt).getTime();
     const diff = end - start;
     return Math.max(1, Math.round(diff / 60000));
+  }
+
+  getFormattedSessionDuration(): string | null {
+    const session = this.session();
+    if (!session) return null;
+    let totalSec = session.durationSeconds || 0;
+    if (totalSec <= 0 && session.startedAt && session.completedAt) {
+      const start = new Date(session.startedAt).getTime();
+      const end = new Date(session.completedAt).getTime();
+      totalSec = Math.max(0, Math.round((end - start) / 1000));
+    }
+    if (totalSec <= 0) return null;
+    const minutes = Math.round(totalSec / 60);
+    if (minutes < 60) {
+      return `${Math.max(1, minutes)} min`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remMins = minutes % 60;
+    return remMins > 0 ? `${hours}h ${remMins}m` : `${hours}h`;
   }
 
   totalVolumeKg() {

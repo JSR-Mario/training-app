@@ -109,6 +109,16 @@ public class WorkoutSessionController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{id}/pause")
+    public WorkoutSessionResponse pauseSession(@PathVariable UUID id) {
+        return sessionService.pauseSession(id, UserContext.getCurrentUserId());
+    }
+
+    @PostMapping("/{id}/resume")
+    public WorkoutSessionResponse resumeSession(@PathVariable UUID id) {
+        return sessionService.resumeSession(id, UserContext.getCurrentUserId());
+    }
+
     @PostMapping("/{id}/complete")
     public ResponseEntity<Void> completeSession(@PathVariable UUID id) {
         sessionService.completeSession(id, UserContext.getCurrentUserId());
