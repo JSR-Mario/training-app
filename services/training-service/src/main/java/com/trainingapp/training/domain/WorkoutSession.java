@@ -45,6 +45,15 @@ public class WorkoutSession {
     @Column(name = "completed_at")
     private Instant completedAt;
 
+    @Column(name = "last_resumed_at")
+    private Instant lastResumedAt;
+
+    @Column(name = "paused_at")
+    private Instant pausedAt;
+
+    @Column(name = "duration_seconds", nullable = false)
+    private int durationSeconds = 0;
+
     @Column(name = "notes")
     private String notes;
 
@@ -61,6 +70,12 @@ public class WorkoutSession {
     public void setStartedAt(Instant startedAt) { this.startedAt = startedAt; }
     public Instant getCompletedAt() { return completedAt; }
     public void setCompletedAt(Instant completedAt) { this.completedAt = completedAt; }
+    public Instant getLastResumedAt() { return lastResumedAt; }
+    public void setLastResumedAt(Instant lastResumedAt) { this.lastResumedAt = lastResumedAt; }
+    public Instant getPausedAt() { return pausedAt; }
+    public void setPausedAt(Instant pausedAt) { this.pausedAt = pausedAt; }
+    public int getDurationSeconds() { return durationSeconds; }
+    public void setDurationSeconds(int durationSeconds) { this.durationSeconds = durationSeconds; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 }

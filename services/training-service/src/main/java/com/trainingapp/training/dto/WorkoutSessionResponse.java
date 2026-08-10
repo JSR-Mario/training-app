@@ -14,6 +14,9 @@ public record WorkoutSessionResponse(
     int weekNumber,
     Instant startedAt,
     Instant completedAt,
+    Instant lastResumedAt,
+    Instant pausedAt,
+    int durationSeconds,
     String notes,
     String previousNotes,
     List<SessionRatingResponse> ratings

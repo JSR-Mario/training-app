@@ -108,6 +108,28 @@ describe('WorkoutService', () => {
     req.flush(null);
   });
 
+  it('should pause a session', () => {
+    service.pauseSession('123').subscribe(session => {
+      expect(session).toEqual(mockSessionResponse);
+    });
+
+    const req = httpMock.expectOne('/api/v1/training/sessions/123/pause');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({});
+    req.flush(mockSessionResponse);
+  });
+
+  it('should resume a session', () => {
+    service.resumeSession('123').subscribe(session => {
+      expect(session).toEqual(mockSessionResponse);
+    });
+
+    const req = httpMock.expectOne('/api/v1/training/sessions/123/resume');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({});
+    req.flush(mockSessionResponse);
+  });
+
   it('should get sets for a session', () => {
     service.getSets('123').subscribe(sets => {
       expect(sets.length).toBe(1);
