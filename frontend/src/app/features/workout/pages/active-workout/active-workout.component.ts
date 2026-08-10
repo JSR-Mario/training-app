@@ -82,7 +82,12 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
               </div>
             }
             @for (ex of exercises(); track ex; let i = $index) {
-              <div [id]="'exercise-' + ex.id" class="solid-card p-4 sm:p-6 relative" [class.z-20]="activeIconTooltip()?.startsWith(ex.id)">
+              <div [id]="'exercise-' + ex.id"
+                   class="solid-card p-4 sm:p-6 relative transition-all duration-300"
+                   [class.z-20]="activeIconTooltip()?.startsWith(ex.id)"
+                   [class.ring-2]="activeLoggingExercise()?.id === ex.id && !session()?.completedAt"
+                   [class.ring-accent-pos]="activeLoggingExercise()?.id === ex.id && !session()?.completedAt"
+                   [class.ring-opacity-50]="activeLoggingExercise()?.id === ex.id && !session()?.completedAt">
                 <!-- Exercise Header -->
                 <div class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4">
                   <div class="flex-1 pr-4">
@@ -127,7 +132,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                               class="fixed z-50 w-52 max-w-[calc(100vw-32px)] p-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs rounded-lg shadow-xl text-center leading-relaxed pointer-events-none"
                               [style.left.px]="tooltipPosition()!.left"
                               [style.top.px]="tooltipPosition()!.top">
-                              Increase reps
+                              Increase weight
                               <div
                                 class="absolute bottom-full border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-white -ml-1"
                                 [style.left.px]="tooltipPosition()!.arrowLeft">
@@ -311,16 +316,16 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                         <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
                             <div class="flex-1 min-w-[80px]">
                               <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Weight ({{ getUnit(ex.id) }})</label>
-                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" [placeholder]="getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg || getSuggestion(ex.id)?.suggestedWeightKg, ex.id)" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
+                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" (input)="markExerciseTouched(ex.id)" [placeholder]="getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg || getSuggestion(ex.id)?.suggestedWeightKg, ex.id)" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                             </div>
                             <div class="flex-1 min-w-[70px]">
                               <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ ex.unilateral ? 'Reps (L)' : 'Reps' }}</label>
-                              <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" [placeholder]="getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
+                              <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" (input)="markExerciseTouched(ex.id)" [placeholder]="getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                             </div>
                             @if (ex.unilateral) {
                               <div class="flex-1 min-w-[70px]">
                                 <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Reps (R)</label>
-                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" [placeholder]="getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
+                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" (input)="markExerciseTouched(ex.id)" [placeholder]="getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder-gray-400 dark:placeholder-gray-500/50">
                               </div>
                             }
 
@@ -576,7 +581,19 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
           </div>
           <div class="w-full max-w-sm">
             @if (!session()?.completedAt) {
-              @if (getActiveExercise(); as activeEx) {
+              @if (activeLoggingExercise(); as activeEx) {
+                <div class="w-full mb-2 flex items-center justify-center gap-1.5">
+                  <div class="w-1.5 h-1.5 rounded-full bg-accent-pos animate-pulse"></div>
+                  <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Logging:
+                  </span>
+                  <span class="text-xs font-bold text-black dark:text-white truncate max-w-[160px]">
+                    {{ activeEx.exerciseName }}
+                  </span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">
+                    &middot; Set {{ getSetsForExercise(activeEx.id).length + 1 }}
+                  </span>
+                </div>
                 <button
                   (click)="logSet(activeEx)"
                   [disabled]="getForm(activeEx.id).invalid || isLoggingSet()"
@@ -621,11 +638,35 @@ export class ActiveWorkoutComponent implements OnInit {
   activeIconTooltip = signal<string | null>(null);
   tooltipPosition = signal<{ left: number; top: number; arrowLeft: number } | null>(null);
 
+  /** ID of the last exercise card the user explicitly touched (input change/rating). */
+  activeLoggingExerciseId = signal<string | null>(null);
+
   sessionId = signal<string | null>(null);
   session = signal<WorkoutSessionResponse | null>(null);
   exercises = signal<DayExercise[]>([]);
   existingExerciseIds = computed(() => this.exercises().map(e => e.exerciseId));
   loggedSets = signal<WorkoutSetResponse[]>([]);
+
+  /**
+   * DayExercise targeted by the sticky Log Set button.
+   * Priority:
+   * 1. Last explicitly touched exercise (if still incomplete).
+   * 2. First incomplete exercise (fallback for initial load or after completion).
+   */
+  activeLoggingExercise = computed<DayExercise | undefined>(() => {
+    const touchedId = this.activeLoggingExerciseId();
+    const exercises = this.exercises();
+    const isIncomplete = (ex: DayExercise) =>
+      this.getSetsForExercise(ex.id).length < (ex.sets || 1);
+
+    if (touchedId) {
+      const touched = exercises.find(ex => ex.id === touchedId);
+      if (touched && isIncomplete(touched)) {
+        return touched;
+      }
+    }
+    return exercises.find(isIncomplete);
+  });
   suggestions = signal<Map<string, ExerciseSuggestionResponse>>(new Map());
   latestBodyWeight = signal<number | null>(null);
   isLoading = signal<boolean>(true);
@@ -1103,7 +1144,15 @@ export class ActiveWorkoutComponent implements OnInit {
   }
 
   getActiveExercise(): DayExercise | undefined {
-    return this.exercises().find(ex => this.getSetsForExercise(ex.id).length < (ex.sets || 1));
+    return this.activeLoggingExercise();
+  }
+
+  /**
+   * Marks an exercise card as touched by user interaction (input change or rating tap),
+   * updating the target for the sticky Log Set button.
+   */
+  markExerciseTouched(exId: string): void {
+    this.activeLoggingExerciseId.set(exId);
   }
 
   getLastSetForExercise(exerciseId: string): WorkoutSetResponse | null {
@@ -1445,6 +1494,8 @@ export class ActiveWorkoutComponent implements OnInit {
     const id = this.sessionId();
     if (!id || this.session()?.completedAt) return;
 
+    this.markExerciseTouched(dayExerciseId);
+
     this.workoutService.updateExerciseRating(id, dayExerciseId, rating).subscribe({
       next: (updatedSession) => {
         this.session.set(updatedSession);
@@ -1458,6 +1509,8 @@ export class ActiveWorkoutComponent implements OnInit {
   deleteRating(dayExerciseId: string) {
     const id = this.sessionId();
     if (!id || this.session()?.completedAt) return;
+
+    this.markExerciseTouched(dayExerciseId);
 
     this.workoutService.deleteExerciseRating(id, dayExerciseId).subscribe({
       next: (updatedSession) => {
