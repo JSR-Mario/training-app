@@ -46,33 +46,19 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
               <h1 class="text-3xl font-bold text-black dark:text-white mb-1">{{ session()?.dayTemplateName }}</h1>
               <p class="text-gray-500 dark:text-gray-400 text-sm">Week {{ session()?.weekNumber }} &bull; {{ session()?.performedOn | date:'mediumDate' }}</p>
             </div>
-            <div class="flex flex-col items-end gap-2">
-              <div class="flex items-center gap-2">
-                @if (session()?.completedAt) {
-                  <div class="px-3 py-1 bg-accent-pos/20 text-accent-pos text-xs rounded-lg border border-accent-pos/30 font-medium">
-                    Completed
-                  </div>
-                } @else {
-                  <button (click)="cancelWorkout()" class="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors" title="Cancel Workout">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                }
-              </div>
-
+            <div class="flex items-center gap-3">
               @if (!session()?.completedAt) {
-                <div class="flex items-center gap-2 px-2.5 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-mono font-medium shadow-sm">
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-mono font-medium shadow-sm">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent-pos transition-transform duration-300 shrink-0" [class.animate-pulse]="!isPaused()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span class="text-black dark:text-white font-bold text-xs sm:text-sm tracking-wider whitespace-nowrap">{{ formattedTimerDisplay() }}</span>
+                  <span class="text-black dark:text-white font-bold text-sm tracking-wider whitespace-nowrap">{{ formattedTimerDisplay() }}</span>
                   
                   <button
                     type="button"
                     (click)="togglePauseWorkout()"
                     [disabled]="isTimerActionLoading()"
-                    class="ml-1 px-2 py-0.5 text-xs font-semibold rounded-md flex items-center gap-1 transition-all cursor-pointer border"
+                    class="ml-1 px-2.5 py-1 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all cursor-pointer border"
                     [class.bg-amber-500/20]="isPaused()"
                     [class.text-amber-500]="isPaused()"
                     [class.border-amber-500/30]="isPaused()"
@@ -80,17 +66,21 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                     [class.text-accent-pos]="!isPaused()"
                     [class.border-accent-pos/30]="!isPaused()">
                     @if (isPaused()) {
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 fill-current" viewBox="0 0 24 24">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z" />
                       </svg>
                       <span>RESUME</span>
                     } @else {
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 fill-current" viewBox="0 0 24 24">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
                         <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                       </svg>
                       <span>PAUSE</span>
                     }
                   </button>
+                </div>
+              } @else {
+                <div class="px-3 py-1 bg-accent-pos/20 text-accent-pos text-xs rounded-xl border border-accent-pos/30 font-medium">
+                  Completed
                 </div>
               }
             </div>
@@ -582,21 +572,30 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
             </div>
           </div>
 
-          <!-- Non-sticky Finish / End Early Button -->
-          <div class="mt-8 mb-4 text-center">
+          <!-- Non-sticky Finish / Cancel Workout Buttons -->
+          <div class="mt-8 mb-4 flex flex-col sm:flex-row items-center justify-center gap-3">
             @if (!session()?.completedAt) {
               <button
                 (click)="completeWorkout()"
                 [disabled]="isCompleting()"
-                class="px-6 py-3 text-gray-500 hover:text-accent-pos dark:text-gray-400 dark:hover:text-accent-pos border border-gray-300 dark:border-gray-700 hover:border-accent-pos dark:hover:border-accent-pos rounded-xl transition-colors bg-transparent shadow-sm w-full md:w-auto"
+                class="px-6 py-3 text-gray-500 hover:text-accent-pos dark:text-gray-400 dark:hover:text-accent-pos border border-gray-300 dark:border-gray-700 hover:border-accent-pos dark:hover:border-accent-pos rounded-xl transition-colors bg-transparent shadow-sm w-full sm:w-auto font-medium"
                 >
                 {{ isCompleting() ? 'Completing...' : 'End Workout Early' }}
+              </button>
+              <button
+                (click)="cancelWorkout()"
+                class="px-6 py-3 text-accent-neg hover:bg-accent-neg/10 border border-accent-neg/30 rounded-xl transition-colors bg-transparent shadow-sm w-full sm:w-auto font-medium flex items-center justify-center gap-2"
+                >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Cancel Workout</span>
               </button>
             } @else {
               <button
                 (click)="uncompleteWorkout()"
                 [disabled]="isCompleting()"
-                class="px-6 py-3 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-black dark:text-white font-bold rounded-xl transition-colors shadow-sm w-full md:w-auto"
+                class="px-6 py-3 bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-black dark:text-white font-bold rounded-xl transition-colors shadow-sm w-full sm:w-auto"
                 >
                 {{ isCompleting() ? 'Reopening...' : 'Uncomplete & Edit' }}
               </button>
