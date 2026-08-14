@@ -27,6 +27,7 @@ describe('DayDetailComponent', () => {
     programServiceSpy = jasmine.createSpyObj('ProgramService', [
       'getDay',
       'getDayExercises',
+      'getProgram',
       'updateDayExercise',
       'deleteDayExercise',
       'reorderDayExercises'
@@ -41,6 +42,17 @@ describe('DayDetailComponent', () => {
     };
     programServiceSpy.getDay.and.returnValue(of(mockDay));
     programServiceSpy.getDayExercises.and.returnValue(of([mockDayExercise]));
+    programServiceSpy.getProgram.and.returnValue(of({
+      id: 'p-1',
+      userId: 'user-1',
+      name: 'Program A',
+      durationWeeks: 4,
+      isActive: true,
+      currentWeek: 1,
+      goal: 'MAINTENANCE',
+      isPublic: false,
+      createdAt: '2026-01-01T00:00:00Z'
+    }));
     exerciseServiceSpy.getExercises.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({

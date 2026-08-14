@@ -153,4 +153,150 @@ class WorkoutSetServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.isNewPr()).isFalse();
     }
+
+    @Test
+    void logSet_ReturnsWarning_WhenRepsBelowTargetRepRange() {
+        sessionExercise.setReps(8);
+        sessionExercise.setRepsMax(12);
+        sessionExercise.setAmrap(false);
+
+        WorkoutSetRequest request = new WorkoutSetRequest(sessionExerciseId, 1, 6, null, BigDecimal.valueOf(100.0));
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(sessionExercise));
+
+        WorkoutSet savedSet = new WorkoutSet();
+        ReflectionTestUtils.setField(savedSet, "id", UUID.randomUUID());
+        savedSet.setSession(session);
+        savedSet.setSessionExercise(sessionExercise);
+        savedSet.setSetNumber(1);
+        savedSet.setRepsCompleted(6);
+        savedSet.setWeightKg(BigDecimal.valueOf(100.0));
+
+        when(setRepository.save(any(WorkoutSet.class))).thenReturn(savedSet);
+        when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(java.util.List.of(savedSet));
+
+        WorkoutSetResponse response = setService.logSet(sessionId, userId, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.performanceStatus()).isEqualTo("WARNING");
+    }
+
+    @Test
+    void logSet_ReturnsWarning_WhenUnilateralRepsBelowTargetRepRange() {
+        exercise.setUnilateral(true);
+        sessionExercise.setReps(10);
+        sessionExercise.setAmrap(false);
+
+        WorkoutSetRequest request = new WorkoutSetRequest(sessionExerciseId, 1, 10, 8, BigDecimal.valueOf(20.0));
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(sessionExercise));
+
+        WorkoutSet savedSet = new WorkoutSet();
+        ReflectionTestUtils.setField(savedSet, "id", UUID.randomUUID());
+        savedSet.setSession(session);
+        savedSet.setSessionExercise(sessionExercise);
+        savedSet.setSetNumber(1);
+        savedSet.setRepsCompleted(10);
+        savedSet.setRepsCompletedRight(8);
+        savedSet.setWeightKg(BigDecimal.valueOf(20.0));
+
+        when(setRepository.save(any(WorkoutSet.class))).thenReturn(savedSet);
+        when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(java.util.List.of(savedSet));
+
+        WorkoutSetResponse response = setService.logSet(sessionId, userId, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.performanceStatus()).isEqualTo("WARNING");
+    }
+
+    @Test
+    void logSet_ReturnsGood_WhenExerciseIsAmrapEvenIfRepsBelowTarget() {
+        sessionExercise.setReps(10);
+        sessionExercise.setAmrap(true);
+
+        WorkoutSetRequest request = new WorkoutSetRequest(sessionExerciseId, 1, 5, null, BigDecimal.valueOf(50.0));
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(sessionExercise));
+
+        WorkoutSet savedSet = new WorkoutSet();
+        ReflectionTestUtils.setField(savedSet, "id", UUID.randomUUID());
+        savedSet.setSession(session);
+        savedSet.setSessionExercise(sessionExercise);
+        savedSet.setSetNumber(1);
+        savedSet.setRepsCompleted(5);
+        savedSet.setWeightKg(BigDecimal.valueOf(50.0));
+
+        when(setRepository.save(any(WorkoutSet.class))).thenReturn(savedSet);
+        when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(java.util.List.of(savedSet));
+
+        WorkoutSetResponse response = setService.logSet(sessionId, userId, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.performanceStatus()).isEqualTo("GOOD");
+    }
+
+    @Test
+    void logSet_ReturnsCritical_WhenPerformanceDropsBelow70Percent() {
+        sessionExercise.setReps(8);
+        sessionExercise.setAmrap(false);
+
+        WorkoutSet previousSet = new WorkoutSet();
+        ReflectionTestUtils.setField(previousSet, "id", UUID.randomUUID());
+        previousSet.setSession(session);
+        previousSet.setSessionExercise(sessionExercise);
+        previousSet.setSetNumber(1);
+        previousSet.setRepsCompleted(10);
+        previousSet.setWeightKg(BigDecimal.valueOf(100.0)); // perf = 1000
+
+        WorkoutSet currentSet = new WorkoutSet();
+        ReflectionTestUtils.setField(currentSet, "id", UUID.randomUUID());
+        currentSet.setSession(session);
+        currentSet.setSessionExercise(sessionExercise);
+        currentSet.setSetNumber(2);
+        currentSet.setRepsCompleted(6);
+        currentSet.setWeightKg(BigDecimal.valueOf(100.0)); // perf = 600 (ratio 0.60 < 0.70)
+
+        WorkoutSetRequest request = new WorkoutSetRequest(sessionExerciseId, 2, 6, null, BigDecimal.valueOf(100.0));
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(sessionExercise));
+        when(setRepository.save(any(WorkoutSet.class))).thenReturn(currentSet);
+        when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(java.util.List.of(previousSet, currentSet));
+
+        WorkoutSetResponse response = setService.logSet(sessionId, userId, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.performanceStatus()).isEqualTo("CRITICAL");
+    }
+
+    @Test
+    void logSet_ReturnsGood_WhenRepsAndPerformanceMeetTarget() {
+        sessionExercise.setReps(8);
+        sessionExercise.setRepsMax(12);
+        sessionExercise.setAmrap(false);
+
+        WorkoutSetRequest request = new WorkoutSetRequest(sessionExerciseId, 1, 10, null, BigDecimal.valueOf(80.0));
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(sessionExercise));
+
+        WorkoutSet savedSet = new WorkoutSet();
+        ReflectionTestUtils.setField(savedSet, "id", UUID.randomUUID());
+        savedSet.setSession(session);
+        savedSet.setSessionExercise(sessionExercise);
+        savedSet.setSetNumber(1);
+        savedSet.setRepsCompleted(10);
+        savedSet.setWeightKg(BigDecimal.valueOf(80.0));
+
+        when(setRepository.save(any(WorkoutSet.class))).thenReturn(savedSet);
+        when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(java.util.List.of(savedSet));
+
+        WorkoutSetResponse response = setService.logSet(sessionId, userId, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.performanceStatus()).isEqualTo("GOOD");
+    }
 }

@@ -5,5 +5,9 @@ import java.util.UUID;
 
 public record SessionExerciseReplaceRequest(
     @NotNull(message = "New exercise ID is required")
-    UUID newExerciseId
+    UUID newExerciseId,
+    Integer sets,
+    Integer reps,
+    Integer repsMax,
+    Boolean isAmrap
 ) {}

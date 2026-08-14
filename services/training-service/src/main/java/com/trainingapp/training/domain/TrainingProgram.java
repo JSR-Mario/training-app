@@ -57,16 +57,27 @@ public class TrainingProgram {
     @Column(name = "is_public", nullable = false)
     private boolean isPublic = false;
 
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "source_program_id")
+    private UUID sourceProgramId;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
     }
 
     public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public UUID getSourceProgramId() { return sourceProgramId; }
+    public void setSourceProgramId(UUID sourceProgramId) { this.sourceProgramId = sourceProgramId; }
     public int getDurationWeeks() { return durationWeeks; }
     public void setDurationWeeks(int durationWeeks) { this.durationWeeks = durationWeeks; }
     public LocalDate getStartDate() { return startDate; }

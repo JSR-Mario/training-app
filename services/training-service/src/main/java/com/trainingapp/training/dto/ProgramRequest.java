@@ -16,5 +16,6 @@ public record ProgramRequest(
         boolean isActive,
         @Min(1) @Max(52) Integer currentWeek,
         @NotNull ProgramGoal goal,
-        boolean isPublic
+        boolean isPublic,
+        @Size(max = 2000) String description
 ) {}

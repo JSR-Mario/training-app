@@ -49,11 +49,11 @@ class DayTemplateServiceTest {
 
     @Test
     void findByWeek_validatesOwnership() {
-        when(weekService.findOwned(userId, weekId)).thenReturn(sampleWeek);
+        when(weekService.findOwnedOrPublic(userId, weekId)).thenReturn(sampleWeek);
         when(dayRepository.findByWeekTemplateIdOrderBySortOrderAsc(weekId)).thenReturn(List.of(sampleDay));
         List<DayTemplateResponse> result = dayService.findByWeek(userId, weekId);
         assertThat(result).hasSize(1);
-        verify(weekService).findOwned(userId, weekId);
+        verify(weekService).findOwnedOrPublic(userId, weekId);
     }
 
     @Test

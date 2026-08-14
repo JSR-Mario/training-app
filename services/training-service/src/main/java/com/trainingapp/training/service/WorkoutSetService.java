@@ -64,7 +64,7 @@ public class WorkoutSetService {
         WorkoutSet saved = setRepository.save(set);
         
         List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId());
-        MaxPerfResult maxPerf = calculateMaxPerf(allSets, sessionExercise.getId());
+        double maxPerf = calculateMaxPerf(allSets, sessionExercise.getId());
         
         // Calculate if it's a PR by looking at past suggestions
         PrResult prResult = checkPr(session.getUserId(), saved);
@@ -80,7 +80,7 @@ public class WorkoutSetService {
         List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId);
         return allSets.stream()
             .map(set -> {
-                MaxPerfResult maxPerf = calculateMaxPerf(allSets, set.getSessionExercise().getId());
+                double maxPerf = calculateMaxPerf(allSets, set.getSessionExercise().getId());
                 PrResult prResult = checkPr(userId, set);
                 return mapToResponse(set, maxPerf, prResult);
             })
@@ -110,7 +110,7 @@ public class WorkoutSetService {
         set.setWeightKg(request.weightKg());
         WorkoutSet saved = setRepository.save(set);
         List<WorkoutSet> allSets = setRepository.findBySessionIdOrderByLoggedAtAsc(set.getSession().getId());
-        MaxPerfResult maxPerf = calculateMaxPerf(allSets, sessionExercise.getId());
+        double maxPerf = calculateMaxPerf(allSets, sessionExercise.getId());
         PrResult prResult = checkPr(userId, saved);
         return mapToResponse(saved, maxPerf, prResult);
     }
@@ -127,37 +127,50 @@ public class WorkoutSetService {
         setRepository.delete(set);
     }
 
-    private record MaxPerfResult(double maxPerf, Integer maxPerfSetNumber) {}
-
-    private MaxPerfResult calculateMaxPerf(List<WorkoutSet> sets, UUID sessionExerciseId) {
+    private double calculateMaxPerf(List<WorkoutSet> sets, UUID sessionExerciseId) {
         double max = 0;
-        Integer maxSetNum = null;
         for (WorkoutSet s : sets) {
             if (s.getSessionExercise().getId().equals(sessionExerciseId) && s.getWeightKg() != null && s.getRepsCompleted() != null) {
                 int reps = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
                 double perf = s.getWeightKg().doubleValue() * reps;
                 if (perf > max) {
                     max = perf;
-                    maxSetNum = s.getSetNumber();
                 }
             }
         }
-        return new MaxPerfResult(max, maxSetNum);
+        return max;
     }
 
-    private String calculatePerformanceStatus(WorkoutSet set, MaxPerfResult maxPerfResult) {
-        if (set.getWeightKg() == null || set.getRepsCompleted() == null || maxPerfResult.maxPerf() == 0) return "GOOD";
+    private String calculatePerformanceStatus(WorkoutSet set, double maxPerf) {
+        if (set.getRepsCompleted() == null) return "GOOD";
+
         int reps = set.getRepsCompleted() + (set.getRepsCompletedRight() != null ? set.getRepsCompletedRight() : 0);
-        double perf = set.getWeightKg().doubleValue() * reps;
-        double ratio = perf / maxPerfResult.maxPerf();
-        
-        if (ratio < 0.80) {
-            if (maxPerfResult.maxPerfSetNumber() != null && set.getSetNumber() < maxPerfResult.maxPerfSetNumber()) {
-                return "WARMUP";
-            }
-            if (ratio < 0.70) return "CRITICAL";
+
+        Double ratio = null;
+        if (set.getWeightKg() != null && maxPerf > 0) {
+            double perf = set.getWeightKg().doubleValue() * reps;
+            ratio = perf / maxPerf;
+        }
+
+        if (ratio != null && ratio < 0.70) {
+            return "CRITICAL";
+        }
+
+        if (ratio != null && ratio < 0.80) {
             return "WARNING";
         }
+
+        SessionExercise se = set.getSessionExercise();
+        if (se != null && !se.isAmrap() && se.getReps() != null) {
+            boolean isUnilateral = se.getExercise() != null && se.getExercise().isUnilateral();
+            int effectiveReps = (isUnilateral && set.getRepsCompletedRight() != null)
+                    ? Math.min(set.getRepsCompleted(), set.getRepsCompletedRight())
+                    : set.getRepsCompleted();
+            if (effectiveReps < se.getReps()) {
+                return "WARNING";
+            }
+        }
+
         return "GOOD";
     }
 
@@ -200,7 +213,7 @@ public class WorkoutSetService {
         return "31+";
     }
 
-    private WorkoutSetResponse mapToResponse(WorkoutSet set, MaxPerfResult maxPerf, PrResult prResult) {
+    private WorkoutSetResponse mapToResponse(WorkoutSet set, double maxPerf, PrResult prResult) {
         return new WorkoutSetResponse(
             set.getId(),
             set.getSession().getId(),

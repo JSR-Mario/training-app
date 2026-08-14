@@ -181,6 +181,73 @@ import { TutorialService } from '../../../../core/services/tutorial.service';
       }
     }
   
+    <!-- Program Completed Rating Celebration Modal -->
+    @if (finishedProgramForRating(); as finishedProg) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div class="solid-card rounded-2xl w-full max-w-md p-6 shadow-2xl relative border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div class="text-center mb-6">
+            <div class="w-14 h-14 rounded-full bg-accent-pos/15 text-accent-pos flex items-center justify-center mx-auto mb-3 text-2xl font-bold">
+              ✓
+            </div>
+            <h2 class="text-2xl font-bold text-black dark:text-white">Program Completed!</h2>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
+              Congratulations! You completed all {{ finishedProg.durationWeeks }} weeks of <span class="font-semibold text-black dark:text-white">{{ finishedProg.name }}</span>.
+            </p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
+              How would you rate this training program?
+            </p>
+          </div>
+
+          <div class="space-y-4">
+            <!-- 1 to 10 rating scale buttons -->
+            <div class="grid grid-cols-5 gap-2">
+              @for (r of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track r) {
+                <button
+                  type="button"
+                  (click)="selectedProgramRating.set(r)"
+                  class="py-2.5 rounded-xl font-bold text-sm transition-all border"
+                  [class.bg-accent-pos]="selectedProgramRating() === r"
+                  [class.text-white]="selectedProgramRating() === r"
+                  [class.border-accent-pos]="selectedProgramRating() === r"
+                  [class.shadow-md]="selectedProgramRating() === r"
+                  [class.bg-gray-100]="selectedProgramRating() !== r"
+                  [class.dark:bg-gray-800]="selectedProgramRating() !== r"
+                  [class.text-gray-700]="selectedProgramRating() !== r"
+                  [class.dark:text-gray-300]="selectedProgramRating() !== r"
+                  [class.border-gray-300]="selectedProgramRating() !== r"
+                  [class.dark:border-gray-700]="selectedProgramRating() !== r"
+                >
+                  {{ r }}
+                </button>
+              }
+            </div>
+
+            <div class="text-center text-xs font-semibold text-gray-400 dark:text-gray-500">
+              Selected Rating: <span class="text-accent-pos font-bold text-sm">{{ selectedProgramRating() }}/10</span>
+            </div>
+
+            <div class="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-800">
+              <button
+                type="button"
+                (click)="skipRating()"
+                class="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors text-sm font-medium"
+              >
+                Skip
+              </button>
+              <button
+                type="button"
+                (click)="submitProgramRating()"
+                [disabled]="isSubmittingProgramRating()"
+                class="px-6 py-2.5 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl text-sm transition-all solid-btn"
+              >
+                {{ isSubmittingProgramRating() ? 'Saving...' : 'Submit Rating' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  
   </div>
   `
 })
@@ -198,6 +265,9 @@ export class WorkoutDashboardComponent implements OnInit {
   isLoading = signal<boolean>(false);
   isReordering = signal<boolean>(false);
   reorderModeActive = signal<boolean>(false);
+  finishedProgramForRating = signal<TrainingProgram | null>(null);
+  selectedProgramRating = signal<number>(10);
+  isSubmittingProgramRating = signal<boolean>(false);
 
   toggleReorderMode() {
     this.reorderModeActive.update(v => !v);
@@ -336,11 +406,12 @@ export class WorkoutDashboardComponent implements OnInit {
       this.programService.advanceWeek(prog.id).subscribe({
         next: (updatedProgram) => {
           if (!updatedProgram.isActive) {
-            // Program finished
+            // Program finished - set for rating celebration modal
+            this.finishedProgramForRating.set(prog);
+            this.selectedProgramRating.set(10);
             this.activeProgram.set(null);
             this.sessions.set([]);
             this.dayTemplates.set([]);
-            alert('Congratulations on finishing the program!');
           } else {
             this.activeProgram.set(updatedProgram);
             this.displayedWeek.set(updatedProgram.currentWeek);
@@ -351,6 +422,28 @@ export class WorkoutDashboardComponent implements OnInit {
         error: (err) => console.error('Failed to advance week', err)
       });
     }
+  }
+
+  submitProgramRating() {
+    const finished = this.finishedProgramForRating();
+    if (!finished) return;
+
+    this.isSubmittingProgramRating.set(true);
+    this.programService.rateProgram(finished.id, this.selectedProgramRating()).subscribe({
+      next: () => {
+        this.isSubmittingProgramRating.set(false);
+        this.finishedProgramForRating.set(null);
+      },
+      error: (err) => {
+        console.error('Failed to rate program', err);
+        this.isSubmittingProgramRating.set(false);
+        this.finishedProgramForRating.set(null);
+      }
+    });
+  }
+
+  skipRating() {
+    this.finishedProgramForRating.set(null);
   }
 
   startDaySession(dayTemplateId: string) {

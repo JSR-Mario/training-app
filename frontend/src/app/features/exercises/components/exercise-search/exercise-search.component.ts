@@ -216,8 +216,9 @@ export class ExerciseSearchComponent implements OnInit {
       name: formData.name,
       equipmentBrand: formData.equipmentBrand || undefined,
       unilateral: formData.unilateral,
-      isPublic: formData.isPublic,
-      type: 'STRENGTH' as const
+      spinalLoading: formData.spinalLoading || false,
+      isBodyweight: formData.isBodyweight || false,
+      isPublic: formData.isPublic || false
     };
 
     this.exerciseService.createExercise(exercisePayload).pipe(
@@ -245,7 +246,7 @@ export class ExerciseSearchComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to create inline exercise', err);
-        alert(err.error?.message || 'Failed to create exercise. It might be a duplicate.');
+        alert(err.error?.detail || err.error?.message || 'Failed to create exercise.');
         this.savingNew.set(false);
       }
     });
