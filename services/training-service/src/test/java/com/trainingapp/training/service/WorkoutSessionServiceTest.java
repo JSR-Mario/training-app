@@ -44,6 +44,7 @@ class WorkoutSessionServiceTest {
     @Mock private com.trainingapp.training.repository.SessionExerciseRatingRepository ratingRepository;
     @Mock private com.trainingapp.training.repository.DayExerciseRepository dayExerciseRepository;
     @Mock private com.trainingapp.training.repository.SessionExerciseRepository sessionExerciseRepository;
+    @Mock private com.trainingapp.training.repository.ExerciseRepository exerciseRepository;
     @Mock private com.trainingapp.training.repository.BodyWeightRepository bodyWeightRepository;
     @Mock private ExperienceService experienceService;
 
@@ -427,5 +428,93 @@ class WorkoutSessionServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.previousNotes()).isEqualTo("Heavy bench press 100kg");
+    }
+
+    @Test
+    void replaceSessionExercise_WithCustomPrescription_UpdatesSetsAndReps() {
+        UUID sessionId = UUID.randomUUID();
+        UUID sessionExerciseId = UUID.randomUUID();
+        UUID newExerciseId = UUID.randomUUID();
+
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setUserId(userId);
+
+        com.trainingapp.training.domain.Exercise oldEx = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(oldEx, "id", UUID.randomUUID());
+        oldEx.setName("Bench Press");
+
+        com.trainingapp.training.domain.Exercise newEx = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(newEx, "id", newExerciseId);
+        newEx.setName("Incline Dumbbell Press");
+
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", sessionExerciseId);
+        se.setSession(session);
+        se.setExercise(oldEx);
+        se.setSets(3);
+        se.setReps(8);
+        se.setRepsMax(12);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(se));
+        when(exerciseRepository.findById(newExerciseId)).thenReturn(Optional.of(newEx));
+        when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(List.of());
+        when(sessionExerciseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        com.trainingapp.training.dto.SessionExerciseReplaceRequest req =
+            new com.trainingapp.training.dto.SessionExerciseReplaceRequest(newExerciseId, 4, 12, 15, false);
+
+        com.trainingapp.training.dto.SessionExerciseResponse response =
+            sessionService.replaceSessionExercise(sessionId, userId, sessionExerciseId, req);
+
+        assertThat(response.exercise().name()).isEqualTo("Incline Dumbbell Press");
+        assertThat(response.sets()).isEqualTo(4);
+        assertThat(response.reps()).isEqualTo(12);
+        assertThat(response.repsMax()).isEqualTo(15);
+    }
+
+    @Test
+    void replaceSessionExercise_WithoutCustomPrescription_KeepsExistingSetsAndReps() {
+        UUID sessionId = UUID.randomUUID();
+        UUID sessionExerciseId = UUID.randomUUID();
+        UUID newExerciseId = UUID.randomUUID();
+
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setUserId(userId);
+
+        com.trainingapp.training.domain.Exercise oldEx = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(oldEx, "id", UUID.randomUUID());
+        oldEx.setName("Bench Press");
+
+        com.trainingapp.training.domain.Exercise newEx = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(newEx, "id", newExerciseId);
+        newEx.setName("Chest Flyes");
+
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", sessionExerciseId);
+        se.setSession(session);
+        se.setExercise(oldEx);
+        se.setSets(3);
+        se.setReps(10);
+        se.setRepsMax(null);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(se));
+        when(exerciseRepository.findById(newExerciseId)).thenReturn(Optional.of(newEx));
+        when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(List.of());
+        when(sessionExerciseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        com.trainingapp.training.dto.SessionExerciseReplaceRequest req =
+            new com.trainingapp.training.dto.SessionExerciseReplaceRequest(newExerciseId, null, null, null, null);
+
+        com.trainingapp.training.dto.SessionExerciseResponse response =
+            sessionService.replaceSessionExercise(sessionId, userId, sessionExerciseId, req);
+
+        assertThat(response.exercise().name()).isEqualTo("Chest Flyes");
+        assertThat(response.sets()).isEqualTo(3);
+        assertThat(response.reps()).isEqualTo(10);
+        assertThat(response.repsMax()).isNull();
     }
 }

@@ -675,6 +675,18 @@ public class WorkoutSessionService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "New exercise not found"));
 
         se.setExercise(newExercise);
+        if (request.sets() != null && request.sets() > 0) {
+            se.setSets(request.sets());
+        }
+        if (request.reps() != null && request.reps() > 0) {
+            se.setReps(request.reps());
+        }
+        if (request.repsMax() != null) {
+            se.setRepsMax(request.repsMax());
+        }
+        if (request.isAmrap() != null) {
+            se.setAmrap(request.isAmrap());
+        }
 
         // Delete any logged sets for the replaced exercise
         List<WorkoutSet> setsToDelete = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId())

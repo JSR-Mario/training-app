@@ -12,7 +12,8 @@ import {
   DayExercise, 
   WorkoutSetResponse,
   Exercise,
-  ExerciseSuggestionResponse
+  ExerciseSuggestionResponse,
+  SessionExerciseReplaceRequest
 } from '../../../../core/types/training.types';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/components/exercise-form/exercise-form.component';
@@ -469,12 +470,76 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                 
                 @if (replacingExerciseId() === ex.id) {
                   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
-                    <div class="solid-card rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative p-6 h-[80vh] flex flex-col">
+                    <div class="solid-card rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative p-6 max-h-[85vh] flex flex-col">
                       <button (click)="cancelReplace()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white z-10">✕</button>
-                      <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0">Replace {{ ex.exerciseName }}</h3>
-                      <div class="flex-1 overflow-y-auto min-h-0">
-                        <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onReplaceExerciseSelected($event)"></app-exercise-search>
-                      </div>
+                      
+                      @if (!replaceTargetExercise()) {
+                        <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0">Replace {{ ex.exerciseName }}</h3>
+                        <div class="flex-1 overflow-y-auto min-h-0">
+                          <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onReplaceExerciseSelected($event)"></app-exercise-search>
+                        </div>
+                      } @else {
+                        <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0">Confirm Replacement</h3>
+                        
+                        <div class="flex-1 overflow-y-auto min-h-0 space-y-5">
+                          <div class="p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/60 text-sm space-y-1.5">
+                            <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                              <span class="text-xs uppercase font-bold tracking-wider">Replacing:</span>
+                              <span class="font-semibold text-gray-700 dark:text-gray-300 line-through">{{ ex.exerciseName }}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-accent-pos font-bold">
+                              <span class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-normal">With:</span>
+                              <span>{{ replaceTargetExercise()?.name }}</span>
+                            </div>
+                          </div>
+
+                          <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-600 dark:text-amber-400 flex items-start gap-2">
+                            <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <span>Any logged sets for this exercise will be deleted upon replacement.</span>
+                          </div>
+
+                          <form [formGroup]="replaceForm" (ngSubmit)="confirmReplaceExercise()" class="space-y-4">
+                            <div class="flex items-center gap-3">
+                              <label class="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  formControlName="keepExistingTargets"
+                                  class="sr-only peer"
+                                  id="keepTargetsCheckbox"
+                                >
+                                <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+                              </label>
+                              <label for="keepTargetsCheckbox" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                Keep same sets & reps ({{ ex.sets }} sets &times; {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps)
+                              </label>
+                            </div>
+
+                            @if (!replaceForm.get('keepExistingTargets')?.value) {
+                              <div class="grid grid-cols-3 gap-3 pt-1">
+                                <div>
+                                  <label for="replaceSetsInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Sets</label>
+                                  <input id="replaceSetsInput" type="number" formControlName="sets" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                                </div>
+                                <div>
+                                  <label for="replaceRepsInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Min Reps</label>
+                                  <input id="replaceRepsInput" type="number" formControlName="reps" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                                </div>
+                                <div>
+                                  <label for="replaceRepsMaxInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Max Reps (Opt)</label>
+                                  <input id="replaceRepsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                                </div>
+                              </div>
+                            }
+
+                            <div class="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700/60">
+                              <button type="button" (click)="cancelReplaceTarget()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Back</button>
+                              <button type="submit" [disabled]="replaceForm.invalid && !replaceForm.get('keepExistingTargets')?.value" class="px-5 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl text-sm disabled:opacity-50 transition-colors solid-btn">Replace Exercise</button>
+                            </div>
+                          </form>
+                        </div>
+                      }
                     </div>
                   </div>
                 }
@@ -789,7 +854,15 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   
   optionsModalOpen = signal<string | null>(null);
   replacingExerciseId = signal<string | null>(null);
+  replaceTargetExercise = signal<Exercise | null>(null);
   exerciseUnits = signal<Record<string, 'kg' | 'lb'>>({});
+
+  replaceForm: FormGroup = this.fb.group({
+    keepExistingTargets: [true],
+    sets: [3, [Validators.required, Validators.min(1)]],
+    reps: [10, [Validators.required, Validators.min(1)]],
+    repsMax: [null as number | null]
+  });
 
   exerciseForm: FormGroup = this.fb.group({
     exerciseId: ['', Validators.required],
@@ -891,29 +964,62 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   startReplaceExercise(exId: string) {
     this.closeOptionsModal();
     this.replacingExerciseId.set(exId);
+    this.replaceTargetExercise.set(null);
   }
 
   cancelReplace() {
     this.replacingExerciseId.set(null);
+    this.replaceTargetExercise.set(null);
+  }
+
+  cancelReplaceTarget() {
+    this.replaceTargetExercise.set(null);
+  }
+
+  getReplacingExercise(): DayExercise | undefined {
+    const id = this.replacingExerciseId();
+    return this.exercises().find(e => e.id === id);
   }
 
   onReplaceExerciseSelected(newExercise: Exercise) {
+    const current = this.getReplacingExercise();
+    this.replaceTargetExercise.set(newExercise);
+    this.replaceForm.reset({
+      keepExistingTargets: true,
+      sets: current?.sets || 3,
+      reps: current?.reps || 10,
+      repsMax: current?.repsMax ?? null
+    });
+  }
+
+  confirmReplaceExercise() {
     const sessionExerciseId = this.replacingExerciseId();
     const sessionId = this.sessionId();
-    if (!sessionExerciseId || !sessionId) return;
-    
-    if (!confirm('Are you sure you want to replace this exercise? Any logged sets will be deleted.')) {
+    const newExercise = this.replaceTargetExercise();
+    if (!sessionExerciseId || !sessionId || !newExercise) return;
+
+    if (this.replaceForm.invalid && !this.replaceForm.value.keepExistingTargets) {
       return;
     }
 
-    this.workoutService.replaceSessionExercise(sessionId, sessionExerciseId, { newExerciseId: newExercise.id }).subscribe({
+    const formVal = this.replaceForm.value;
+    const current = this.getReplacingExercise();
+    const payload: SessionExerciseReplaceRequest = {
+      newExerciseId: newExercise.id,
+      sets: formVal.keepExistingTargets ? (current?.sets ?? 3) : (formVal.sets || 3),
+      reps: formVal.keepExistingTargets ? (current?.reps ?? 10) : (formVal.reps || 10),
+      repsMax: formVal.keepExistingTargets ? (current?.repsMax ?? undefined) : (formVal.repsMax || undefined)
+    };
+
+    this.workoutService.replaceSessionExercise(sessionId, sessionExerciseId, payload).subscribe({
       next: () => {
         this.loadWorkoutData();
         this.replacingExerciseId.set(null);
+        this.replaceTargetExercise.set(null);
       },
       error: (err) => {
         console.error('Failed to replace exercise', err);
-        alert('Failed to replace exercise');
+        alert(err.error?.detail || err.error?.message || 'Failed to replace exercise');
       }
     });
   }
