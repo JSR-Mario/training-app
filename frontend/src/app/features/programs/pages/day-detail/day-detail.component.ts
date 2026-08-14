@@ -61,7 +61,7 @@ import { Observable, forkJoin } from 'rxjs';
         <div class="solid-card p-6 border border-accent-pos/30">
           <h3 class="text-lg font-bold text-black dark:text-white mb-4">Add Exercise to {{ day()?.name }}</h3>
           @if (!selectedExercise()) {
-            <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onExerciseSelected($event)"></app-exercise-search>
+            <app-exercise-search [excludeIds]="existingExerciseIds()" [publicOnly]="program()?.isPublic || false" (exerciseSelected)="onExerciseSelected($event)"></app-exercise-search>
           }
           @if (selectedExercise()) {
             <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
@@ -384,6 +384,26 @@ export class DayDetailComponent implements OnInit {
         this.loadData();
       }
     });
+
+    this.exerciseForm.get('isAmrap')?.valueChanges.subscribe(isAmrap => {
+      const repsControl = this.exerciseForm.get('reps');
+      if (isAmrap) {
+        repsControl?.clearValidators();
+      } else if (this.selectedExercise()) {
+        repsControl?.setValidators([Validators.required, Validators.min(1)]);
+      }
+      repsControl?.updateValueAndValidity();
+    });
+
+    this.editForm.get('isAmrap')?.valueChanges.subscribe(isAmrap => {
+      const repsControl = this.editForm.get('reps');
+      if (isAmrap) {
+        repsControl?.clearValidators();
+      } else {
+        repsControl?.setValidators([Validators.required, Validators.min(1)]);
+      }
+      repsControl?.updateValueAndValidity();
+    });
   }
 
   loadData() {
@@ -412,10 +432,13 @@ export class DayDetailComponent implements OnInit {
         this.day.set(data.day);
         const sorted = data.dayExercises.sort((a, b) => a.sortOrder - b.sortOrder);
         this.exercises.set(sorted);
-        this.availableExercises.set(data.library);
         if (data.program) {
           this.program.set(data.program);
         }
+        const available = data.program?.isPublic
+          ? data.library.filter(e => e.isPublic)
+          : data.library;
+        this.availableExercises.set(available);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -488,7 +511,11 @@ export class DayDetailComponent implements OnInit {
     this.exerciseForm.patchValue({ exerciseId: ex.id });
 
     this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
-    this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+    if (this.exerciseForm.get('isAmrap')?.value) {
+      this.exerciseForm.get('reps')?.clearValidators();
+    } else {
+      this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+    }
     
     this.exerciseForm.get('sets')?.updateValueAndValidity();
     this.exerciseForm.get('reps')?.updateValueAndValidity();
