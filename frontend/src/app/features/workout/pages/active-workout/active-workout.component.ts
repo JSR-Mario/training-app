@@ -87,9 +87,9 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
             </div>
           </div>
 
-          <!-- Mobile Workout Progress Bar -->
+          <!-- Mobile Workout Progress Bar (Sticky on mobile) -->
           @if (!session()?.completedAt) {
-            <div class="lg:hidden mb-6 p-4 solid-card border border-gray-300 dark:border-gray-700">
+            <div class="lg:hidden sticky top-16 z-20 mb-6 p-3.5 sm:p-4 solid-card border border-gray-300 dark:border-gray-700 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md shadow-md">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Workout Progress</span>
                 <span class="text-xs font-bold text-black dark:text-white">{{ getTotalLoggedSets() }} / {{ getTotalExpectedSets() }} Sets ({{ getTotalExpectedSets() > 0 ? Math.round((getTotalLoggedSets() / getTotalExpectedSets()) * 100) : 0 }}%)</span>
