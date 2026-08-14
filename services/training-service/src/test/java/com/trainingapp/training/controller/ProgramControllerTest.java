@@ -1,23 +1,25 @@
 package com.trainingapp.training.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.trainingapp.training.config.UserIdAuthenticationToken;
 import com.trainingapp.training.domain.ProgramGoal;
+import com.trainingapp.training.dto.ProgramRatingRequest;
 import com.trainingapp.training.dto.ProgramRequest;
 import com.trainingapp.training.dto.ProgramResponse;
 import com.trainingapp.training.service.ProgramService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.trainingapp.training.config.UserIdAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -43,7 +45,6 @@ class ProgramControllerTest {
         SecurityContextHolder.clearContext();
     }
 
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -56,8 +57,8 @@ class ProgramControllerTest {
     @Test
     void createProgram_Success() throws Exception {
         UUID userId = testUserId;
-        ProgramRequest req = new ProgramRequest("Hypertrophy", 8, LocalDate.now(), false, 1, ProgramGoal.MAINTENANCE, false);
-        ProgramResponse resp = new ProgramResponse(UUID.randomUUID(), "Hypertrophy", 8, LocalDate.now(), false, 1, java.time.Instant.now(), ProgramGoal.MAINTENANCE, false);
+        ProgramRequest req = new ProgramRequest("Hypertrophy", 8, LocalDate.now(), false, 1, ProgramGoal.MAINTENANCE, false, "Hypertrophy routine");
+        ProgramResponse resp = new ProgramResponse(UUID.randomUUID(), userId, "Hypertrophy", "Hypertrophy routine", 8, LocalDate.now(), false, 1, Instant.now(), ProgramGoal.MAINTENANCE, false, null, 9.0, 1, 9);
 
         Mockito.when(programService.create(eq(userId), any())).thenReturn(resp);
 
@@ -66,8 +67,25 @@ class ProgramControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("Hypertrophy"));
+                .andExpect(jsonPath("$.name").value("Hypertrophy"))
+                .andExpect(jsonPath("$.description").value("Hypertrophy routine"));
+    }
+
+    @Test
+    void rateProgram_Success() throws Exception {
+        UUID userId = testUserId;
+        UUID programId = UUID.randomUUID();
+        ProgramRatingRequest req = new ProgramRatingRequest(9);
+        ProgramResponse resp = new ProgramResponse(programId, userId, "Hypertrophy", "Hypertrophy routine", 8, LocalDate.now(), false, 1, Instant.now(), ProgramGoal.MAINTENANCE, false, null, 9.0, 1, 9);
+
+        Mockito.when(programService.rateProgram(eq(userId), eq(programId), eq(9))).thenReturn(resp);
+
+        mockMvc.perform(post("/api/v1/training/programs/{id}/ratings", programId)
+                .header("X-User-Id", userId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.averageRating").value(9.0))
+                .andExpect(jsonPath("$.ratingsCount").value(1));
     }
 }
-
-

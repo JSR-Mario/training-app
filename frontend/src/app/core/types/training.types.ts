@@ -99,13 +99,18 @@ export interface TrainingProgram {
   id: string;
   userId: string;
   name: string;
+  description?: string;
   durationWeeks: number;
   isActive: boolean;
   currentWeek: number;
   goal: ProgramGoal;
   isPublic?: boolean;
+  sourceProgramId?: string;
+  averageRating?: number;
+  ratingsCount?: number;
+  userRating?: number;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface WorkoutSessionRequest {

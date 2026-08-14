@@ -14,7 +14,7 @@ import java.util.UUID;
 
 /**
  * Business logic for week templates. Validates that the parent program
- * belongs to the authenticated user before any read or write.
+ * belongs to the authenticated user or is public before read, and belongs to user before write.
  */
 @Service
 public class WeekTemplateService {
@@ -30,7 +30,7 @@ public class WeekTemplateService {
 
     @Transactional(readOnly = true)
     public List<WeekTemplateResponse> findByProgram(UUID userId, UUID programId) {
-        programService.findOwned(userId, programId);
+        programService.findOwnedOrPublic(userId, programId);
         return weekRepository.findByProgramId(programId).stream()
                 .map(this::toResponse)
                 .toList();
@@ -38,7 +38,7 @@ public class WeekTemplateService {
 
     @Transactional(readOnly = true)
     public WeekTemplateResponse findById(UUID userId, UUID weekId) {
-        return toResponse(findOwned(userId, weekId));
+        return toResponse(findOwnedOrPublic(userId, weekId));
     }
 
     @Transactional
@@ -68,6 +68,14 @@ public class WeekTemplateService {
         WeekTemplate week = weekRepository.findById(weekId)
                 .orElseThrow(() -> new ResourceNotFoundException("Week template not found."));
         programService.findOwned(userId, week.getProgram().getId());
+        return week;
+    }
+
+    /** Package-private: validates week's parent program belongs to user or is public. */
+    WeekTemplate findOwnedOrPublic(UUID userId, UUID weekId) {
+        WeekTemplate week = weekRepository.findById(weekId)
+                .orElseThrow(() -> new ResourceNotFoundException("Week template not found."));
+        programService.findOwnedOrPublic(userId, week.getProgram().getId());
         return week;
     }
 

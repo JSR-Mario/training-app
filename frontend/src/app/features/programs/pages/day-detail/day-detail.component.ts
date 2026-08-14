@@ -1,44 +1,63 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
-
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProgramService } from '../../services/program.service';
 import { ExerciseService } from '../../../exercises/services/exercise.service';
-import { DayTemplate, DayExercise, Exercise, getBodyPartPath, BodyPart } from '../../../../core/types/training.types';
+import { DayTemplate, DayExercise, Exercise, TrainingProgram } from '../../../../core/types/training.types';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
-import { forkJoin } from 'rxjs';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { Observable, forkJoin } from 'rxjs';
 
 @Component({
   standalone: true,
-    selector: 'app-day-detail',
-    imports: [RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
-    template: `
+  selector: 'app-day-detail',
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
+  template: `
     <div class="max-w-7xl mx-auto space-y-6 pb-24">
     
-      <!-- Header -->
+      <!-- Back Link & Header -->
       <div>
+        <div class="mb-3">
+          <a [routerLink]="['/programs', programId()]" class="text-xs sm:text-sm font-semibold text-gray-500 hover:text-black dark:hover:text-white transition-colors inline-flex items-center gap-1.5">
+            &larr; Back to Program Overview
+          </a>
+        </div>
+
         @if (isLoading()) {
           <div class="text-gray-500 dark:text-gray-400">Loading day details...</div>
         }
     
         @if (!isLoading() && day()) {
-          <div class="flex justify-between items-end border-b border-gray-300 dark:border-gray-800 pb-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-gray-300 dark:border-gray-800 pb-4 gap-4">
             <div>
-              <h1 class="text-3xl font-bold text-black dark:text-white">{{ day()?.name }}</h1>
-              <p class="text-gray-500 dark:text-gray-400 mt-1">{{ exercises().length }} exercises configured</p>
+              <div class="flex items-center gap-2">
+                <h1 class="text-2xl sm:text-3xl font-bold text-black dark:text-white">{{ day()?.name }}</h1>
+                @if (isReadOnly()) {
+                  <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-accent-pos/20 text-accent-pos border border-accent-pos/30">
+                    Preview Mode
+                  </span>
+                }
+              </div>
+              <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-1">
+                {{ exercises().length }} exercises configured &bull; Expected Volume: {{ totalVolumeSets() }} sets
+              </p>
             </div>
-            <button
-              (click)="openAddExercise()"
-              class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-lg transition-colors text-sm font-medium shadow-lg solid-btn"
+
+            @if (!isReadOnly()) {
+              <button
+                (click)="openAddExercise()"
+                class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-xl transition-colors text-sm font-semibold shadow-lg solid-btn shrink-0"
               >
-              + Add Exercise
-            </button>
+                + Add Exercise
+              </button>
+            }
           </div>
         }
       </div>
     
       <!-- Add Exercise Form -->
-      @if (showAddExercise() && !isLoading()) {
+      @if (showAddExercise() && !isLoading() && !isReadOnly()) {
         <div class="solid-card p-6 border border-accent-pos/30">
           <h3 class="text-lg font-bold text-black dark:text-white mb-4">Add Exercise to {{ day()?.name }}</h3>
           @if (!selectedExercise()) {
@@ -49,71 +68,71 @@ import { forkJoin } from 'rxjs';
               <div class="text-sm font-semibold text-accent-pos mb-1 border-b border-gray-300 dark:border-gray-700 pb-2 flex items-center gap-2">
                 Selected: {{ selectedExercise()?.name }}
               </div>
-                <div class="flex gap-4">
+              <div class="flex gap-4">
+                <div class="flex-1">
+                  <label for="setsInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sets</label>
+                  <input
+                    id="setsInput"
+                    type="number"
+                    formControlName="sets"
+                    min="1"
+                    class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
+                  >
+                </div>
+              </div>
+              <div class="mt-4 flex items-center gap-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    formControlName="isAmrap"
+                    class="sr-only peer"
+                    id="isAmrap"
+                  >
+                  <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+                </label>
+                <label for="isAmrap" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                  AMRAP
+                  <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(As Many Reps As Possible)</span>
+                </label>
+              </div>
+
+              @if (!exerciseForm.get('isAmrap')?.value) {
+                <div class="flex gap-4 mt-4">
                   <div class="flex-1">
-                    <label for="setsInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sets</label>
+                    <label for="repsInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Min Reps</label>
                     <input
-                      id="setsInput"
+                      id="repsInput"
                       type="number"
-                      formControlName="sets"
+                      formControlName="reps"
                       min="1"
                       class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
-                      >
-                  </div>
-                </div>
-                <div class="mt-4 flex items-center gap-3">
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      formControlName="isAmrap"
-                      class="sr-only peer"
-                      id="isAmrap"
                     >
-                    <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
-                  </label>
-                  <label for="isAmrap" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-                    AMRAP
-                    <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(As Many Reps As Possible)</span>
-                  </label>
-                </div>
- 
-                @if (!exerciseForm.get('isAmrap')?.value) {
-                  <div class="flex gap-4 mt-4">
-                    <div class="flex-1">
-                      <label for="repsInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Min Reps</label>
-                      <input
-                        id="repsInput"
-                        type="number"
-                        formControlName="reps"
-                        min="1"
-                        class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
-                        >
-                    </div>
-                    <div class="flex-1">
-                      <label for="repsMaxInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Reps (Optional)</label>
-                      <input
-                        id="repsMaxInput"
-                        type="number"
-                        formControlName="repsMax"
-                        min="1"
-                        class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
-                        >
-                    </div>
                   </div>
-                }
+                  <div class="flex-1">
+                    <label for="repsMaxInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Reps (Optional)</label>
+                    <input
+                      id="repsMaxInput"
+                      type="number"
+                      formControlName="repsMax"
+                      min="1"
+                      class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
+                    >
+                  </div>
+                </div>
+              }
               <div class="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   (click)="cancelAdd()"
                   class="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors text-sm"
-                  >
+                >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   [disabled]="exerciseForm.invalid"
                   class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-lg text-sm disabled:opacity-50 transition-colors solid-btn"
-                  >
+                >
                   Save Exercise
                 </button>
               </div>
@@ -132,41 +151,47 @@ import { forkJoin } from 'rxjs';
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
               </div>
-              <h3 class="text-lg font-bold text-black dark:text-white mb-2">Add exercises to this day</h3>
+              <h3 class="text-lg font-bold text-black dark:text-white mb-2">No exercises configured</h3>
               <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
-                Pick exercises from your catalog and specify target sets, target reps, or AMRAP sets for this training day.
+                {{ isReadOnly() ? 'This public template day has no exercises assigned.' : 'Pick exercises from your catalog and specify target sets and reps for this training day.' }}
               </p>
-              <button (click)="openAddExercise()" class="px-6 py-2.5 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl transition-all solid-btn">
-                + Add Exercise
-              </button>
+              @if (!isReadOnly()) {
+                <button (click)="openAddExercise()" class="px-6 py-2.5 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl transition-all solid-btn">
+                  + Add Exercise
+                </button>
+              }
             </div>
           }
+
           @if (exercises().length > 0) {
             <div class="space-y-3">
-              <h4 class="text-gray-700 dark:text-gray-300 font-semibold mb-2">Strength Exercises</h4>
+              <h4 class="text-gray-700 dark:text-gray-300 font-semibold mb-2">Exercises Routine</h4>
               @for (ex of exercises(); track ex; let i = $index) {
                 <div class="solid-card p-4 flex flex-col group hover:border-gray-400 dark:hover:border-gray-600 transition-colors">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
-                      <!-- Reorder handles -->
-                      <div class="flex flex-col gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
-                        <button
-                          (click)="moveStrengthExercise(ex.id, -1)"
-                          [disabled]="i === 0"
-                          class="text-gray-400 hover:text-black dark:hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
-                          title="Move Up"
+                      <!-- Reorder handles (only in edit mode) -->
+                      @if (!isReadOnly()) {
+                        <div class="flex flex-col gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                          <button
+                            (click)="moveStrengthExercise(ex.id, -1)"
+                            [disabled]="i === 0"
+                            class="text-gray-400 hover:text-black dark:hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
+                            title="Move Up"
                           >
-                          &uarr;
-                        </button>
-                        <button
-                          (click)="moveStrengthExercise(ex.id, 1)"
-                          [disabled]="i === exercises().length - 1"
-                          class="text-gray-400 hover:text-black dark:hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
-                          title="Move Down"
+                            &uarr;
+                          </button>
+                          <button
+                            (click)="moveStrengthExercise(ex.id, 1)"
+                            [disabled]="i === exercises().length - 1"
+                            class="text-gray-400 hover:text-black dark:hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 p-1"
+                            title="Move Down"
                           >
-                          &darr;
-                        </button>
-                      </div>
+                            &darr;
+                          </button>
+                        </div>
+                      }
+
                       <div>
                         <h4 class="font-semibold text-lg text-black dark:text-white flex items-center flex-wrap gap-2">
                           {{ ex.exerciseName }}
@@ -184,29 +209,32 @@ import { forkJoin } from 'rxjs';
                         </p>
                       </div>
                     </div>
-                    <div class="flex items-center gap-1">
-                      <button
-                        (click)="startEditExercise(ex)"
-                        class="text-accent-pos hover:opacity-80 p-2 opacity-50 group-hover:opacity-100 transition-opacity"
-                        title="Edit Parameters"
+
+                    @if (!isReadOnly()) {
+                      <div class="flex items-center gap-1">
+                        <button
+                          (click)="startEditExercise(ex)"
+                          class="text-accent-pos hover:opacity-80 p-2 opacity-50 group-hover:opacity-100 transition-opacity"
+                          title="Edit Parameters"
                         >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                      </button>
-                      <button
-                        (click)="deleteExercise(ex.id)"
-                        class="text-accent-neg hover:opacity-80 p-2 opacity-50 group-hover:opacity-100 transition-opacity"
-                        title="Remove"
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+                        <button
+                          (click)="deleteExercise(ex.id)"
+                          class="text-accent-neg hover:opacity-80 p-2 opacity-50 group-hover:opacity-100 transition-opacity"
+                          title="Remove"
                         >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                    }
                   </div>
 
-                  @if (editingExerciseId() === ex.id) {
+                  @if (editingExerciseId() === ex.id && !isReadOnly()) {
                     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
                       <div class="text-sm font-semibold text-accent-pos">
                         Edit Exercise Parameters
@@ -221,7 +249,7 @@ import { forkJoin } from 'rxjs';
                               formControlName="sets"
                               min="1"
                               class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
-                              >
+                            >
                           </div>
                         </div>
                         <div class="flex items-center gap-3">
@@ -250,7 +278,7 @@ import { forkJoin } from 'rxjs';
                                 formControlName="reps"
                                 min="1"
                                 class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
-                                >
+                              >
                             </div>
                             <div class="flex-1">
                               <label for="editRepsMaxInput_{{ex.id}}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Reps (Optional)</label>
@@ -260,7 +288,7 @@ import { forkJoin } from 'rxjs';
                                 formControlName="repsMax"
                                 min="1"
                                 class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input"
-                                >
+                              >
                             </div>
                           </div>
                         }
@@ -270,14 +298,14 @@ import { forkJoin } from 'rxjs';
                             type="button"
                             (click)="cancelEdit()"
                             class="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors text-sm"
-                            >
+                          >
                             Cancel
                           </button>
                           <button
                             type="submit"
                             [disabled]="editForm.invalid"
                             class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-lg text-sm disabled:opacity-50 transition-colors solid-btn"
-                            >
+                          >
                             Save Changes
                           </button>
                         </div>
@@ -290,56 +318,34 @@ import { forkJoin } from 'rxjs';
           }
         </div>
       }
-
-      @if (!isLoading() && volumeBreakdown().length > 0) {
-        <div class="mt-8 pt-8 border-t border-gray-300 dark:border-gray-800">
-          <h3 class="text-xl font-bold text-black dark:text-white mb-6 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-accent-pos" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Volume Breakdown
-          </h3>
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            @for (item of volumeBreakdown(); track item.part) {
-              <div class="bg-gray-100 dark:bg-gray-800/40 rounded-xl p-4 flex flex-col items-center justify-center border border-gray-300 dark:border-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
-                <span class="text-3xl font-black text-accent-pos">{{ item.sets }}</span>
-                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1 text-center">{{ item.part }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      }
     </div>
-    `
+  `
 })
 export class DayDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private programService = inject(ProgramService);
   private exerciseService = inject(ExerciseService);
+  public authService = inject(AuthService);
   private fb = inject(FormBuilder);
 
   programId = signal<string | null>(null);
   dayId = signal<string | null>(null);
+  program = signal<TrainingProgram | null>(null);
   day = signal<DayTemplate | null>(null);
   exercises = signal<DayExercise[]>([]);
-  existingExerciseIds = computed(() => this.exercises().map(e => e.exerciseId));
   availableExercises = signal<Exercise[]>([]);
-  volumeBreakdown = computed(() => {
-    const breakdown = new Map<string, number>();
-    for (const ex of this.exercises()) {
-      if (!ex.sets) continue;
-      const fullEx = this.availableExercises().find(e => e.id === ex.exerciseId);
-      if (fullEx && fullEx.targets) {
-        for (const t of fullEx.targets) {
-          const path = getBodyPartPath(t.bodyPart as BodyPart);
-          const name = path ? path.group : t.bodyPart.replace(/_/g, ' ');
-          breakdown.set(name, (breakdown.get(name) || 0) + ex.sets);
-        }
-      }
-    }
-    return Array.from(breakdown.entries())
-      .map(([part, sets]) => ({ part, sets }))
-      .sort((a, b) => b.sets - a.sets);
+
+  isReadOnly = computed(() => {
+    const prog = this.program();
+    if (!prog) return false;
+    if (!prog.isPublic) return false;
+    const currentUserId = this.authService.currentUserId;
+    const isOwner = !!currentUserId && prog.userId === currentUserId;
+    return !isOwner && !this.authService.isAdmin;
+  });
+
+  totalVolumeSets = computed(() => {
+    return this.exercises().reduce((total, ex) => total + (ex.sets || 0), 0);
   });
 
   isLoading = signal<boolean>(true);
@@ -365,6 +371,10 @@ export class DayDetailComponent implements OnInit {
     isAmrap: [false]
   });
 
+  existingExerciseIds(): string[] {
+    return this.exercises().map(e => e.exerciseId);
+  }
+
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
       this.programId.set(params.get('programId'));
@@ -379,18 +389,33 @@ export class DayDetailComponent implements OnInit {
   loadData() {
     this.isLoading.set(true);
     const dayId = this.dayId();
+    const programId = this.programId();
     if (!dayId) return;
 
-    forkJoin({
+    const requests: {
+      day: Observable<DayTemplate>;
+      dayExercises: Observable<DayExercise[]>;
+      library: Observable<Exercise[]>;
+      program?: Observable<TrainingProgram>;
+    } = {
       day: this.programService.getDay(dayId),
       dayExercises: this.programService.getDayExercises(dayId),
       library: this.exerciseService.getExercises()
-    }).subscribe({
+    };
+
+    if (programId) {
+      requests.program = this.programService.getProgram(programId);
+    }
+
+    forkJoin(requests).subscribe({
       next: (data) => {
         this.day.set(data.day);
         const sorted = data.dayExercises.sort((a, b) => a.sortOrder - b.sortOrder);
         this.exercises.set(sorted);
         this.availableExercises.set(data.library);
+        if (data.program) {
+          this.program.set(data.program);
+        }
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -403,7 +428,7 @@ export class DayDetailComponent implements OnInit {
   openAddExercise() {
     this.showAddExercise.set(true);
     this.selectedExercise.set(null);
-    this.exerciseForm.reset({ sets: 3, reps: 10, repsMax: null });
+    this.exerciseForm.reset({ sets: 3, reps: 10, repsMax: null, isAmrap: false });
   }
 
   cancelAdd() {
@@ -487,6 +512,9 @@ export class DayDetailComponent implements OnInit {
         reps, 
         sortOrder, 
         repsMax,
+        undefined,
+        undefined,
+        undefined,
         isAmrap
       ).subscribe({
         next: () => {
