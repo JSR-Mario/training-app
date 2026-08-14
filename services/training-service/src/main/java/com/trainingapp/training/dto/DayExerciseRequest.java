@@ -7,7 +7,7 @@ import java.util.UUID;
 
 /** Request body for adding or updating an exercise within a day template. */
 public record DayExerciseRequest(
-        @NotNull UUID exerciseId,
+        UUID exerciseId,
         Integer sets,
         Integer reps,
         @PositiveOrZero Integer repsMax,

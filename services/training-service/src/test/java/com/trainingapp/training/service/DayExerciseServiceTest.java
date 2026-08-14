@@ -78,6 +78,47 @@ class DayExerciseServiceTest {
     }
 
     @Test
+    void create_amrapExercise_savesWithNullReps() {
+        UUID exerciseId = UUID.randomUUID();
+        when(dayTemplateService.findOwned(userId, dayId)).thenReturn(sampleDay);
+        when(exerciseService.findOwned(userId, exerciseId)).thenReturn(sampleExercise);
+        when(dayExerciseRepository.save(any())).thenReturn(sampleDayExercise);
+
+        DayExerciseResponse result = dayExerciseService.create(userId, dayId,
+                new DayExerciseRequest(exerciseId, 3, null, null, true, 1));
+        assertThat(result.sets()).isEqualTo(3);
+    }
+
+    @Test
+    void create_nullExerciseId_throwsIllegalArgumentException() {
+        when(dayTemplateService.findOwned(userId, dayId)).thenReturn(sampleDay);
+        assertThatThrownBy(() -> dayExerciseService.create(userId, dayId,
+                new DayExerciseRequest(null, 3, 10, null, false, 1)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Exercise ID is required.");
+    }
+
+    @Test
+    void create_privateExerciseInPublicProgram_throwsIllegalArgumentException() {
+        UUID exerciseId = UUID.randomUUID();
+        com.trainingapp.training.domain.TrainingProgram publicProgram = new com.trainingapp.training.domain.TrainingProgram();
+        publicProgram.setIsPublic(true);
+        com.trainingapp.training.domain.WeekTemplate week = new com.trainingapp.training.domain.WeekTemplate();
+        week.setProgram(publicProgram);
+        sampleDay.setWeekTemplate(week);
+
+        sampleExercise.setIsPublic(false);
+
+        when(dayTemplateService.findOwned(userId, dayId)).thenReturn(sampleDay);
+        when(exerciseService.findOwned(userId, exerciseId)).thenReturn(sampleExercise);
+
+        assertThatThrownBy(() -> dayExerciseService.create(userId, dayId,
+                new DayExerciseRequest(exerciseId, 3, 10, null, false, 1)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Cannot add private exercise to a public program. The exercise must be public.");
+    }
+
+    @Test
     void delete_notFound_throwsNotFound() {
         UUID id = UUID.randomUUID();
         when(dayExerciseRepository.findById(id)).thenReturn(Optional.empty());

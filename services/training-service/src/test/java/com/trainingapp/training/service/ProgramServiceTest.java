@@ -83,7 +83,7 @@ class ProgramServiceTest {
 
     @Test
     void delete_existingProgram_deletes() {
-        when(programRepository.findByIdAndUserId(programId, userId)).thenReturn(Optional.of(sampleProgram));
+        when(programRepository.findById(programId)).thenReturn(Optional.of(sampleProgram));
         programService.delete(userId, programId);
         verify(programRepository).delete(sampleProgram);
     }
