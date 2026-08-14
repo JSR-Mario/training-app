@@ -157,6 +157,10 @@ export interface SessionExerciseRequest {
 
 export interface SessionExerciseReplaceRequest {
   newExerciseId: string;
+  sets?: number;
+  reps?: number;
+  repsMax?: number;
+  isAmrap?: boolean;
 }
 
 export interface SessionExerciseReorderRequest {

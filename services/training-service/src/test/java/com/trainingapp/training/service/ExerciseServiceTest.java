@@ -70,25 +70,49 @@ class ExerciseServiceTest {
 
     @Test
     void create_savesWithAllFields() {
+        when(exerciseRepository.existsByNameInUserScope(userId, "Bench Press", null)).thenReturn(false);
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
         ExerciseResponse result = exerciseService.create(userId,
-                new ExerciseRequest("Bench Press", "Hammer Strength", false, false, false, false));
+                new ExerciseRequest("  Bench Press  ", "Hammer Strength", false, false, false, false));
         assertThat(result.name()).isEqualTo("Bench Press");
         assertThat(result.equipmentBrand()).isEqualTo("Hammer Strength");
+        verify(exerciseRepository).existsByNameInUserScope(userId, "Bench Press", null);
         verify(exerciseRepository).save(any());
+    }
+
+    @Test
+    void create_duplicateName_throwsIllegalArgumentException() {
+        when(exerciseRepository.existsByNameInUserScope(userId, "Bench Press", null)).thenReturn(true);
+        assertThatThrownBy(() -> exerciseService.create(userId,
+                new ExerciseRequest("Bench Press", "Hammer Strength", false, false, false, false)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("An exercise with this name already exists.");
+        verify(exerciseRepository, never()).save(any());
     }
 
     @Test
     void update_existingExercise_updatesAllFields() {
         when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
+        when(exerciseRepository.existsByNameInUserScope(userId, "Incline Press", exerciseId)).thenReturn(false);
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
         when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
         when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());
         ExerciseResponse result = exerciseService.update(userId, exerciseId,
-                new ExerciseRequest("Incline Press", "Rogue", true, false, false, false));
+                new ExerciseRequest("  Incline Press  ", "Rogue", true, false, false, false));
         assertThat(sampleExercise.getName()).isEqualTo("Incline Press");
         assertThat(sampleExercise.getEquipmentBrand()).isEqualTo("Rogue");
         assertThat(sampleExercise.isUnilateral()).isTrue();
+    }
+
+    @Test
+    void update_duplicateName_throwsIllegalArgumentException() {
+        when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
+        when(exerciseRepository.existsByNameInUserScope(userId, "Existing Name", exerciseId)).thenReturn(true);
+        assertThatThrownBy(() -> exerciseService.update(userId, exerciseId,
+                new ExerciseRequest("Existing Name", "Rogue", true, false, false, false)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("An exercise with this name already exists.");
+        verify(exerciseRepository, never()).save(any());
     }
 
     @Test
@@ -141,5 +165,17 @@ class ExerciseServiceTest {
         when(targetRepository.findById(targetId)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> exerciseService.deleteTarget(userId, targetId))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void findById_success() {
+        when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
+        when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
+        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());
+
+        ExerciseResponse result = exerciseService.findById(userId, exerciseId);
+
+        assertThat(result.name()).isEqualTo("Bench Press");
+        assertThat(result.equipmentBrand()).isEqualTo("Hammer Strength");
     }
 }

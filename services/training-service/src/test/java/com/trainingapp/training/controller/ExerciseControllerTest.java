@@ -84,4 +84,19 @@ class ExerciseControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Bench Press"));
     }
+
+    @Test
+    void getExercise_Success() throws Exception {
+        UUID userId = testUserId;
+        UUID exerciseId = UUID.randomUUID();
+        ExerciseResponse resp = new ExerciseResponse(exerciseId, "Bench Press", "Hammer Strength", false, false, false, false, java.time.Instant.now(), java.util.Collections.emptyList(), 5.0, null);
+
+        Mockito.when(exerciseService.findById(eq(userId), eq(exerciseId))).thenReturn(resp);
+
+        mockMvc.perform(get("/api/v1/training/exercises/" + exerciseId)
+                .header("X-User-Id", userId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(exerciseId.toString()))
+                .andExpect(jsonPath("$.name").value("Bench Press"));
+    }
 }

@@ -32,4 +32,21 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
     @EntityGraph(attributePaths = "targets")
     @Query("SELECT e FROM Exercise e WHERE e.userId = :userId AND e.isDeleted = false")
     List<Exercise> findByUserIdAndIsDeletedFalse(@Param("userId") UUID userId);
+
+    /**
+     * Checks whether an exercise with the given name (case-insensitive and trimmed) already exists
+     * among the user's own exercises or public exercises that are not soft-deleted.
+     * Optionally excludes a specific exercise ID (for updates).
+     */
+    @Query("""
+        SELECT COUNT(e) > 0 FROM Exercise e
+        WHERE (e.userId = :userId OR e.isPublic = true)
+          AND e.isDeleted = false
+          AND LOWER(TRIM(e.name)) = LOWER(TRIM(:name))
+          AND (:excludeId IS NULL OR e.id <> :excludeId)
+        """)
+    boolean existsByNameInUserScope(
+            @Param("userId") UUID userId,
+            @Param("name") String name,
+            @Param("excludeId") UUID excludeId);
 }

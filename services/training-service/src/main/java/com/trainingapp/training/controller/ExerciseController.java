@@ -42,6 +42,11 @@ public class ExerciseController {
                 .body(exerciseService.create(UserContext.getCurrentUserId(), request));
     }
 
+    @GetMapping("/exercises/{id}")
+    public ExerciseResponse get(@PathVariable UUID id) {
+        return exerciseService.findById(UserContext.getCurrentUserId(), id);
+    }
+
     @PutMapping("/exercises/{id}")
     public ExerciseResponse update(@PathVariable UUID id, @Valid @RequestBody ExerciseRequest request) {
         return exerciseService.update(UserContext.getCurrentUserId(), id, request);

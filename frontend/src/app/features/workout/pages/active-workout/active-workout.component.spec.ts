@@ -201,6 +201,36 @@ describe('ActiveWorkoutComponent', () => {
       expect(component.isPaused()).toBeTrue();
       expect(component.formattedTimerDisplay()).toBe('02:00');
     });
+
+    it('determines exercise completion accurately', () => {
+      expect(component.isExerciseCompleted('ex1', 3)).toBeFalse();
+
+      const set1: WorkoutSetResponse = {
+        id: 's1', sessionId: 'sess-1', sessionExerciseId: 'ex1', setNumber: 1, weightKg: 50,
+        repsCompleted: 10, repsCompletedRight: undefined, loggedAt: new Date().toISOString(),
+        performanceStatus: 'GOOD', isNewPr: false, previousPrWeight: undefined, previousPrReps: undefined
+      };
+      const set2: WorkoutSetResponse = {
+        id: 's2', sessionId: 'sess-1', sessionExerciseId: 'ex1', setNumber: 2, weightKg: 50,
+        repsCompleted: 10, repsCompletedRight: undefined, loggedAt: new Date().toISOString(),
+        performanceStatus: 'GOOD', isNewPr: false, previousPrWeight: undefined, previousPrReps: undefined
+      };
+      const set3: WorkoutSetResponse = {
+        id: 's3', sessionId: 'sess-1', sessionExerciseId: 'ex1', setNumber: 3, weightKg: 50,
+        repsCompleted: 10, repsCompletedRight: undefined, loggedAt: new Date().toISOString(),
+        performanceStatus: 'GOOD', isNewPr: false, previousPrWeight: undefined, previousPrReps: undefined
+      };
+
+      component.loggedSets.set([set1, set2, set3]);
+      expect(component.isExerciseCompleted('ex1', 3)).toBeTrue();
+    });
+
+    it('tracks per-exercise logging state accurately', () => {
+      expect(component.isLogging('ex1')).toBeFalse();
+      component.isLoggingExercise.update(s => new Set(s).add('ex1'));
+      expect(component.isLogging('ex1')).toBeTrue();
+      expect(component.isLogging('ex2')).toBeFalse();
+    });
   });
 });
 
