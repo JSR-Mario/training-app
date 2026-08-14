@@ -525,154 +525,6 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                       }
                     </div>
                   }
-                  
-                  @if (optionsModalOpen() === ex.id) {
-                    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
-                      <div class="solid-card rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative p-6">
-                        <button (click)="closeOptionsModal()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white">✕</button>
-                        <h3 class="text-xl font-bold mb-6 text-black dark:text-white">{{ ex.exerciseName }} Options</h3>
-                        <div class="space-y-4">
-                          <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
-                            <span class="font-medium text-gray-700 dark:text-gray-300">Unit</span>
-                            <button (click)="toggleUnit(ex.id)" class="px-4 py-2 bg-accent-pos/10 text-accent-pos border border-accent-pos/30 hover:bg-accent-pos/20 rounded-lg text-sm font-bold transition-colors uppercase w-16">
-                              {{ getUnit(ex.id) }}
-                            </button>
-                          </div>
-                          <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl flex flex-col gap-3">
-                            <div class="flex items-center justify-between">
-                              <span class="font-medium text-gray-700 dark:text-gray-300">Workout Order</span>
-                              <span class="text-xs text-gray-500 dark:text-gray-400">Live preview</span>
-                            </div>
-                            <div class="max-h-48 overflow-y-auto space-y-1.5 pr-1">
-                              @for (item of exercises(); track item.id; let idx = $index) {
-                                <div 
-                                  class="flex items-center justify-between p-2 rounded-lg text-sm transition-colors text-black dark:text-white"
-                                  [class.bg-accent-pos/15]="item.id === ex.id"
-                                  [class.border]="item.id === ex.id"
-                                  [class.border-accent-pos/40]="item.id === ex.id"
-                                  [class.font-semibold]="item.id === ex.id"
-                                  [class.bg-white]="item.id !== ex.id"
-                                  [class.dark:bg-gray-900/60]="item.id !== ex.id">
-                                  
-                                  <div class="flex items-center gap-2 min-w-0 pr-2">
-                                    <span class="text-xs font-bold px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shrink-0">
-                                      {{ idx + 1 }}
-                                    </span>
-                                    <span class="truncate" [class.text-accent-pos]="item.id === ex.id">
-                                      {{ item.exerciseName }}
-                                    </span>
-                                  </div>
-                                  
-                                  <div class="flex items-center gap-1 shrink-0">
-                                    <button 
-                                      (click)="moveExercise(item.id, -1)" 
-                                      [disabled]="idx === 0" 
-                                      title="Move Up"
-                                      class="w-7 h-7 flex items-center justify-center rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition-colors text-black dark:text-white">
-                                      &uarr;
-                                    </button>
-                                    <button 
-                                      (click)="moveExercise(item.id, 1)" 
-                                      [disabled]="idx === exercises().length - 1" 
-                                      title="Move Down"
-                                      class="w-7 h-7 flex items-center justify-center rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition-colors text-black dark:text-white">
-                                      &darr;
-                                    </button>
-                                  </div>
-                                </div>
-                              }
-                            </div>
-                          </div>
-                          <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl flex flex-col gap-2">
-                            <button (click)="startReplaceExercise(ex.id)" class="w-full py-2 bg-accent-neg/10 text-accent-neg hover:bg-accent-neg/20 border border-accent-neg/20 rounded-lg text-sm font-bold transition-colors">
-                              Replace Exercise
-                            </button>
-                            <p class="text-xs text-gray-500 text-center mt-1 mb-2">Logged sets for this exercise will be removed.</p>
-                            
-                            <a [routerLink]="['/analytics']" [queryParams]="{ exerciseId: ex.exerciseId }" class="w-full py-2 bg-accent-pos/10 text-accent-pos hover:bg-accent-pos/20 border border-accent-pos/30 rounded-lg text-sm font-bold transition-colors text-center block">
-                              View Analytics
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  }
-                  
-                  @if (replacingExerciseId() === ex.id) {
-                    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
-                      <div class="solid-card rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative p-6 max-h-[85vh] flex flex-col">
-                        <button (click)="cancelReplace()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white z-10">✕</button>
-                        
-                        @if (!replaceTargetExercise()) {
-                          <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0">Replace {{ ex.exerciseName }}</h3>
-                          <div class="flex-1 overflow-y-auto min-h-0">
-                            <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onReplaceExerciseSelected($event)"></app-exercise-search>
-                          </div>
-                        } @else {
-                          <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0">Confirm Replacement</h3>
-                          
-                          <div class="flex-1 overflow-y-auto min-h-0 space-y-5">
-                            <div class="p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/60 text-sm space-y-1.5">
-                              <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                                <span class="text-xs uppercase font-bold tracking-wider">Replacing:</span>
-                                <span class="font-semibold text-gray-700 dark:text-gray-300 line-through">{{ ex.exerciseName }}</span>
-                              </div>
-                              <div class="flex items-center gap-2 text-accent-pos font-bold">
-                                <span class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-normal">With:</span>
-                                <span>{{ replaceTargetExercise()?.name }}</span>
-                              </div>
-                            </div>
-
-                            <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-600 dark:text-amber-400 flex items-start gap-2">
-                              <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                              </svg>
-                              <span>Any logged sets for this exercise will be deleted upon replacement.</span>
-                            </div>
-
-                            <form [formGroup]="replaceForm" (ngSubmit)="confirmReplaceExercise()" class="space-y-4">
-                              <div class="flex items-center gap-3">
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    formControlName="keepExistingTargets"
-                                    class="sr-only peer"
-                                    id="keepTargetsCheckbox"
-                                  >
-                                  <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
-                                </label>
-                                <label for="keepTargetsCheckbox" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-                                  Keep same sets & reps ({{ ex.sets }} sets &times; {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps)
-                                </label>
-                              </div>
-
-                              @if (!replaceForm.get('keepExistingTargets')?.value) {
-                                <div class="grid grid-cols-3 gap-3 pt-1">
-                                  <div>
-                                    <label for="replaceSetsInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Sets</label>
-                                    <input id="replaceSetsInput" type="number" formControlName="sets" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
-                                  </div>
-                                  <div>
-                                    <label for="replaceRepsInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Min Reps</label>
-                                    <input id="replaceRepsInput" type="number" formControlName="reps" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
-                                  </div>
-                                  <div>
-                                    <label for="replaceRepsMaxInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Max Reps (Opt)</label>
-                                    <input id="replaceRepsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
-                                  </div>
-                                </div>
-                              }
-
-                              <div class="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700/60">
-                                <button type="button" (click)="cancelReplaceTarget()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Back</button>
-                                <button type="submit" [disabled]="replaceForm.invalid && !replaceForm.get('keepExistingTargets')?.value" class="px-5 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl text-sm disabled:opacity-50 transition-colors solid-btn">Replace Exercise</button>
-                              </div>
-                            </form>
-                          </div>
-                        }
-                      </div>
-                    </div>
-                  }
                 </div>
               }
 
@@ -800,6 +652,185 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                 }
               </div>
             </div>
+          </div>
+        </div>
+      }
+
+      <!-- Exercise Options Modal (Root Level Overlay) -->
+      @if (optionsExercise(); as ex) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
+          <div class="solid-card rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative p-6">
+            <button (click)="closeOptionsModal()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white text-lg">✕</button>
+            <h3 class="text-xl font-bold mb-5 text-black dark:text-white pr-6">{{ ex.exerciseName }} Options</h3>
+            <div class="space-y-4">
+              <!-- Unit Preference -->
+              <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
+                <div>
+                  <span class="font-medium text-gray-700 dark:text-gray-300 block">Weight Unit</span>
+                  <span class="text-xs text-gray-500">Selected for this exercise</span>
+                </div>
+                <button (click)="toggleUnit(ex.id)" class="px-4 py-2 bg-accent-pos/10 text-accent-pos border border-accent-pos/30 hover:bg-accent-pos/20 rounded-lg text-sm font-bold transition-colors uppercase w-16">
+                  {{ getUnit(ex.id) }}
+                </button>
+              </div>
+
+              <!-- Workout Order Reorder Block -->
+              <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium text-gray-700 dark:text-gray-300">Workout Order</span>
+                  <span class="text-xs font-semibold text-accent-pos">
+                    Position {{ getExerciseIndex(ex.id) + 1 }} of {{ exercises().length }}
+                  </span>
+                </div>
+                
+                <!-- Direct Move Up / Move Down for Current Exercise -->
+                <div class="grid grid-cols-2 gap-2">
+                  <button 
+                    (click)="moveExercise(ex.id, -1)" 
+                    [disabled]="getExerciseIndex(ex.id) === 0" 
+                    class="py-2 px-3 flex items-center justify-center gap-1.5 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 text-sm font-semibold text-black dark:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm">
+                    <span>&uarr; Move Up</span>
+                  </button>
+                  <button 
+                    (click)="moveExercise(ex.id, 1)" 
+                    [disabled]="getExerciseIndex(ex.id) === exercises().length - 1" 
+                    class="py-2 px-3 flex items-center justify-center gap-1.5 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 text-sm font-semibold text-black dark:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm">
+                    <span>&darr; Move Down</span>
+                  </button>
+                </div>
+
+                <!-- Sequence Preview List -->
+                <div class="max-h-44 overflow-y-auto space-y-1.5 pr-1 border-t border-gray-200 dark:border-gray-700/60 pt-2">
+                  @for (item of exercises(); track item.id; let idx = $index) {
+                    <div 
+                      [id]="'reorder-item-' + item.id"
+                      class="flex items-center justify-between p-2 rounded-lg text-xs transition-colors text-black dark:text-white"
+                      [class.bg-accent-pos/15]="item.id === ex.id"
+                      [class.border]="item.id === ex.id"
+                      [class.border-accent-pos/40]="item.id === ex.id"
+                      [class.font-bold]="item.id === ex.id"
+                      [class.bg-white]="item.id !== ex.id"
+                      [class.dark:bg-gray-900/60]="item.id !== ex.id">
+                      
+                      <div class="flex items-center gap-2 min-w-0 pr-2">
+                        <span class="font-bold px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shrink-0">
+                          {{ idx + 1 }}
+                        </span>
+                        <span class="truncate" [class.text-accent-pos]="item.id === ex.id">
+                          {{ item.exerciseName }}
+                        </span>
+                      </div>
+                      
+                      <div class="flex items-center gap-1 shrink-0">
+                        <button 
+                          (click)="moveExercise(item.id, -1)" 
+                          [disabled]="idx === 0" 
+                          title="Move Up"
+                          class="w-6 h-6 flex items-center justify-center rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition-colors text-black dark:text-white">
+                          &uarr;
+                        </button>
+                        <button 
+                          (click)="moveExercise(item.id, 1)" 
+                          [disabled]="idx === exercises().length - 1" 
+                          title="Move Down"
+                          class="w-6 h-6 flex items-center justify-center rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition-colors text-black dark:text-white">
+                          &darr;
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Replace and Analytics -->
+              <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl flex flex-col gap-2">
+                <button (click)="startReplaceExercise(ex.id)" class="w-full py-2 bg-accent-neg/10 text-accent-neg hover:bg-accent-neg/20 border border-accent-neg/20 rounded-lg text-sm font-bold transition-colors">
+                  Replace Exercise
+                </button>
+                <p class="text-xs text-gray-500 text-center mt-1 mb-2">Logged sets for this exercise will be removed.</p>
+                
+                <a [routerLink]="['/analytics']" [queryParams]="{ exerciseId: ex.exerciseId }" (click)="closeOptionsModal()" class="w-full py-2 bg-accent-pos/10 text-accent-pos hover:bg-accent-pos/20 border border-accent-pos/30 rounded-lg text-sm font-bold transition-colors text-center block">
+                  View Analytics
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Replace Exercise Modal (Root Level Overlay) -->
+      @if (replacingExercise(); as ex) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
+          <div class="solid-card rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative p-6 max-h-[85vh] flex flex-col">
+            <button (click)="cancelReplace()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white z-10 text-lg">✕</button>
+            
+            @if (!replaceTargetExercise()) {
+              <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0">Replace {{ ex.exerciseName }}</h3>
+              <div class="flex-1 overflow-y-auto min-h-0">
+                <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onReplaceExerciseSelected($event)"></app-exercise-search>
+              </div>
+            } @else {
+              <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0">Confirm Replacement</h3>
+              
+              <div class="flex-1 overflow-y-auto min-h-0 space-y-5">
+                <div class="p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/60 text-sm space-y-1.5">
+                  <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                    <span class="text-xs uppercase font-bold tracking-wider">Replacing:</span>
+                    <span class="font-semibold text-gray-700 dark:text-gray-300 line-through">{{ ex.exerciseName }}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-accent-pos font-bold">
+                    <span class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-normal">With:</span>
+                    <span>{{ replaceTargetExercise()?.name }}</span>
+                  </div>
+                </div>
+
+                <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-600 dark:text-amber-400 flex items-start gap-2">
+                  <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  </svg>
+                  <span>Any logged sets for this exercise will be deleted upon replacement.</span>
+                </div>
+
+                <form [formGroup]="replaceForm" (ngSubmit)="confirmReplaceExercise()" class="space-y-4">
+                  <div class="flex items-center gap-3">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        formControlName="keepExistingTargets"
+                        class="sr-only peer"
+                        id="keepTargetsCheckbox"
+                      >
+                      <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+                    </label>
+                    <label for="keepTargetsCheckbox" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                      Keep same sets & reps ({{ ex.sets }} sets &times; {{ ex.reps }}{{ ex.repsMax ? '-' + ex.repsMax : '' }} reps)
+                    </label>
+                  </div>
+
+                  @if (!replaceForm.get('keepExistingTargets')?.value) {
+                    <div class="grid grid-cols-3 gap-3 pt-1">
+                      <div>
+                        <label for="replaceSetsInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Sets</label>
+                        <input id="replaceSetsInput" type="number" formControlName="sets" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                      </div>
+                      <div>
+                        <label for="replaceRepsInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Min Reps</label>
+                        <input id="replaceRepsInput" type="number" formControlName="reps" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                      </div>
+                      <div>
+                        <label for="replaceRepsMaxInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Max Reps (Opt)</label>
+                        <input id="replaceRepsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                      </div>
+                    </div>
+                  }
+
+                  <div class="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700/60">
+                    <button type="button" (click)="cancelReplaceTarget()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Back</button>
+                    <button type="submit" [disabled]="replaceForm.invalid && !replaceForm.get('keepExistingTargets')?.value" class="px-5 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl text-sm disabled:opacity-50 transition-colors solid-btn">Replace Exercise</button>
+                  </div>
+                </form>
+              </div>
+            }
           </div>
         </div>
       }
@@ -959,6 +990,20 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   replacingExerciseId = signal<string | null>(null);
   replaceTargetExercise = signal<Exercise | null>(null);
   exerciseUnits = signal<Record<string, 'kg' | 'lb'>>({});
+
+  optionsExercise = computed(() => {
+    const id = this.optionsModalOpen();
+    return id ? this.exercises().find(e => e.id === id) || null : null;
+  });
+
+  replacingExercise = computed(() => {
+    const id = this.replacingExerciseId();
+    return id ? this.exercises().find(e => e.id === id) || null : null;
+  });
+
+  getExerciseIndex(exId: string): number {
+    return this.exercises().findIndex(e => e.id === exId);
+  }
 
   replaceForm: FormGroup = this.fb.group({
     keepExistingTargets: [true],
@@ -1244,6 +1289,12 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
       this.workoutService.reorderSessionExercises(sessionId, requests).subscribe({
         error: (err) => console.error('Failed to reorder exercises on backend', err)
       });
+    }
+
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        document.getElementById('reorder-item-' + exId)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }, 50);
     }
   }
 
