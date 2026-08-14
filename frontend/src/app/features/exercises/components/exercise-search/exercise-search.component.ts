@@ -216,8 +216,9 @@ export class ExerciseSearchComponent implements OnInit {
       name: formData.name,
       equipmentBrand: formData.equipmentBrand || undefined,
       unilateral: formData.unilateral,
-      isPublic: formData.isPublic,
-      type: 'STRENGTH' as const
+      spinalLoading: formData.spinalLoading || false,
+      isBodyweight: formData.isBodyweight || false,
+      isPublic: formData.isPublic || false
     };
 
     this.exerciseService.createExercise(exercisePayload).pipe(

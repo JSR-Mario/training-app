@@ -166,4 +166,16 @@ class ExerciseServiceTest {
         assertThatThrownBy(() -> exerciseService.deleteTarget(userId, targetId))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
+
+    @Test
+    void findById_success() {
+        when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
+        when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
+        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());
+
+        ExerciseResponse result = exerciseService.findById(userId, exerciseId);
+
+        assertThat(result.name()).isEqualTo("Bench Press");
+        assertThat(result.equipmentBrand()).isEqualTo("Hammer Strength");
+    }
 }

@@ -10,6 +10,8 @@ export interface ExerciseFormData {
   name: string;
   equipmentBrand: string;
   unilateral: boolean;
+  spinalLoading?: boolean;
+  isBodyweight?: boolean;
   isPublic: boolean;
   targets: { id?: string; bodyPart: string; targetValue: number }[];
 }

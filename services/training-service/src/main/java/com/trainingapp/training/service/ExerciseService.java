@@ -277,6 +277,13 @@ public class ExerciseService {
         }
     }
 
+    /** Returns a single exercise by ID for the user (or public). */
+    @Transactional(readOnly = true)
+    public ExerciseResponse findById(UUID userId, UUID exerciseId) {
+        Exercise exercise = findOwned(userId, exerciseId);
+        return mapExercisesWithRatingsAndPrs(List.of(exercise), userId).get(0);
+    }
+
     /**
      * Finds an exercise by ID and validates it belongs to the user.
      * Package-private so other services can reuse it.
