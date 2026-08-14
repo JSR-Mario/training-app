@@ -669,10 +669,10 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
         </div>
       }
     </div>
-      <!-- Sticky Bottom Action Bar -->
+      <!-- Bottom Action Bar (Fixed Full-Width on Mobile, Sticky Centered on Desktop) -->
       @if (!isLoading() && session()) {
-        <div class="sticky bottom-0 md:bottom-4 z-40 w-full pointer-events-none mt-4">
-          <div class="max-w-2xl mx-auto p-4 md:p-6 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border-t md:border border-gray-300 dark:border-gray-800 rounded-t-2xl md:rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] flex flex-col items-center pointer-events-auto">
+        <div class="fixed bottom-16 left-0 right-0 w-full md:static md:sticky md:bottom-4 md:left-auto md:right-auto md:w-full z-40 pointer-events-none md:mt-4">
+          <div class="w-full md:max-w-2xl mx-auto p-4 md:p-6 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border-t md:border border-gray-300 dark:border-gray-800 rounded-t-2xl md:rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] flex flex-col items-center pointer-events-auto">
             <div class="w-full max-w-sm mb-3">
               <div class="w-full h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
