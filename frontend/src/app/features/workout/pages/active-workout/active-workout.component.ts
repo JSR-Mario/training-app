@@ -28,7 +28,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
     selector: 'app-active-workout',
     imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent, BaseChartDirective],
   template: `
-    <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-48">
+    <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-8">
     
       @if (isLoading()) {
         <div class="text-center py-12">
@@ -109,7 +109,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
             }
             @for (ex of exercises(); track ex; let i = $index) {
               <div [id]="'exercise-' + ex.id"
-                   class="solid-card p-4 sm:p-6 relative transition-all duration-300"
+                   class="solid-card p-4 sm:p-6 relative transition-all duration-300 scroll-mt-24 scroll-mb-36"
                    [class.z-20]="activeIconTooltip()?.startsWith(ex.id)"
                    [class.ring-2]="activeLoggingExercise()?.id === ex.id && !session()?.completedAt"
                    [class.ring-accent-pos]="activeLoggingExercise()?.id === ex.id && !session()?.completedAt"
@@ -669,53 +669,55 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
         </div>
       }
     </div>
-      <!-- Fixed Bottom Action Bar -->
+      <!-- Sticky Bottom Action Bar -->
       @if (!isLoading() && session()) {
-        <div class="fixed bottom-16 md:bottom-6 left-0 right-0 md:left-1/2 md:-translate-x-1/2 w-full md:max-w-2xl mx-auto p-4 md:p-6 bg-white/90 dark:bg-[#121212]/90 backdrop-blur-md border-t md:border border-gray-300 dark:border-gray-800 rounded-t-2xl md:rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-40 flex flex-col items-center">
-          <div class="w-full max-w-sm mb-3">
-            <div class="w-full h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
-                   [style.width.%]="getTotalExpectedSets() > 0 ? (getTotalLoggedSets() / getTotalExpectedSets()) * 100 : 0"></div>
-            </div>
-          </div>
-          <div class="w-full max-w-sm">
-            @if (!session()?.completedAt) {
-              @if (activeLoggingExercise(); as activeEx) {
-                <div class="w-full mb-2 flex items-center justify-center gap-1.5">
-                  <div class="w-1.5 h-1.5 rounded-full bg-accent-pos animate-pulse"></div>
-                  <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Logging:
-                  </span>
-                  <span class="text-xs font-bold text-black dark:text-white truncate max-w-[160px]">
-                    {{ activeEx.exerciseName }}
-                  </span>
-                  <span class="text-xs text-gray-500 dark:text-gray-400">
-                    &middot; Set {{ getSetsForExercise(activeEx.id).length + 1 }}
-                  </span>
-                </div>
-                <button
-                  (click)="logSet(activeEx)"
-                  [disabled]="getForm(activeEx.id).invalid || isLoggingSet()"
-                  class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
-                  style="box-shadow: 0 0 20px rgb(var(--color-accent-pos));"
-                  >
-                  <span>{{ isLoggingSet() ? 'Logging...' : 'Log Set' }}</span>
-                </button>
-              } @else {
-                <button
-                  (click)="completeWorkout()"
-                  [disabled]="isCompleting()"
-                  class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
-                  style="box-shadow: 0 0 20px rgb(var(--color-accent-pos));"
-                  >
-                  <span>{{ isCompleting() ? 'Completing...' : 'Finish Workout' }}</span>
-                </button>
-              }
-            } @else {
-              <div class="text-center font-bold text-lg text-accent-pos">
-                Workout Complete!
+        <div class="sticky bottom-0 z-30 w-full pt-2 pb-3 md:pb-6 pointer-events-none mt-6">
+          <div class="max-w-2xl mx-auto p-4 md:p-6 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border border-gray-300 dark:border-gray-800 rounded-2xl shadow-xl flex flex-col items-center pointer-events-auto">
+            <div class="w-full max-w-sm mb-3">
+              <div class="w-full h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
+                     [style.width.%]="getTotalExpectedSets() > 0 ? (getTotalLoggedSets() / getTotalExpectedSets()) * 100 : 0"></div>
               </div>
-            }
+            </div>
+            <div class="w-full max-w-sm">
+              @if (!session()?.completedAt) {
+                @if (activeLoggingExercise(); as activeEx) {
+                  <div class="w-full mb-2 flex items-center justify-center gap-1.5">
+                    <div class="w-1.5 h-1.5 rounded-full bg-accent-pos animate-pulse"></div>
+                    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Logging:
+                    </span>
+                    <span class="text-xs font-bold text-black dark:text-white truncate max-w-[160px]">
+                      {{ activeEx.exerciseName }}
+                    </span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                      &middot; Set {{ getSetsForExercise(activeEx.id).length + 1 }}
+                    </span>
+                  </div>
+                  <button
+                    (click)="logSet(activeEx)"
+                    [disabled]="getForm(activeEx.id).invalid || isLoggingSet()"
+                    class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
+                    style="box-shadow: 0 0 20px rgb(var(--color-accent-pos));"
+                    >
+                    <span>{{ isLoggingSet() ? 'Logging...' : 'Log Set' }}</span>
+                  </button>
+                } @else {
+                  <button
+                    (click)="completeWorkout()"
+                    [disabled]="isCompleting()"
+                    class="w-full py-3 text-white font-bold text-lg rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md disabled:opacity-50 bg-accent-pos hover:opacity-90 flex flex-col items-center justify-center"
+                    style="box-shadow: 0 0 20px rgb(var(--color-accent-pos));"
+                    >
+                    <span>{{ isCompleting() ? 'Completing...' : 'Finish Workout' }}</span>
+                  </button>
+                }
+              } @else {
+                <div class="text-center font-bold text-lg text-accent-pos">
+                  Workout Complete!
+                </div>
+              }
+            </div>
           </div>
         </div>
       }
