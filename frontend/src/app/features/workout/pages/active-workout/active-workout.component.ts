@@ -238,20 +238,6 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                         <h2 class="text-xl font-bold text-black dark:text-white group-hover:text-accent-pos transition-colors">
                           {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}
                         </h2>
-                        
-                        <!-- Completed / In Progress Sets Badge -->
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-md border"
-                              [class.bg-accent-pos/15]="isExerciseCompleted(ex.id, ex.sets)"
-                              [class.text-accent-pos]="isExerciseCompleted(ex.id, ex.sets)"
-                              [class.border-accent-pos/30]="isExerciseCompleted(ex.id, ex.sets)"
-                              [class.bg-gray-100]="!isExerciseCompleted(ex.id, ex.sets)"
-                              [class.dark:bg-gray-800]="!isExerciseCompleted(ex.id, ex.sets)"
-                              [class.text-gray-600]="!isExerciseCompleted(ex.id, ex.sets)"
-                              [class.dark:text-gray-300]="!isExerciseCompleted(ex.id, ex.sets)"
-                              [class.border-gray-300]="!isExerciseCompleted(ex.id, ex.sets)"
-                              [class.dark:border-gray-700]="!isExerciseCompleted(ex.id, ex.sets)">
-                          {{ getSetsForExercise(ex.id).length }} / {{ ex.sets || 1 }} Sets
-                        </span>
 
                         @if (getSuggestion(ex.id)?.hadFatigueLastWeek) {
                           <div class="relative">
