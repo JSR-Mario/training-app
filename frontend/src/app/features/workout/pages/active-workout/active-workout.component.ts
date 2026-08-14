@@ -227,11 +227,15 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                 <div [id]="'exercise-' + ex.id"
                      class="solid-card p-4 sm:p-6 relative transition-all duration-300 scroll-mt-24"
                      [class.z-20]="activeIconTooltip()?.startsWith(ex.id)">
-                  <!-- Exercise Header -->
-                  <div class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4">
-                    <div class="flex-1 pr-4">
+                  <!-- Exercise Header with Expanded Tappable Area for Minimize/Collapse -->
+                  <div (click)="toggleCollapse(ex.id)"
+                       (keydown.enter)="toggleCollapse(ex.id)"
+                       tabindex="0"
+                       role="button"
+                       class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4 cursor-pointer select-none group focus:outline-none">
+                    <div class="flex-1 pr-4 min-w-0">
                       <div class="flex flex-wrap items-center gap-2 mb-1">
-                        <h2 class="text-xl font-bold text-black dark:text-white">
+                        <h2 class="text-xl font-bold text-black dark:text-white group-hover:text-accent-pos transition-colors">
                           {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}
                         </h2>
                         
@@ -338,14 +342,14 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                     
                     <div class="flex items-center gap-1 border-l border-gray-200 dark:border-gray-700 pl-3 shrink-0">
                       @if (!session()?.completedAt) {
-                        <button (click)="openOptionsModal(ex.id)" class="p-1.5 text-gray-400 hover:text-accent-pos hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" title="Options">
+                        <button (click)="$event.stopPropagation(); openOptionsModal(ex.id)" class="p-2 text-gray-400 hover:text-accent-pos hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" title="Options">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                           </svg>
                         </button>
                       }
-                      <button (click)="toggleCollapse(ex.id)"
-                        class="p-1.5 rounded-lg transition-colors border flex items-center justify-center text-gray-500 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      <button (click)="$event.stopPropagation(); toggleCollapse(ex.id)"
+                        class="p-2 rounded-lg transition-colors border flex items-center justify-center text-gray-500 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
                         [ngClass]="isCollapsed(ex.id) ? 'bg-gray-200 dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-900'"
                         [title]="isCollapsed(ex.id) ? 'Expand Exercise' : 'Minimize Exercise'">
                         <svg xmlns="http://www.w3.org/2000/svg" 
@@ -446,7 +450,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                         }
                       </div>
 
-                      <!-- Log New Set Form with Inline Log Set Button -->
+                      <!-- Log New Set Form with Full-Width Log Set Button -->
                       @if (!session()?.completedAt && getSetsForExercise(ex.id).length < (ex.sets || 1)) {
                         <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                           <div class="mb-3 flex items-center justify-between gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
@@ -455,7 +459,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                                 {{ getSetsForExercise(ex.id).length + 1 }}
                               </span>
                               <span class="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                                Next Set ({{ getSetsForExercise(ex.id).length + 1 }} of {{ ex.sets || 1 }})
+                                Next Set
                               </span>
                             </div>
                             @if (getSuggestionForNextSet(ex.id)) {
@@ -464,31 +468,33 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                               </div>
                             }
                           </div>
-                          <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="flex items-end gap-3 flex-wrap">
-                            <div class="flex-1 min-w-[90px]">
-                              <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Weight ({{ getUnit(ex.id) }})</label>
-                              <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" (input)="markExerciseTouched(ex.id)" [placeholder]="getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg || getSuggestion(ex.id)?.suggestedWeightKg, ex.id) || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder:italic placeholder:text-gray-400 dark:placeholder:text-gray-500/60">
-                            </div>
-                            <div class="flex-1 min-w-[80px]">
-                              <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ ex.unilateral ? 'Reps (L)' : 'Reps' }}</label>
-                              <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" (input)="markExerciseTouched(ex.id)" [placeholder]="getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder:italic placeholder:text-gray-400 dark:placeholder:text-gray-500/60">
-                            </div>
-                            @if (ex.unilateral) {
-                              <div class="flex-1 min-w-[80px]">
-                                <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Reps (R)</label>
-                                <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" (input)="markExerciseTouched(ex.id)" [placeholder]="getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder:italic placeholder:text-gray-400 dark:placeholder:text-gray-500/60">
+                          <form [formGroup]="getForm(ex.id)" (ngSubmit)="logSet(ex)" class="space-y-3">
+                            <div class="flex items-end gap-3 flex-wrap sm:flex-nowrap">
+                              <div class="flex-1 min-w-[90px]">
+                                <label [for]="'weight-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Weight ({{ getUnit(ex.id) }})</label>
+                                <input [id]="'weight-' + ex.id" type="number" inputmode="decimal" step="0.5" min="0" formControlName="weightKg" (input)="markExerciseTouched(ex.id)" [placeholder]="getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg || getSuggestion(ex.id)?.suggestedWeightKg, ex.id) || '0'" class="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder:italic placeholder:text-gray-400 dark:placeholder:text-gray-500/60">
                               </div>
-                            }
+                              <div class="flex-1 min-w-[80px]">
+                                <label [for]="'reps-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ ex.unilateral ? 'Reps (L)' : 'Reps' }}</label>
+                                <input [id]="'reps-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompleted" (input)="markExerciseTouched(ex.id)" [placeholder]="getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder:italic placeholder:text-gray-400 dark:placeholder:text-gray-500/60">
+                              </div>
+                              @if (ex.unilateral) {
+                                <div class="flex-1 min-w-[80px]">
+                                  <label [for]="'reps-r-' + ex.id" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Reps (R)</label>
+                                  <input [id]="'reps-r-' + ex.id" type="number" inputmode="numeric" min="0" formControlName="repsCompletedRight" (input)="markExerciseTouched(ex.id)" [placeholder]="getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps || getSuggestion(ex.id)?.suggestedReps || ex.reps || '0'" class="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white text-lg font-bold text-center placeholder:italic placeholder:text-gray-400 dark:placeholder:text-gray-500/60">
+                                </div>
+                              }
+                            </div>
                             
                             <button
                               type="submit"
                               [disabled]="getForm(ex.id).invalid || isLogging(ex.id)"
-                              class="px-5 py-2.5 bg-accent-pos hover:opacity-90 active:scale-95 text-white font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 shrink-0 disabled:opacity-40"
+                              class="w-full py-2.5 sm:py-3 bg-accent-pos hover:opacity-90 active:scale-[0.98] text-white font-bold text-base rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-40"
                             >
                               @if (isLogging(ex.id)) {
                                 <span>Logging...</span>
                               } @else {
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                                 </svg>
                                 <span>Log Set</span>
