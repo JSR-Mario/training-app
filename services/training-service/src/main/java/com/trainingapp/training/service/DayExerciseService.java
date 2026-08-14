@@ -47,6 +47,10 @@ public class DayExerciseService {
     public DayExerciseResponse create(UUID userId, UUID dayId, DayExerciseRequest request) {
         DayTemplate day = dayTemplateService.findOwned(userId, dayId);
         
+        if (request.exerciseId() == null) {
+            throw new IllegalArgumentException("Exercise ID is required.");
+        }
+
         boolean alreadyExists = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayId).stream()
                 .anyMatch(de -> de.getExercise().getId().equals(request.exerciseId()));
         if (alreadyExists) {
@@ -55,12 +59,17 @@ public class DayExerciseService {
 
         Exercise exercise = exerciseService.findOwned(userId, request.exerciseId());
 
+        if (day.getWeekTemplate() != null && day.getWeekTemplate().getProgram() != null
+                && day.getWeekTemplate().getProgram().getIsPublic() && !exercise.getIsPublic()) {
+            throw new IllegalArgumentException("Cannot add private exercise to a public program. The exercise must be public.");
+        }
+
         DayExercise dayExercise = new DayExercise();
         dayExercise.setDayTemplate(day);
         dayExercise.setExercise(exercise);
-        dayExercise.setSets(request.sets());
-        dayExercise.setReps(request.reps());
-        dayExercise.setRepsMax(request.repsMax());
+        dayExercise.setSets(request.sets() != null && request.sets() > 0 ? request.sets() : 3);
+        dayExercise.setReps(request.isAmrap() ? null : request.reps());
+        dayExercise.setRepsMax(request.isAmrap() ? null : request.repsMax());
         dayExercise.setAmrap(request.isAmrap());
         dayExercise.setSortOrder(request.sortOrder());
         return toResponse(dayExerciseRepository.save(dayExercise));
@@ -69,12 +78,20 @@ public class DayExerciseService {
     @Transactional
     public DayExerciseResponse update(UUID userId, UUID dayExerciseId, DayExerciseRequest request) {
         DayExercise dayExercise = findOwnedDayExercise(userId, dayExerciseId);
-        Exercise exercise = exerciseService.findOwned(userId, request.exerciseId());
+        if (request.exerciseId() != null) {
+            Exercise exercise = exerciseService.findOwned(userId, request.exerciseId());
+            if (dayExercise.getDayTemplate().getWeekTemplate() != null && dayExercise.getDayTemplate().getWeekTemplate().getProgram() != null
+                    && dayExercise.getDayTemplate().getWeekTemplate().getProgram().getIsPublic() && !exercise.getIsPublic()) {
+                throw new IllegalArgumentException("Cannot add private exercise to a public program. The exercise must be public.");
+            }
+            dayExercise.setExercise(exercise);
+        }
 
-        dayExercise.setExercise(exercise);
-        dayExercise.setSets(request.sets());
-        dayExercise.setReps(request.reps());
-        dayExercise.setRepsMax(request.repsMax());
+        if (request.sets() != null && request.sets() > 0) {
+            dayExercise.setSets(request.sets());
+        }
+        dayExercise.setReps(request.isAmrap() ? null : request.reps());
+        dayExercise.setRepsMax(request.isAmrap() ? null : request.repsMax());
         dayExercise.setAmrap(request.isAmrap());
         dayExercise.setSortOrder(request.sortOrder());
         return toResponse(dayExerciseRepository.save(dayExercise));

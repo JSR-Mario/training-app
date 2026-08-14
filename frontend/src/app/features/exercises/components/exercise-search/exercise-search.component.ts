@@ -163,6 +163,7 @@ import { debounceTime, forkJoin, switchMap } from 'rxjs';
 })
 export class ExerciseSearchComponent implements OnInit {
   readonly excludeIds = input<string[]>([]);
+  readonly publicOnly = input<boolean>(false);
   readonly exerciseSelected = output<Exercise>();
 
   private fb = inject(FormBuilder);
@@ -192,8 +193,9 @@ export class ExerciseSearchComponent implements OnInit {
     this.loading.set(true);
     this.exerciseService.getExercises().subscribe({
       next: (data) => {
+        const available = this.publicOnly() ? data.filter(e => e.isPublic) : data;
         // Sort alphabetically by default
-        this.allExercises = data.sort((a, b) => a.name.localeCompare(b.name));
+        this.allExercises = available.sort((a, b) => a.name.localeCompare(b.name));
         this.applyFilters(this.searchForm.get('query')?.value || '');
         this.loading.set(false);
       },
@@ -218,7 +220,7 @@ export class ExerciseSearchComponent implements OnInit {
       unilateral: formData.unilateral,
       spinalLoading: formData.spinalLoading || false,
       isBodyweight: formData.isBodyweight || false,
-      isPublic: formData.isPublic || false
+      isPublic: this.publicOnly() ? true : (formData.isPublic || false)
     };
 
     this.exerciseService.createExercise(exercisePayload).pipe(
@@ -237,7 +239,8 @@ export class ExerciseSearchComponent implements OnInit {
     ).subscribe({
       next: (fullExercise) => {
         this.exerciseService.getExercises().subscribe(all => {
-          this.allExercises = all.sort((a, b) => a.name.localeCompare(b.name));
+          const available = this.publicOnly() ? all.filter(e => e.isPublic) : all;
+          this.allExercises = available.sort((a, b) => a.name.localeCompare(b.name));
           this.applyFilters(this.searchForm.get('query')?.value || '');
           this.savingNew.set(false);
           this.showCreateForm.set(false);

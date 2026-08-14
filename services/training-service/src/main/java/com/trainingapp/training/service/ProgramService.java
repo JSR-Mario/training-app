@@ -296,11 +296,27 @@ public class ProgramService {
         return findById(userId, program.getId());
     }
 
-    /** Package-private: validates program belongs to user and returns entity. */
+    /** Package-private: validates program belongs to user or is public and user is admin/creator. */
     @Transactional(readOnly = true)
     public TrainingProgram findOwned(UUID userId, UUID programId) {
-        return programRepository.findByIdAndUserId(programId, userId)
+        return findOwnedOrPublicAdmin(userId, programId);
+    }
+
+    /** Package-private: validates program belongs to user or is public and user is admin/creator. */
+    @Transactional(readOnly = true)
+    public TrainingProgram findOwnedOrPublicAdmin(UUID userId, UUID programId) {
+        TrainingProgram program = programRepository.findById(programId)
                 .orElseThrow(() -> new ResourceNotFoundException("Program not found."));
+        if (program.getIsPublic()) {
+            if (!isAdmin() && !program.getUserId().equals(userId)) {
+                throw new AccessDeniedException("Only administrators or the creator can modify public programs.");
+            }
+        } else {
+            if (!program.getUserId().equals(userId)) {
+                throw new AccessDeniedException("You do not have permission to modify this program.");
+            }
+        }
+        return program;
     }
 
     @Transactional(readOnly = true)
