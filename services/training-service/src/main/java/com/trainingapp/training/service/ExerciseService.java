@@ -134,15 +134,15 @@ public class ExerciseService {
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = "userExerciseProjections:v1", key = "#userId")
     public ExerciseResponse create(UUID userId, ExerciseRequest request) {
-        boolean duplicate = exerciseRepository.findByUserIdOrIsPublic(userId).stream()
-                .anyMatch(e -> e.getName().equalsIgnoreCase(request.name()));
+        String trimmedName = request.name().trim();
+        boolean duplicate = exerciseRepository.existsByNameInUserScope(userId, trimmedName, null);
         if (duplicate) {
             throw new IllegalArgumentException("An exercise with this name already exists.");
         }
 
         Exercise exercise = new Exercise();
         exercise.setUserId(userId);
-        exercise.setName(request.name());
+        exercise.setName(trimmedName);
         exercise.setEquipmentBrand(request.equipmentBrand());
         exercise.setUnilateral(request.unilateral());
         exercise.setBodyweight(request.isBodyweight());
@@ -171,13 +171,13 @@ public class ExerciseService {
     public ExerciseResponse update(UUID userId, UUID exerciseId, ExerciseRequest request) {
         Exercise exercise = findOwnedOrPublicAdmin(userId, exerciseId);
 
-        boolean duplicate = exerciseRepository.findByUserIdOrIsPublic(userId).stream()
-                .anyMatch(e -> e.getName().equalsIgnoreCase(request.name()) && !e.getId().equals(exerciseId));
+        String trimmedName = request.name().trim();
+        boolean duplicate = exerciseRepository.existsByNameInUserScope(userId, trimmedName, exerciseId);
         if (duplicate) {
             throw new IllegalArgumentException("An exercise with this name already exists.");
         }
 
-        exercise.setName(request.name());
+        exercise.setName(trimmedName);
         exercise.setEquipmentBrand(request.equipmentBrand());
         exercise.setUnilateral(request.unilateral());
         exercise.setBodyweight(request.isBodyweight());

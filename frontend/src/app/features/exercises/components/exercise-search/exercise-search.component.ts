@@ -245,7 +245,7 @@ export class ExerciseSearchComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to create inline exercise', err);
-        alert(err.error?.message || 'Failed to create exercise. It might be a duplicate.');
+        alert(err.error?.detail || err.error?.message || 'Failed to create exercise.');
         this.savingNew.set(false);
       }
     });

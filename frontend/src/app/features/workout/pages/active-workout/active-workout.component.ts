@@ -1453,7 +1453,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error creating exercise', err);
-        alert(err.error?.message || 'Failed to create exercise.');
+        alert(err.error?.detail || err.error?.message || 'Failed to create exercise.');
         this.isSavingNewExercise.set(false);
       }
     });
