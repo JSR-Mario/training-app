@@ -1,6 +1,7 @@
 package com.trainingapp.training.controller;
 
 import com.trainingapp.training.config.UserContext;
+import com.trainingapp.training.dto.ProgramRatingRequest;
 import com.trainingapp.training.dto.ProgramRequest;
 import com.trainingapp.training.dto.ProgramResponse;
 import com.trainingapp.training.service.ProgramService;
@@ -69,5 +70,10 @@ public class ProgramController {
     @PostMapping("/{id}/advance-week")
     public ProgramResponse advanceWeek(@PathVariable UUID id) {
         return programService.advanceWeek(UserContext.getCurrentUserId(), id);
+    }
+
+    @PostMapping("/{id}/ratings")
+    public ProgramResponse rate(@PathVariable UUID id, @Valid @RequestBody ProgramRatingRequest request) {
+        return programService.rateProgram(UserContext.getCurrentUserId(), id, request.rating());
     }
 }

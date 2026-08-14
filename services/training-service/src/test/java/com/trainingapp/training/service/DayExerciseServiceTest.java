@@ -57,7 +57,7 @@ class DayExerciseServiceTest {
 
     @Test
     void findByDay_validatesOwnership() {
-        when(dayTemplateService.findOwned(userId, dayId)).thenReturn(sampleDay);
+        when(dayTemplateService.findOwnedOrPublic(userId, dayId)).thenReturn(sampleDay);
         when(dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayId))
                 .thenReturn(List.of(sampleDayExercise));
         List<DayExerciseResponse> result = dayExerciseService.findByDay(userId, dayId);

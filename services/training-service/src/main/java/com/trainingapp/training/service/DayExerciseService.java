@@ -37,7 +37,7 @@ public class DayExerciseService {
 
     @Transactional(readOnly = true)
     public List<DayExerciseResponse> findByDay(UUID userId, UUID dayId) {
-        dayTemplateService.findOwned(userId, dayId);
+        dayTemplateService.findOwnedOrPublic(userId, dayId);
         return dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayId).stream()
                 .map(this::toResponse)
                 .toList();

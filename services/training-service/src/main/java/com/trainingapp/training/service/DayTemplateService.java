@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 /**
  * Business logic for day templates. Validates that the parent week
- * belongs to the authenticated user before any read or write.
+ * belongs to the authenticated user or is public before read, and belongs to user before write.
  */
 @Service
 public class DayTemplateService {
@@ -33,7 +33,7 @@ public class DayTemplateService {
 
     @Transactional(readOnly = true)
     public List<DayTemplateResponse> findByWeek(UUID userId, UUID weekId) {
-        weekService.findOwned(userId, weekId);
+        weekService.findOwnedOrPublic(userId, weekId);
         return dayRepository.findByWeekTemplateIdOrderBySortOrderAsc(weekId).stream()
                 .map(this::toResponse)
                 .toList();
@@ -41,7 +41,7 @@ public class DayTemplateService {
 
     @Transactional(readOnly = true)
     public DayTemplateResponse findById(UUID userId, UUID dayId) {
-        return toResponse(findOwned(userId, dayId));
+        return toResponse(findOwnedOrPublic(userId, dayId));
     }
 
     @Transactional
@@ -92,6 +92,14 @@ public class DayTemplateService {
         DayTemplate day = dayRepository.findById(dayId)
                 .orElseThrow(() -> new ResourceNotFoundException("Day template not found."));
         weekService.findOwned(userId, day.getWeekTemplate().getId());
+        return day;
+    }
+
+    /** Package-private: validates day's parent week belongs to user or is public. */
+    DayTemplate findOwnedOrPublic(UUID userId, UUID dayId) {
+        DayTemplate day = dayRepository.findById(dayId)
+                .orElseThrow(() -> new ResourceNotFoundException("Day template not found."));
+        weekService.findOwnedOrPublic(userId, day.getWeekTemplate().getId());
         return day;
     }
 

@@ -50,11 +50,11 @@ class WeekTemplateServiceTest {
 
     @Test
     void findByProgram_validatesOwnership() {
-        when(programService.findOwned(userId, programId)).thenReturn(sampleProgram);
+        when(programService.findOwnedOrPublic(userId, programId)).thenReturn(sampleProgram);
         when(weekRepository.findByProgramId(programId)).thenReturn(List.of(sampleWeek));
         List<WeekTemplateResponse> result = weekService.findByProgram(userId, programId);
         assertThat(result).hasSize(1);
-        verify(programService).findOwned(userId, programId);
+        verify(programService).findOwnedOrPublic(userId, programId);
     }
 
     @Test
