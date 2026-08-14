@@ -28,7 +28,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
     selector: 'app-active-workout',
     imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent, BaseChartDirective],
   template: `
-    <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-8">
+    <div class="max-w-2xl mx-auto space-y-6 pt-4 pb-64">
     
       @if (isLoading()) {
         <div class="text-center py-12">
@@ -109,7 +109,7 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
             }
             @for (ex of exercises(); track ex; let i = $index) {
               <div [id]="'exercise-' + ex.id"
-                   class="solid-card p-4 sm:p-6 relative transition-all duration-300 scroll-mt-24 scroll-mb-36"
+                   class="solid-card p-4 sm:p-6 relative transition-all duration-300 scroll-mt-20 scroll-mb-48"
                    [class.z-20]="activeIconTooltip()?.startsWith(ex.id)"
                    [class.ring-2]="activeLoggingExercise()?.id === ex.id && !session()?.completedAt"
                    [class.ring-accent-pos]="activeLoggingExercise()?.id === ex.id && !session()?.completedAt"
@@ -671,8 +671,8 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
     </div>
       <!-- Sticky Bottom Action Bar -->
       @if (!isLoading() && session()) {
-        <div class="sticky bottom-0 z-30 w-full pt-2 pb-3 md:pb-6 pointer-events-none mt-6">
-          <div class="max-w-2xl mx-auto p-4 md:p-6 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border border-gray-300 dark:border-gray-800 rounded-2xl shadow-xl flex flex-col items-center pointer-events-auto">
+        <div class="sticky bottom-0 md:bottom-4 z-40 w-full pointer-events-none mt-4">
+          <div class="max-w-2xl mx-auto p-4 md:p-6 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border-t md:border border-gray-300 dark:border-gray-800 rounded-t-2xl md:rounded-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] flex flex-col items-center pointer-events-auto">
             <div class="w-full max-w-sm mb-3">
               <div class="w-full h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div class="h-full bg-accent-pos transition-all duration-500 ease-out"
