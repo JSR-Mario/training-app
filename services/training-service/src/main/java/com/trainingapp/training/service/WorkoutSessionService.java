@@ -480,7 +480,7 @@ public class WorkoutSessionService {
                         int effectiveReps = (se.getExercise().isUnilateral() && s.getRepsCompletedRight() != null)
                                 ? Math.min(s.getRepsCompleted(), s.getRepsCompletedRight())
                                 : s.getRepsCompleted();
-                        if (se.getReps() != null && effectiveReps < se.getReps()) {
+                        if (!se.isAmrap() && se.getReps() != null && effectiveReps < se.getReps()) {
                             setsBelowMinReps++;
                         }
                         if (se.getRepsMax() != null && effectiveReps >= se.getRepsMax()) {
