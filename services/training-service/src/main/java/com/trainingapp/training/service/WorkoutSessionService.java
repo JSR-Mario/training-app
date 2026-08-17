@@ -446,14 +446,16 @@ public class WorkoutSessionService {
             List<com.trainingapp.training.dto.PreviousSetSuggestion> previousSets = new java.util.ArrayList<>();
 
             List<WorkoutSet> recentSets = findBestMatchingRecentSets(
-                allHistorical, currentDayTemplateId, minReps, maxReps, se.isAmrap(), relevantBuckets
+                allHistorical, currentDayTemplateId, minReps, maxReps, se.isAmrap(), relevantBuckets, se.getExercise().isUnilateral()
             );
 
             if (!recentSets.isEmpty()) {
                 double maxPerf = 0;
                 for (WorkoutSet s : recentSets) {
                     if (s.getWeightKg() != null && s.getRepsCompleted() != null) {
-                        int r = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
+                        int r = (se.getExercise().isUnilateral() && s.getRepsCompletedRight() != null)
+                                ? Math.min(s.getRepsCompleted(), s.getRepsCompletedRight())
+                                : s.getRepsCompleted();
                         double perf = s.getWeightKg().doubleValue() * r;
                         if (perf > maxPerf) maxPerf = perf;
                     }
@@ -466,7 +468,9 @@ public class WorkoutSessionService {
 
                 for (WorkoutSet s : recentSets) {
                     if (s.getWeightKg() != null && s.getRepsCompleted() != null && maxPerf > 0) {
-                        int r = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
+                        int r = (se.getExercise().isUnilateral() && s.getRepsCompletedRight() != null)
+                                ? Math.min(s.getRepsCompleted(), s.getRepsCompletedRight())
+                                : s.getRepsCompleted();
                         double perf = s.getWeightKg().doubleValue() * r;
                         double ratio = perf / maxPerf;
                         if (ratio < 0.75) criticals++;
@@ -521,7 +525,8 @@ public class WorkoutSessionService {
             int minReps,
             int maxReps,
             boolean isAmrap,
-            java.util.Set<String> relevantBuckets
+            java.util.Set<String> relevantBuckets,
+            boolean isUnilateral
     ) {
         if (allHistorical == null || allHistorical.isEmpty()) {
             return java.util.Collections.emptyList();
@@ -540,23 +545,16 @@ public class WorkoutSessionService {
             for (List<WorkoutSet> sessionSets : sessionSetsMap.values()) {
                 WorkoutSession s = sessionSets.get(0).getSession();
                 if (s.getDayTemplate() != null && currentDayTemplateId.equals(s.getDayTemplate().getId())) {
-                    if (isSessionSetsCompatibleWithRepRange(sessionSets, minReps, maxReps, isAmrap, relevantBuckets)) {
+                    if (isSessionSetsCompatibleWithRepRange(sessionSets, minReps, maxReps, isAmrap, relevantBuckets, isUnilateral)) {
                         return sessionSets;
                     }
                 }
             }
-            // Priority 2: Same day template fallback
-            for (List<WorkoutSet> sessionSets : sessionSetsMap.values()) {
-                WorkoutSession s = sessionSets.get(0).getSession();
-                if (s.getDayTemplate() != null && currentDayTemplateId.equals(s.getDayTemplate().getId())) {
-                    return sessionSets;
-                }
-            }
         }
 
-        // Priority 3: Other session whose sets match the target rep range
+        // Priority 2: Other session whose sets match the target rep range
         for (List<WorkoutSet> sessionSets : sessionSetsMap.values()) {
-            if (isSessionSetsCompatibleWithRepRange(sessionSets, minReps, maxReps, isAmrap, relevantBuckets)) {
+            if (isSessionSetsCompatibleWithRepRange(sessionSets, minReps, maxReps, isAmrap, relevantBuckets, isUnilateral)) {
                 return sessionSets;
             }
         }
@@ -569,14 +567,17 @@ public class WorkoutSessionService {
             int minReps,
             int maxReps,
             boolean isAmrap,
-            java.util.Set<String> relevantBuckets
+            java.util.Set<String> relevantBuckets,
+            boolean isUnilateral
     ) {
         if (isAmrap) return true;
         if (sets == null || sets.isEmpty()) return false;
 
         for (WorkoutSet s : sets) {
             if (s.getRepsCompleted() != null) {
-                int effectiveReps = s.getRepsCompleted();
+                int effectiveReps = (isUnilateral && s.getRepsCompletedRight() != null)
+                        ? Math.min(s.getRepsCompleted(), s.getRepsCompletedRight())
+                        : s.getRepsCompleted();
                 String bucket = getBucketForReps(effectiveReps);
                 if (relevantBuckets.contains(bucket) || (effectiveReps >= minReps - 2 && effectiveReps <= maxReps + 5)) {
                     return true;
