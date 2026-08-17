@@ -126,7 +126,11 @@ public class ExerciseService {
     /** Returns up to 3 exercises matching the query for autocomplete. */
     @Transactional(readOnly = true)
     public List<ExerciseResponse> search(UUID userId, String query) {
-        List<Exercise> exercises = exerciseRepository.searchExercises(userId, query, org.springframework.data.domain.PageRequest.of(0, 3));
+        List<UUID> ids = exerciseRepository.searchExerciseIds(userId, query, org.springframework.data.domain.PageRequest.of(0, 3));
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        List<Exercise> exercises = exerciseRepository.findByIdIn(ids);
         return mapExercisesWithRatingsAndPrs(exercises, userId);
     }
 

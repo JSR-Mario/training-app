@@ -154,7 +154,9 @@ class ExerciseServiceTest {
 
     @Test
     void search_returnsMatchingExercises() {
-        when(exerciseRepository.searchExercises(eq(userId), eq("bench"), any()))
+        when(exerciseRepository.searchExerciseIds(eq(userId), eq("bench"), any()))
+                .thenReturn(List.of(exerciseId));
+        when(exerciseRepository.findByIdIn(List.of(exerciseId)))
                 .thenReturn(List.of(sampleExercise));
         when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
         when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());

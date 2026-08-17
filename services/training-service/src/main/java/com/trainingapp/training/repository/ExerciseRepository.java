@@ -20,10 +20,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
     @Query("SELECT e FROM Exercise e WHERE e.id = :id AND (e.userId = :userId OR e.isPublic = true)")
     Optional<Exercise> findByIdAndUserIdOrIsPublic(@Param("id") UUID id, @Param("userId") UUID userId);
 
-    /** Returns up to 3 exercises whose name contains the query (case-insensitive). */
+    /** Returns IDs of exercises matching the query (case-insensitive), paginated. */
+    @Query("SELECT e.id FROM Exercise e WHERE (e.userId = :userId OR e.isPublic = true) AND e.isDeleted = false AND LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    List<UUID> searchExerciseIds(@Param("userId") UUID userId, @Param("name") String name, Pageable pageable);
+
+    /** Fetches exercises by ID with their targets eagerly loaded. */
     @EntityGraph(attributePaths = "targets")
-    @Query("SELECT e FROM Exercise e WHERE (e.userId = :userId OR e.isPublic = true) AND e.isDeleted = false AND LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    List<Exercise> searchExercises(@Param("userId") UUID userId, @Param("name") String name, Pageable pageable);
+    @Query("SELECT e FROM Exercise e WHERE e.id IN :ids")
+    List<Exercise> findByIdIn(@Param("ids") List<UUID> ids);
 
     @EntityGraph(attributePaths = "targets")
     @Query("SELECT e FROM Exercise e WHERE e.isPublic = true AND e.isDeleted = false")
