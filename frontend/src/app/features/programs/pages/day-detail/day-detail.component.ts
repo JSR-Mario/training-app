@@ -9,12 +9,10 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Observable, forkJoin } from 'rxjs';
 
-import { ExerciseDisplayNamePipe } from '../../../../shared/pipes/exercise-display-name.pipe';
-
 @Component({
   standalone: true,
   selector: 'app-day-detail',
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseDisplayNamePipe],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent],
   template: `
     <div class="max-w-7xl mx-auto space-y-6 pb-24">
     
@@ -72,7 +70,12 @@ import { ExerciseDisplayNamePipe } from '../../../../shared/pipes/exercise-displ
                 @if (selectedExercise()?.isPublic) {
                   <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 }
-                {{ selectedExercise()?.name | exerciseDisplayName:selectedExercise()?.equipmentBrand }}
+                <span>{{ selectedExercise()?.name }}</span>
+                @if (selectedExercise()?.equipmentBrand) {
+                  <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                    {{ selectedExercise()?.equipmentBrand }}
+                  </span>
+                }
               </div>
               <div class="flex gap-4">
                 <div class="flex-1">
@@ -203,7 +206,12 @@ import { ExerciseDisplayNamePipe } from '../../../../shared/pipes/exercise-displ
                           @if (ex.isPublic) {
                             <svg class="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                           }
-                          {{ ex.exerciseName | exerciseDisplayName:ex.equipmentBrand }}
+                          <span>{{ ex.exerciseName }}</span>
+                          @if (ex.equipmentBrand) {
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 font-sans tracking-normal font-normal">
+                              {{ ex.equipmentBrand }}
+                            </span>
+                          }
                           @for (target of getExerciseTargets(ex.exerciseId); track target) {
                             <span class="text-[10px] bg-gray-200 dark:bg-gray-700/60 text-gray-800 dark:text-gray-300 px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600/50 uppercase">{{ target }}</span>
                           }
