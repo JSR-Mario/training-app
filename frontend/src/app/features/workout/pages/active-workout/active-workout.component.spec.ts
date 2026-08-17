@@ -17,9 +17,25 @@ describe('ActiveWorkoutComponent', () => {
 
   beforeEach(async () => {
     const workoutServiceSpy = jasmine.createSpyObj('WorkoutService', [
-      'createSession', 'getActiveSession', 'getLoggedSets', 'completeSession', 'pauseSession', 'resumeSession', 'logSet', 'deleteSet', 'updateSet', 'updateNotes', 'addExerciseToSession', 'deleteExerciseFromSession', 'updateExerciseRating', 'deleteExerciseRating'
+      'createSession', 'getActiveSession', 'startSession', 'getSession', 'deleteSession',
+      'completeSession', 'uncompleteSession', 'pauseSession', 'resumeSession', 'updateSessionNotes',
+      'updateExerciseRating', 'deleteExerciseRating', 'getSets', 'logSet', 'updateSet', 'deleteSet',
+      'getSuggestions', 'getSessionExercises', 'addSessionExercise', 'removeSessionExercise',
+      'replaceSessionExercise', 'reorderSessionExercises'
     ]);
     workoutServiceSpy.getActiveSession.and.returnValue(of(null));
+    workoutServiceSpy.getSession.and.returnValue(of({
+      id: 'test-id',
+      programId: 'p1',
+      dayId: 'd1',
+      durationSeconds: 0,
+      startedAt: '2026-01-01T00:00:00Z',
+      completedAt: null,
+      notes: ''
+    }));
+    workoutServiceSpy.getSets.and.returnValue(of([]));
+    workoutServiceSpy.getSessionExercises.and.returnValue(of([]));
+    workoutServiceSpy.getSuggestions.and.returnValue(of([]));
     workoutServiceSpy.updateExerciseRating.and.returnValue(of({ ratings: [] }));
     workoutServiceSpy.deleteExerciseRating.and.returnValue(of({ ratings: [] }));
 
@@ -36,7 +52,14 @@ describe('ActiveWorkoutComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'test-id' } }, queryParams: of({}) } },
+        { 
+          provide: ActivatedRoute, 
+          useValue: { 
+            snapshot: { paramMap: { get: () => 'test-id' } }, 
+            paramMap: of({ get: () => 'test-id' }),
+            queryParams: of({}) 
+          } 
+        },
         { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) },
         { provide: WorkoutService, useValue: workoutServiceSpy },
         { provide: ProgramService, useValue: programServiceSpy },
@@ -185,7 +208,7 @@ describe('ActiveWorkoutComponent', () => {
         lastResumedAt: now,
         pausedAt: null,
         completedAt: null
-      } as WorkoutSessionResponse);
+      } as unknown as WorkoutSessionResponse);
 
       expect(component.isPaused()).toBeFalse();
       expect(component.formattedTimerDisplay()).toMatch(/\d{2}:\d{2}/);
@@ -196,7 +219,7 @@ describe('ActiveWorkoutComponent', () => {
         lastResumedAt: now,
         pausedAt: now,
         completedAt: null
-      } as WorkoutSessionResponse);
+      } as unknown as WorkoutSessionResponse);
 
       expect(component.isPaused()).toBeTrue();
       expect(component.formattedTimerDisplay()).toBe('02:00');
@@ -231,6 +254,79 @@ describe('ActiveWorkoutComponent', () => {
       expect(component.isLogging('ex1')).toBeTrue();
       expect(component.isLogging('ex2')).toBeFalse();
     });
+
+    it('toggles AMRAP and adjusts reps validation accordingly', () => {
+      component.ngOnInit();
+      component.openAddExercise();
+      expect(component.exerciseForm.get('isAmrap')?.value).toBeFalse();
+
+      component.onExerciseSelected({
+        id: 'ex-100',
+        userId: 'u1',
+        name: 'Pull Up',
+        unilateral: false,
+        spinalLoading: false,
+        isBodyweight: true,
+        isPublic: false,
+        targets: [],
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z'
+      });
+
+      // Initially not AMRAP, reps is required
+      component.exerciseForm.patchValue({ reps: null });
+      expect(component.exerciseForm.valid).toBeFalse();
+
+      // Toggle AMRAP to true -> reps should not be required
+      component.exerciseForm.patchValue({ isAmrap: true });
+      expect(component.exerciseForm.valid).toBeTrue();
+    });
+
+    it('reloads workout data and suggestions upon adding a new exercise', () => {
+      const workoutService = TestBed.inject(WorkoutService);
+      const workoutSpy = spyOn(component, 'loadWorkoutData').and.callThrough();
+      (workoutService.addSessionExercise as jasmine.Spy).and.returnValue(of({
+        id: 'se-100',
+        sessionId: 'test-id',
+        exercise: { id: 'ex-100', name: 'Pull Up', isPublic: false, unilateral: false, isBodyweight: true },
+        sets: 3,
+        reps: 10,
+        sortOrder: 1,
+        isAmrap: false
+      }));
+
+      component.session.set({
+        id: 'test-id',
+        dayTemplateId: 'dt-1',
+        dayTemplateName: 'Push Day',
+        performedOn: '2026-01-01',
+        weekNumber: 1,
+        durationSeconds: 0,
+        startedAt: '2026-01-01T00:00:00Z',
+        completedAt: null,
+        notes: ''
+      });
+
+      component.exerciseForm.patchValue({
+        exerciseId: 'ex-100',
+        sets: 3,
+        reps: 10,
+        repsMax: null,
+        isAmrap: false
+      });
+
+      component.onSubmitExercise();
+
+      expect(workoutService.addSessionExercise).toHaveBeenCalledWith('test-id', {
+        exerciseId: 'ex-100',
+        sets: 3,
+        reps: 10,
+        repsMax: undefined,
+        isAmrap: false
+      });
+      expect(workoutSpy).toHaveBeenCalled();
+    });
   });
 });
+
 

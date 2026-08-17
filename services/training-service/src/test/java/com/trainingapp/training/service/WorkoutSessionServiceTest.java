@@ -405,6 +405,124 @@ class WorkoutSessionServiceTest {
     }
 
     @Test
+    void getExerciseSuggestions_PrioritizesSameDayTemplate_OverCrossWorkoutSession() {
+        UUID sessionId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID pushDayTemplateId = UUID.randomUUID();
+        UUID pullDayTemplateId = UUID.randomUUID();
+
+        com.trainingapp.training.domain.DayTemplate pushTemplate = new com.trainingapp.training.domain.DayTemplate();
+        ReflectionTestUtils.setField(pushTemplate, "id", pushDayTemplateId);
+        pushTemplate.setName("Push Day");
+
+        com.trainingapp.training.domain.DayTemplate pullTemplate = new com.trainingapp.training.domain.DayTemplate();
+        ReflectionTestUtils.setField(pullTemplate, "id", pullDayTemplateId);
+        pullTemplate.setName("Pull Day");
+
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setDayTemplate(pushTemplate);
+        session.setPerformedOn(LocalDate.now());
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", UUID.randomUUID());
+        ex.setUnilateral(false);
+
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", UUID.randomUUID());
+        se.setExercise(ex);
+        se.setReps(6);
+        se.setRepsMax(8);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(se));
+
+        // More recent session from Pull Day (e.g. 2 days ago, 15 reps @ 60kg)
+        WorkoutSession crossWorkoutSession = new WorkoutSession();
+        ReflectionTestUtils.setField(crossWorkoutSession, "id", UUID.randomUUID());
+        crossWorkoutSession.setDayTemplate(pullTemplate);
+        crossWorkoutSession.setPerformedOn(LocalDate.now().minusDays(2));
+
+        com.trainingapp.training.domain.WorkoutSet crossSet = new com.trainingapp.training.domain.WorkoutSet();
+        crossSet.setSession(crossWorkoutSession);
+        crossSet.setSetNumber(1);
+        crossSet.setWeightKg(java.math.BigDecimal.valueOf(60.0));
+        crossSet.setRepsCompleted(15);
+
+        // Older session from same Push Day (e.g. 7 days ago, 8 reps @ 80kg)
+        WorkoutSession sameDaySession = new WorkoutSession();
+        ReflectionTestUtils.setField(sameDaySession, "id", UUID.randomUUID());
+        sameDaySession.setDayTemplate(pushTemplate);
+        sameDaySession.setPerformedOn(LocalDate.now().minusDays(7));
+
+        com.trainingapp.training.domain.WorkoutSet pushSet = new com.trainingapp.training.domain.WorkoutSet();
+        pushSet.setSession(sameDaySession);
+        pushSet.setSetNumber(1);
+        pushSet.setWeightKg(java.math.BigDecimal.valueOf(80.0));
+        pushSet.setRepsCompleted(8);
+
+        // allHistorical returns crossSet first (descending date) then pushSet
+        when(setRepository.findHistoricalSetsForExercise(ex.getId(), userId, session.getPerformedOn()))
+            .thenReturn(List.of(crossSet, pushSet));
+
+        List<com.trainingapp.training.dto.ExerciseSuggestionResponse> suggestions = sessionService.getExerciseSuggestions(sessionId, userId);
+
+        assertThat(suggestions).hasSize(1);
+        // Must pick the same day template sets (80kg x 8), avoiding cross-workout contamination
+        assertThat(suggestions.get(0).previousSets()).hasSize(1);
+        assertThat(suggestions.get(0).previousSets().get(0).weightKg()).isEqualByComparingTo(java.math.BigDecimal.valueOf(80.0));
+        assertThat(suggestions.get(0).previousSets().get(0).reps()).isEqualTo(8);
+    }
+
+    @Test
+    void getExerciseSuggestions_FiltersOutHistoricalSessionsOutsideRepRange() {
+        UUID sessionId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setPerformedOn(LocalDate.now());
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", UUID.randomUUID());
+        ex.setUnilateral(false);
+
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", UUID.randomUUID());
+        se.setExercise(ex);
+        se.setReps(15);
+        se.setRepsMax(20);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(se));
+
+        // Historical session only has 3-rep heavy sets (bucket 1-5, outside 15-20 rep range)
+        WorkoutSession pastSession = new WorkoutSession();
+        ReflectionTestUtils.setField(pastSession, "id", UUID.randomUUID());
+        pastSession.setPerformedOn(LocalDate.now().minusDays(5));
+
+        com.trainingapp.training.domain.WorkoutSet heavySet = new com.trainingapp.training.domain.WorkoutSet();
+        heavySet.setSession(pastSession);
+        heavySet.setSetNumber(1);
+        heavySet.setWeightKg(java.math.BigDecimal.valueOf(120.0));
+        heavySet.setRepsCompleted(3);
+
+        when(setRepository.findHistoricalSetsForExercise(ex.getId(), userId, session.getPerformedOn()))
+            .thenReturn(List.of(heavySet));
+
+        List<com.trainingapp.training.dto.ExerciseSuggestionResponse> suggestions = sessionService.getExerciseSuggestions(sessionId, userId);
+
+        assertThat(suggestions).hasSize(1);
+        // Incompatible 3-rep set must be omitted from previousSets
+        assertThat(suggestions.get(0).previousSets()).isEmpty();
+        // Should not trigger false fatigue or weight addition
+        assertThat(suggestions.get(0).hadFatigueLastWeek()).isFalse();
+        assertThat(suggestions.get(0).suggestAddWeight()).isFalse();
+        // Suggested reps defaults to midpoint (17)
+        assertThat(suggestions.get(0).suggestedReps()).isEqualTo(17);
+    }
+
+    @Test
     void startSession_WithPreviousNotesByDayName() {
         WorkoutSessionRequest request = new WorkoutSessionRequest(dayTemplateId, LocalDate.now(), 1);
         when(dayTemplateRepository.findById(dayTemplateId)).thenReturn(Optional.of(dayTemplate));
