@@ -69,7 +69,7 @@ export interface ExerciseFormData {
             <div
               class="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden"
               >
-              @for (suggestion of suggestions(); track suggestion) {
+              @for (suggestion of suggestions(); track suggestion.id) {
                 <button
                   type="button"
                   (mousedown)="selectSuggestion(suggestion)"
@@ -191,7 +191,7 @@ export interface ExerciseFormData {
               }
             </div>
             <div formArrayName="targets" class="space-y-3">
-              @for (targetForm of targets.controls; track targetForm; let i = $index) {
+              @for (targetForm of targets.controls; track i; let i = $index) {
                 <div [formGroupName]="i" class="flex gap-3 items-start bg-gray-50 dark:bg-gray-800/30 p-3 rounded-xl border border-gray-300 dark:border-gray-700/50">
                   <div class="flex-1 flex flex-col gap-2">
                     <select
@@ -401,12 +401,11 @@ export class ExerciseFormComponent implements OnInit {
     return Object.keys(this.hierarchy[category as keyof typeof this.hierarchy]);
   }
 
-  getPartsFor(category: string, group: string): string[] {
+  getPartsFor(category: string, group: string): readonly string[] {
     if (!category || !group) return [];
     const catData = this.hierarchy[category as keyof typeof this.hierarchy] as Record<string, readonly string[]>;
     if (!catData) return [];
-    const parts = catData[group];
-    return parts ? [...parts] : [];
+    return catData[group] || [];
   }
 
   onCategoryChange(index: number) {

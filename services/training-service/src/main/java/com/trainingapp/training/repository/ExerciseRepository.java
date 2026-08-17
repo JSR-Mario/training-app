@@ -20,10 +20,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
     @Query("SELECT e FROM Exercise e WHERE e.id = :id AND (e.userId = :userId OR e.isPublic = true)")
     Optional<Exercise> findByIdAndUserIdOrIsPublic(@Param("id") UUID id, @Param("userId") UUID userId);
 
-    /** Returns up to 3 exercises whose name contains the query (case-insensitive). */
+    /** Returns IDs of exercises matching the query (case-insensitive), paginated. */
+    @Query("SELECT e.id FROM Exercise e WHERE (e.userId = :userId OR e.isPublic = true) AND e.isDeleted = false AND LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    List<UUID> searchExerciseIds(@Param("userId") UUID userId, @Param("name") String name, Pageable pageable);
+
+    /** Fetches exercises by ID with their targets eagerly loaded. */
     @EntityGraph(attributePaths = "targets")
-    @Query("SELECT e FROM Exercise e WHERE (e.userId = :userId OR e.isPublic = true) AND e.isDeleted = false AND LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    List<Exercise> searchExercises(@Param("userId") UUID userId, @Param("name") String name, Pageable pageable);
+    @Query("SELECT e FROM Exercise e WHERE e.id IN :ids")
+    List<Exercise> findByIdIn(@Param("ids") List<UUID> ids);
 
     @EntityGraph(attributePaths = "targets")
     @Query("SELECT e FROM Exercise e WHERE e.isPublic = true AND e.isDeleted = false")
@@ -34,18 +38,22 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
     List<Exercise> findByUserIdAndIsDeletedFalse(@Param("userId") UUID userId);
 
     /**
-     * Checks whether an exercise with the given name and brand (both case-insensitive
-     * and trimmed) already exists among the user's own exercises or public exercises
-     * that are not soft-deleted. Optionally excludes a specific exercise ID (for updates).
+     * Checks whether an exercise with the given name and brand already exists
+     * among the user's own exercises or public exercises that are not soft-deleted.
+     * Optionally excludes a specific exercise ID (for updates).
+     *
+     * <p>Callers must pass {@code name} and {@code brand} already trimmed and
+     * lowercased so that no SQL functions are called on the bind parameters
+     * (avoids Hibernate inferring null parameters as bytea).
      */
     @Query("""
         SELECT COUNT(e) > 0 FROM Exercise e
         WHERE (e.userId = :userId OR e.isPublic = true)
           AND e.isDeleted = false
-          AND LOWER(TRIM(e.name)) = LOWER(TRIM(:name))
+          AND LOWER(TRIM(e.name)) = :name
           AND (
             (:brand IS NULL AND e.equipmentBrand IS NULL)
-            OR LOWER(TRIM(e.equipmentBrand)) = LOWER(TRIM(:brand))
+            OR LOWER(TRIM(e.equipmentBrand)) = :brand
           )
           AND (:excludeId IS NULL OR e.id <> :excludeId)
         """)
