@@ -8,5 +8,10 @@ public record SessionExerciseRequest(
     Integer sets,
     Integer reps,
     Integer repsMax,
-    boolean isAmrap
-) {}
+    boolean isAmrap,
+    Boolean saveToDayTemplate
+) {
+    public SessionExerciseRequest(UUID exerciseId, Integer sets, Integer reps, Integer repsMax, boolean isAmrap) {
+        this(exerciseId, sets, reps, repsMax, isAmrap, false);
+    }
+}

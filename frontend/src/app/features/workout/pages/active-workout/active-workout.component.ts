@@ -616,6 +616,21 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                               </div>
                             }
 
+                            <div class="flex items-center gap-3 pt-1">
+                              <label class="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  formControlName="saveToDayTemplate"
+                                  class="sr-only peer"
+                                  id="addExerciseSaveToDayTemplate"
+                                >
+                                <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+                              </label>
+                              <label for="addExerciseSaveToDayTemplate" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                Save to Program Routine (Day Template)
+                              </label>
+                            </div>
+
                           <div class="flex justify-end gap-3 pt-2">
                             <button type="button" (click)="cancelAdd()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Cancel</button>
                             <button type="submit" [disabled]="exerciseForm.invalid" class="px-4 py-2 bg-accent-pos hover:opacity-80 text-white rounded-lg text-sm disabled:opacity-50 transition-colors">Save Exercise</button>
@@ -915,6 +930,21 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                     </div>
                   }
 
+                  <div class="flex items-center gap-3 pt-1">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        formControlName="saveToDayTemplate"
+                        class="sr-only peer"
+                        id="replaceSaveToDayTemplate"
+                      >
+                      <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+                    </label>
+                    <label for="replaceSaveToDayTemplate" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                      Update Program Routine (Day Template)
+                    </label>
+                  </div>
+
                   <div class="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700/60">
                     <button type="button" (click)="cancelReplaceTarget()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Back</button>
                     <button type="submit" [disabled]="replaceForm.invalid && !replaceForm.get('keepExistingTargets')?.value" class="px-5 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl text-sm disabled:opacity-50 transition-colors solid-btn">Replace Exercise</button>
@@ -1100,7 +1130,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     keepExistingTargets: [true],
     sets: [3, [Validators.required, Validators.min(1)]],
     reps: [10, [Validators.required, Validators.min(1)]],
-    repsMax: [null as number | null]
+    repsMax: [null as number | null],
+    saveToDayTemplate: [true]
   });
 
   exerciseForm: FormGroup = this.fb.group({
@@ -1108,7 +1139,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     sets: [3],
     reps: [10],
     repsMax: [null],
-    isAmrap: [false]
+    isAmrap: [false],
+    saveToDayTemplate: [true]
   });
 
   collapsedExercises = new Set<string>();
@@ -1228,7 +1260,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
       keepExistingTargets: true,
       sets: current?.sets || 3,
       reps: current?.reps || 10,
-      repsMax: current?.repsMax ?? null
+      repsMax: current?.repsMax ?? null,
+      saveToDayTemplate: true
     });
   }
 
@@ -1248,7 +1281,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
       newExerciseId: newExercise.id,
       sets: formVal.keepExistingTargets ? (current?.sets ?? 3) : (formVal.sets || 3),
       reps: formVal.keepExistingTargets ? (current?.reps ?? 10) : (formVal.reps || 10),
-      repsMax: formVal.keepExistingTargets ? (current?.repsMax ?? undefined) : (formVal.repsMax || undefined)
+      repsMax: formVal.keepExistingTargets ? (current?.repsMax ?? undefined) : (formVal.repsMax || undefined),
+      saveToDayTemplate: !!formVal.saveToDayTemplate
     };
 
     this.workoutService.replaceSessionExercise(sessionId, sessionExerciseId, payload).subscribe({
@@ -1729,7 +1763,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   openAddExercise() {
     this.showAddExercise.set(true);
     this.selectedExercise.set(null);
-    this.exerciseForm.reset({ sets: 3, reps: 10, isAmrap: false });
+    this.exerciseForm.reset({ sets: 3, reps: 10, repsMax: null, isAmrap: false, saveToDayTemplate: true });
   }
 
   cancelAdd() {
@@ -1762,7 +1796,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
         sets: formVal.sets,
         reps: isAmrap ? undefined : (formVal.reps ?? undefined),
         repsMax: isAmrap ? undefined : (formVal.repsMax ?? undefined),
-        isAmrap: isAmrap
+        isAmrap: isAmrap,
+        saveToDayTemplate: !!formVal.saveToDayTemplate
       };
 
       this.workoutService.addSessionExercise(session.id, payload).subscribe({
