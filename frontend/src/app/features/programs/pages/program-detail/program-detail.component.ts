@@ -498,20 +498,39 @@ import { ExerciseDisplayNamePipe } from '../../../../shared/pipes/exercise-displ
                 }
                 {{ selectedExercise()?.name | exerciseDisplayName:selectedExercise()?.equipmentBrand }}
               </div>
-              <div class="flex gap-4">
-                <div class="flex-1">
-                  <label for="qa-sets" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Sets</label>
-                  <input id="qa-sets" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input">
-                </div>
-                <div class="flex-1">
-                  <label for="qa-reps" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Min Reps</label>
-                  <input id="qa-reps" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input">
-                </div>
-                <div class="flex-1">
-                  <label for="qa-repsMax" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Max Reps</label>
-                  <input id="qa-repsMax" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input">
-                </div>
+              <div>
+                <label for="qa-sets" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Sets</label>
+                <input id="qa-sets" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input">
               </div>
+
+              <div class="flex items-center gap-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    formControlName="isAmrap"
+                    class="sr-only peer"
+                    id="qa-isAmrap"
+                  >
+                  <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+                </label>
+                <label for="qa-isAmrap" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                  AMRAP
+                  <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(As Many Reps As Possible)</span>
+                </label>
+              </div>
+
+              @if (!exerciseForm.get('isAmrap')?.value) {
+                <div class="flex gap-4">
+                  <div class="flex-1">
+                    <label for="qa-reps" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Min Reps</label>
+                    <input id="qa-reps" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input">
+                  </div>
+                  <div class="flex-1">
+                    <label for="qa-repsMax" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Max Reps (Optional)</label>
+                    <input id="qa-repsMax" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm solid-input">
+                  </div>
+                </div>
+              }
 
               <div class="flex justify-end gap-3 pt-4">
                 <button type="button" (click)="cancelQuickAdd()" class="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors text-sm">Cancel</button>
@@ -702,6 +721,7 @@ export class ProgramDetailComponent implements OnInit {
     sets: [3],
     reps: [10],
     repsMax: [null],
+    isAmrap: [false],
     durationMinutes: [null],
     incline: [null],
     resistance: [null]
@@ -713,6 +733,16 @@ export class ProgramDetailComponent implements OnInit {
       if (this.programId()) {
         this.loadProgramData();
       }
+    });
+
+    this.exerciseForm.get('isAmrap')?.valueChanges.subscribe(isAmrap => {
+      const repsControl = this.exerciseForm.get('reps');
+      if (isAmrap) {
+        repsControl?.clearValidators();
+      } else if (this.selectedExercise()) {
+        repsControl?.setValidators([Validators.required, Validators.min(1)]);
+      }
+      repsControl?.updateValueAndValidity();
     });
   }
 
@@ -881,7 +911,7 @@ export class ProgramDetailComponent implements OnInit {
     event.stopPropagation();
     this.addingExerciseToDayId.set(dayId);
     this.selectedExercise.set(null);
-    this.exerciseForm.reset({ sets: 3, reps: 10 });
+    this.exerciseForm.reset({ sets: 3, reps: 10, isAmrap: false });
   }
 
   cancelQuickAdd() {
@@ -894,7 +924,11 @@ export class ProgramDetailComponent implements OnInit {
     this.exerciseForm.patchValue({ exerciseId: ex.id });
     
     this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
-    this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+    if (!this.exerciseForm.get('isAmrap')?.value) {
+      this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+    } else {
+      this.exerciseForm.get('reps')?.clearValidators();
+    }
     
     this.exerciseForm.get('sets')?.updateValueAndValidity();
     this.exerciseForm.get('reps')?.updateValueAndValidity();
@@ -906,10 +940,11 @@ export class ProgramDetailComponent implements OnInit {
       const formVal = this.exerciseForm.value;
       const day = this.days().find(d => d.id === dayId);
       const sortOrder = day?.exercises?.length || 0;
+      const isAmrap = !!formVal.isAmrap;
 
       const sets = formVal.sets;
-      const reps = formVal.reps;
-      const repsMax = formVal.repsMax;
+      const reps = isAmrap ? undefined : formVal.reps;
+      const repsMax = isAmrap ? undefined : formVal.repsMax;
 
       this.programService.addDayExercise(
         dayId,
@@ -917,7 +952,11 @@ export class ProgramDetailComponent implements OnInit {
         sets,
         reps,
         sortOrder,
-        repsMax
+        repsMax,
+        undefined,
+        undefined,
+        undefined,
+        isAmrap
       ).subscribe({
         next: () => {
           this.cancelQuickAdd();

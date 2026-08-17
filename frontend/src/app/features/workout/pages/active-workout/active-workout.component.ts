@@ -570,20 +570,39 @@ import { ExerciseDisplayNamePipe } from '../../../../shared/pipes/exercise-displ
                               }
                               {{ selectedExercise()?.name | exerciseDisplayName:selectedExercise()?.equipmentBrand }}
                             </div>
-                            <div class="flex gap-4">
-                              <div class="flex-1">
-                                <label for="setsInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Sets</label>
-                                <input id="setsInput" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
-                              </div>
-                              <div class="flex-1">
-                                <label for="repsInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Min Reps</label>
-                                <input id="repsInput" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
-                              </div>
-                              <div class="flex-1">
-                                <label for="repsMaxInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Max Reps (Opt)</label>
-                                <input id="repsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
-                              </div>
+                            <div>
+                              <label for="setsInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Sets</label>
+                              <input id="setsInput" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
                             </div>
+
+                            <div class="flex items-center gap-3">
+                              <label class="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  formControlName="isAmrap"
+                                  class="sr-only peer"
+                                  id="addExerciseIsAmrap"
+                                >
+                                <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+                              </label>
+                              <label for="addExerciseIsAmrap" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                AMRAP
+                                <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(As Many Reps As Possible)</span>
+                              </label>
+                            </div>
+
+                            @if (!exerciseForm.get('isAmrap')?.value) {
+                              <div class="flex gap-4">
+                                <div class="flex-1">
+                                  <label for="repsInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Min Reps</label>
+                                  <input id="repsInput" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                                </div>
+                                <div class="flex-1">
+                                  <label for="repsMaxInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Max Reps (Opt)</label>
+                                  <input id="repsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                                </div>
+                              </div>
+                            }
 
                           <div class="flex justify-end gap-3 pt-2">
                             <button type="button" (click)="cancelAdd()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Cancel</button>
@@ -1054,7 +1073,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     exerciseId: ['', Validators.required],
     sets: [3],
     reps: [10],
-    repsMax: [null]
+    repsMax: [null],
+    isAmrap: [false]
   });
 
   collapsedExercises = new Set<string>();
@@ -1347,6 +1367,16 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
       if (this.sessionId()) {
         this.loadWorkoutData();
       }
+    });
+
+    this.exerciseForm.get('isAmrap')?.valueChanges.subscribe(isAmrap => {
+      const repsControl = this.exerciseForm.get('reps');
+      if (isAmrap) {
+        repsControl?.clearValidators();
+      } else if (this.selectedExercise()) {
+        repsControl?.setValidators([Validators.required, Validators.min(1)]);
+      }
+      repsControl?.updateValueAndValidity();
     });
   }
 
@@ -1665,7 +1695,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   openAddExercise() {
     this.showAddExercise.set(true);
     this.selectedExercise.set(null);
-    this.exerciseForm.reset({ sets: 3, reps: 10 });
+    this.exerciseForm.reset({ sets: 3, reps: 10, isAmrap: false });
   }
 
   cancelAdd() {
@@ -1678,7 +1708,11 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     this.exerciseForm.patchValue({ exerciseId: ex.id });
     
     this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
-    this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+    if (!this.exerciseForm.get('isAmrap')?.value) {
+      this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+    } else {
+      this.exerciseForm.get('reps')?.clearValidators();
+    }
     
     this.exerciseForm.get('sets')?.updateValueAndValidity();
     this.exerciseForm.get('reps')?.updateValueAndValidity();
@@ -1688,12 +1722,13 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     const session = this.session();
     if (this.exerciseForm.valid && session) {
       const formVal = this.exerciseForm.value;
+      const isAmrap = !!formVal.isAmrap;
       const payload = {
         exerciseId: formVal.exerciseId,
         sets: formVal.sets,
-        reps: formVal.reps,
-        repsMax: formVal.repsMax,
-        isAmrap: false
+        reps: isAmrap ? undefined : formVal.reps,
+        repsMax: isAmrap ? undefined : formVal.repsMax,
+        isAmrap: isAmrap
       };
 
       this.workoutService.addSessionExercise(session.id, payload).subscribe({
