@@ -208,7 +208,7 @@ describe('ActiveWorkoutComponent', () => {
         lastResumedAt: now,
         pausedAt: null,
         completedAt: null
-      } as WorkoutSessionResponse);
+      } as unknown as WorkoutSessionResponse);
 
       expect(component.isPaused()).toBeFalse();
       expect(component.formattedTimerDisplay()).toMatch(/\d{2}:\d{2}/);
@@ -219,7 +219,7 @@ describe('ActiveWorkoutComponent', () => {
         lastResumedAt: now,
         pausedAt: now,
         completedAt: null
-      } as WorkoutSessionResponse);
+      } as unknown as WorkoutSessionResponse);
 
       expect(component.isPaused()).toBeTrue();
       expect(component.formattedTimerDisplay()).toBe('02:00');
@@ -280,6 +280,51 @@ describe('ActiveWorkoutComponent', () => {
       // Toggle AMRAP to true -> reps should not be required
       component.exerciseForm.patchValue({ isAmrap: true });
       expect(component.exerciseForm.valid).toBeTrue();
+    });
+
+    it('reloads workout data and suggestions upon adding a new exercise', () => {
+      const workoutService = TestBed.inject(WorkoutService);
+      const workoutSpy = spyOn(component, 'loadWorkoutData').and.callThrough();
+      (workoutService.addSessionExercise as jasmine.Spy).and.returnValue(of({
+        id: 'se-100',
+        sessionId: 'test-id',
+        exercise: { id: 'ex-100', name: 'Pull Up', isPublic: false, unilateral: false, isBodyweight: true },
+        sets: 3,
+        reps: 10,
+        sortOrder: 1,
+        isAmrap: false
+      }));
+
+      component.session.set({
+        id: 'test-id',
+        dayTemplateId: 'dt-1',
+        dayTemplateName: 'Push Day',
+        performedOn: '2026-01-01',
+        weekNumber: 1,
+        durationSeconds: 0,
+        startedAt: '2026-01-01T00:00:00Z',
+        completedAt: null,
+        notes: ''
+      });
+
+      component.exerciseForm.patchValue({
+        exerciseId: 'ex-100',
+        sets: 3,
+        reps: 10,
+        repsMax: null,
+        isAmrap: false
+      });
+
+      component.onSubmitExercise();
+
+      expect(workoutService.addSessionExercise).toHaveBeenCalledWith('test-id', {
+        exerciseId: 'ex-100',
+        sets: 3,
+        reps: 10,
+        repsMax: undefined,
+        isAmrap: false
+      });
+      expect(workoutSpy).toHaveBeenCalled();
     });
   });
 });
