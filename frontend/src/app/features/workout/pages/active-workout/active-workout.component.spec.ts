@@ -322,7 +322,8 @@ describe('ActiveWorkoutComponent', () => {
         sets: 3,
         reps: 10,
         repsMax: undefined,
-        isAmrap: false
+        isAmrap: false,
+        saveToDayTemplate: true
       });
       expect(workoutSpy).toHaveBeenCalled();
     });

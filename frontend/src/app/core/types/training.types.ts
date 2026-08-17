@@ -160,6 +160,7 @@ export interface SessionExerciseRequest {
   reps?: number;
   repsMax?: number;
   isAmrap?: boolean;
+  saveToDayTemplate?: boolean;
 }
 
 export interface SessionExerciseReplaceRequest {
@@ -168,6 +169,7 @@ export interface SessionExerciseReplaceRequest {
   reps?: number;
   repsMax?: number;
   isAmrap?: boolean;
+  saveToDayTemplate?: boolean;
 }
 
 export interface SessionExerciseReorderRequest {

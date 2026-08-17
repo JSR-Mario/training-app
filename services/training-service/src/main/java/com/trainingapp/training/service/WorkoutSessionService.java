@@ -710,6 +710,33 @@ public class WorkoutSessionService {
         se.setSortOrder(maxOrder + 1);
 
         SessionExercise saved = sessionExerciseRepository.save(se);
+
+        if (Boolean.TRUE.equals(request.saveToDayTemplate()) && session.getDayTemplate() != null) {
+            DayTemplate dayTemplate = session.getDayTemplate();
+            if (dayTemplate.getWeekTemplate() != null &&
+                dayTemplate.getWeekTemplate().getProgram() != null &&
+                dayTemplate.getWeekTemplate().getProgram().getUserId().equals(userId)) {
+
+                boolean alreadyInDay = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplate.getId())
+                    .stream().anyMatch(de -> de.getExercise().getId().equals(exercise.getId()));
+
+                if (!alreadyInDay) {
+                    int maxDayOrder = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplate.getId())
+                        .stream().mapToInt(DayExercise::getSortOrder).max().orElse(0);
+
+                    DayExercise dayExercise = new DayExercise();
+                    dayExercise.setDayTemplate(dayTemplate);
+                    dayExercise.setExercise(exercise);
+                    dayExercise.setSets(request.sets() != null && request.sets() > 0 ? request.sets() : 3);
+                    dayExercise.setReps(request.isAmrap() ? null : request.reps());
+                    dayExercise.setRepsMax(request.isAmrap() ? null : request.repsMax());
+                    dayExercise.setAmrap(request.isAmrap());
+                    dayExercise.setSortOrder(maxDayOrder + 1);
+                    dayExerciseRepository.save(dayExercise);
+                }
+            }
+        }
+
         return mapSessionExerciseToResponse(saved);
     }
 
@@ -739,6 +766,7 @@ public class WorkoutSessionService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your session exercise");
         }
 
+        Exercise oldExercise = se.getExercise();
         Exercise newExercise = exerciseRepository.findById(request.newExerciseId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "New exercise not found"));
 
@@ -765,6 +793,39 @@ public class WorkoutSessionService {
         setRepository.deleteAll(setsToDelete);
 
         SessionExercise saved = sessionExerciseRepository.save(se);
+
+        if (Boolean.TRUE.equals(request.saveToDayTemplate()) && session.getDayTemplate() != null) {
+            DayTemplate dayTemplate = session.getDayTemplate();
+            if (dayTemplate.getWeekTemplate() != null &&
+                dayTemplate.getWeekTemplate().getProgram() != null &&
+                dayTemplate.getWeekTemplate().getProgram().getUserId().equals(userId)) {
+
+                List<DayExercise> dayExercises = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplate.getId());
+                for (DayExercise de : dayExercises) {
+                    if (de.getExercise().getId().equals(oldExercise.getId())) {
+                        de.setExercise(newExercise);
+                        if (request.sets() != null && request.sets() > 0) {
+                            de.setSets(request.sets());
+                        }
+                        if (request.isAmrap() != null) {
+                            de.setAmrap(request.isAmrap());
+                            de.setReps(request.isAmrap() ? null : request.reps());
+                            de.setRepsMax(request.isAmrap() ? null : request.repsMax());
+                        } else {
+                            if (request.reps() != null && request.reps() > 0) {
+                                de.setReps(request.reps());
+                            }
+                            if (request.repsMax() != null) {
+                                de.setRepsMax(request.repsMax());
+                            }
+                        }
+                        dayExerciseRepository.save(de);
+                        break;
+                    }
+                }
+            }
+        }
+
         return mapSessionExerciseToResponse(saved);
     }
 
