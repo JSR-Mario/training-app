@@ -138,7 +138,8 @@ public class ExerciseService {
         String trimmedBrand = request.equipmentBrand() != null && !request.equipmentBrand().trim().isEmpty()
                 ? request.equipmentBrand().trim()
                 : null;
-        boolean duplicate = exerciseRepository.existsByNameInUserScope(userId, trimmedName, trimmedBrand, null);
+        boolean duplicate = exerciseRepository.existsByNameInUserScope(
+                userId, trimmedName.toLowerCase(), trimmedBrand != null ? trimmedBrand.toLowerCase() : null, null);
         if (duplicate) {
             throw new IllegalArgumentException("An exercise with this name and brand already exists.");
         }
@@ -178,7 +179,8 @@ public class ExerciseService {
         String trimmedBrand = request.equipmentBrand() != null && !request.equipmentBrand().trim().isEmpty()
                 ? request.equipmentBrand().trim()
                 : null;
-        boolean duplicate = exerciseRepository.existsByNameInUserScope(userId, trimmedName, trimmedBrand, exerciseId);
+        boolean duplicate = exerciseRepository.existsByNameInUserScope(
+                userId, trimmedName.toLowerCase(), trimmedBrand != null ? trimmedBrand.toLowerCase() : null, exerciseId);
         if (duplicate) {
             throw new IllegalArgumentException("An exercise with this name and brand already exists.");
         }
