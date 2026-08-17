@@ -42,10 +42,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
         SELECT COUNT(e) > 0 FROM Exercise e
         WHERE (e.userId = :userId OR e.isPublic = true)
           AND e.isDeleted = false
-          AND LOWER(TRIM(e.name)) = LOWER(TRIM(:name))
+          AND LOWER(TRIM(e.name)) = LOWER(:name)
           AND (
             (:brand IS NULL AND e.equipmentBrand IS NULL)
-            OR LOWER(TRIM(e.equipmentBrand)) = LOWER(TRIM(:brand))
+            OR LOWER(TRIM(e.equipmentBrand)) = LOWER(:brand)
           )
           AND (:excludeId IS NULL OR e.id <> :excludeId)
         """)

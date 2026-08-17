@@ -81,6 +81,24 @@ class ExerciseServiceTest {
     }
 
     @Test
+    void create_withNullBrand_passesNullToDuplicateCheckAndSaves() {
+        Exercise noBrandExercise = new Exercise();
+        noBrandExercise.setUserId(userId);
+        noBrandExercise.setName("Chest Press");
+        noBrandExercise.setEquipmentBrand(null);
+
+        when(exerciseRepository.existsByNameInUserScope(userId, "Chest Press", null, null)).thenReturn(false);
+        when(exerciseRepository.save(any())).thenReturn(noBrandExercise);
+
+        ExerciseResponse result = exerciseService.create(userId,
+                new ExerciseRequest("  Chest Press  ", null, false, false, false, false));
+        assertThat(result.name()).isEqualTo("Chest Press");
+        assertThat(result.equipmentBrand()).isNull();
+        verify(exerciseRepository).existsByNameInUserScope(userId, "Chest Press", null, null);
+        verify(exerciseRepository).save(any());
+    }
+
+    @Test
     void create_duplicateName_throwsIllegalArgumentException() {
         when(exerciseRepository.existsByNameInUserScope(userId, "Bench Press", "Hammer Strength", null)).thenReturn(true);
         assertThatThrownBy(() -> exerciseService.create(userId,
