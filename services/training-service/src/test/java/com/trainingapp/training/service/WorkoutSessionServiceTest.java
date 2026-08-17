@@ -625,7 +625,7 @@ class WorkoutSessionServiceTest {
         when(sessionExerciseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         com.trainingapp.training.dto.SessionExerciseReplaceRequest req =
-            new com.trainingapp.training.dto.SessionExerciseReplaceRequest(newExerciseId, null, null, null, null);
+            new com.trainingapp.training.dto.SessionExerciseReplaceRequest(newExerciseId, null, null, null, null, false);
 
         com.trainingapp.training.dto.SessionExerciseResponse response =
             sessionService.replaceSessionExercise(sessionId, userId, sessionExerciseId, req);
@@ -634,5 +634,100 @@ class WorkoutSessionServiceTest {
         assertThat(response.sets()).isEqualTo(3);
         assertThat(response.reps()).isEqualTo(10);
         assertThat(response.repsMax()).isNull();
+    }
+
+    @Test
+    void addSessionExercise_WithSaveToDayTemplate_PersistsToDayExercise() {
+        UUID sessionId = UUID.randomUUID();
+        UUID exerciseId = UUID.randomUUID();
+
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setUserId(userId);
+        session.setDayTemplate(dayTemplate);
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", exerciseId);
+        ex.setName("Overhead Press");
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(ex));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of());
+        when(sessionExerciseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplateId)).thenReturn(List.of());
+
+        com.trainingapp.training.dto.SessionExerciseRequest req =
+            new com.trainingapp.training.dto.SessionExerciseRequest(exerciseId, 4, 8, 10, false, true);
+
+        com.trainingapp.training.dto.SessionExerciseResponse response =
+            sessionService.addSessionExercise(sessionId, userId, req);
+
+        assertThat(response).isNotNull();
+        assertThat(response.exercise().name()).isEqualTo("Overhead Press");
+
+        ArgumentCaptor<com.trainingapp.training.domain.DayExercise> deCaptor =
+            ArgumentCaptor.forClass(com.trainingapp.training.domain.DayExercise.class);
+        verify(dayExerciseRepository).save(deCaptor.capture());
+        assertThat(deCaptor.getValue().getExercise().getName()).isEqualTo("Overhead Press");
+        assertThat(deCaptor.getValue().getSets()).isEqualTo(4);
+        assertThat(deCaptor.getValue().getReps()).isEqualTo(8);
+        assertThat(deCaptor.getValue().getRepsMax()).isEqualTo(10);
+    }
+
+    @Test
+    void replaceSessionExercise_WithSaveToDayTemplate_UpdatesDayExercise() {
+        UUID sessionId = UUID.randomUUID();
+        UUID sessionExerciseId = UUID.randomUUID();
+        UUID oldExerciseId = UUID.randomUUID();
+        UUID newExerciseId = UUID.randomUUID();
+
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setUserId(userId);
+        session.setDayTemplate(dayTemplate);
+
+        com.trainingapp.training.domain.Exercise oldEx = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(oldEx, "id", oldExerciseId);
+        oldEx.setName("Old Bench");
+
+        com.trainingapp.training.domain.Exercise newEx = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(newEx, "id", newExerciseId);
+        newEx.setName("New Incline Bench");
+
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", sessionExerciseId);
+        se.setSession(session);
+        se.setExercise(oldEx);
+        se.setSets(3);
+        se.setReps(10);
+
+        com.trainingapp.training.domain.DayExercise existingDe = new com.trainingapp.training.domain.DayExercise();
+        existingDe.setDayTemplate(dayTemplate);
+        existingDe.setExercise(oldEx);
+        existingDe.setSets(3);
+        existingDe.setReps(10);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(se));
+        when(exerciseRepository.findById(newExerciseId)).thenReturn(Optional.of(newEx));
+        when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(List.of());
+        when(sessionExerciseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplateId)).thenReturn(List.of(existingDe));
+
+        com.trainingapp.training.dto.SessionExerciseReplaceRequest req =
+            new com.trainingapp.training.dto.SessionExerciseReplaceRequest(newExerciseId, 4, 12, 15, false, true);
+
+        com.trainingapp.training.dto.SessionExerciseResponse response =
+            sessionService.replaceSessionExercise(sessionId, userId, sessionExerciseId, req);
+
+        assertThat(response.exercise().name()).isEqualTo("New Incline Bench");
+
+        ArgumentCaptor<com.trainingapp.training.domain.DayExercise> deCaptor =
+            ArgumentCaptor.forClass(com.trainingapp.training.domain.DayExercise.class);
+        verify(dayExerciseRepository).save(deCaptor.capture());
+        assertThat(deCaptor.getValue().getExercise().getName()).isEqualTo("New Incline Bench");
+        assertThat(deCaptor.getValue().getSets()).isEqualTo(4);
+        assertThat(deCaptor.getValue().getReps()).isEqualTo(12);
+        assertThat(deCaptor.getValue().getRepsMax()).isEqualTo(15);
     }
 }
