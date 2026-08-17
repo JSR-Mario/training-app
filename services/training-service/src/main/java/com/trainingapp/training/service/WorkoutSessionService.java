@@ -409,18 +409,19 @@ public class WorkoutSessionService {
         List<SessionExercise> sessionExercises = sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(session.getId());
         List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserId(userId);
         Optional<BodyWeightEntry> latestBw = bodyWeightRepository.findFirstByUserIdOrderByDateDesc(userId);
-        
+        UUID currentDayTemplateId = session.getDayTemplate() != null ? session.getDayTemplate().getId() : null;
+
         List<ExerciseSuggestionResponse> suggestions = new java.util.ArrayList<>();
         for (SessionExercise se : sessionExercises) {
             int minReps = se.getReps() != null ? se.getReps() : 10;
             int maxReps = se.getRepsMax() != null ? se.getRepsMax() : minReps;
             int targetReps = (minReps + maxReps) / 2;
-            
+
             java.util.Set<String> relevantBuckets = getOverlappingBuckets(minReps, maxReps);
             java.math.BigDecimal suggestedWeight = null;
             Integer suggestedReps = targetReps;
             double maxVolume = -1;
-            
+
             // Find PR with the highest volume across all buckets that overlap with the exercise's rep range
             for (com.trainingapp.training.dto.ExercisePrProjection pr : prs) {
                 if (pr.getExerciseId().equals(se.getExercise().getId()) && relevantBuckets.contains(pr.getBucket())) {
@@ -433,26 +434,22 @@ public class WorkoutSessionService {
                     }
                 }
             }
-            
+
             // If no PR and it's bodyweight, default to latest recorded body weight
             if (suggestedWeight == null && se.getExercise().isBodyweight() && latestBw.isPresent()) {
                 suggestedWeight = latestBw.get().getWeightKg();
             }
-            
+
             List<WorkoutSet> allHistorical = setRepository.findHistoricalSetsForExercise(se.getExercise().getId(), userId, session.getPerformedOn());
             boolean hadFatigueLastWeek = false;
             boolean suggestAddWeight = false;
             List<com.trainingapp.training.dto.PreviousSetSuggestion> previousSets = new java.util.ArrayList<>();
-            
-            if (!allHistorical.isEmpty()) {
-                UUID mostRecentSessionId = allHistorical.get(0).getSession().getId();
-                List<WorkoutSet> recentSets = new java.util.ArrayList<>();
-                for (WorkoutSet historicalSet : allHistorical) {
-                    if (historicalSet.getSession().getId().equals(mostRecentSessionId)) {
-                        recentSets.add(historicalSet);
-                    }
-                }
-                
+
+            List<WorkoutSet> recentSets = findBestMatchingRecentSets(
+                allHistorical, currentDayTemplateId, minReps, maxReps, se.isAmrap(), relevantBuckets
+            );
+
+            if (!recentSets.isEmpty()) {
                 double maxPerf = 0;
                 for (WorkoutSet s : recentSets) {
                     if (s.getWeightKg() != null && s.getRepsCompleted() != null) {
@@ -461,12 +458,12 @@ public class WorkoutSessionService {
                         if (perf > maxPerf) maxPerf = perf;
                     }
                 }
-                
+
                 int warnings = 0;
                 int criticals = 0;
                 int setsBelowMinReps = 0;
                 int setsAboveMaxReps = 0;
-                
+
                 for (WorkoutSet s : recentSets) {
                     if (s.getWeightKg() != null && s.getRepsCompleted() != null && maxPerf > 0) {
                         int r = s.getRepsCompleted() + (s.getRepsCompletedRight() != null ? s.getRepsCompletedRight() : 0);
@@ -475,7 +472,7 @@ public class WorkoutSessionService {
                         if (ratio < 0.75) criticals++;
                         else if (ratio < 0.90) warnings++;
                     }
-                    
+
                     if (s.getRepsCompleted() != null) {
                         int effectiveReps = (se.getExercise().isUnilateral() && s.getRepsCompletedRight() != null)
                                 ? Math.min(s.getRepsCompleted(), s.getRepsCompletedRight())
@@ -490,11 +487,11 @@ public class WorkoutSessionService {
                         }
                     }
                 }
-                
+
                 hadFatigueLastWeek = criticals >= 1 || warnings >= 2 || setsBelowMinReps > 0;
                 int requiredSetsAboveMax = Math.min(2, recentSets.size());
                 suggestAddWeight = setsAboveMaxReps >= requiredSetsAboveMax;
-                
+
                 for (WorkoutSet s : recentSets) {
                     previousSets.add(new com.trainingapp.training.dto.PreviousSetSuggestion(
                         s.getSetNumber(),
@@ -504,7 +501,7 @@ public class WorkoutSessionService {
                     ));
                 }
             }
-            
+
             suggestions.add(new ExerciseSuggestionResponse(
                 se.getId(),
                 se.getExercise().getId(),
@@ -516,6 +513,77 @@ public class WorkoutSessionService {
             ));
         }
         return suggestions;
+    }
+
+    private List<WorkoutSet> findBestMatchingRecentSets(
+            List<WorkoutSet> allHistorical,
+            UUID currentDayTemplateId,
+            int minReps,
+            int maxReps,
+            boolean isAmrap,
+            java.util.Set<String> relevantBuckets
+    ) {
+        if (allHistorical == null || allHistorical.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        // Group sets by session preserving descending date order
+        java.util.Map<UUID, List<WorkoutSet>> sessionSetsMap = new java.util.LinkedHashMap<>();
+        for (WorkoutSet hs : allHistorical) {
+            if (hs.getSession() != null) {
+                sessionSetsMap.computeIfAbsent(hs.getSession().getId(), k -> new java.util.ArrayList<>()).add(hs);
+            }
+        }
+
+        // Priority 1: Same day template and compatible rep range
+        if (currentDayTemplateId != null) {
+            for (List<WorkoutSet> sessionSets : sessionSetsMap.values()) {
+                WorkoutSession s = sessionSets.get(0).getSession();
+                if (s.getDayTemplate() != null && currentDayTemplateId.equals(s.getDayTemplate().getId())) {
+                    if (isSessionSetsCompatibleWithRepRange(sessionSets, minReps, maxReps, isAmrap, relevantBuckets)) {
+                        return sessionSets;
+                    }
+                }
+            }
+            // Priority 2: Same day template fallback
+            for (List<WorkoutSet> sessionSets : sessionSetsMap.values()) {
+                WorkoutSession s = sessionSets.get(0).getSession();
+                if (s.getDayTemplate() != null && currentDayTemplateId.equals(s.getDayTemplate().getId())) {
+                    return sessionSets;
+                }
+            }
+        }
+
+        // Priority 3: Other session whose sets match the target rep range
+        for (List<WorkoutSet> sessionSets : sessionSetsMap.values()) {
+            if (isSessionSetsCompatibleWithRepRange(sessionSets, minReps, maxReps, isAmrap, relevantBuckets)) {
+                return sessionSets;
+            }
+        }
+
+        return java.util.Collections.emptyList();
+    }
+
+    private boolean isSessionSetsCompatibleWithRepRange(
+            List<WorkoutSet> sets,
+            int minReps,
+            int maxReps,
+            boolean isAmrap,
+            java.util.Set<String> relevantBuckets
+    ) {
+        if (isAmrap) return true;
+        if (sets == null || sets.isEmpty()) return false;
+
+        for (WorkoutSet s : sets) {
+            if (s.getRepsCompleted() != null) {
+                int effectiveReps = s.getRepsCompleted();
+                String bucket = getBucketForReps(effectiveReps);
+                if (relevantBuckets.contains(bucket) || (effectiveReps >= minReps - 2 && effectiveReps <= maxReps + 5)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private String getBucketForReps(int reps) {

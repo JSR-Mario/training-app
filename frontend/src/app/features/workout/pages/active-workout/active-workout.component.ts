@@ -13,6 +13,7 @@ import {
   WorkoutSetResponse,
   Exercise,
   ExerciseSuggestionResponse,
+  SessionExerciseRequest,
   SessionExerciseReplaceRequest
 } from '../../../../core/types/training.types';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
@@ -1756,37 +1757,18 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     if (this.exerciseForm.valid && session) {
       const formVal = this.exerciseForm.value;
       const isAmrap = !!formVal.isAmrap;
-      const payload = {
+      const payload: SessionExerciseRequest = {
         exerciseId: formVal.exerciseId,
         sets: formVal.sets,
-        reps: isAmrap ? undefined : formVal.reps,
-        repsMax: isAmrap ? undefined : formVal.repsMax,
+        reps: isAmrap ? undefined : (formVal.reps ?? undefined),
+        repsMax: isAmrap ? undefined : (formVal.repsMax ?? undefined),
         isAmrap: isAmrap
       };
 
       this.workoutService.addSessionExercise(session.id, payload).subscribe({
         next: () => {
           this.cancelAdd();
-          // Reload exercises to show the newly added one
-          this.workoutService.getSessionExercises(session.id).subscribe(exercises => {
-            const mappedExercises: DayExercise[] = exercises.map(e => ({
-              id: e.id,
-              exerciseId: e.exercise.id,
-              exerciseName: e.exercise.name,
-              equipmentBrand: e.exercise.equipmentBrand,
-              isPublic: e.exercise.isPublic,
-              sets: e.sets,
-              reps: e.reps,
-              repsMax: e.repsMax,
-              sortOrder: e.sortOrder,
-              isAmrap: e.isAmrap,
-              unilateral: e.exercise.unilateral,
-              isBodyweight: e.exercise.isBodyweight
-            }));
-            const sorted = mappedExercises.sort((a, b) => a.sortOrder - b.sortOrder);
-            this.exercises.set(sorted);
-            this.initForms(sorted);
-          });
+          this.loadWorkoutData();
         },
         error: (err) => console.error('Error adding exercise', err)
       });
