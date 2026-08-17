@@ -64,6 +64,8 @@ export interface DayExercise {
   id: string;
   exerciseId: string;
   exerciseName?: string;
+  equipmentBrand?: string;
+  isPublic?: boolean;
   sets?: number;
   reps?: number;
   repsMax?: number;

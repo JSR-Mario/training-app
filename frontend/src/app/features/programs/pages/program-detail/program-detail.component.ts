@@ -10,10 +10,12 @@ import { ExerciseSearchComponent } from '../../../exercises/components/exercise-
 import { ExerciseService } from '../../../exercises/services/exercise.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 
+import { ExerciseDisplayNamePipe } from '../../../../shared/pipes/exercise-display-name.pipe';
+
 @Component({
   standalone: true,
   selector: 'app-program-detail',
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, ExerciseSearchComponent, DragDropModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, ExerciseSearchComponent, DragDropModule, ExerciseDisplayNamePipe],
   template: `
     <div class="max-w-7xl mx-auto space-y-6">
     
@@ -490,7 +492,11 @@ import { AuthService } from '../../../../core/auth/auth.service';
           @if (selectedExercise()) {
             <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4 mt-4">
               <div class="text-sm font-semibold text-accent-pos mb-1 border-b border-gray-300 dark:border-gray-700 pb-2 flex items-center gap-2">
-                Selected: {{ selectedExercise()?.name }}
+                Selected:
+                @if (selectedExercise()?.isPublic) {
+                  <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                }
+                {{ selectedExercise()?.name | exerciseDisplayName:selectedExercise()?.equipmentBrand }}
               </div>
               <div class="flex gap-4">
                 <div class="flex-1">

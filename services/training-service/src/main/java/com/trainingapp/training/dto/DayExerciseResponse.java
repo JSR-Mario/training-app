@@ -7,6 +7,8 @@ public record DayExerciseResponse(
         UUID id,
         UUID exerciseId,
         String exerciseName,
+        String equipmentBrand,
+        boolean isPublic,
         Integer sets,
         Integer reps,
         Integer repsMax,

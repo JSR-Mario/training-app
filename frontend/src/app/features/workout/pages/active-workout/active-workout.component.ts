@@ -23,10 +23,12 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 import { DayVolumeEntry } from '../../../../core/types/analytics.types';
 
+import { ExerciseDisplayNamePipe } from '../../../../shared/pipes/exercise-display-name.pipe';
+
 @Component({
   standalone: true,
     selector: 'app-active-workout',
-    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent, BaseChartDirective],
+    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent, BaseChartDirective, ExerciseDisplayNamePipe],
   template: `
     <div class="max-w-6xl mx-auto space-y-6 pt-2 pb-12">
     
@@ -168,8 +170,11 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                             {{ idx + 1 }}
                           </span>
                         }
-                        <span class="text-xs font-medium text-black dark:text-white truncate group-hover:text-accent-pos transition-colors">
-                          {{ item.exerciseName || 'Exercise ' + (idx + 1) }}
+                        <span class="text-xs font-medium text-black dark:text-white truncate group-hover:text-accent-pos transition-colors inline-flex items-center gap-1">
+                          @if (item.isPublic) {
+                            <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                          }
+                          {{ (item.exerciseName || 'Exercise ' + (idx + 1)) | exerciseDisplayName:item.equipmentBrand }}
                         </span>
                       </div>
                       <span class="text-[11px] font-mono shrink-0"
@@ -235,8 +240,11 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                        class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4 cursor-pointer select-none group focus:outline-none">
                     <div class="flex-1 pr-4 min-w-0">
                       <div class="flex flex-wrap items-center gap-2 mb-1">
-                        <h2 class="text-xl font-bold text-black dark:text-white group-hover:text-accent-pos transition-colors">
-                          {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}
+                        <h2 class="text-xl font-bold text-black dark:text-white group-hover:text-accent-pos transition-colors inline-flex items-center gap-1.5">
+                          @if (ex.isPublic) {
+                            <svg class="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                          }
+                          {{ (ex.exerciseName || 'Exercise ' + ex.exerciseId) | exerciseDisplayName:ex.equipmentBrand }}
                         </h2>
 
                         @if (getSuggestion(ex.id)?.hadFatigueLastWeek) {
@@ -555,7 +563,13 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                         }
                         @if (selectedExercise()) {
                           <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
-                            <div class="text-black dark:text-white">Selected: {{ selectedExercise()?.name }}</div>
+                            <div class="text-black dark:text-white inline-flex items-center gap-1.5">
+                              Selected:
+                              @if (selectedExercise()?.isPublic) {
+                                <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                              }
+                              {{ selectedExercise()?.name | exerciseDisplayName:selectedExercise()?.equipmentBrand }}
+                            </div>
                             <div class="flex gap-4">
                               <div class="flex-1">
                                 <label for="setsInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Sets</label>
@@ -661,7 +675,12 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
           <div class="solid-card rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative p-6">
             <button (click)="closeOptionsModal()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white text-lg">✕</button>
-            <h3 class="text-xl font-bold mb-5 text-black dark:text-white pr-6">{{ ex.exerciseName }} Options</h3>
+            <h3 class="text-xl font-bold mb-5 text-black dark:text-white pr-6 inline-flex items-center gap-1.5">
+              @if (ex.isPublic) {
+                <svg class="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              }
+              {{ ex.exerciseName | exerciseDisplayName:ex.equipmentBrand }} Options
+            </h3>
             <div class="space-y-4">
               <!-- Unit Preference -->
               <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
@@ -716,8 +735,11 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                         <span class="font-bold px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shrink-0">
                           {{ idx + 1 }}
                         </span>
-                        <span class="truncate" [class.text-accent-pos]="item.id === ex.id">
-                          {{ item.exerciseName }}
+                        <span class="truncate inline-flex items-center gap-1" [class.text-accent-pos]="item.id === ex.id">
+                          @if (item.isPublic) {
+                            <svg class="w-3 h-3 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                          }
+                          {{ item.exerciseName | exerciseDisplayName:item.equipmentBrand }}
                         </span>
                       </div>
                       
@@ -765,7 +787,13 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
             <button (click)="cancelReplace()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white z-10 text-lg">✕</button>
             
             @if (!replaceTargetExercise()) {
-              <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0">Replace {{ ex.exerciseName }}</h3>
+              <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0 inline-flex items-center gap-1.5">
+                Replace
+                @if (ex.isPublic) {
+                  <svg class="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                }
+                {{ ex.exerciseName | exerciseDisplayName:ex.equipmentBrand }}
+              </h3>
               <div class="flex-1 overflow-y-auto min-h-0">
                 <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onReplaceExerciseSelected($event)"></app-exercise-search>
               </div>
@@ -776,11 +804,21 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                 <div class="p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/60 text-sm space-y-1.5">
                   <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                     <span class="text-xs uppercase font-bold tracking-wider">Replacing:</span>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300 line-through">{{ ex.exerciseName }}</span>
+                    <span class="font-semibold text-gray-700 dark:text-gray-300 line-through inline-flex items-center gap-1">
+                      @if (ex.isPublic) {
+                        <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      }
+                      {{ ex.exerciseName | exerciseDisplayName:ex.equipmentBrand }}
+                    </span>
                   </div>
                   <div class="flex items-center gap-2 text-accent-pos font-bold">
                     <span class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-normal">With:</span>
-                    <span>{{ replaceTargetExercise()?.name }}</span>
+                    <span class="inline-flex items-center gap-1">
+                      @if (replaceTargetExercise()?.isPublic) {
+                        <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      }
+                      {{ replaceTargetExercise()?.name | exerciseDisplayName:replaceTargetExercise()?.equipmentBrand }}
+                    </span>
                   </div>
                 </div>
 
@@ -1398,6 +1436,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
               id: e.id,
               exerciseId: e.exercise.id,
               exerciseName: e.exercise.name,
+              equipmentBrand: e.exercise.equipmentBrand,
+              isPublic: e.exercise.isPublic,
               sets: e.sets,
               reps: e.reps,
               repsMax: e.repsMax,
@@ -1665,6 +1705,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
               id: e.id,
               exerciseId: e.exercise.id,
               exerciseName: e.exercise.name,
+              equipmentBrand: e.exercise.equipmentBrand,
+              isPublic: e.exercise.isPublic,
               sets: e.sets,
               reps: e.reps,
               repsMax: e.repsMax,
