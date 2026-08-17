@@ -137,6 +137,8 @@ public class DayExerciseService {
                 de.getId(),
                 de.getExercise().getId(),
                 de.getExercise().getName(),
+                de.getExercise().getEquipmentBrand(),
+                de.getExercise().getIsPublic(),
                 de.getSets(),
                 de.getReps(),
                 de.getRepsMax(),

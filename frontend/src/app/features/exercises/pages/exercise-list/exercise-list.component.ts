@@ -450,7 +450,12 @@ export type ViewMode = 'LIST' | 'GRID';
 
                     <!-- Name -->
                     <td class="py-3 px-4 font-bold text-gray-900 dark:text-gray-100 group-hover:text-accent-pos transition-colors">
-                      {{ ex.name }}
+                      <div class="inline-flex items-center gap-1.5">
+                        @if (ex.isPublic) {
+                          <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        }
+                        <span>{{ ex.name }}</span>
+                      </div>
                     </td>
 
                     <!-- Brand -->
@@ -531,8 +536,11 @@ export type ViewMode = 'LIST' | 'GRID';
               <!-- Header Row (Name & Star Rating) -->
               <div>
                 <div class="flex items-start justify-between gap-2 mb-2">
-                  <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-accent-pos transition-colors text-base leading-snug truncate" [title]="ex.name">
-                    {{ ex.name }}
+                  <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-accent-pos transition-colors text-base leading-snug truncate inline-flex items-center gap-1.5" [title]="ex.name">
+                    @if (ex.isPublic) {
+                      <svg class="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    }
+                    <span class="truncate">{{ ex.name }}</span>
                   </h3>
                   
                   <!-- Rating Badge -->

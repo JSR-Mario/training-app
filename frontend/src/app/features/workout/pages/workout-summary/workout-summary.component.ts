@@ -15,8 +15,8 @@ import { ChartConfiguration } from 'chart.js';
 
 @Component({
   standalone: true,
-    selector: 'app-workout-summary',
-    imports: [CommonModule, RouterModule, BaseChartDirective],
+  selector: 'app-workout-summary',
+  imports: [CommonModule, RouterModule, BaseChartDirective],
     template: `
     <div class="max-w-2xl mx-auto space-y-6 pt-8 pb-24 text-center">
     
@@ -82,8 +82,16 @@ import { ChartConfiguration } from 'chart.js';
             @for (ex of exercises(); track ex) {
               <div class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-800 last:border-0">
                 <div>
-                  <p class="text-gray-800 dark:text-gray-200 font-medium">
-                    {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}
+                  <p class="text-gray-800 dark:text-gray-200 font-medium inline-flex items-center gap-1.5 flex-wrap">
+                    @if (ex.isPublic) {
+                      <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    }
+                    <span>{{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</span>
+                    @if (ex.equipmentBrand) {
+                      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 font-sans font-normal">
+                        {{ ex.equipmentBrand }}
+                      </span>
+                    }
                     @if (hasPrForExercise(ex.id)) {
                       <span class="ml-2 text-[10px] uppercase font-bold text-accent-pos bg-accent-pos/10 px-1.5 py-0.5 rounded border border-accent-pos/20">PR!</span>
                     }
@@ -176,6 +184,8 @@ export class WorkoutSummaryComponent implements OnInit {
                   id: e.id,
                   exerciseId: e.exercise.id,
                   exerciseName: e.exercise.name,
+                  equipmentBrand: e.exercise.equipmentBrand,
+                  isPublic: e.exercise.isPublic,
                   sets: e.sets,
                   reps: e.reps,
                   repsMax: e.repsMax,

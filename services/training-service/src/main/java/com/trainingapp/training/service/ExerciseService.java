@@ -135,15 +135,18 @@ public class ExerciseService {
     @org.springframework.cache.annotation.CacheEvict(value = "userExerciseProjections:v1", key = "#userId")
     public ExerciseResponse create(UUID userId, ExerciseRequest request) {
         String trimmedName = request.name().trim();
-        boolean duplicate = exerciseRepository.existsByNameInUserScope(userId, trimmedName, null);
+        String trimmedBrand = request.equipmentBrand() != null && !request.equipmentBrand().trim().isEmpty()
+                ? request.equipmentBrand().trim()
+                : null;
+        boolean duplicate = exerciseRepository.existsByNameInUserScope(userId, trimmedName, trimmedBrand, null);
         if (duplicate) {
-            throw new IllegalArgumentException("An exercise with this name already exists.");
+            throw new IllegalArgumentException("An exercise with this name and brand already exists.");
         }
 
         Exercise exercise = new Exercise();
         exercise.setUserId(userId);
         exercise.setName(trimmedName);
-        exercise.setEquipmentBrand(request.equipmentBrand());
+        exercise.setEquipmentBrand(trimmedBrand);
         exercise.setUnilateral(request.unilateral());
         exercise.setBodyweight(request.isBodyweight());
         exercise.setSpinalLoading(request.spinalLoading());
@@ -172,13 +175,16 @@ public class ExerciseService {
         Exercise exercise = findOwnedOrPublicAdmin(userId, exerciseId);
 
         String trimmedName = request.name().trim();
-        boolean duplicate = exerciseRepository.existsByNameInUserScope(userId, trimmedName, exerciseId);
+        String trimmedBrand = request.equipmentBrand() != null && !request.equipmentBrand().trim().isEmpty()
+                ? request.equipmentBrand().trim()
+                : null;
+        boolean duplicate = exerciseRepository.existsByNameInUserScope(userId, trimmedName, trimmedBrand, exerciseId);
         if (duplicate) {
-            throw new IllegalArgumentException("An exercise with this name already exists.");
+            throw new IllegalArgumentException("An exercise with this name and brand already exists.");
         }
 
         exercise.setName(trimmedName);
-        exercise.setEquipmentBrand(request.equipmentBrand());
+        exercise.setEquipmentBrand(trimmedBrand);
         exercise.setUnilateral(request.unilateral());
         exercise.setBodyweight(request.isBodyweight());
         exercise.setSpinalLoading(request.spinalLoading());

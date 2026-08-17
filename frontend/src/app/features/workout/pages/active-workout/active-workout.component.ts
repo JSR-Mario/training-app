@@ -25,8 +25,8 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
 
 @Component({
   standalone: true,
-    selector: 'app-active-workout',
-    imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent, BaseChartDirective],
+  selector: 'app-active-workout',
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ExerciseSearchComponent, ExerciseFormComponent, BaseChartDirective],
   template: `
     <div class="max-w-6xl mx-auto space-y-6 pt-2 pb-12">
     
@@ -168,8 +168,14 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                             {{ idx + 1 }}
                           </span>
                         }
-                        <span class="text-xs font-medium text-black dark:text-white truncate group-hover:text-accent-pos transition-colors">
-                          {{ item.exerciseName || 'Exercise ' + (idx + 1) }}
+                        <span class="text-xs font-medium text-black dark:text-white truncate group-hover:text-accent-pos transition-colors inline-flex items-center gap-1 min-w-0">
+                          @if (item.isPublic) {
+                            <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                          }
+                          <span class="truncate">{{ item.exerciseName || 'Exercise ' + (idx + 1) }}</span>
+                          @if (item.equipmentBrand) {
+                            <span class="text-[10px] text-gray-500 dark:text-gray-400 font-normal shrink-0">({{ item.equipmentBrand }})</span>
+                          }
                         </span>
                       </div>
                       <span class="text-[11px] font-mono shrink-0"
@@ -235,8 +241,16 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                        class="flex items-start justify-between mb-4 border-b border-gray-300 dark:border-gray-700 pb-4 cursor-pointer select-none group focus:outline-none">
                     <div class="flex-1 pr-4 min-w-0">
                       <div class="flex flex-wrap items-center gap-2 mb-1">
-                        <h2 class="text-xl font-bold text-black dark:text-white group-hover:text-accent-pos transition-colors">
-                          {{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}
+                        <h2 class="text-xl font-bold text-black dark:text-white group-hover:text-accent-pos transition-colors inline-flex items-center gap-2 flex-wrap">
+                          @if (ex.isPublic) {
+                            <svg class="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                          }
+                          <span>{{ ex.exerciseName || 'Exercise ' + ex.exerciseId }}</span>
+                          @if (ex.equipmentBrand) {
+                            <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 tracking-normal font-normal">
+                              {{ ex.equipmentBrand }}
+                            </span>
+                          }
                         </h2>
 
                         @if (getSuggestion(ex.id)?.hadFatigueLastWeek) {
@@ -555,21 +569,51 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                         }
                         @if (selectedExercise()) {
                           <form [formGroup]="exerciseForm" (ngSubmit)="onSubmitExercise()" class="space-y-4">
-                            <div class="text-black dark:text-white">Selected: {{ selectedExercise()?.name }}</div>
-                            <div class="flex gap-4">
-                              <div class="flex-1">
-                                <label for="setsInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Sets</label>
-                                <input id="setsInput" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
-                              </div>
-                              <div class="flex-1">
-                                <label for="repsInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Min Reps</label>
-                                <input id="repsInput" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
-                              </div>
-                              <div class="flex-1">
-                                <label for="repsMaxInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Max Reps (Opt)</label>
-                                <input id="repsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
-                              </div>
+                            <div class="text-black dark:text-white inline-flex items-center gap-2 flex-wrap text-sm">
+                              <span class="font-medium text-gray-500 dark:text-gray-400">Selected:</span>
+                              @if (selectedExercise()?.isPublic) {
+                                <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                              }
+                              <span class="font-semibold">{{ selectedExercise()?.name }}</span>
+                              @if (selectedExercise()?.equipmentBrand) {
+                                <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                  {{ selectedExercise()?.equipmentBrand }}
+                                </span>
+                              }
                             </div>
+                            <div>
+                              <label for="setsInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Sets</label>
+                              <input id="setsInput" type="number" formControlName="sets" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                              <label class="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  formControlName="isAmrap"
+                                  class="sr-only peer"
+                                  id="addExerciseIsAmrap"
+                                >
+                                <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+                              </label>
+                              <label for="addExerciseIsAmrap" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                AMRAP
+                                <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(As Many Reps As Possible)</span>
+                              </label>
+                            </div>
+
+                            @if (!exerciseForm.get('isAmrap')?.value) {
+                              <div class="flex gap-4">
+                                <div class="flex-1">
+                                  <label for="repsInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Min Reps</label>
+                                  <input id="repsInput" type="number" formControlName="reps" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                                </div>
+                                <div class="flex-1">
+                                  <label for="repsMaxInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Max Reps (Opt)</label>
+                                  <input id="repsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                                </div>
+                              </div>
+                            }
 
                           <div class="flex justify-end gap-3 pt-2">
                             <button type="button" (click)="cancelAdd()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Cancel</button>
@@ -661,7 +705,18 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
           <div class="solid-card rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative p-6">
             <button (click)="closeOptionsModal()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white text-lg">✕</button>
-            <h3 class="text-xl font-bold mb-5 text-black dark:text-white pr-6">{{ ex.exerciseName }} Options</h3>
+            <h3 class="text-xl font-bold mb-5 text-black dark:text-white pr-6 inline-flex items-center gap-2 flex-wrap">
+              @if (ex.isPublic) {
+                <svg class="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              }
+              <span>{{ ex.exerciseName }}</span>
+              @if (ex.equipmentBrand) {
+                <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 font-normal">
+                  {{ ex.equipmentBrand }}
+                </span>
+              }
+              <span class="text-gray-500 dark:text-gray-400 font-normal">Options</span>
+            </h3>
             <div class="space-y-4">
               <!-- Unit Preference -->
               <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
@@ -716,8 +771,14 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                         <span class="font-bold px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shrink-0">
                           {{ idx + 1 }}
                         </span>
-                        <span class="truncate" [class.text-accent-pos]="item.id === ex.id">
-                          {{ item.exerciseName }}
+                        <span class="truncate inline-flex items-center gap-1" [class.text-accent-pos]="item.id === ex.id">
+                          @if (item.isPublic) {
+                            <svg class="w-3 h-3 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                          }
+                          <span>{{ item.exerciseName }}</span>
+                          @if (item.equipmentBrand) {
+                            <span class="text-[10px] text-gray-500 dark:text-gray-400 font-normal">({{ item.equipmentBrand }})</span>
+                          }
                         </span>
                       </div>
                       
@@ -765,7 +826,18 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
             <button (click)="cancelReplace()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white z-10 text-lg">✕</button>
             
             @if (!replaceTargetExercise()) {
-              <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0">Replace {{ ex.exerciseName }}</h3>
+              <h3 class="text-xl font-bold mb-4 text-black dark:text-white shrink-0 inline-flex items-center gap-2 flex-wrap">
+                <span>Replace</span>
+                @if (ex.isPublic) {
+                  <svg class="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                }
+                <span>{{ ex.exerciseName }}</span>
+                @if (ex.equipmentBrand) {
+                  <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 font-normal">
+                    {{ ex.equipmentBrand }}
+                  </span>
+                }
+              </h3>
               <div class="flex-1 overflow-y-auto min-h-0">
                 <app-exercise-search [excludeIds]="existingExerciseIds()" (exerciseSelected)="onReplaceExerciseSelected($event)"></app-exercise-search>
               </div>
@@ -776,11 +848,29 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                 <div class="p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/60 text-sm space-y-1.5">
                   <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                     <span class="text-xs uppercase font-bold tracking-wider">Replacing:</span>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300 line-through">{{ ex.exerciseName }}</span>
+                    <span class="font-semibold text-gray-700 dark:text-gray-300 line-through inline-flex items-center gap-1.5">
+                      @if (ex.isPublic) {
+                        <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      }
+                      <span>{{ ex.exerciseName }}</span>
+                      @if (ex.equipmentBrand) {
+                        <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">({{ ex.equipmentBrand }})</span>
+                      }
+                    </span>
                   </div>
                   <div class="flex items-center gap-2 text-accent-pos font-bold">
                     <span class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-normal">With:</span>
-                    <span>{{ replaceTargetExercise()?.name }}</span>
+                    <span class="inline-flex items-center gap-1.5">
+                      @if (replaceTargetExercise()?.isPublic) {
+                        <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      }
+                      <span>{{ replaceTargetExercise()?.name }}</span>
+                      @if (replaceTargetExercise()?.equipmentBrand) {
+                        <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 font-normal">
+                          {{ replaceTargetExercise()?.equipmentBrand }}
+                        </span>
+                      }
+                    </span>
                   </div>
                 </div>
 
@@ -1016,7 +1106,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     exerciseId: ['', Validators.required],
     sets: [3],
     reps: [10],
-    repsMax: [null]
+    repsMax: [null],
+    isAmrap: [false]
   });
 
   collapsedExercises = new Set<string>();
@@ -1310,6 +1401,16 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
         this.loadWorkoutData();
       }
     });
+
+    this.exerciseForm.get('isAmrap')?.valueChanges.subscribe(isAmrap => {
+      const repsControl = this.exerciseForm.get('reps');
+      if (isAmrap) {
+        repsControl?.clearValidators();
+      } else if (this.selectedExercise()) {
+        repsControl?.setValidators([Validators.required, Validators.min(1)]);
+      }
+      repsControl?.updateValueAndValidity();
+    });
   }
 
   ngOnDestroy() {
@@ -1398,6 +1499,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
               id: e.id,
               exerciseId: e.exercise.id,
               exerciseName: e.exercise.name,
+              equipmentBrand: e.exercise.equipmentBrand,
+              isPublic: e.exercise.isPublic,
               sets: e.sets,
               reps: e.reps,
               repsMax: e.repsMax,
@@ -1625,7 +1728,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   openAddExercise() {
     this.showAddExercise.set(true);
     this.selectedExercise.set(null);
-    this.exerciseForm.reset({ sets: 3, reps: 10 });
+    this.exerciseForm.reset({ sets: 3, reps: 10, isAmrap: false });
   }
 
   cancelAdd() {
@@ -1638,7 +1741,11 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     this.exerciseForm.patchValue({ exerciseId: ex.id });
     
     this.exerciseForm.get('sets')?.setValidators([Validators.required, Validators.min(1)]);
-    this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+    if (!this.exerciseForm.get('isAmrap')?.value) {
+      this.exerciseForm.get('reps')?.setValidators([Validators.required, Validators.min(1)]);
+    } else {
+      this.exerciseForm.get('reps')?.clearValidators();
+    }
     
     this.exerciseForm.get('sets')?.updateValueAndValidity();
     this.exerciseForm.get('reps')?.updateValueAndValidity();
@@ -1648,12 +1755,13 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     const session = this.session();
     if (this.exerciseForm.valid && session) {
       const formVal = this.exerciseForm.value;
+      const isAmrap = !!formVal.isAmrap;
       const payload = {
         exerciseId: formVal.exerciseId,
         sets: formVal.sets,
-        reps: formVal.reps,
-        repsMax: formVal.repsMax,
-        isAmrap: false
+        reps: isAmrap ? undefined : formVal.reps,
+        repsMax: isAmrap ? undefined : formVal.repsMax,
+        isAmrap: isAmrap
       };
 
       this.workoutService.addSessionExercise(session.id, payload).subscribe({
@@ -1665,6 +1773,8 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
               id: e.id,
               exerciseId: e.exercise.id,
               exerciseName: e.exercise.name,
+              equipmentBrand: e.exercise.equipmentBrand,
+              isPublic: e.exercise.isPublic,
               sets: e.sets,
               reps: e.reps,
               repsMax: e.repsMax,
