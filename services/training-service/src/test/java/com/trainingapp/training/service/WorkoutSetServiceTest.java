@@ -299,4 +299,40 @@ class WorkoutSetServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.performanceStatus()).isEqualTo("GOOD");
     }
+
+    @Test
+    void logSet_UnilateralPr_EvaluatesLimitingSideForPrBucket() {
+        exercise.setUnilateral(true);
+
+        WorkoutSetRequest request = new WorkoutSetRequest(sessionExerciseId, 1, 20, 15, BigDecimal.valueOf(80.0));
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(sessionExercise));
+
+        WorkoutSet savedSet = new WorkoutSet();
+        ReflectionTestUtils.setField(savedSet, "id", UUID.randomUUID());
+        savedSet.setSession(session);
+        savedSet.setSessionExercise(sessionExercise);
+        savedSet.setSetNumber(1);
+        savedSet.setRepsCompleted(20);
+        savedSet.setRepsCompletedRight(15);
+        savedSet.setWeightKg(BigDecimal.valueOf(80.0));
+
+        when(setRepository.save(any(WorkoutSet.class))).thenReturn(savedSet);
+
+        // Existing PR in bucket "11-15" is 80kg x 15 reps
+        com.trainingapp.training.dto.ExercisePrProjection existingPr = mock(com.trainingapp.training.dto.ExercisePrProjection.class);
+        when(existingPr.getExerciseId()).thenReturn(exercise.getId());
+        when(existingPr.getBucket()).thenReturn("11-15");
+        when(existingPr.getPrWeight()).thenReturn(BigDecimal.valueOf(80.0));
+        when(existingPr.getPrReps()).thenReturn(15);
+
+        when(setRepository.findPersonalRecordsByUserIdExcludingSession(eq(userId), any())).thenReturn(java.util.List.of(existingPr));
+
+        WorkoutSetResponse response = setService.logSet(sessionId, userId, request);
+
+        assertThat(response).isNotNull();
+        // Limiting side is 15 reps, which matches existing 80kg x 15 reps in bucket 11-15, so isNewPr is false
+        assertThat(response.isNewPr()).isFalse();
+    }
 }

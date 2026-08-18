@@ -181,8 +181,8 @@ public class WorkoutSetService {
         
         boolean isUnilateral = set.getSessionExercise().getExercise().isUnilateral();
         int effectiveReps = isUnilateral 
-            ? set.getRepsCompleted() 
-            : (set.getRepsCompleted() + (set.getRepsCompletedRight() != null ? set.getRepsCompletedRight() : 0));
+            ? (set.getRepsCompletedRight() != null ? Math.min(set.getRepsCompleted(), set.getRepsCompletedRight()) : set.getRepsCompleted())
+            : set.getRepsCompleted();
             
         String bucket = getBucketForReps(effectiveReps);
         List<com.trainingapp.training.dto.ExercisePrProjection> prs = setRepository.findPersonalRecordsByUserIdExcludingSession(userId, set.getSession().getId());
