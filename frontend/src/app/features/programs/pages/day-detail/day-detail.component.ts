@@ -175,7 +175,7 @@ import { Observable, forkJoin } from 'rxjs';
           @if (exercises().length > 0) {
             <div class="space-y-3">
               <h4 class="text-gray-700 dark:text-gray-300 font-semibold mb-2">Exercises Routine</h4>
-              @for (ex of exercises(); track ex; let i = $index) {
+              @for (ex of exercises(); track ex.id; let i = $index) {
                 <div class="solid-card p-4 flex flex-col group hover:border-gray-400 dark:hover:border-gray-600 transition-colors">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">

@@ -401,7 +401,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
           }
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" cdkDropList [cdkDropListDisabled]="!reorderModeActive() || isReadOnly()" (cdkDropListDropped)="dropDay($event)">
-            @for (day of days(); track day) {
+            @for (day of days(); track day.id) {
               <div cdkDrag class="solid-card p-5 group flex flex-col hover:border-gray-400 dark:hover:border-gray-600 transition-all cursor-pointer" [routerLink]="['/programs', program()?.id, 'days', day.id]">
                 <div class="flex justify-between items-start mb-4">
                   <div class="flex items-center gap-3">

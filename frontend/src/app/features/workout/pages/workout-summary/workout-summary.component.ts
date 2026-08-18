@@ -79,7 +79,7 @@ import { ChartConfiguration } from 'chart.js';
           <!-- Details -->
           <div class="solid-card p-6 text-left space-y-4 border border-gray-300 dark:border-gray-700">
             <h2 class="text-xl font-bold text-black dark:text-white border-b border-gray-300 dark:border-gray-700 pb-2">Summary</h2>
-            @for (ex of exercises(); track ex) {
+            @for (ex of exercises(); track ex.id) {
               <div class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-800 last:border-0">
                 <div>
                   <p class="text-gray-800 dark:text-gray-200 font-medium inline-flex items-center gap-1.5 flex-wrap">

@@ -70,19 +70,37 @@ class ExerciseServiceTest {
 
     @Test
     void create_savesWithAllFields() {
-        when(exerciseRepository.existsByNameInUserScope(userId, "Bench Press", "Hammer Strength", null)).thenReturn(false);
+        when(exerciseRepository.existsByNameInUserScope(userId, "bench press", "hammer strength", null)).thenReturn(false);
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
         ExerciseResponse result = exerciseService.create(userId,
                 new ExerciseRequest("  Bench Press  ", "Hammer Strength", false, false, false, false));
         assertThat(result.name()).isEqualTo("Bench Press");
         assertThat(result.equipmentBrand()).isEqualTo("Hammer Strength");
-        verify(exerciseRepository).existsByNameInUserScope(userId, "Bench Press", "Hammer Strength", null);
+        verify(exerciseRepository).existsByNameInUserScope(userId, "bench press", "hammer strength", null);
+        verify(exerciseRepository).save(any());
+    }
+
+    @Test
+    void create_withNullBrand_passesNullToDuplicateCheckAndSaves() {
+        Exercise noBrandExercise = new Exercise();
+        noBrandExercise.setUserId(userId);
+        noBrandExercise.setName("Chest Press");
+        noBrandExercise.setEquipmentBrand(null);
+
+        when(exerciseRepository.existsByNameInUserScope(userId, "chest press", null, null)).thenReturn(false);
+        when(exerciseRepository.save(any())).thenReturn(noBrandExercise);
+
+        ExerciseResponse result = exerciseService.create(userId,
+                new ExerciseRequest("  Chest Press  ", null, false, false, false, false));
+        assertThat(result.name()).isEqualTo("Chest Press");
+        assertThat(result.equipmentBrand()).isNull();
+        verify(exerciseRepository).existsByNameInUserScope(userId, "chest press", null, null);
         verify(exerciseRepository).save(any());
     }
 
     @Test
     void create_duplicateName_throwsIllegalArgumentException() {
-        when(exerciseRepository.existsByNameInUserScope(userId, "Bench Press", "Hammer Strength", null)).thenReturn(true);
+        when(exerciseRepository.existsByNameInUserScope(userId, "bench press", "hammer strength", null)).thenReturn(true);
         assertThatThrownBy(() -> exerciseService.create(userId,
                 new ExerciseRequest("Bench Press", "Hammer Strength", false, false, false, false)))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -93,7 +111,7 @@ class ExerciseServiceTest {
     @Test
     void update_existingExercise_updatesAllFields() {
         when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
-        when(exerciseRepository.existsByNameInUserScope(userId, "Incline Press", "Rogue", exerciseId)).thenReturn(false);
+        when(exerciseRepository.existsByNameInUserScope(userId, "incline press", "rogue", exerciseId)).thenReturn(false);
         when(exerciseRepository.save(any())).thenReturn(sampleExercise);
         when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
         when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());
@@ -107,7 +125,7 @@ class ExerciseServiceTest {
     @Test
     void update_duplicateName_throwsIllegalArgumentException() {
         when(exerciseRepository.findByIdAndUserIdOrIsPublic(exerciseId, userId)).thenReturn(Optional.of(sampleExercise));
-        when(exerciseRepository.existsByNameInUserScope(userId, "Existing Name", "Rogue", exerciseId)).thenReturn(true);
+        when(exerciseRepository.existsByNameInUserScope(userId, "existing name", "rogue", exerciseId)).thenReturn(true);
         assertThatThrownBy(() -> exerciseService.update(userId, exerciseId,
                 new ExerciseRequest("Existing Name", "Rogue", true, false, false, false)))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -136,7 +154,9 @@ class ExerciseServiceTest {
 
     @Test
     void search_returnsMatchingExercises() {
-        when(exerciseRepository.searchExercises(eq(userId), eq("bench"), any()))
+        when(exerciseRepository.searchExerciseIds(eq(userId), eq("bench"), any()))
+                .thenReturn(List.of(exerciseId));
+        when(exerciseRepository.findByIdIn(List.of(exerciseId)))
                 .thenReturn(List.of(sampleExercise));
         when(ratingRepository.getAverageRatingsForExercises(any())).thenReturn(List.of());
         when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());

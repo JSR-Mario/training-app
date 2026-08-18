@@ -46,25 +46,25 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
     @Query(value = """
         SELECT DISTINCT ON (e.id, 
             CASE 
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 1 AND 5 THEN '1-5'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 6 AND 10 THEN '6-10'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 11 AND 15 THEN '11-15'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 16 AND 20 THEN '16-20'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 21 AND 25 THEN '21-25'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 26 AND 30 THEN '26-30'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 1 AND 5 THEN '1-5'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 6 AND 10 THEN '6-10'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 11 AND 15 THEN '11-15'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 16 AND 20 THEN '16-20'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 21 AND 25 THEN '21-25'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 26 AND 30 THEN '26-30'
                 ELSE '31+'
             END
         )
             e.id AS exerciseId,
             ws.weight_kg AS prWeight,
-            (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) AS prReps,
+            (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) AS prReps,
             CASE 
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 1 AND 5 THEN '1-5'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 6 AND 10 THEN '6-10'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 11 AND 15 THEN '11-15'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 16 AND 20 THEN '16-20'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 21 AND 25 THEN '21-25'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 26 AND 30 THEN '26-30'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 1 AND 5 THEN '1-5'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 6 AND 10 THEN '6-10'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 11 AND 15 THEN '11-15'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 16 AND 20 THEN '16-20'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 21 AND 25 THEN '21-25'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 26 AND 30 THEN '26-30'
                 ELSE '31+'
             END AS bucket
         FROM training.workout_sets ws
@@ -76,40 +76,40 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
           AND ws.weight_kg IS NOT NULL
         ORDER BY e.id, 
             CASE 
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 1 AND 5 THEN '1-5'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 6 AND 10 THEN '6-10'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 11 AND 15 THEN '11-15'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 16 AND 20 THEN '16-20'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 21 AND 25 THEN '21-25'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 26 AND 30 THEN '26-30'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 1 AND 5 THEN '1-5'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 6 AND 10 THEN '6-10'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 11 AND 15 THEN '11-15'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 16 AND 20 THEN '16-20'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 21 AND 25 THEN '21-25'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 26 AND 30 THEN '26-30'
                 ELSE '31+'
             END,
-            (ws.weight_kg * (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END)) DESC
+            (ws.weight_kg * (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END)) DESC
         """, nativeQuery = true)
     List<com.trainingapp.training.dto.ExercisePrProjection> findPersonalRecordsByUserId(@Param("userId") UUID userId);
 
     @Query(value = """
         SELECT DISTINCT ON (e.id, 
             CASE 
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 1 AND 5 THEN '1-5'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 6 AND 10 THEN '6-10'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 11 AND 15 THEN '11-15'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 16 AND 20 THEN '16-20'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 21 AND 25 THEN '21-25'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 26 AND 30 THEN '26-30'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 1 AND 5 THEN '1-5'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 6 AND 10 THEN '6-10'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 11 AND 15 THEN '11-15'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 16 AND 20 THEN '16-20'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 21 AND 25 THEN '21-25'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 26 AND 30 THEN '26-30'
                 ELSE '31+'
             END
         )
             e.id AS exerciseId,
             ws.weight_kg AS prWeight,
-            (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) AS prReps,
+            (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) AS prReps,
             CASE 
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 1 AND 5 THEN '1-5'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 6 AND 10 THEN '6-10'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 11 AND 15 THEN '11-15'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 16 AND 20 THEN '16-20'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 21 AND 25 THEN '21-25'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 26 AND 30 THEN '26-30'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 1 AND 5 THEN '1-5'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 6 AND 10 THEN '6-10'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 11 AND 15 THEN '11-15'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 16 AND 20 THEN '16-20'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 21 AND 25 THEN '21-25'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 26 AND 30 THEN '26-30'
                 ELSE '31+'
             END AS bucket
         FROM training.workout_sets ws
@@ -122,15 +122,15 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, UUID> {
           AND ws.weight_kg IS NOT NULL
         ORDER BY e.id, 
             CASE 
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 1 AND 5 THEN '1-5'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 6 AND 10 THEN '6-10'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 11 AND 15 THEN '11-15'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 16 AND 20 THEN '16-20'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 21 AND 25 THEN '21-25'
-                WHEN (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END) BETWEEN 26 AND 30 THEN '26-30'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 1 AND 5 THEN '1-5'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 6 AND 10 THEN '6-10'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 11 AND 15 THEN '11-15'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 16 AND 20 THEN '16-20'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 21 AND 25 THEN '21-25'
+                WHEN (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END) BETWEEN 26 AND 30 THEN '26-30'
                 ELSE '31+'
             END,
-            (ws.weight_kg * (CASE WHEN e.unilateral = true THEN ws.reps_completed ELSE (ws.reps_completed + COALESCE(ws.reps_completed_right, 0)) END)) DESC
+            (ws.weight_kg * (CASE WHEN e.unilateral = true THEN LEAST(ws.reps_completed, COALESCE(ws.reps_completed_right, ws.reps_completed)) ELSE ws.reps_completed END)) DESC
         """, nativeQuery = true)
     List<com.trainingapp.training.dto.ExercisePrProjection> findPersonalRecordsByUserIdExcludingSession(@Param("userId") UUID userId, @Param("excludedSessionId") UUID excludedSessionId);
 

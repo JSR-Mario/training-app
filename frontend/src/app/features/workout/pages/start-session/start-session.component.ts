@@ -47,7 +47,7 @@ import { forkJoin } from 'rxjs';
                 class="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-accent-pos outline-none text-black dark:text-white appearance-none solid-input"
                 >
                 <option value="" disabled>Choose a day to train</option>
-                @for (day of days(); track day) {
+                @for (day of days(); track day.id) {
                   <option [value]="day.id">
                     {{ day.name }} ({{ day.exercises?.length || 0 }} exercises)
                   </option>
