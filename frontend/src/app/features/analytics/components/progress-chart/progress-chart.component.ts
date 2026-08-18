@@ -388,16 +388,28 @@ export class ProgressChartComponent implements OnInit {
         return sum;
       });
 
-      if (dataPoints.length > 1 && dataPoints.some(v => v >= 0)) {
+      const n = sortedWeeks.length;
+      const fittingPoints: { x: number; y: number }[] = [];
+      for (let i = 0; i < n; i++) {
+        if (isLatestWeekIncomplete && i === n - 1 && n > 1) {
+          continue;
+        }
+        fittingPoints.push({ x: i, y: dataPoints[i] });
+      }
+
+      const trendValues = this.calculateLinearRegression(fittingPoints, n);
+      const accentColor = this.getCssVariableValue('--color-accent-pos');
+
+      if (dataPoints.length > 0 && dataPoints.some(v => v >= 0)) {
         datasets.push({
           type: 'line' as const,
           label: 'Trend',
-          data: dataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? null : val),
-          spanGaps: false,
-          borderColor: this.getCssVariableValue('--color-accent-pos'),
-          borderWidth: 3,
+          data: trendValues.length > 0 ? trendValues : dataPoints,
+          borderColor: accentColor,
+          borderWidth: 2.5,
+          borderDash: [4, 4],
           fill: false,
-          tension: 0.2,
+          tension: 0,
           pointRadius: 0,
           order: 0
         });
@@ -454,23 +466,35 @@ export class ProgressChartComponent implements OnInit {
       }
 
       if (totalDataPoints.some(v => v > 0)) {
+        const n = sortedWeeks.length;
+        const fittingPoints: { x: number; y: number }[] = [];
+        for (let i = 0; i < n; i++) {
+          if (isLatestWeekIncomplete && i === n - 1 && n > 1) {
+            continue;
+          }
+          fittingPoints.push({ x: i, y: totalDataPoints[i] });
+        }
+
+        const trendValues = this.calculateLinearRegression(fittingPoints, n);
         const accentColor = this.getCssVariableValue('--color-accent-pos');
-        datasets.push({
-          type: 'line' as const,
-          label: 'Total Trend',
-          data: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? null : val),
-          spanGaps: false,
-          borderColor: accentColor,
-          borderWidth: 3,
-          fill: false,
-          tension: 0.2,
-          pointBackgroundColor: accentColor,
-          pointBorderColor: '#0f172a',
-          pointBorderWidth: 2,
-          pointRadius: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? 0 : 5),
-          pointHoverRadius: totalDataPoints.map((val, i) => (isLatestWeekIncomplete && sortedWeeks[i] === latestWeek) ? 0 : 7),
-          order: 0
-        });
+
+        if (trendValues.length > 0) {
+          datasets.push({
+            type: 'line' as const,
+            label: 'Trend Line',
+            data: trendValues,
+            borderColor: accentColor,
+            borderWidth: 2.5,
+            borderDash: [5, 5],
+            fill: false,
+            tension: 0,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            pointBackgroundColor: accentColor,
+            stack: 'trend',
+            order: -1
+          });
+        }
       }
     }
 
@@ -485,6 +509,47 @@ export class ProgressChartComponent implements OnInit {
       labels,
       datasets
     };
+  }
+
+  /**
+   * Calculates least-squares linear regression values across all points.
+   *
+   * @param points Array of {x, y} points used for fitting the model.
+   * @param totalCount Total number of points to evaluate (0..totalCount-1).
+   * @returns Array of projected values for x = 0..totalCount-1.
+   */
+  private calculateLinearRegression(
+    points: { x: number; y: number }[],
+    totalCount: number
+  ): number[] {
+    if (points.length === 0 || totalCount === 0) return [];
+    if (points.length === 1) {
+      return Array.from({ length: totalCount }, () => points[0].y);
+    }
+
+    const k = points.length;
+    let sumX = 0;
+    let sumY = 0;
+    let sumXY = 0;
+    let sumX2 = 0;
+
+    for (const pt of points) {
+      sumX += pt.x;
+      sumY += pt.y;
+      sumXY += pt.x * pt.y;
+      sumX2 += pt.x * pt.x;
+    }
+
+    const denominator = k * sumX2 - sumX * sumX;
+    const slope = denominator !== 0 ? (k * sumXY - sumX * sumY) / denominator : 0;
+    const intercept = (sumY - slope * sumX) / k;
+
+    const result: number[] = [];
+    for (let i = 0; i < totalCount; i++) {
+      const val = slope * i + intercept;
+      result.push(Math.max(0, Math.round(val * 10) / 10));
+    }
+    return result;
   }
 
   private resetChart() {
