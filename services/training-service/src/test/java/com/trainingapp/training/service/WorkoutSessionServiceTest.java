@@ -838,4 +838,109 @@ class WorkoutSessionServiceTest {
         // Limiting side (3 reps) is outside the 10-15 target range, so previous sets must be omitted
         assertThat(suggestions.get(0).previousSets()).isEmpty();
     }
+
+    @Test
+    void getExerciseSuggestions_PrWithRepsBelowTargetRange_IsExcluded() {
+        UUID sessionId = UUID.randomUUID();
+
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setPerformedOn(LocalDate.now());
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", UUID.randomUUID());
+        ex.setUnilateral(true);
+
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", UUID.randomUUID());
+        se.setExercise(ex);
+        se.setReps(20);
+        se.setRepsMax(30);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(se));
+
+        // PR in 16-20 bucket (overlapping with 20-30), but PR reps was only 16 (below minReps - 2 = 18)
+        com.trainingapp.training.dto.ExercisePrProjection pr = mock(com.trainingapp.training.dto.ExercisePrProjection.class);
+        when(pr.getExerciseId()).thenReturn(ex.getId());
+        when(pr.getBucket()).thenReturn("16-20");
+        lenient().when(pr.getPrWeight()).thenReturn(java.math.BigDecimal.valueOf(80.0));
+        lenient().when(pr.getPrReps()).thenReturn(16);
+        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of(pr));
+        when(bodyWeightRepository.findFirstByUserIdOrderByDateDesc(userId)).thenReturn(Optional.empty());
+
+        when(setRepository.findHistoricalSetsForExercise(ex.getId(), userId, session.getPerformedOn()))
+            .thenReturn(Collections.emptyList());
+
+        List<com.trainingapp.training.dto.ExerciseSuggestionResponse> suggestions = sessionService.getExerciseSuggestions(sessionId, userId);
+
+        assertThat(suggestions).hasSize(1);
+        // PR was done with 16 reps, which is below the 20-30 rep range (16 < 18), so suggestedWeightKg must be null
+        assertThat(suggestions.get(0).suggestedWeightKg()).isNull();
+        assertThat(suggestions.get(0).suggestedReps()).isEqualTo(25);
+    }
+
+    @Test
+    void getExerciseSuggestions_SessionWithMixedReps_FiltersIndividualSets() {
+        UUID sessionId = UUID.randomUUID();
+
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setPerformedOn(LocalDate.now());
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", UUID.randomUUID());
+        ex.setUnilateral(true);
+
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", UUID.randomUUID());
+        se.setExercise(ex);
+        se.setReps(20);
+        se.setRepsMax(30);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(se));
+        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());
+        when(bodyWeightRepository.findFirstByUserIdOrderByDateDesc(userId)).thenReturn(Optional.empty());
+
+        WorkoutSession pastSession = new WorkoutSession();
+        ReflectionTestUtils.setField(pastSession, "id", UUID.randomUUID());
+        pastSession.setPerformedOn(LocalDate.now().minusDays(3));
+
+        // Set 1: 15/15 reps (out of range)
+        com.trainingapp.training.domain.WorkoutSet set1 = new com.trainingapp.training.domain.WorkoutSet();
+        set1.setSession(pastSession);
+        set1.setSetNumber(1);
+        set1.setWeightKg(java.math.BigDecimal.valueOf(80.0));
+        set1.setRepsCompleted(15);
+        set1.setRepsCompletedRight(15);
+
+        // Set 2: 16/16 reps (out of range, 16 < 18)
+        com.trainingapp.training.domain.WorkoutSet set2 = new com.trainingapp.training.domain.WorkoutSet();
+        set2.setSession(pastSession);
+        set2.setSetNumber(2);
+        set2.setWeightKg(java.math.BigDecimal.valueOf(80.0));
+        set2.setRepsCompleted(16);
+        set2.setRepsCompletedRight(16);
+
+        // Set 3: 20/20 reps (in range)
+        com.trainingapp.training.domain.WorkoutSet set3 = new com.trainingapp.training.domain.WorkoutSet();
+        set3.setSession(pastSession);
+        set3.setSetNumber(3);
+        set3.setWeightKg(java.math.BigDecimal.valueOf(60.0));
+        set3.setRepsCompleted(20);
+        set3.setRepsCompletedRight(20);
+
+        when(setRepository.findHistoricalSetsForExercise(ex.getId(), userId, session.getPerformedOn()))
+            .thenReturn(List.of(set1, set2, set3));
+
+        List<com.trainingapp.training.dto.ExerciseSuggestionResponse> suggestions = sessionService.getExerciseSuggestions(sessionId, userId);
+
+        assertThat(suggestions).hasSize(1);
+        // Only Set 3 (20 reps) is within the 20-30 range, Set 1 (15) and Set 2 (16) must be filtered out
+        assertThat(suggestions.get(0).previousSets()).hasSize(1);
+        assertThat(suggestions.get(0).previousSets().get(0).setNumber()).isEqualTo(3);
+        assertThat(suggestions.get(0).previousSets().get(0).reps()).isEqualTo(20);
+        assertThat(suggestions.get(0).previousSets().get(0).weightKg()).isEqualByComparingTo("60.0");
+    }
 }
