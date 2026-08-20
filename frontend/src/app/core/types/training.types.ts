@@ -250,6 +250,7 @@ export interface ExerciseSuggestionResponse {
   hadFatigueLastWeek?: boolean;
   suggestAddWeight?: boolean;
   previousSets?: PreviousSetSuggestion[];
+  repRangeChanged?: boolean;
 }
 
 export interface ExerciseHistoryResponse {
