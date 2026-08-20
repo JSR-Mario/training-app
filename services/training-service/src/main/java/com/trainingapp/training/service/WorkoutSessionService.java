@@ -424,7 +424,7 @@ public class WorkoutSessionService {
 
             // Find PR with the highest volume across all buckets that overlap with the exercise's rep range
             for (com.trainingapp.training.dto.ExercisePrProjection pr : prs) {
-                boolean isRepsInRange = se.isAmrap() || (pr.getPrReps() != null && pr.getPrReps() >= minReps - 2 && pr.getPrReps() <= maxReps + 5);
+                boolean isRepsInRange = se.isAmrap() || (pr.getPrReps() != null && pr.getPrReps() >= minReps - 1 && pr.getPrReps() <= maxReps + 5);
                 if (pr.getExerciseId().equals(se.getExercise().getId()) && relevantBuckets.contains(pr.getBucket()) && isRepsInRange) {
                     if (pr.getPrWeight() != null && pr.getPrReps() != null) {
                         double currentVolume = pr.getPrWeight().doubleValue() * pr.getPrReps();
@@ -445,10 +445,18 @@ public class WorkoutSessionService {
             boolean hadFatigueLastWeek = false;
             boolean suggestAddWeight = false;
             List<com.trainingapp.training.dto.PreviousSetSuggestion> previousSets = new java.util.ArrayList<>();
+            boolean repRangeChanged = false;
 
             List<WorkoutSet> recentSets = findBestMatchingRecentSets(
                 allHistorical, currentDayTemplateId, minReps, maxReps, se.isAmrap(), se.getExercise().isUnilateral()
             );
+
+            if (!recentSets.isEmpty() && recentSets.get(0).getSessionExercise() != null) {
+                Integer prevMin = recentSets.get(0).getSessionExercise().getReps();
+                Integer prevMax = recentSets.get(0).getSessionExercise().getRepsMax();
+                repRangeChanged = !java.util.Objects.equals(prevMin, se.getReps())
+                               || !java.util.Objects.equals(prevMax, se.getRepsMax());
+            }
 
             if (!recentSets.isEmpty()) {
                 double maxPerf = 0;
@@ -523,9 +531,10 @@ public class WorkoutSessionService {
                 se.getExercise().getId(),
                 suggestedWeight,
                 suggestedReps,
-                hadFatigueLastWeek,
+                hadFatigueLastWeek && !repRangeChanged,
                 suggestAddWeight,
-                previousSets
+                previousSets,
+                repRangeChanged
             ));
         }
         return suggestions;
@@ -603,7 +612,7 @@ public class WorkoutSessionService {
         int effectiveReps = (isUnilateral && s.getRepsCompletedRight() != null)
                 ? Math.min(s.getRepsCompleted(), s.getRepsCompletedRight())
                 : s.getRepsCompleted();
-        return effectiveReps >= minReps - 2 && effectiveReps <= maxReps + 5;
+        return effectiveReps >= minReps - 1 && effectiveReps <= maxReps + 5;
     }
 
     private String getBucketForReps(int reps) {

@@ -11,5 +11,6 @@ public record ExerciseSuggestionResponse(
     Integer suggestedReps,
     boolean hadFatigueLastWeek,
     boolean suggestAddWeight,
-    List<PreviousSetSuggestion> previousSets
+    List<PreviousSetSuggestion> previousSets,
+    boolean repRangeChanged
 ) {}
