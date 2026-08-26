@@ -32,6 +32,7 @@ import com.trainingapp.training.dto.ExerciseSuggestionResponse;
 import com.trainingapp.training.dto.SessionExerciseResponse;
 import com.trainingapp.training.dto.SessionExerciseRequest;
 import com.trainingapp.training.dto.SessionExerciseReorderRequest;
+import com.trainingapp.training.dto.SessionExerciseUpdateRequest;
 import com.trainingapp.training.repository.ExerciseRepository;
 import com.trainingapp.training.domain.Exercise;
 
@@ -770,6 +771,132 @@ public class WorkoutSessionService {
     }
 
     @Transactional
+    public WorkoutSessionResponse syncSessionExercises(UUID sessionId, UUID userId) {
+        WorkoutSession session = getSessionEntity(sessionId, userId);
+
+        if (session.getCompletedAt() != null || session.getDayTemplate() == null) {
+            return mapToResponse(session);
+        }
+
+        DayTemplate dayTemplate = session.getDayTemplate();
+        List<DayExercise> templateExercises = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplate.getId());
+        List<SessionExercise> sessionExercises = sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(session.getId());
+
+        Map<UUID, SessionExercise> sessionByExerciseId = sessionExercises.stream()
+            .collect(Collectors.toMap(
+                se -> se.getExercise().getId(),
+                se -> se,
+                (a, b) -> a
+            ));
+
+        Set<UUID> templateExerciseIds = templateExercises.stream()
+            .map(de -> de.getExercise().getId())
+            .collect(Collectors.toSet());
+
+        // 1. Update existing exercises & 2. Add new exercises
+        for (DayExercise de : templateExercises) {
+            SessionExercise se = sessionByExerciseId.get(de.getExercise().getId());
+            if (se != null) {
+                se.setSets(de.getSets());
+                se.setReps(de.getReps());
+                se.setRepsMax(de.getRepsMax());
+                se.setSortOrder(de.getSortOrder());
+                se.setAmrap(de.isAmrap());
+                sessionExerciseRepository.save(se);
+            } else {
+                SessionExercise newSe = new SessionExercise();
+                newSe.setSession(session);
+                newSe.setExercise(de.getExercise());
+                newSe.setSets(de.getSets());
+                newSe.setReps(de.getReps());
+                newSe.setRepsMax(de.getRepsMax());
+                newSe.setSortOrder(de.getSortOrder());
+                newSe.setAmrap(de.isAmrap());
+                sessionExerciseRepository.save(newSe);
+            }
+        }
+
+        // 3. Remove exercises that are no longer in template ONLY IF they have no logged sets
+        List<WorkoutSet> allSessionSets = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId());
+        Set<UUID> sessionExerciseIdsWithSets = allSessionSets.stream()
+            .map(s -> s.getSessionExercise().getId())
+            .collect(Collectors.toSet());
+
+        for (SessionExercise se : sessionExercises) {
+            if (!templateExerciseIds.contains(se.getExercise().getId())) {
+                if (!sessionExerciseIdsWithSets.contains(se.getId())) {
+                    ratingRepository.deleteBySessionIdAndSessionExerciseId(session.getId(), se.getId());
+                    sessionExerciseRepository.delete(se);
+                }
+            }
+        }
+
+        return mapToResponse(session);
+    }
+
+    @Transactional
+    public SessionExerciseResponse updateSessionExercise(UUID sessionId, UUID userId, UUID sessionExerciseId, SessionExerciseUpdateRequest request) {
+        WorkoutSession session = getSessionEntity(sessionId, userId);
+        if (session.getCompletedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot modify a completed session");
+        }
+
+        SessionExercise se = sessionExerciseRepository.findById(sessionExerciseId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session exercise not found"));
+
+        if (!se.getSession().getId().equals(session.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your session exercise");
+        }
+
+        if (request.sets() != null && request.sets() > 0) {
+            se.setSets(request.sets());
+        }
+        se.setAmrap(request.isAmrap());
+        if (request.isAmrap()) {
+            se.setReps(null);
+            se.setRepsMax(null);
+        } else {
+            if (request.reps() != null && request.reps() > 0) {
+                se.setReps(request.reps());
+            }
+            se.setRepsMax(request.repsMax());
+        }
+
+        SessionExercise saved = sessionExerciseRepository.save(se);
+
+        if (Boolean.TRUE.equals(request.saveToDayTemplate()) && session.getDayTemplate() != null) {
+            DayTemplate dayTemplate = session.getDayTemplate();
+            if (dayTemplate.getWeekTemplate() != null &&
+                dayTemplate.getWeekTemplate().getProgram() != null &&
+                dayTemplate.getWeekTemplate().getProgram().getUserId().equals(userId)) {
+
+                List<DayExercise> dayExercises = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplate.getId());
+                for (DayExercise de : dayExercises) {
+                    if (de.getExercise().getId().equals(se.getExercise().getId())) {
+                        if (request.sets() != null && request.sets() > 0) {
+                            de.setSets(request.sets());
+                        }
+                        de.setAmrap(request.isAmrap());
+                        if (request.isAmrap()) {
+                            de.setReps(null);
+                            de.setRepsMax(null);
+                        } else {
+                            if (request.reps() != null && request.reps() > 0) {
+                                de.setReps(request.reps());
+                            }
+                            de.setRepsMax(request.repsMax());
+                        }
+                        dayExerciseRepository.save(de);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return mapSessionExerciseToResponse(saved);
+    }
+
+    @Transactional
     public void removeSessionExercise(UUID sessionId, UUID userId, UUID sessionExerciseId) {
         WorkoutSession session = getSessionEntity(sessionId, userId);
         SessionExercise se = sessionExerciseRepository.findById(sessionExerciseId)
@@ -778,6 +905,15 @@ public class WorkoutSessionService {
         if (!se.getSession().getId().equals(session.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your session exercise");
         }
+
+        // Clean up associated sets and ratings before deleting session exercise
+        List<WorkoutSet> setsToDelete = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId())
+            .stream()
+            .filter(set -> set.getSessionExercise().getId().equals(se.getId()))
+            .collect(Collectors.toList());
+        setRepository.deleteAll(setsToDelete);
+
+        ratingRepository.deleteBySessionIdAndSessionExerciseId(session.getId(), se.getId());
         sessionExerciseRepository.delete(se);
     }
 

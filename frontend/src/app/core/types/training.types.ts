@@ -177,6 +177,14 @@ export interface SessionExerciseReorderRequest {
   sortOrder: number;
 }
 
+export interface SessionExerciseUpdateRequest {
+  sets?: number;
+  reps?: number;
+  repsMax?: number;
+  isAmrap?: boolean;
+  saveToDayTemplate?: boolean;
+}
+
 export interface WorkoutSetRequest {
   sessionExerciseId: string;
   setNumber: number;

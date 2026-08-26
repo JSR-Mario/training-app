@@ -68,6 +68,11 @@ public class WorkoutSessionController {
         return sessionService.updateRating(id, UserContext.getCurrentUserId(), dayExerciseId, request);
     }
 
+    @PostMapping("/{id}/sync")
+    public WorkoutSessionResponse syncSession(@PathVariable UUID id) {
+        return sessionService.syncSessionExercises(id, UserContext.getCurrentUserId());
+    }
+
     @GetMapping("/{id}/exercises")
     public List<com.trainingapp.training.dto.SessionExerciseResponse> getSessionExercises(@PathVariable UUID id) {
         return sessionService.getSessionExercises(id, UserContext.getCurrentUserId());
@@ -76,6 +81,14 @@ public class WorkoutSessionController {
     @PostMapping("/{id}/exercises")
     public com.trainingapp.training.dto.SessionExerciseResponse addSessionExercise(@PathVariable UUID id, @Valid @RequestBody com.trainingapp.training.dto.SessionExerciseRequest request) {
         return sessionService.addSessionExercise(id, UserContext.getCurrentUserId(), request);
+    }
+
+    @PutMapping("/{id}/exercises/{sessionExerciseId}")
+    public com.trainingapp.training.dto.SessionExerciseResponse updateSessionExercise(
+            @PathVariable UUID id,
+            @PathVariable UUID sessionExerciseId,
+            @Valid @RequestBody com.trainingapp.training.dto.SessionExerciseUpdateRequest request) {
+        return sessionService.updateSessionExercise(id, UserContext.getCurrentUserId(), sessionExerciseId, request);
     }
 
     @DeleteMapping("/{id}/exercises/{sessionExerciseId}")
