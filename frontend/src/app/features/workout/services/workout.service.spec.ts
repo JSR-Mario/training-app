@@ -184,4 +184,32 @@ describe('WorkoutService', () => {
     expect(req.request.method).toBe('DELETE');
     req.flush(null);
   });
+
+  it('should sync a session', () => {
+    service.syncSession('123').subscribe(session => {
+      expect(session).toEqual(mockSessionResponse);
+    });
+
+    const req = httpMock.expectOne('/api/v1/training/sessions/123/sync');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({});
+    req.flush(mockSessionResponse);
+  });
+
+  it('should update a session exercise', () => {
+    const updateReq = {
+      sets: 4,
+      reps: 12,
+      repsMax: 15,
+      isAmrap: false,
+      saveToDayTemplate: true
+    };
+
+    service.updateSessionExercise('123', 'ex-1', updateReq).subscribe();
+
+    const req = httpMock.expectOne('/api/v1/training/sessions/123/exercises/ex-1');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(updateReq);
+    req.flush({});
+  });
 });

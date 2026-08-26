@@ -21,10 +21,9 @@ describe('ActiveWorkoutComponent', () => {
       'completeSession', 'uncompleteSession', 'pauseSession', 'resumeSession', 'updateSessionNotes',
       'updateExerciseRating', 'deleteExerciseRating', 'getSets', 'logSet', 'updateSet', 'deleteSet',
       'getSuggestions', 'getSessionExercises', 'addSessionExercise', 'removeSessionExercise',
-      'replaceSessionExercise', 'reorderSessionExercises'
+      'replaceSessionExercise', 'reorderSessionExercises', 'syncSession', 'updateSessionExercise'
     ]);
-    workoutServiceSpy.getActiveSession.and.returnValue(of(null));
-    workoutServiceSpy.getSession.and.returnValue(of({
+    const mockSession = {
       id: 'test-id',
       programId: 'p1',
       dayId: 'd1',
@@ -32,7 +31,10 @@ describe('ActiveWorkoutComponent', () => {
       startedAt: '2026-01-01T00:00:00Z',
       completedAt: null,
       notes: ''
-    }));
+    };
+    workoutServiceSpy.getActiveSession.and.returnValue(of(null));
+    workoutServiceSpy.getSession.and.returnValue(of(mockSession));
+    workoutServiceSpy.syncSession.and.returnValue(of(mockSession));
     workoutServiceSpy.getSets.and.returnValue(of([]));
     workoutServiceSpy.getSessionExercises.and.returnValue(of([]));
     workoutServiceSpy.getSuggestions.and.returnValue(of([]));
@@ -325,6 +327,53 @@ describe('ActiveWorkoutComponent', () => {
         isAmrap: false,
         saveToDayTemplate: true
       });
+      expect(workoutSpy).toHaveBeenCalled();
+    });
+
+    it('should edit exercise targets and reload workout data', () => {
+      const workoutSpy = spyOn(component, 'loadWorkoutData');
+      const workoutService = TestBed.inject(WorkoutService);
+      (workoutService.updateSessionExercise as jasmine.Spy).and.returnValue(of({
+        id: 'se-1',
+        sessionId: 'test-id',
+        exercise: { id: 'ex-1', name: 'Bench Press', isPublic: false, unilateral: false, isBodyweight: false },
+        sets: 4,
+        reps: 12,
+        sortOrder: 0,
+        isAmrap: false
+      }));
+
+      component.sessionId.set('test-id');
+      component.editingTargetExerciseId.set('se-1');
+      component.editTargetForm.patchValue({
+        sets: 4,
+        reps: 12,
+        repsMax: null,
+        isAmrap: false,
+        saveToDayTemplate: true
+      });
+
+      component.confirmEditTargets();
+
+      expect(workoutService.updateSessionExercise).toHaveBeenCalledWith('test-id', 'se-1', {
+        sets: 4,
+        reps: 12,
+        repsMax: undefined,
+        isAmrap: false,
+        saveToDayTemplate: true
+      });
+      expect(workoutSpy).toHaveBeenCalled();
+    });
+
+    it('should remove exercise from workout and reload data', () => {
+      const workoutSpy = spyOn(component, 'loadWorkoutData');
+      const workoutService = TestBed.inject(WorkoutService);
+      (workoutService.removeSessionExercise as jasmine.Spy).and.returnValue(of(undefined));
+
+      component.sessionId.set('test-id');
+      component.confirmRemoveExercise('se-1');
+
+      expect(workoutService.removeSessionExercise).toHaveBeenCalledWith('test-id', 'se-1');
       expect(workoutSpy).toHaveBeenCalled();
     });
   });

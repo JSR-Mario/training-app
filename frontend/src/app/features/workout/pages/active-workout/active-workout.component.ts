@@ -14,7 +14,8 @@ import {
   Exercise,
   ExerciseSuggestionResponse,
   SessionExerciseRequest,
-  SessionExerciseReplaceRequest
+  SessionExerciseReplaceRequest,
+  SessionExerciseUpdateRequest
 } from '../../../../core/types/training.types';
 import { ExerciseSearchComponent } from '../../../exercises/components/exercise-search/exercise-search.component';
 import { ExerciseFormComponent, ExerciseFormData } from '../../../exercises/components/exercise-form/exercise-form.component';
@@ -464,8 +465,15 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                               </span>
                             </div>
                             @if (getSuggestionForNextSet(ex.id)) {
-                              <div class="text-xs text-gray-500 dark:text-gray-400">
-                                Last week: <span class="font-bold text-gray-700 dark:text-gray-300">{{ getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg, ex.id) }}{{ getUnit(ex.id) }} &times; @if (ex.unilateral) { {{ getSuggestionForNextSet(ex.id)?.reps }} / {{ getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps }} } @else { {{ getSuggestionForNextSet(ex.id)?.reps }} }</span>
+                              <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                @if (getSuggestion(ex.id)?.repRangeChanged) {
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Rep range changed since last session">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                  </svg>
+                                  <span class="line-through text-gray-400 dark:text-gray-500">Last week: <span class="font-bold">{{ getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg, ex.id) }}{{ getUnit(ex.id) }} &times; @if (ex.unilateral) { {{ getSuggestionForNextSet(ex.id)?.reps }} / {{ getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps }} } @else { {{ getSuggestionForNextSet(ex.id)?.reps }} }</span></span>
+                                } @else {
+                                  Last week: <span class="font-bold text-gray-700 dark:text-gray-300">{{ getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg, ex.id) }}{{ getUnit(ex.id) }} &times; @if (ex.unilateral) { {{ getSuggestionForNextSet(ex.id)?.reps }} / {{ getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps }} } @else { {{ getSuggestionForNextSet(ex.id)?.reps }} }</span>
+                                }
                               </div>
                             }
                           </div>
@@ -819,14 +827,18 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                 </div>
               </div>
 
-              <!-- Replace and Analytics -->
+              <!-- Actions: Edit Targets, Replace, Remove, Analytics -->
               <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl flex flex-col gap-2">
-                <button (click)="startReplaceExercise(ex.id)" class="w-full py-2 bg-accent-neg/10 text-accent-neg hover:bg-accent-neg/20 border border-accent-neg/20 rounded-lg text-sm font-bold transition-colors">
+                <button (click)="startEditTargets(ex.id)" class="w-full py-2 bg-accent-pos/10 text-accent-pos hover:bg-accent-pos/20 border border-accent-pos/30 rounded-lg text-sm font-bold transition-colors">
+                  Edit Targets (Sets & Reps)
+                </button>
+                <button (click)="startReplaceExercise(ex.id)" class="w-full py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-sm font-bold transition-colors">
                   Replace Exercise
                 </button>
-                <p class="text-xs text-gray-500 text-center mt-1 mb-2">Logged sets for this exercise will be removed.</p>
-                
-                <a [routerLink]="['/analytics']" [queryParams]="{ exerciseId: ex.exerciseId }" (click)="closeOptionsModal()" class="w-full py-2 bg-accent-pos/10 text-accent-pos hover:bg-accent-pos/20 border border-accent-pos/30 rounded-lg text-sm font-bold transition-colors text-center block">
+                <button (click)="promptRemoveExercise(ex.id)" class="w-full py-2 bg-accent-neg/10 text-accent-neg hover:bg-accent-neg/20 border border-accent-neg/30 rounded-lg text-sm font-bold transition-colors">
+                  Remove from Workout
+                </button>
+                <a [routerLink]="['/analytics']" [queryParams]="{ exerciseId: ex.exerciseId }" (click)="closeOptionsModal()" class="w-full py-1.5 text-gray-500 hover:text-accent-pos rounded-lg text-xs font-medium transition-colors text-center block pt-1">
                   View Analytics
                 </a>
               </div>
@@ -952,6 +964,98 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                 </form>
               </div>
             }
+          </div>
+        </div>
+      }
+
+      <!-- Edit Targets Modal (Root Level Overlay) -->
+      @if (editingTargetExercise(); as ex) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
+          <div class="solid-card rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative p-6">
+            <button (click)="cancelEditTargets()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white text-lg">✕</button>
+            <h3 class="text-xl font-bold mb-4 text-black dark:text-white pr-6">Edit Targets &bull; {{ ex.exerciseName }}</h3>
+            
+            <form [formGroup]="editTargetForm" (ngSubmit)="confirmEditTargets()" class="space-y-4">
+              <div>
+                <label for="editTargetSetsInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Target Sets</label>
+                <input id="editTargetSetsInput" type="number" formControlName="sets" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+              </div>
+
+              <div class="flex items-center gap-3 pt-1">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    formControlName="isAmrap"
+                    class="sr-only peer"
+                    id="editTargetIsAmrap"
+                  >
+                  <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+                </label>
+                <label for="editTargetIsAmrap" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                  AMRAP
+                  <span class="text-gray-500 dark:text-gray-400 text-xs ml-1">(As Many Reps As Possible)</span>
+                </label>
+              </div>
+
+              @if (!editTargetForm.get('isAmrap')?.value) {
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label for="editTargetRepsInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Min Reps</label>
+                    <input id="editTargetRepsInput" type="number" formControlName="reps" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                  </div>
+                  <div>
+                    <label for="editTargetRepsMaxInput" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Max Reps (Opt)</label>
+                    <input id="editTargetRepsMaxInput" type="number" formControlName="repsMax" min="1" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-accent-pos outline-none text-black dark:text-white text-sm">
+                  </div>
+                </div>
+              }
+
+              <div class="flex items-center gap-3 pt-1">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    formControlName="saveToDayTemplate"
+                    class="sr-only peer"
+                    id="editTargetSaveToDayTemplate"
+                  >
+                  <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+                </label>
+                <label for="editTargetSaveToDayTemplate" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                  Update Program Routine (Day Template)
+                </label>
+              </div>
+
+              <div class="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700/60">
+                <button type="button" (click)="cancelEditTargets()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Cancel</button>
+                <button type="submit" [disabled]="editTargetForm.invalid || isSavingTargets()" class="px-5 py-2 bg-accent-pos hover:opacity-80 text-white font-semibold rounded-xl text-sm disabled:opacity-50 transition-colors solid-btn">
+                  {{ isSavingTargets() ? 'Saving...' : 'Save Targets' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- Remove Exercise Confirmation Modal (Root Level Overlay) -->
+      @if (confirmRemoveExerciseId(); as exId) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm">
+          <div class="solid-card rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative p-6">
+            <button (click)="cancelRemoveExercise()" class="absolute top-4 right-4 text-gray-500 hover:text-black dark:hover:text-white text-lg">✕</button>
+            <h3 class="text-xl font-bold mb-3 text-accent-neg">Remove Exercise</h3>
+            <p class="text-sm text-gray-700 dark:text-gray-300 mb-4">
+              Are you sure you want to remove <span class="font-bold text-black dark:text-white">{{ getExerciseName(exId) }}</span> from this workout session?
+            </p>
+            @if (getSetsForExercise(exId).length > 0) {
+              <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-600 dark:text-amber-400 mb-4">
+                Warning: {{ getSetsForExercise(exId).length }} logged set(s) for this exercise will also be deleted.
+              </div>
+            }
+            <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700/60">
+              <button type="button" (click)="cancelRemoveExercise()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Cancel</button>
+              <button type="button" (click)="confirmRemoveExercise(exId)" [disabled]="isRemovingExercise()" class="px-5 py-2 bg-accent-neg hover:opacity-80 text-white font-semibold rounded-xl text-sm disabled:opacity-50 transition-colors">
+                {{ isRemovingExercise() ? 'Removing...' : 'Remove' }}
+              </button>
+            </div>
           </div>
         </div>
       }
@@ -1126,6 +1230,24 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     return this.exercises().findIndex(e => e.id === exId);
   }
 
+  editingTargetExerciseId = signal<string | null>(null);
+  isSavingTargets = signal<boolean>(false);
+  confirmRemoveExerciseId = signal<string | null>(null);
+  isRemovingExercise = signal<boolean>(false);
+
+  editingTargetExercise = computed(() => {
+    const id = this.editingTargetExerciseId();
+    return id ? this.exercises().find(e => e.id === id) || null : null;
+  });
+
+  editTargetForm: FormGroup = this.fb.group({
+    sets: [3, [Validators.required, Validators.min(1)]],
+    reps: [10, [Validators.required, Validators.min(1)]],
+    repsMax: [null as number | null],
+    isAmrap: [false],
+    saveToDayTemplate: [true]
+  });
+
   replaceForm: FormGroup = this.fb.group({
     keepExistingTargets: [true],
     sets: [3, [Validators.required, Validators.min(1)]],
@@ -1298,6 +1420,90 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     });
   }
 
+  startEditTargets(exId: string) {
+    this.closeOptionsModal();
+    const ex = this.exercises().find(e => e.id === exId);
+    if (!ex) return;
+    this.editingTargetExerciseId.set(exId);
+    this.editTargetForm.reset({
+      sets: ex.sets || 3,
+      reps: ex.reps || 10,
+      repsMax: ex.repsMax ?? null,
+      isAmrap: !!ex.isAmrap,
+      saveToDayTemplate: true
+    });
+  }
+
+  cancelEditTargets() {
+    this.editingTargetExerciseId.set(null);
+  }
+
+  confirmEditTargets() {
+    const sessionExerciseId = this.editingTargetExerciseId();
+    const sessionId = this.sessionId();
+    if (!sessionExerciseId || !sessionId || this.isSavingTargets()) return;
+
+    const isAmrap = !!this.editTargetForm.value.isAmrap;
+    if (this.editTargetForm.invalid && !isAmrap) {
+      return;
+    }
+
+    this.isSavingTargets.set(true);
+    const formVal = this.editTargetForm.value;
+    const req: SessionExerciseUpdateRequest = {
+      sets: formVal.sets || 3,
+      reps: isAmrap ? undefined : (formVal.reps || 10),
+      repsMax: isAmrap ? undefined : (formVal.repsMax || undefined),
+      isAmrap: isAmrap,
+      saveToDayTemplate: !!formVal.saveToDayTemplate
+    };
+
+    this.workoutService.updateSessionExercise(sessionId, sessionExerciseId, req).subscribe({
+      next: () => {
+        this.isSavingTargets.set(false);
+        this.editingTargetExerciseId.set(null);
+        this.loadWorkoutData();
+      },
+      error: (err) => {
+        console.error('Failed to update exercise targets', err);
+        this.isSavingTargets.set(false);
+        alert(err.error?.detail || err.error?.message || 'Failed to update exercise targets');
+      }
+    });
+  }
+
+  promptRemoveExercise(exId: string) {
+    this.closeOptionsModal();
+    this.confirmRemoveExerciseId.set(exId);
+  }
+
+  cancelRemoveExercise() {
+    this.confirmRemoveExerciseId.set(null);
+  }
+
+  getExerciseName(exId: string): string {
+    return this.exercises().find(e => e.id === exId)?.exerciseName || 'this exercise';
+  }
+
+  confirmRemoveExercise(exId: string) {
+    const sessionId = this.sessionId();
+    if (!sessionId || !exId || this.isRemovingExercise()) return;
+
+    this.isRemovingExercise.set(true);
+    this.workoutService.removeSessionExercise(sessionId, exId).subscribe({
+      next: () => {
+        this.isRemovingExercise.set(false);
+        this.confirmRemoveExerciseId.set(null);
+        this.loadWorkoutData();
+      },
+      error: (err) => {
+        console.error('Failed to remove exercise', err);
+        this.isRemovingExercise.set(false);
+        alert(err.error?.detail || err.error?.message || 'Failed to remove exercise');
+      }
+    });
+  }
+
   startEditSet(set: WorkoutSetResponse, exId: string) {
     this.editingSetId.set(set.id);
     const unit = this.getUnit(exId);
@@ -1446,6 +1652,16 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
       }
       repsControl?.updateValueAndValidity();
     });
+
+    this.editTargetForm.get('isAmrap')?.valueChanges.subscribe(isAmrap => {
+      const repsControl = this.editTargetForm.get('reps');
+      if (isAmrap) {
+        repsControl?.clearValidators();
+      } else {
+        repsControl?.setValidators([Validators.required, Validators.min(1)]);
+      }
+      repsControl?.updateValueAndValidity();
+    });
   }
 
   ngOnDestroy() {
@@ -1502,71 +1718,79 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     
     this.workoutService.getSession(id).subscribe({
       next: (sess) => {
-        this.session.set(sess);
-        if (sess.notes) {
-          this.notesControl.setValue(sess.notes, { emitEvent: false });
-          this.hasCurrentNotes.set(!!(sess.notes && sess.notes.trim().length > 0));
-        } else {
-          this.notesControl.setValue('', { emitEvent: false });
-          this.hasCurrentNotes.set(false);
-        }
-        
-        forkJoin({
-          sets: this.workoutService.getSets(id),
-          exercises: this.workoutService.getSessionExercises(id),
-          suggestions: this.workoutService.getSuggestions(id).pipe(catchError(() => of([]))),
-          latestBW: this.bodyWeightService.getWeightEntries('2000-01-01', new Date().toISOString().split('T')[0]).pipe(catchError(() => of([])))
-        }).subscribe({
-          next: (res) => {
-            this.loggedSets.set(res.sets);
-            
-            const suggMap = new Map<string, ExerciseSuggestionResponse>();
-            res.suggestions.forEach(s => suggMap.set(s.dayExerciseId, s));
-            this.suggestions.set(suggMap);
-            
-            if (res.latestBW && res.latestBW.length > 0) {
-              const sortedBW = [...res.latestBW].sort((a, b) => a.date.localeCompare(b.date));
-              this.latestBodyWeight.set(sortedBW[sortedBW.length - 1].weightKg);
+        const sync$ = sess.completedAt
+          ? of(sess)
+          : this.workoutService.syncSession(id).pipe(catchError(() => of(sess)));
+
+        sync$.subscribe({
+          next: (syncedSess) => {
+            this.session.set(syncedSess);
+            if (syncedSess.notes) {
+              this.notesControl.setValue(syncedSess.notes, { emitEvent: false });
+              this.hasCurrentNotes.set(!!(syncedSess.notes && syncedSess.notes.trim().length > 0));
+            } else {
+              this.notesControl.setValue('', { emitEvent: false });
+              this.hasCurrentNotes.set(false);
             }
             
-            // Map SessionExerciseResponse to DayExercise format for frontend compatibility
-            const mappedExercises: DayExercise[] = res.exercises.map(e => ({
-              id: e.id,
-              exerciseId: e.exercise.id,
-              exerciseName: e.exercise.name,
-              equipmentBrand: e.exercise.equipmentBrand,
-              isPublic: e.exercise.isPublic,
-              sets: e.sets,
-              reps: e.reps,
-              repsMax: e.repsMax,
-              sortOrder: e.sortOrder,
-              isAmrap: e.isAmrap,
-              unilateral: e.exercise.unilateral,
-              isBodyweight: e.exercise.isBodyweight
-            }));
-            
-            const sorted = mappedExercises.sort((a, b) => a.sortOrder - b.sortOrder);
-            this.exercises.set(sorted);
-            this.initForms(sorted);
-            
-            // Auto-collapse completed exercises on load
-            sorted.forEach(ex => {
-              const setsLogged = this.getSetsForExercise(ex.id).length;
-              if (setsLogged >= (ex.sets || 1)) {
-                this.collapsedExercises.add(ex.id);
+            forkJoin({
+              sets: this.workoutService.getSets(id),
+              exercises: this.workoutService.getSessionExercises(id),
+              suggestions: this.workoutService.getSuggestions(id).pipe(catchError(() => of([]))),
+              latestBW: this.bodyWeightService.getWeightEntries('2000-01-01', new Date().toISOString().split('T')[0]).pipe(catchError(() => of([])))
+            }).subscribe({
+              next: (res) => {
+                this.loggedSets.set(res.sets);
+                
+                const suggMap = new Map<string, ExerciseSuggestionResponse>();
+                res.suggestions.forEach(s => suggMap.set(s.dayExerciseId, s));
+                this.suggestions.set(suggMap);
+                
+                if (res.latestBW && res.latestBW.length > 0) {
+                  const sortedBW = [...res.latestBW].sort((a, b) => a.date.localeCompare(b.date));
+                  this.latestBodyWeight.set(sortedBW[sortedBW.length - 1].weightKg);
+                }
+                
+                // Map SessionExerciseResponse to DayExercise format for frontend compatibility
+                const mappedExercises: DayExercise[] = res.exercises.map(e => ({
+                  id: e.id,
+                  exerciseId: e.exercise.id,
+                  exerciseName: e.exercise.name,
+                  equipmentBrand: e.exercise.equipmentBrand,
+                  isPublic: e.exercise.isPublic,
+                  sets: e.sets,
+                  reps: e.reps,
+                  repsMax: e.repsMax,
+                  sortOrder: e.sortOrder,
+                  isAmrap: e.isAmrap,
+                  unilateral: e.exercise.unilateral,
+                  isBodyweight: e.exercise.isBodyweight
+                }));
+                
+                const sorted = mappedExercises.sort((a, b) => a.sortOrder - b.sortOrder);
+                this.exercises.set(sorted);
+                this.initForms(sorted);
+                
+                // Auto-collapse completed exercises on load
+                sorted.forEach(ex => {
+                  const setsLogged = this.getSetsForExercise(ex.id).length;
+                  if (setsLogged >= (ex.sets || 1)) {
+                    this.collapsedExercises.add(ex.id);
+                  }
+                });
+
+                if (this.session()?.completedAt) {
+                  this.buildChartData();
+                }
+
+                this.isLoading.set(false);
+                this.scrollToFirstIncompleteExercise();
+              },
+              error: (err) => {
+                console.error('Failed to load workout data', err);
+                this.isLoading.set(false);
               }
             });
-
-            if (this.session()?.completedAt) {
-              this.buildChartData();
-            }
-
-            this.isLoading.set(false);
-            this.scrollToFirstIncompleteExercise();
-          },
-          error: (err) => {
-            console.error('Failed to load workout data', err);
-            this.isLoading.set(false);
           }
         });
       },
