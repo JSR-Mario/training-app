@@ -1110,4 +1110,194 @@ class WorkoutSessionServiceTest {
         assertThat(suggestions.get(0).repRangeChanged()).isFalse();
         assertThat(suggestions.get(0).hadFatigueLastWeek()).isTrue();
     }
+
+    @Test
+    void syncSessionExercises_UpdatesExisting_AddsNew_RemovesUnusedWithoutSets() {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setDayTemplate(dayTemplate);
+
+        com.trainingapp.training.domain.Exercise exA = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(exA, "id", UUID.randomUUID());
+        com.trainingapp.training.domain.Exercise exB = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(exB, "id", UUID.randomUUID());
+        com.trainingapp.training.domain.Exercise exC = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(exC, "id", UUID.randomUUID());
+
+        com.trainingapp.training.domain.SessionExercise seA = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(seA, "id", UUID.randomUUID());
+        seA.setSession(session);
+        seA.setExercise(exA);
+        seA.setSets(3);
+        seA.setReps(10);
+        seA.setSortOrder(0);
+
+        com.trainingapp.training.domain.SessionExercise seB = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(seB, "id", UUID.randomUUID());
+        seB.setSession(session);
+        seB.setExercise(exB);
+        seB.setSets(3);
+        seB.setReps(10);
+        seB.setSortOrder(1);
+
+        com.trainingapp.training.domain.DayExercise deA = new com.trainingapp.training.domain.DayExercise();
+        ReflectionTestUtils.setField(deA, "id", UUID.randomUUID());
+        deA.setDayTemplate(dayTemplate);
+        deA.setExercise(exA);
+        deA.setSets(4); // Changed from 3 to 4
+        deA.setReps(12);
+        deA.setSortOrder(0);
+
+        com.trainingapp.training.domain.DayExercise deC = new com.trainingapp.training.domain.DayExercise();
+        ReflectionTestUtils.setField(deC, "id", UUID.randomUUID());
+        deC.setDayTemplate(dayTemplate);
+        deC.setExercise(exC);
+        deC.setSets(3);
+        deC.setReps(8);
+        deC.setSortOrder(1);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplateId)).thenReturn(List.of(deA, deC));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(seA, seB));
+        when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(Collections.emptyList());
+
+        WorkoutSessionResponse response = sessionService.syncSessionExercises(sessionId, userId);
+
+        assertThat(response).isNotNull();
+        // Existing exercise A updated
+        assertThat(seA.getSets()).isEqualTo(4);
+        assertThat(seA.getReps()).isEqualTo(12);
+        verify(sessionExerciseRepository).save(seA);
+
+        // New exercise C added
+        verify(sessionExerciseRepository).save(argThat(se -> se.getExercise().equals(exC) && se.getSets() == 3));
+
+        // Removed exercise B deleted (no logged sets)
+        verify(sessionExerciseRepository).delete(seB);
+    }
+
+    @Test
+    void syncSessionExercises_RetainsRemovedExerciseIfHasLoggedSets() {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setDayTemplate(dayTemplate);
+
+        com.trainingapp.training.domain.Exercise exB = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(exB, "id", UUID.randomUUID());
+
+        com.trainingapp.training.domain.SessionExercise seB = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(seB, "id", UUID.randomUUID());
+        seB.setSession(session);
+        seB.setExercise(exB);
+        seB.setSets(3);
+
+        com.trainingapp.training.domain.WorkoutSet loggedSet = new com.trainingapp.training.domain.WorkoutSet();
+        loggedSet.setSession(session);
+        loggedSet.setSessionExercise(seB);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplateId)).thenReturn(Collections.emptyList());
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(seB));
+        when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(List.of(loggedSet));
+
+        sessionService.syncSessionExercises(sessionId, userId);
+
+        // Exercise B has logged sets, so it must NOT be deleted
+        verify(sessionExerciseRepository, never()).delete(seB);
+    }
+
+    @Test
+    void syncSessionExercises_CompletedSession_DoesNothing() {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setCompletedAt(java.time.Instant.now());
+        session.setDayTemplate(dayTemplate);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+
+        sessionService.syncSessionExercises(sessionId, userId);
+
+        verify(dayExerciseRepository, never()).findByDayTemplateIdOrderBySortOrderAsc(any());
+        verify(sessionExerciseRepository, never()).save(any());
+    }
+
+    @Test
+    void updateSessionExercise_Success_UpdatesAndOptionallySavesToDayTemplate() {
+        UUID sessionId = UUID.randomUUID();
+        UUID sessionExerciseId = UUID.randomUUID();
+
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setDayTemplate(dayTemplate);
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", UUID.randomUUID());
+        ex.setName("Bench Press");
+
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", sessionExerciseId);
+        se.setSession(session);
+        se.setExercise(ex);
+        se.setSets(3);
+        se.setReps(10);
+
+        com.trainingapp.training.domain.DayExercise de = new com.trainingapp.training.domain.DayExercise();
+        ReflectionTestUtils.setField(de, "id", UUID.randomUUID());
+        de.setDayTemplate(dayTemplate);
+        de.setExercise(ex);
+        de.setSets(3);
+        de.setReps(10);
+
+        com.trainingapp.training.dto.SessionExerciseUpdateRequest request =
+            new com.trainingapp.training.dto.SessionExerciseUpdateRequest(4, 12, 15, false, true);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(se));
+        when(sessionExerciseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplateId)).thenReturn(List.of(de));
+
+        com.trainingapp.training.dto.SessionExerciseResponse response =
+            sessionService.updateSessionExercise(sessionId, userId, sessionExerciseId, request);
+
+        assertThat(response).isNotNull();
+        assertThat(se.getSets()).isEqualTo(4);
+        assertThat(se.getReps()).isEqualTo(12);
+        assertThat(se.getRepsMax()).isEqualTo(15);
+        assertThat(se.isAmrap()).isFalse();
+
+        // Also check that day template was updated
+        assertThat(de.getSets()).isEqualTo(4);
+        assertThat(de.getReps()).isEqualTo(12);
+        verify(dayExerciseRepository).save(de);
+    }
+
+    @Test
+    void removeSessionExercise_DeletesSetsAndRatingsFirst() {
+        UUID sessionId = UUID.randomUUID();
+        UUID sessionExerciseId = UUID.randomUUID();
+
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", sessionExerciseId);
+        se.setSession(session);
+
+        com.trainingapp.training.domain.WorkoutSet set1 = new com.trainingapp.training.domain.WorkoutSet();
+        set1.setSession(session);
+        set1.setSessionExercise(se);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findById(sessionExerciseId)).thenReturn(Optional.of(se));
+        when(setRepository.findBySessionIdOrderByLoggedAtAsc(sessionId)).thenReturn(List.of(set1));
+
+        sessionService.removeSessionExercise(sessionId, userId, sessionExerciseId);
+
+        verify(setRepository).deleteAll(List.of(set1));
+        verify(ratingRepository).deleteBySessionIdAndSessionExerciseId(sessionId, sessionExerciseId);
+        verify(sessionExerciseRepository).delete(se);
+    }
 }

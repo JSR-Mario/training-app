@@ -9,7 +9,8 @@ import {
   ExerciseSuggestionResponse,
   SessionExerciseResponse,
   SessionExerciseRequest,
-  SessionExerciseReorderRequest
+  SessionExerciseReorderRequest,
+  SessionExerciseUpdateRequest
 } from '../../../core/types/training.types';
 
 @Injectable({
@@ -115,5 +116,13 @@ export class WorkoutService {
 
   reorderSessionExercises(sessionId: string, requests: SessionExerciseReorderRequest[]): Observable<SessionExerciseResponse[]> {
     return this.http.patch<SessionExerciseResponse[]>(`${this.baseUrl}/sessions/${sessionId}/exercises/reorder`, requests);
+  }
+
+  syncSession(id: string): Observable<WorkoutSessionResponse> {
+    return this.http.post<WorkoutSessionResponse>(`${this.baseUrl}/sessions/${id}/sync`, {});
+  }
+
+  updateSessionExercise(sessionId: string, sessionExerciseId: string, request: SessionExerciseUpdateRequest): Observable<SessionExerciseResponse> {
+    return this.http.put<SessionExerciseResponse>(`${this.baseUrl}/sessions/${sessionId}/exercises/${sessionExerciseId}`, request);
   }
 }
