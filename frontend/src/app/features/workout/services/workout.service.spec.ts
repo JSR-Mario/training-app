@@ -212,4 +212,13 @@ describe('WorkoutService', () => {
     expect(req.request.body).toEqual(updateReq);
     req.flush({});
   });
+
+  it('should remove a session exercise with saveToDayTemplate query parameter', () => {
+    service.removeSessionExercise('123', 'ex-1', true).subscribe();
+
+    const req = httpMock.expectOne('/api/v1/training/sessions/123/exercises/ex-1?saveToDayTemplate=true');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
 });
+

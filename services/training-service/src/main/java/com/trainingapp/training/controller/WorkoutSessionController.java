@@ -92,8 +92,11 @@ public class WorkoutSessionController {
     }
 
     @DeleteMapping("/{id}/exercises/{sessionExerciseId}")
-    public ResponseEntity<Void> removeSessionExercise(@PathVariable UUID id, @PathVariable UUID sessionExerciseId) {
-        sessionService.removeSessionExercise(id, UserContext.getCurrentUserId(), sessionExerciseId);
+    public ResponseEntity<Void> removeSessionExercise(
+            @PathVariable UUID id, 
+            @PathVariable UUID sessionExerciseId,
+            @RequestParam(required = false, defaultValue = "false") boolean saveToDayTemplate) {
+        sessionService.removeSessionExercise(id, UserContext.getCurrentUserId(), sessionExerciseId, saveToDayTemplate);
         return ResponseEntity.noContent().build();
     }
 
