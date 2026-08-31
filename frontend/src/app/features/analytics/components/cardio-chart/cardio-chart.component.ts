@@ -1,13 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration, ChartType } from 'chart.js';
+import { ChartConfiguration, ChartType, TooltipItem } from 'chart.js';
 import { CardioLogService } from '../../services/cardio-log.service';
 import { CardioLogResponse } from '../../../../core/types/training.types';
 import { CARDIO_TYPES } from '../../../../core/constants/cardio-types';
 
 export type CardioTimeRange = '7D' | '1M' | '1Y' | 'ALL';
-export type CardioMetric = 'duration' | 'distance';
 
 @Component({
   selector: 'app-cardio-chart',
@@ -23,7 +22,6 @@ export class CardioChartComponent implements OnInit {
   logs = signal<CardioLogResponse[]>([]);
 
   activeRange = signal<CardioTimeRange>('7D');
-  activeMetric = signal<CardioMetric>('duration');
 
   readonly timeRanges = [
     { id: '7D', label: '7D' },
@@ -34,11 +32,6 @@ export class CardioChartComponent implements OnInit {
 
   setRange(range: CardioTimeRange) {
     this.activeRange.set(range);
-    this.updateChart();
-  }
-
-  setMetric(metric: CardioMetric) {
-    this.activeMetric.set(metric);
     this.updateChart();
   }
 
@@ -54,7 +47,21 @@ export class CardioChartComponent implements OnInit {
         padding: 12,
         cornerRadius: 8,
         mode: 'index',
-        intersect: false
+        intersect: false,
+        callbacks: {
+          label: (context: TooltipItem<ChartType>) => {
+            const datasetLabel = context.dataset.label || '';
+            const value = context.parsed.y;
+            if (value === null || value === undefined) return '';
+            if (value === 0 && context.dataset.type === 'bar') {
+              return '';
+            }
+            if (context.dataset.yAxisID === 'y1' || datasetLabel.includes('Distance')) {
+              return `${datasetLabel}: ${value} km`;
+            }
+            return `${datasetLabel}: ${value} min`;
+          }
+        }
       }
     },
     scales: {
@@ -67,14 +74,24 @@ export class CardioChartComponent implements OnInit {
         type: 'linear',
         display: true,
         position: 'left',
+        stacked: true,
         grid: { color: 'rgba(255, 255, 255, 0.1)' },
-        ticks: { color: '#10b981' }, // Emerald 500
-        title: { display: true, text: 'Duration (Minutes)', color: '#10b981' },
+        ticks: { color: '#10b981' },
+        title: { display: true, text: 'Duration (min)', color: '#10b981' },
+        beginAtZero: true
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        ticks: { color: '#38bdf8' },
+        title: { display: true, text: 'Distance (km)', color: '#38bdf8' },
         beginAtZero: true
       }
     },
     interaction: {
-      mode: 'nearest',
+      mode: 'index',
       axis: 'x',
       intersect: false
     }
@@ -125,7 +142,6 @@ export class CardioChartComponent implements OnInit {
     }
 
     const range = this.activeRange();
-    const isDistance = this.activeMetric() === 'distance';
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -151,6 +167,7 @@ export class CardioChartComponent implements OnInit {
     const knownNames = new Set(typeOrder);
 
     const aggregated = new Map<string, Map<string, number>>();
+    const dailyDistanceMap = new Map<string, number>();
     const presentTypes = new Set<string>();
 
     if (range === '7D') {
@@ -159,6 +176,7 @@ export class CardioChartComponent implements OnInit {
         d.setDate(today.getDate() - i);
         const dateStr = this.formatDateIso(d);
         aggregated.set(dateStr, new Map<string, number>());
+        dailyDistanceMap.set(dateStr, 0);
       }
     }
 
@@ -176,8 +194,10 @@ export class CardioChartComponent implements OnInit {
         aggregated.set(date, new Map<string, number>());
       }
       const dateMap = aggregated.get(date)!;
-      const value = isDistance ? (Number(entry.distanceKm) || 0) : (entry.durationMinutes || 0);
-      dateMap.set(type, Math.round(((dateMap.get(type) || 0) + value) * 100) / 100);
+      dateMap.set(type, (dateMap.get(type) || 0) + (entry.durationMinutes || 0));
+
+      const dist = Number(entry.distanceKm) || 0;
+      dailyDistanceMap.set(date, Math.round(((dailyDistanceMap.get(date) || 0) + dist) * 100) / 100);
     });
 
     const sortedDates = Array.from(aggregated.keys()).sort();
@@ -185,42 +205,6 @@ export class CardioChartComponent implements OnInit {
     if (sortedDates.length === 0) {
       this.chartData = { labels: [], datasets: [] };
       return;
-    }
-
-    // Calculate daily totals for trendline
-    const dailyTotals = sortedDates.map(d => {
-      const dateMap = aggregated.get(d);
-      if (!dateMap) return 0;
-      let sum = 0;
-      dateMap.forEach(val => sum += val);
-      return Math.round(sum * 100) / 100;
-    });
-
-    // Linear regression for Trend Line
-    const n = sortedDates.length;
-    const trendValues: number[] = [];
-
-    if (n > 0) {
-      let sumX = 0;
-      let sumY = 0;
-      let sumXY = 0;
-      let sumX2 = 0;
-
-      for (let i = 0; i < n; i++) {
-        sumX += i;
-        sumY += dailyTotals[i];
-        sumXY += i * dailyTotals[i];
-        sumX2 += i * i;
-      }
-
-      const denominator = n * sumX2 - sumX * sumX;
-      const slope = denominator !== 0 ? (n * sumXY - sumX * sumY) / denominator : 0;
-      const intercept = (sumY - slope * sumX) / n;
-
-      for (let i = 0; i < n; i++) {
-        const val = slope * i + intercept;
-        trendValues.push(Math.max(0, Math.round(val * 100) / 100));
-      }
     }
 
     const sortedTypes = Array.from(presentTypes).sort((a, b) => {
@@ -240,50 +224,29 @@ export class CardioChartComponent implements OnInit {
         borderColor: colorOptions.border,
         borderWidth: 2,
         borderRadius: 4,
-        stack: 'cardio'
+        stack: 'cardio',
+        yAxisID: 'y',
+        order: 2
       };
     });
 
-    if (dailyTotals.some(v => v > 0)) {
-      datasets.push({
-        type: 'line',
-        label: 'Trend Line',
-        data: trendValues,
-        borderColor: '#f59e0b',
-        backgroundColor: 'rgba(245, 158, 11, 0.15)',
-        borderWidth: 2.5,
-        borderDash: [6, 4],
-        pointRadius: 3,
-        pointBackgroundColor: '#f59e0b',
-        fill: false,
-        stack: 'trend',
-        order: -1
-      });
-    }
-
-    this.chartOptions = {
-      ...this.chartOptions,
-      scales: {
-        x: {
-          stacked: true,
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: { color: '#94a3b8' }
-        },
-        y: {
-          type: 'linear',
-          display: true,
-          position: 'left',
-          grid: { color: 'rgba(255, 255, 255, 0.1)' },
-          ticks: { color: '#10b981' },
-          title: {
-            display: true,
-            text: isDistance ? 'Distance (Kilometers)' : 'Duration (Minutes)',
-            color: '#10b981'
-          },
-          beginAtZero: true
-        }
-      }
-    };
+    const dailyDistances = sortedDates.map(d => dailyDistanceMap.get(d) || 0);
+    datasets.push({
+      type: 'line',
+      label: 'Distance (km)',
+      data: dailyDistances,
+      borderColor: '#38bdf8',
+      backgroundColor: 'rgba(56, 189, 248, 0.15)',
+      borderWidth: 2.5,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      pointBackgroundColor: '#38bdf8',
+      pointBorderColor: '#ffffff',
+      tension: 0.2,
+      fill: false,
+      yAxisID: 'y1',
+      order: 1
+    });
 
     this.chartData = {
       labels: sortedDates,
