@@ -4,9 +4,9 @@ I built Yes App to track my own workouts, manage fitness programs, and analyze l
 
 ## Architecture
 
-[![Architecture Diagram](docs/architecture.png)](https://htmlpreview.github.io/?https://github.com/JSR-Mario/training-app/blob/main/docs/architecture.html)
+[![Architecture Diagram](docs/architecture.png)](https://jsr-mario.github.io/training-app/)
 
-*Click the diagram above for the [Interactive Architecture Viewer (Live Web Preview)](https://htmlpreview.github.io/?https://github.com/JSR-Mario/training-app/blob/main/docs/architecture.html) or open [`docs/architecture.html`](docs/architecture.html) in a local browser (supports route tracing, node focusing, and guided tours).*
+*Click the diagram above to open the [Interactive Architecture Viewer](https://jsr-mario.github.io/training-app/) (route tracing, node focusing, and guided tours) or open [`docs/architecture.html`](docs/architecture.html) locally.*
 
 ### Architectural Highlights
 
