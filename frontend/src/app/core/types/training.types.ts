@@ -271,6 +271,7 @@ export interface ExerciseHistoryResponse {
 export interface CardioLogRequest {
   durationMinutes: number;
   cardioType?: string;
+  distanceKm?: number | null;
   performedOn: string;
 }
 
@@ -278,6 +279,7 @@ export interface CardioLogResponse {
   id: string;
   durationMinutes: number;
   cardioType?: string;
+  distanceKm?: number | null;
   performedOn: string;
   createdAt: string;
 }

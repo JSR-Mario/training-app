@@ -1,12 +1,10 @@
 <div class="animate-fade-in relative">
 
   <!-- Range Selector Bar -->
-  <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-    <div class="flex items-center gap-2">
-      <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Time Range</span>
-    </div>
+  <div class="flex items-center justify-between gap-3 mb-3">
+    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration Overview</span>
 
-    <div class="flex gap-1 p-1 bg-gray-200 dark:bg-gray-900 rounded-lg shrink-0">
+    <div class="flex items-center gap-1 p-1 bg-gray-200 dark:bg-gray-900 rounded-lg shrink-0">
       @for (range of timeRanges; track range.id) {
         <button
           type="button"
@@ -23,7 +21,7 @@
     </div>
   </div>
   
-  <div class="relative h-[400px] w-full mt-2">
+  <div class="relative h-[380px] w-full mt-2">
     <!-- Loading overlay -->
     @if (isLoading()) {
       <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all">

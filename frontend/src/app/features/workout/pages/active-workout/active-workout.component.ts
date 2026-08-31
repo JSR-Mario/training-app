@@ -470,10 +470,8 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                                   <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Rep range changed since last session">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                   </svg>
-                                  <span class="line-through text-gray-400 dark:text-gray-500">Last week: <span class="font-bold">{{ getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg, ex.id) }}{{ getUnit(ex.id) }} &times; @if (ex.unilateral) { {{ getSuggestionForNextSet(ex.id)?.reps }} / {{ getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps }} } @else { {{ getSuggestionForNextSet(ex.id)?.reps }} }</span></span>
-                                } @else {
-                                  Last week: <span class="font-bold text-gray-700 dark:text-gray-300">{{ getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg, ex.id) }}{{ getUnit(ex.id) }} &times; @if (ex.unilateral) { {{ getSuggestionForNextSet(ex.id)?.reps }} / {{ getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps }} } @else { {{ getSuggestionForNextSet(ex.id)?.reps }} }</span>
                                 }
+                                <span>Last week: <span class="font-bold text-gray-700 dark:text-gray-300">{{ getDisplayWeight(getSuggestionForNextSet(ex.id)?.weightKg, ex.id) }}{{ getUnit(ex.id) }} &times; @if (ex.unilateral) { {{ getSuggestionForNextSet(ex.id)?.reps }} / {{ getSuggestionForNextSet(ex.id)?.repsRight ?? getSuggestionForNextSet(ex.id)?.reps }} } @else { {{ getSuggestionForNextSet(ex.id)?.reps }} }</span></span>
                               </div>
                             }
                           </div>
@@ -761,25 +759,9 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                     Position {{ getExerciseIndex(ex.id) + 1 }} of {{ exercises().length }}
                   </span>
                 </div>
-                
-                <!-- Direct Move Up / Move Down for Current Exercise -->
-                <div class="grid grid-cols-2 gap-2">
-                  <button 
-                    (click)="moveExercise(ex.id, -1)" 
-                    [disabled]="getExerciseIndex(ex.id) === 0" 
-                    class="py-2 px-3 flex items-center justify-center gap-1.5 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 text-sm font-semibold text-black dark:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm">
-                    <span>&uarr; Move Up</span>
-                  </button>
-                  <button 
-                    (click)="moveExercise(ex.id, 1)" 
-                    [disabled]="getExerciseIndex(ex.id) === exercises().length - 1" 
-                    class="py-2 px-3 flex items-center justify-center gap-1.5 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 text-sm font-semibold text-black dark:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm">
-                    <span>&darr; Move Down</span>
-                  </button>
-                </div>
 
-                <!-- Sequence Preview List -->
-                <div class="max-h-44 overflow-y-auto space-y-1.5 pr-1 border-t border-gray-200 dark:border-gray-700/60 pt-2">
+                <!-- Sequence Preview List with Reorder Buttons -->
+                <div class="max-h-48 overflow-y-auto space-y-1.5 pr-1">
                   @for (item of exercises(); track item.id; let idx = $index) {
                     <div 
                       [id]="'reorder-item-' + item.id"
@@ -1050,6 +1032,21 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                 Warning: {{ getSetsForExercise(exId).length }} logged set(s) for this exercise will also be deleted.
               </div>
             }
+            <div class="flex items-center gap-3 pt-1 mb-4">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  [checked]="confirmRemoveSaveToDayTemplate()"
+                  (change)="confirmRemoveSaveToDayTemplate.set($any($event.target).checked)"
+                  class="sr-only peer"
+                  id="removeSaveToDayTemplate"
+                >
+                <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+              </label>
+              <label for="removeSaveToDayTemplate" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                Update Program Routine (Day Template)
+              </label>
+            </div>
             <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700/60">
               <button type="button" (click)="cancelRemoveExercise()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Cancel</button>
               <button type="button" (click)="confirmRemoveExercise(exId)" [disabled]="isRemovingExercise()" class="px-5 py-2 bg-accent-neg hover:opacity-80 text-white font-semibold rounded-xl text-sm disabled:opacity-50 transition-colors">
@@ -1233,6 +1230,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   editingTargetExerciseId = signal<string | null>(null);
   isSavingTargets = signal<boolean>(false);
   confirmRemoveExerciseId = signal<string | null>(null);
+  confirmRemoveSaveToDayTemplate = signal<boolean>(true);
   isRemovingExercise = signal<boolean>(false);
 
   editingTargetExercise = computed(() => {
@@ -1474,6 +1472,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
 
   promptRemoveExercise(exId: string) {
     this.closeOptionsModal();
+    this.confirmRemoveSaveToDayTemplate.set(true);
     this.confirmRemoveExerciseId.set(exId);
   }
 
@@ -1490,7 +1489,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     if (!sessionId || !exId || this.isRemovingExercise()) return;
 
     this.isRemovingExercise.set(true);
-    this.workoutService.removeSessionExercise(sessionId, exId).subscribe({
+    this.workoutService.removeSessionExercise(sessionId, exId, this.confirmRemoveSaveToDayTemplate()).subscribe({
       next: () => {
         this.isRemovingExercise.set(false);
         this.confirmRemoveExerciseId.set(null);
@@ -1602,6 +1601,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   }
 
   moveExercise(exId: string, direction: -1 | 1) {
+    const previousExercises = [...this.exercises()];
     const currentExercises = [...this.exercises()];
     const idx = currentExercises.findIndex(ex => ex.id === exId);
     if (idx === -1) return;
@@ -1619,7 +1619,10 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     if (sessionId) {
       const requests = currentExercises.map(ex => ({ id: ex.id, sortOrder: ex.sortOrder }));
       this.workoutService.reorderSessionExercises(sessionId, requests).subscribe({
-        error: (err) => console.error('Failed to reorder exercises on backend', err)
+        error: (err) => {
+          console.error('Failed to reorder exercises on backend', err);
+          this.exercises.set(previousExercises);
+        }
       });
     }
 

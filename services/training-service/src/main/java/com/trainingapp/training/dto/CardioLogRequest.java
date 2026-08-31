@@ -1,7 +1,9 @@
 package com.trainingapp.training.dto;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record CardioLogRequest(
@@ -10,6 +12,9 @@ public record CardioLogRequest(
     Integer durationMinutes,
     
     String cardioType,
+
+    @DecimalMin(value = "0.01", message = "Distance must be greater than 0")
+    BigDecimal distanceKm,
     
     @NotNull(message = "Date is required")
     LocalDate performedOn

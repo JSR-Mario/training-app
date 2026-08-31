@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Yes App - Complete System Architecture",
+    "subtitle": "Microservices, AWS Lightsail, Zero Trust Ingress, CI/CD & Observability (PLG)",
+    "quality_profile": "showcase",
+    "visual_preset": "blueprint",
+    "viewBox": [1200, 950],
+    "views": [
+      {
+        "id": "ingress-flow",
+        "label": "Ingress & Gateway Flow",
+        "focus": ["users", "cloudflare", "caddy", "frontend_srv", "gateway"],
+        "note": "Zero Trust ingress via Cloudflare Tunnel into Caddy and Spring Cloud Gateway."
+      },
+      {
+        "id": "microservices-data",
+        "label": "Microservices & Database",
+        "focus": ["gateway", "auth", "training", "analytics", "redis", "postgres"],
+        "note": "Multi-service backend with isolated schemas, Redis caching, and fire-and-forget events."
+      },
+      {
+        "id": "observability",
+        "label": "Observability Stack (PLG)",
+        "focus": ["prometheus", "promtail", "loki", "grafana"],
+        "note": "Prometheus scrapes Actuator metrics from all services; Promtail tails Docker logs to Loki."
+      },
+      {
+        "id": "aws-external-services",
+        "label": "AWS & External Services",
+        "focus": ["cloudflare", "s3_backup", "smtp", "github_actions", "ghcr"],
+        "note": "Cloudflare Edge, AWS S3 daily snapshots, AWS SES/SMTP, and GitHub Actions CI/CD."
+      }
+    ]
+  },
+  "components": [
+    { "id": "users", "type": "external", "label": "Client Users", "sublabel": "Browser / PWA", "pos": [340, 30], "size": [140, 48], "tag": "Angular 21" },
+    { "id": "cloudflare", "type": "cloud", "label": "Cloudflare Edge", "sublabel": "DNS + Zero Trust Tunnel", "pos": [340, 120], "size": [140, 48], "tag": "No open ports" },
+
+    { "id": "frontend_srv", "type": "frontend", "label": "Frontend (Nginx)", "sublabel": "Static PWA :80", "pos": [130, 220], "size": [140, 48] },
+    { "id": "caddy", "type": "cloud", "label": "Caddy Proxy", "sublabel": "Internal Router", "pos": [340, 220], "size": [140, 48] },
+
+    { "id": "redis", "type": "database", "label": "Redis 7", "sublabel": "Rate Limit & Cache", "pos": [130, 330], "size": [140, 50], "tag": ":6379" },
+    { "id": "gateway", "type": "backend", "label": "API Gateway", "sublabel": "Spring Cloud :8080", "pos": [340, 330], "size": [140, 50], "tag": "JWT + CORS" },
+
+    { "id": "auth", "type": "security", "label": "Auth Service", "sublabel": "Users & JWT :8081", "pos": [60, 470], "size": [140, 50], "tag": "BCrypt 12" },
+    { "id": "training", "type": "backend", "label": "Training Service", "sublabel": "Workouts :8082", "pos": [260, 470], "size": [140, 50], "tag": "Core Domain" },
+    { "id": "analytics", "type": "backend", "label": "Analytics Service", "sublabel": "Metrics :8083", "pos": [460, 470], "size": [140, 50], "tag": "Fire & Forget" },
+
+    { "id": "postgres", "type": "database", "label": "PostgreSQL 16", "sublabel": "3 Schemas :5432", "pos": [260, 610], "size": [140, 50], "tag": "Flyway" },
+
+    { "id": "prometheus", "type": "backend", "label": "Prometheus", "sublabel": "TSDB :9090 (30s scrape)", "pos": [720, 330], "size": [150, 50], "tag": "/actuator" },
+    { "id": "promtail", "type": "backend", "label": "Promtail", "sublabel": "Log Scraper (docker.sock)", "pos": [720, 470], "size": [150, 50], "tag": "All containers" },
+    { "id": "loki", "type": "database", "label": "Grafana Loki", "sublabel": "Log Store :3100", "pos": [720, 600], "size": [150, 50] },
+    { "id": "grafana", "type": "frontend", "label": "Grafana UI", "sublabel": "Dashboards :3000", "pos": [950, 470], "size": [140, 50], "tag": "Health & p95" },
+
+    { "id": "github_actions", "type": "external", "label": "GitHub Actions", "sublabel": "CI: test+lint / CD: build+deploy", "pos": [950, 30], "size": [160, 50], "tag": "PR & main" },
+    { "id": "ghcr", "type": "cloud", "label": "GHCR", "sublabel": "Container Registry", "pos": [950, 160], "size": [140, 48], "tag": "ghcr.io" },
+
+    { "id": "smtp", "type": "external", "label": "Email (AWS SES)", "sublabel": "Verification SMTP", "pos": [60, 780], "size": [140, 50], "tag": "External AWS" },
+    { "id": "s3_backup", "type": "cloud", "label": "AWS S3 Bucket", "sublabel": "Encrypted Snapshots", "pos": [460, 780], "size": [150, 50], "tag": "External Cloud" }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Lightsail Host (Docker Compose Network)",
+      "wraps": ["frontend_srv", "caddy", "redis", "gateway", "auth", "training", "analytics", "postgres", "prometheus", "promtail", "loki", "grafana"],
+      "pad": 16
+    },
+    {
+      "kind": "security-group",
+      "label": "Observability Stack (PLG)",
+      "wraps": ["prometheus", "promtail", "loki", "grafana"]
+    },
+    {
+      "kind": "security-group",
+      "label": "Core Microservices (/internal/** blocked at GW)",
+      "wraps": ["auth", "training", "analytics"]
+    }
+  ],
+  "connections": [
+    { "id": "user-to-cf", "from": "users", "to": "cloudflare", "label": "HTTPS", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 18 },
+    { "id": "cf-to-caddy", "from": "cloudflare", "to": "caddy", "label": "Tunnel", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelDy": 18 },
+    { "id": "caddy-to-web", "from": "caddy", "to": "frontend_srv", "label": "Static", "fromSide": "left", "toSide": "right" },
+    { "id": "caddy-to-gw", "from": "caddy", "to": "gateway", "label": "/api/**", "fromSide": "bottom", "toSide": "top", "labelDy": 18 },
+
+    { "id": "gw-to-redis", "from": "gateway", "to": "redis", "label": "Rate Limit", "fromSide": "left", "toSide": "right" },
+    { "id": "gw-to-auth", "from": "gateway", "to": "auth", "label": "/auth/**", "fromSide": "left", "toSide": "top" },
+    { "id": "gw-to-training", "from": "gateway", "to": "training", "label": "X-User-Id", "fromSide": "bottom", "toSide": "top", "labelDy": 18 },
+    { "id": "gw-to-analytics", "from": "gateway", "to": "analytics", "label": "Read APIs", "fromSide": "bottom", "toSide": "top", "labelAt": [500, 430] },
+
+    { "id": "training-to-analytics", "from": "training", "to": "analytics", "label": "POST /events", "variant": "dashed", "fromSide": "right", "toSide": "left", "labelDy": -18 },
+    { "id": "auth-to-smtp", "from": "auth", "to": "smtp", "label": "SMTP Send", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+
+    { "id": "auth-to-pg", "from": "auth", "to": "postgres", "label": "auth schema", "fromSide": "right", "toSide": "left" },
+    { "id": "training-to-pg", "from": "training", "to": "postgres", "label": "training schema", "fromSide": "bottom", "toSide": "top", "labelDy": 18 },
+    { "id": "analytics-to-pg", "from": "analytics", "to": "postgres", "label": "analytics schema", "fromSide": "bottom", "toSide": "right" },
+
+    { "id": "pg-to-s3", "from": "postgres", "to": "s3_backup", "label": "S3 Snapshot (3AM)", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+
+    { "id": "prom-scrape-gw", "from": "prometheus", "to": "gateway", "label": "Scrape Metrics", "variant": "dashed", "fromSide": "left", "toSide": "right" },
+    { "id": "prom-scrape-svc", "from": "prometheus", "to": "analytics", "label": "Scrape All", "variant": "dashed", "fromSide": "bottom", "toSide": "right" },
+    { "id": "promtail-to-loki", "from": "promtail", "to": "loki", "label": "Push Logs", "fromSide": "bottom", "toSide": "top", "labelDy": 18 },
+    { "id": "prom-to-grafana", "from": "prometheus", "to": "grafana", "label": "Metrics", "fromSide": "right", "toSide": "top" },
+    { "id": "loki-to-grafana", "from": "loki", "to": "grafana", "label": "Logs", "fromSide": "right", "toSide": "bottom" },
+
+    { "id": "gh-to-ghcr", "from": "github_actions", "to": "ghcr", "label": "Push Images", "fromSide": "bottom", "toSide": "top", "labelDy": 18 },
+    { "id": "ghcr-to-lightsail", "from": "ghcr", "to": "caddy", "label": "docker pull", "variant": "dashed", "fromSide": "left", "toSide": "right" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Ingress & Edge",
+      "items": [
+        "Cloudflare Zero Trust Tunnel: no public ports exposed",
+        "Caddy internal reverse proxy: /api/** to Gateway, static to Nginx",
+        "Angular 21 PWA installable, no offline caching"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Microservices Core",
+      "items": [
+        "Spring Cloud Gateway: stateless JWT + Redis rate-limiting (20/min)",
+        "Java 21 + Spring Boot 3.3.x with virtual threads enabled",
+        "Fire-and-forget POST /internal/events on session completion",
+        "PostgreSQL 16: auth, training, analytics schemas (Flyway-managed)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "AWS & External Services",
+      "items": [
+        "AWS Lightsail VM hosts the full Docker Compose stack",
+        "Automated cron pushes daily pg_dump to external AWS S3 bucket",
+        "AWS SES / SMTP provider for email verification links",
+        "GHCR stores 5 multi-stage Docker images per service"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Observability & CI/CD",
+      "items": [
+        "Prometheus scrapes /actuator/prometheus from 4 services (30s)",
+        "Promtail tails all Docker container stdout/stderr via docker.sock",
+        "Grafana Loki stores logs; Grafana UI shows health + p95 latency",
+        "GitHub Actions: CI tests+lint PRs, CD pushes to GHCR + SSH deploy"
+      ]
+    }
+  ]
+}

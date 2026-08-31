@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Instant;
 import java.util.UUID;
@@ -32,6 +33,9 @@ public class CardioLog {
     @Column(name = "cardio_type")
     private String cardioType;
 
+    @Column(name = "distance_km", precision = 6, scale = 2)
+    private BigDecimal distanceKm;
+
     @Column(name = "performed_on", nullable = false)
     private LocalDate performedOn;
 
@@ -46,6 +50,8 @@ public class CardioLog {
     public void setDurationMinutes(int durationMinutes) { this.durationMinutes = durationMinutes; }
     public String getCardioType() { return cardioType; }
     public void setCardioType(String cardioType) { this.cardioType = cardioType; }
+    public BigDecimal getDistanceKm() { return distanceKm; }
+    public void setDistanceKm(BigDecimal distanceKm) { this.distanceKm = distanceKm; }
     public LocalDate getPerformedOn() { return performedOn; }
     public void setPerformedOn(LocalDate performedOn) { this.performedOn = performedOn; }
     public Instant getCreatedAt() { return createdAt; }

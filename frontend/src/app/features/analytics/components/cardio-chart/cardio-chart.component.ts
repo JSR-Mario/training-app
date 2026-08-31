@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration, ChartType } from 'chart.js';
+import { ChartConfiguration, ChartType, TooltipItem } from 'chart.js';
 import { CardioLogService } from '../../services/cardio-log.service';
 import { CardioLogResponse } from '../../../../core/types/training.types';
 import { CARDIO_TYPES } from '../../../../core/constants/cardio-types';
@@ -47,7 +47,15 @@ export class CardioChartComponent implements OnInit {
         padding: 12,
         cornerRadius: 8,
         mode: 'index',
-        intersect: false
+        intersect: false,
+        callbacks: {
+          label: (context: TooltipItem<ChartType>) => {
+            const datasetLabel = context.dataset.label || '';
+            const value = context.parsed.y;
+            if (value === null || value === undefined || value === 0) return '';
+            return `${datasetLabel}: ${value} min`;
+          }
+        }
       }
     },
     scales: {
@@ -60,8 +68,9 @@ export class CardioChartComponent implements OnInit {
         type: 'linear',
         display: true,
         position: 'left',
+        stacked: true,
         grid: { color: 'rgba(255, 255, 255, 0.1)' },
-        ticks: { color: '#10b981' }, // Emerald 500
+        ticks: { color: '#10b981' },
         title: { display: true, text: 'Duration (Minutes)', color: '#10b981' },
         beginAtZero: true
       }
@@ -83,7 +92,6 @@ export class CardioChartComponent implements OnInit {
     this.loadLogs();
   }
 
-  // Allow external components to trigger a reload
   reload() {
     this.loadLogs();
   }
@@ -178,42 +186,6 @@ export class CardioChartComponent implements OnInit {
       return;
     }
 
-    // Calculate total duration per date for trendline
-    const dailyTotals = sortedDates.map(d => {
-      const dateMap = aggregated.get(d);
-      if (!dateMap) return 0;
-      let sum = 0;
-      dateMap.forEach(val => sum += val);
-      return sum;
-    });
-
-    // Linear regression for Trend Line
-    const n = sortedDates.length;
-    const trendValues: number[] = [];
-
-    if (n > 0) {
-      let sumX = 0;
-      let sumY = 0;
-      let sumXY = 0;
-      let sumX2 = 0;
-
-      for (let i = 0; i < n; i++) {
-        sumX += i;
-        sumY += dailyTotals[i];
-        sumXY += i * dailyTotals[i];
-        sumX2 += i * i;
-      }
-
-      const denominator = n * sumX2 - sumX * sumX;
-      const slope = denominator !== 0 ? (n * sumXY - sumX * sumY) / denominator : 0;
-      const intercept = (sumY - slope * sumX) / n;
-
-      for (let i = 0; i < n; i++) {
-        const val = slope * i + intercept;
-        trendValues.push(Math.max(0, Math.round(val * 10) / 10));
-      }
-    }
-
     const sortedTypes = Array.from(presentTypes).sort((a, b) => {
       const idxA = typeOrder.indexOf(a);
       const idxB = typeOrder.indexOf(b);
@@ -234,23 +206,6 @@ export class CardioChartComponent implements OnInit {
         stack: 'cardio'
       };
     });
-
-    if (dailyTotals.some(v => v > 0)) {
-      datasets.push({
-        type: 'line',
-        label: 'Trend Line',
-        data: trendValues,
-        borderColor: '#f59e0b',
-        backgroundColor: 'rgba(245, 158, 11, 0.15)',
-        borderWidth: 2.5,
-        borderDash: [6, 4],
-        pointRadius: 3,
-        pointBackgroundColor: '#f59e0b',
-        fill: false,
-        stack: 'trend',
-        order: -1
-      });
-    }
 
     this.chartData = {
       labels: sortedDates,
