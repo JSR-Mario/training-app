@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, signal, OnInit } from '@angular/core';
+import { Component, inject, ViewChild, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CardioChartComponent } from '../../components/cardio-chart/cardio-chart.component';
@@ -23,21 +23,20 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
       <!-- Logging Form & Chart Container -->
       <div id="tutorial-cardio-form" class="solid-card border border-gray-300 dark:border-gray-700 p-6 mb-6">
         
-        <form [formGroup]="cardioForm" (ngSubmit)="onSubmit()" class="flex flex-col sm:flex-row items-end gap-4 mb-6">
-          
-          <div class="flex-1 w-full">
-            <label for="performedOn" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-            <input id="performedOn" type="date" formControlName="performedOn" 
-                   class="w-full solid-input">
-          </div>
-          
-          <div class="flex-1 w-full">
+        <form [formGroup]="cardioForm" (ngSubmit)="onSubmit()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-end gap-4 mb-6">
+          <div class="w-full">
             <label for="durationMinutes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
             <input id="durationMinutes" type="number" formControlName="durationMinutes" min="1" placeholder="e.g. 30"
                    class="w-full solid-input">
           </div>
 
-          <div class="flex-1 w-full">
+          <div class="w-full">
+            <label for="distanceKm" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distance (km) (Optional)</label>
+            <input id="distanceKm" type="number" step="0.01" min="0.01" formControlName="distanceKm" placeholder="e.g. 5.2"
+                   class="w-full solid-input">
+          </div>
+
+          <div class="w-full">
             <label for="cardioType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type (Optional)</label>
             <select id="cardioType" formControlName="cardioType" class="w-full solid-input">
               <option value="">— Select type —</option>
@@ -48,7 +47,7 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
           </div>
 
           <button type="submit" [disabled]="cardioForm.invalid || isSubmitting()"
-                  class="w-full sm:w-auto solid-btn bg-accent-pos hover:opacity-80 text-white disabled:opacity-50 h-[42px] px-6">
+                  class="w-full solid-btn bg-accent-pos hover:opacity-80 text-white disabled:opacity-50 h-[42px] px-6">
             @if (isSubmitting()) {
               Logging...
             } @else {
@@ -85,7 +84,7 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
           </div>
         } @else {
           <div class="divide-y divide-gray-200 dark:divide-gray-800">
-            @for (log of logs(); track log.id) {
+            @for (log of paginatedLogs(); track log.id) {
               <div class="py-3.5 flex items-center justify-between gap-2 sm:gap-4 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 px-2 rounded-xl transition-colors min-w-0">
                 <div class="flex items-center gap-3 min-w-0 flex-1">
                   <div class="w-10 h-10 rounded-xl bg-accent-pos/10 border border-accent-pos/20 flex items-center justify-center text-accent-pos font-bold shrink-0">
@@ -104,9 +103,19 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                  @if (log.distanceKm !== null && log.distanceKm !== undefined) {
+                    <span class="shrink-0 whitespace-nowrap inline-flex items-center justify-center text-xs sm:text-sm font-semibold text-sky-500 bg-sky-500/10 px-2.5 sm:px-3 py-1 rounded-full border border-sky-500/20">
+                      {{ log.distanceKm }} km
+                    </span>
+                  }
                   <span class="shrink-0 whitespace-nowrap inline-flex items-center justify-center text-xs sm:text-sm font-semibold text-accent-pos bg-accent-pos/10 px-2.5 sm:px-3 py-1 rounded-full border border-accent-pos/20">
                     {{ log.durationMinutes }} min
                   </span>
+                  @if (calculatePace(log.durationMinutes, log.distanceKm); as pace) {
+                    <span class="hidden md:inline-flex shrink-0 whitespace-nowrap items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-700">
+                      {{ pace }}
+                    </span>
+                  }
 
                   <div class="flex items-center gap-0.5 sm:gap-1 shrink-0">
                     <button
@@ -135,6 +144,55 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
               </div>
             }
           </div>
+
+          <!-- Pagination Controls -->
+          @if (totalPages() > 1) {
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-800 mt-2">
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                Showing <span class="font-semibold text-black dark:text-white">{{ (currentPage() - 1) * pageSize() + 1 }}</span>
+                to <span class="font-semibold text-black dark:text-white">{{ getEndIndex() }}</span>
+                of <span class="font-semibold text-black dark:text-white">{{ logs().length }}</span> sessions
+              </div>
+
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  (click)="prevPage()"
+                  [disabled]="currentPage() === 1"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                  Previous
+                </button>
+
+                <div class="flex items-center gap-1">
+                  @for (p of getVisiblePages(); track p) {
+                    <button
+                      type="button"
+                      (click)="goToPage(p)"
+                      [class.bg-accent-pos]="currentPage() === p"
+                      [class.text-white]="currentPage() === p"
+                      [class.border-accent-pos]="currentPage() === p"
+                      [class.border-gray-300]="currentPage() !== p"
+                      [class.dark:border-gray-700]="currentPage() !== p"
+                      [class.bg-white]="currentPage() !== p"
+                      [class.dark:bg-gray-800]="currentPage() !== p"
+                      [class.text-gray-700]="currentPage() !== p"
+                      [class.dark:text-gray-300]="currentPage() !== p"
+                      class="min-w-[32px] h-8 px-2 text-xs font-semibold rounded-lg border transition-colors flex items-center justify-center">
+                      {{ p }}
+                    </button>
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  (click)="nextPage()"
+                  [disabled]="currentPage() === totalPages()"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                  Next
+                </button>
+              </div>
+            </div>
+          }
         }
       </div>
     </div>
@@ -161,6 +219,11 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
             <div>
               <label for="editDurationMinutes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
               <input id="editDurationMinutes" type="number" formControlName="durationMinutes" min="1" placeholder="e.g. 30" class="w-full solid-input">
+            </div>
+
+            <div>
+              <label for="editDistanceKm" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distance (km) (Optional)</label>
+              <input id="editDistanceKm" type="number" step="0.01" min="0.01" formControlName="distanceKm" placeholder="e.g. 5.2" class="w-full solid-input">
             </div>
 
             <div>
@@ -208,15 +271,25 @@ export class CardioDashboardComponent implements OnInit {
   isSavingEdit = signal(false);
   deletingLogId = signal<string | null>(null);
 
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+  totalPages = computed(() => Math.ceil(this.logs().length / this.pageSize()) || 1);
+  paginatedLogs = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.logs().slice(start, start + this.pageSize());
+  });
+
   cardioForm: FormGroup = this.fb.group({
     performedOn: [this.getLocalDateString(), Validators.required],
     durationMinutes: [null, [Validators.required, Validators.min(1)]],
+    distanceKm: [null, [Validators.min(0.01)]],
     cardioType: ['']
   });
 
   editForm: FormGroup = this.fb.group({
     performedOn: ['', Validators.required],
     durationMinutes: [null, [Validators.required, Validators.min(1)]],
+    distanceKm: [null, [Validators.min(0.01)]],
     cardioType: ['']
   });
 
@@ -226,7 +299,7 @@ export class CardioDashboardComponent implements OnInit {
       targetId: 'tutorial-cardio-form',
       title: 'Log Cardio',
       description:
-        'Enter the date, duration in minutes, and optionally the type of cardio. ' +
+        'Enter the date, duration in minutes, distance in km (optional), and optionally the type of cardio. ' +
         'Sessions appear in the chart below grouped by day.',
       section: 'cardio',
       position: 'bottom'
@@ -256,6 +329,55 @@ export class CardioDashboardComponent implements OnInit {
     return found ? found.label : typeValue;
   }
 
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  nextPage() {
+    this.goToPage(this.currentPage() + 1);
+  }
+
+  prevPage() {
+    this.goToPage(this.currentPage() - 1);
+  }
+
+  getEndIndex(): number {
+    return Math.min(this.currentPage() * this.pageSize(), this.logs().length);
+  }
+
+  getVisiblePages(): number[] {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const maxButtons = 5;
+    if (total <= maxButtons) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    let start = Math.max(1, current - 2);
+    const end = Math.min(total, start + maxButtons - 1);
+    if (end - start < maxButtons - 1) {
+      start = Math.max(1, end - maxButtons + 1);
+    }
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  calculatePace(durationMinutes: number, distanceKm?: number | null): string | null {
+    if (!distanceKm || distanceKm <= 0 || !durationMinutes || durationMinutes <= 0) {
+      return null;
+    }
+    const paceDecimal = durationMinutes / distanceKm;
+    const paceMin = Math.floor(paceDecimal);
+    const paceSec = Math.round((paceDecimal - paceMin) * 60);
+    const paddedSec = paceSec < 10 ? `0${paceSec}` : (paceSec === 60 ? '00' : `${paceSec}`);
+    const finalMin = paceSec === 60 ? paceMin + 1 : paceMin;
+    return `${finalMin}:${paddedSec} /km`;
+  }
+
   private getLocalDateString(): string {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -268,10 +390,18 @@ export class CardioDashboardComponent implements OnInit {
     if (this.cardioForm.invalid) return;
 
     this.isSubmitting.set(true);
-    this.cardioService.logCardio(this.cardioForm.value).subscribe({
+    const formVal = this.cardioForm.value;
+    const payload = {
+      ...formVal,
+      performedOn: formVal.performedOn || this.getLocalDateString()
+    };
+
+    this.cardioService.logCardio(payload).subscribe({
       next: () => {
         this.cardioForm.patchValue({
+          performedOn: this.getLocalDateString(),
           durationMinutes: null,
+          distanceKm: null,
           cardioType: ''
         });
         this.loadLogs();
@@ -292,6 +422,7 @@ export class CardioDashboardComponent implements OnInit {
     this.editForm.setValue({
       performedOn: log.performedOn,
       durationMinutes: log.durationMinutes,
+      distanceKm: log.distanceKm ?? null,
       cardioType: log.cardioType || ''
     });
   }

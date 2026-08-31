@@ -58,6 +58,22 @@
         </svg>
         Exercise Progression
       </button>
+
+      <button 
+        (click)="activeTab.set('cardio')"
+        [class.bg-white]="activeTab() === 'cardio'"
+        [class.dark:bg-slate-900]="activeTab() === 'cardio'"
+        [class.text-slate-900]="activeTab() === 'cardio'"
+        [class.dark:text-white]="activeTab() === 'cardio'"
+        [class.shadow-sm]="activeTab() === 'cardio'"
+        [class.text-slate-500]="activeTab() !== 'cardio'"
+        [class.dark:text-slate-400]="activeTab() !== 'cardio'"
+        class="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        Cardio Progression
+      </button>
     </div>
   </header>
  
@@ -67,6 +83,9 @@
     }
     @if (activeTab() === 'exercise') {
       <app-exercise-progress-chart></app-exercise-progress-chart>
+    }
+    @if (activeTab() === 'cardio') {
+      <app-cardio-progress-chart></app-cardio-progress-chart>
     }
   </div>
  

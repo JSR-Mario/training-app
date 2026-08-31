@@ -221,9 +221,9 @@ public class DemoTrainingDataInitializer implements CommandLineRunner {
         }
 
         // 6. Cardio Logs
-        createCardioLog(DEMO_USER_ID, LocalDate.now().minusDays(20), "Outdoor Running", 30);
-        createCardioLog(DEMO_USER_ID, LocalDate.now().minusDays(12), "Outdoor Running", 25);
-        createCardioLog(DEMO_USER_ID, LocalDate.now().minusDays(5), "Outdoor Running", 35);
+        createCardioLog(DEMO_USER_ID, LocalDate.now().minusDays(20), "Running", 30, BigDecimal.valueOf(5.0));
+        createCardioLog(DEMO_USER_ID, LocalDate.now().minusDays(12), "Running", 25, BigDecimal.valueOf(4.2));
+        createCardioLog(DEMO_USER_ID, LocalDate.now().minusDays(5), "Running", 35, BigDecimal.valueOf(6.0));
 
         log.info("Demo user training data seeded successfully!");
     }
@@ -296,12 +296,13 @@ public class DemoTrainingDataInitializer implements CommandLineRunner {
         }
     }
 
-    private void createCardioLog(UUID userId, LocalDate date, String type, int duration) {
+    private void createCardioLog(UUID userId, LocalDate date, String type, int duration, BigDecimal distanceKm) {
         CardioLog log = new CardioLog();
         log.setUserId(userId);
         log.setPerformedOn(date);
         log.setCardioType(type);
         log.setDurationMinutes(duration);
+        log.setDistanceKm(distanceKm);
         cardioLogRepository.save(log);
     }
 
