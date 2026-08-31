@@ -103,4 +103,35 @@ describe('CardioDashboardComponent', () => {
     }));
     expect(component.editingLog()).toBeNull();
   });
+
+  it('should paginate cardio logs correctly', () => {
+    // Generate 25 mock logs to test pagination
+    const manyLogs: CardioLogResponse[] = Array.from({ length: 25 }, (_, i) => ({
+      id: `log-${i}`,
+      durationMinutes: 30,
+      distanceKm: 5.0,
+      cardioType: 'Running',
+      performedOn: `2026-08-${(i + 1).toString().padStart(2, '0')}`,
+      createdAt: '2026-08-30T10:00:00Z'
+    }));
+
+    component.logs.set(manyLogs);
+    expect(component.totalPages()).toBe(3);
+    expect(component.currentPage()).toBe(1);
+    expect(component.paginatedLogs().length).toBe(10);
+    expect(component.paginatedLogs()[0].id).toBe('log-0');
+
+    component.nextPage();
+    expect(component.currentPage()).toBe(2);
+    expect(component.paginatedLogs().length).toBe(10);
+    expect(component.paginatedLogs()[0].id).toBe('log-10');
+
+    component.goToPage(3);
+    expect(component.currentPage()).toBe(3);
+    expect(component.paginatedLogs().length).toBe(5);
+    expect(component.getEndIndex()).toBe(25);
+
+    component.prevPage();
+    expect(component.currentPage()).toBe(2);
+  });
 });

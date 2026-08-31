@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, signal, OnInit } from '@angular/core';
+import { Component, inject, ViewChild, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CardioChartComponent } from '../../components/cardio-chart/cardio-chart.component';
@@ -84,7 +84,7 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
           </div>
         } @else {
           <div class="divide-y divide-gray-200 dark:divide-gray-800">
-            @for (log of logs(); track log.id) {
+            @for (log of paginatedLogs(); track log.id) {
               <div class="py-3.5 flex items-center justify-between gap-2 sm:gap-4 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 px-2 rounded-xl transition-colors min-w-0">
                 <div class="flex items-center gap-3 min-w-0 flex-1">
                   <div class="w-10 h-10 rounded-xl bg-accent-pos/10 border border-accent-pos/20 flex items-center justify-center text-accent-pos font-bold shrink-0">
@@ -144,6 +144,55 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
               </div>
             }
           </div>
+
+          <!-- Pagination Controls -->
+          @if (totalPages() > 1) {
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-800 mt-2">
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                Showing <span class="font-semibold text-black dark:text-white">{{ (currentPage() - 1) * pageSize() + 1 }}</span>
+                to <span class="font-semibold text-black dark:text-white">{{ getEndIndex() }}</span>
+                of <span class="font-semibold text-black dark:text-white">{{ logs().length }}</span> sessions
+              </div>
+
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  (click)="prevPage()"
+                  [disabled]="currentPage() === 1"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                  Previous
+                </button>
+
+                <div class="flex items-center gap-1">
+                  @for (p of getVisiblePages(); track p) {
+                    <button
+                      type="button"
+                      (click)="goToPage(p)"
+                      [class.bg-accent-pos]="currentPage() === p"
+                      [class.text-white]="currentPage() === p"
+                      [class.border-accent-pos]="currentPage() === p"
+                      [class.border-gray-300]="currentPage() !== p"
+                      [class.dark:border-gray-700]="currentPage() !== p"
+                      [class.bg-white]="currentPage() !== p"
+                      [class.dark:bg-gray-800]="currentPage() !== p"
+                      [class.text-gray-700]="currentPage() !== p"
+                      [class.dark:text-gray-300]="currentPage() !== p"
+                      class="min-w-[32px] h-8 px-2 text-xs font-semibold rounded-lg border transition-colors flex items-center justify-center">
+                      {{ p }}
+                    </button>
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  (click)="nextPage()"
+                  [disabled]="currentPage() === totalPages()"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                  Next
+                </button>
+              </div>
+            </div>
+          }
         }
       </div>
     </div>
@@ -222,6 +271,14 @@ export class CardioDashboardComponent implements OnInit {
   isSavingEdit = signal(false);
   deletingLogId = signal<string | null>(null);
 
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+  totalPages = computed(() => Math.ceil(this.logs().length / this.pageSize()) || 1);
+  paginatedLogs = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.logs().slice(start, start + this.pageSize());
+  });
+
   cardioForm: FormGroup = this.fb.group({
     performedOn: [this.getLocalDateString(), Validators.required],
     durationMinutes: [null, [Validators.required, Validators.min(1)]],
@@ -270,6 +327,43 @@ export class CardioDashboardComponent implements OnInit {
     if (!typeValue) return 'General Cardio';
     const found = CARDIO_TYPES.find(t => t.value === typeValue);
     return found ? found.label : typeValue;
+  }
+
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  nextPage() {
+    this.goToPage(this.currentPage() + 1);
+  }
+
+  prevPage() {
+    this.goToPage(this.currentPage() - 1);
+  }
+
+  getEndIndex(): number {
+    return Math.min(this.currentPage() * this.pageSize(), this.logs().length);
+  }
+
+  getVisiblePages(): number[] {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const maxButtons = 5;
+    if (total <= maxButtons) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    let start = Math.max(1, current - 2);
+    const end = Math.min(total, start + maxButtons - 1);
+    if (end - start < maxButtons - 1) {
+      start = Math.max(1, end - maxButtons + 1);
+    }
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
   calculatePace(durationMinutes: number, distanceKm?: number | null): string | null {
