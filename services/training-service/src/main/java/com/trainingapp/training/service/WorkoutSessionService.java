@@ -455,8 +455,11 @@ public class WorkoutSessionService {
             if (!recentSets.isEmpty() && recentSets.get(0).getSessionExercise() != null) {
                 Integer prevMin = recentSets.get(0).getSessionExercise().getReps();
                 Integer prevMax = recentSets.get(0).getSessionExercise().getRepsMax();
-                repRangeChanged = !java.util.Objects.equals(prevMin, se.getReps())
-                               || !java.util.Objects.equals(prevMax, se.getRepsMax());
+                int effectivePrevMin = prevMin != null ? prevMin : 10;
+                int effectivePrevMax = prevMax != null ? prevMax : effectivePrevMin;
+                int effectiveCurrMin = se.getReps() != null ? se.getReps() : 10;
+                int effectiveCurrMax = se.getRepsMax() != null ? se.getRepsMax() : effectiveCurrMin;
+                repRangeChanged = (effectivePrevMin != effectiveCurrMin) || (effectivePrevMax != effectiveCurrMax);
             }
 
             if (!recentSets.isEmpty()) {

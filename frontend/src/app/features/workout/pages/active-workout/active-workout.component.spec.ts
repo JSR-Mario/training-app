@@ -428,6 +428,30 @@ describe('ActiveWorkoutComponent', () => {
       expect(component.exercises()[0].id).toBe('se-1');
       expect(component.exercises()[1].id).toBe('se-2');
     });
+
+    it('should return suggestion for next set correctly', () => {
+      const suggMap = new Map();
+      suggMap.set('se-1', {
+        dayExerciseId: 'se-1',
+        exerciseId: 'e1',
+        suggestedWeightKg: 100,
+        suggestedReps: 11,
+        hadFatigueLastWeek: false,
+        suggestAddWeight: false,
+        repRangeChanged: true,
+        previousSets: [
+          { setNumber: 1, weightKg: 100, reps: 11, repsRight: null },
+          { setNumber: 2, weightKg: 100, reps: 10, repsRight: null }
+        ]
+      });
+      component.suggestions.set(suggMap);
+      component.loggedSets.set([]);
+
+      const nextSetSuggestion = component.getSuggestionForNextSet('se-1');
+      expect(nextSetSuggestion).toBeDefined();
+      expect(nextSetSuggestion?.weightKg).toBe(100);
+      expect(nextSetSuggestion?.reps).toBe(11);
+    });
   });
 });
 

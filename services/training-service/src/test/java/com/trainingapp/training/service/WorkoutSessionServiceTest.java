@@ -1112,6 +1112,57 @@ class WorkoutSessionServiceTest {
     }
 
     @Test
+    void getExerciseSuggestions_SameRepRangeWithNullMax_DoesNotSetRepRangeChanged() {
+        UUID sessionId = UUID.randomUUID();
+
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setPerformedOn(LocalDate.now());
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", UUID.randomUUID());
+        ex.setUnilateral(false);
+
+        // Current exercise has reps=10 and repsMax=10
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", UUID.randomUUID());
+        se.setExercise(ex);
+        se.setReps(10);
+        se.setRepsMax(10);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(se));
+        when(setRepository.findPersonalRecordsByUserId(userId)).thenReturn(List.of());
+        when(bodyWeightRepository.findFirstByUserIdOrderByDateDesc(userId)).thenReturn(Optional.empty());
+
+        WorkoutSession pastSession = new WorkoutSession();
+        ReflectionTestUtils.setField(pastSession, "id", UUID.randomUUID());
+        pastSession.setPerformedOn(LocalDate.now().minusDays(7));
+
+        // Past session had reps=10 and repsMax=null (implicitly 10)
+        com.trainingapp.training.domain.SessionExercise pastSe = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(pastSe, "id", UUID.randomUUID());
+        pastSe.setExercise(ex);
+        pastSe.setReps(10);
+        pastSe.setRepsMax(null);
+
+        com.trainingapp.training.domain.WorkoutSet set1 = new com.trainingapp.training.domain.WorkoutSet();
+        set1.setSession(pastSession);
+        set1.setSessionExercise(pastSe);
+        set1.setSetNumber(1);
+        set1.setWeightKg(java.math.BigDecimal.valueOf(50));
+        set1.setRepsCompleted(10);
+
+        when(setRepository.findHistoricalSetsForExercise(ex.getId(), userId, session.getPerformedOn()))
+            .thenReturn(List.of(set1));
+
+        List<com.trainingapp.training.dto.ExerciseSuggestionResponse> suggestions = sessionService.getExerciseSuggestions(sessionId, userId);
+
+        assertThat(suggestions).hasSize(1);
+        assertThat(suggestions.get(0).repRangeChanged()).isFalse();
+    }
+
+    @Test
     void syncSessionExercises_UpdatesExistingMatchingExerciseTargets_PreservesSessionCustomizations() {
         UUID sessionId = UUID.randomUUID();
         WorkoutSession session = new WorkoutSession();
