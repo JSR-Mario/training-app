@@ -759,25 +759,9 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                     Position {{ getExerciseIndex(ex.id) + 1 }} of {{ exercises().length }}
                   </span>
                 </div>
-                
-                <!-- Direct Move Up / Move Down for Current Exercise -->
-                <div class="grid grid-cols-2 gap-2">
-                  <button 
-                    (click)="moveExercise(ex.id, -1)" 
-                    [disabled]="getExerciseIndex(ex.id) === 0" 
-                    class="py-2 px-3 flex items-center justify-center gap-1.5 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 text-sm font-semibold text-black dark:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm">
-                    <span>&uarr; Move Up</span>
-                  </button>
-                  <button 
-                    (click)="moveExercise(ex.id, 1)" 
-                    [disabled]="getExerciseIndex(ex.id) === exercises().length - 1" 
-                    class="py-2 px-3 flex items-center justify-center gap-1.5 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 text-sm font-semibold text-black dark:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm">
-                    <span>&darr; Move Down</span>
-                  </button>
-                </div>
 
-                <!-- Sequence Preview List -->
-                <div class="max-h-44 overflow-y-auto space-y-1.5 pr-1 border-t border-gray-200 dark:border-gray-700/60 pt-2">
+                <!-- Sequence Preview List with Reorder Buttons -->
+                <div class="max-h-48 overflow-y-auto space-y-1.5 pr-1">
                   @for (item of exercises(); track item.id; let idx = $index) {
                     <div 
                       [id]="'reorder-item-' + item.id"
