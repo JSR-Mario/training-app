@@ -1602,6 +1602,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   }
 
   moveExercise(exId: string, direction: -1 | 1) {
+    const previousExercises = [...this.exercises()];
     const currentExercises = [...this.exercises()];
     const idx = currentExercises.findIndex(ex => ex.id === exId);
     if (idx === -1) return;
@@ -1619,7 +1620,10 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     if (sessionId) {
       const requests = currentExercises.map(ex => ({ id: ex.id, sortOrder: ex.sortOrder }));
       this.workoutService.reorderSessionExercises(sessionId, requests).subscribe({
-        error: (err) => console.error('Failed to reorder exercises on backend', err)
+        error: (err) => {
+          console.error('Failed to reorder exercises on backend', err);
+          this.exercises.set(previousExercises);
+        }
       });
     }
 

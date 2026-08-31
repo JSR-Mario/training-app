@@ -1170,11 +1170,118 @@ class WorkoutSessionServiceTest {
         assertThat(seA.getReps()).isEqualTo(12);
         verify(sessionExerciseRepository).save(seA);
 
-        // New exercise C added
-        verify(sessionExerciseRepository).save(argThat(se -> se.getExercise().equals(exC) && se.getSets() == 3));
+        // New exercise C added with next available sort order
+        verify(sessionExerciseRepository).save(argThat(se -> se.getExercise().equals(exC) && se.getSets() == 3 && se.getSortOrder() == 2));
 
         // Removed exercise B deleted (no logged sets)
         verify(sessionExerciseRepository).delete(seB);
+    }
+
+    @Test
+    void syncSessionExercises_PreservesCustomSortOrderOfExistingSessionExercises() {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setDayTemplate(dayTemplate);
+
+        com.trainingapp.training.domain.Exercise exA = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(exA, "id", UUID.randomUUID());
+        com.trainingapp.training.domain.Exercise exB = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(exB, "id", UUID.randomUUID());
+
+        // User previously customized the order in this session: B first (sortOrder 0), A second (sortOrder 1)
+        com.trainingapp.training.domain.SessionExercise seA = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(seA, "id", UUID.randomUUID());
+        seA.setSession(session);
+        seA.setExercise(exA);
+        seA.setSets(3);
+        seA.setReps(10);
+        seA.setSortOrder(1);
+
+        com.trainingapp.training.domain.SessionExercise seB = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(seB, "id", UUID.randomUUID());
+        seB.setSession(session);
+        seB.setExercise(exB);
+        seB.setSets(3);
+        seB.setReps(10);
+        seB.setSortOrder(0);
+
+        // DayTemplate has original order: A first (sortOrder 0), B second (sortOrder 1)
+        com.trainingapp.training.domain.DayExercise deA = new com.trainingapp.training.domain.DayExercise();
+        ReflectionTestUtils.setField(deA, "id", UUID.randomUUID());
+        deA.setDayTemplate(dayTemplate);
+        deA.setExercise(exA);
+        deA.setSets(4);
+        deA.setReps(12);
+        deA.setSortOrder(0);
+
+        com.trainingapp.training.domain.DayExercise deB = new com.trainingapp.training.domain.DayExercise();
+        ReflectionTestUtils.setField(deB, "id", UUID.randomUUID());
+        deB.setDayTemplate(dayTemplate);
+        deB.setExercise(exB);
+        deB.setSets(4);
+        deB.setReps(12);
+        deB.setSortOrder(1);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplateId)).thenReturn(List.of(deA, deB));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(seB, seA));
+
+        WorkoutSessionResponse response = sessionService.syncSessionExercises(sessionId, userId);
+
+        assertThat(response).isNotNull();
+        // Sets and reps updated from template
+        assertThat(seA.getSets()).isEqualTo(4);
+        assertThat(seA.getReps()).isEqualTo(12);
+        assertThat(seB.getSets()).isEqualTo(4);
+        assertThat(seB.getReps()).isEqualTo(12);
+
+        // Custom workout session sort orders MUST NOT be overwritten by day template sort orders
+        assertThat(seA.getSortOrder()).isEqualTo(1);
+        assertThat(seB.getSortOrder()).isEqualTo(0);
+    }
+
+    @Test
+    void reorderSessionExercises_UpdatesSortOrders() {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+
+        UUID seAId = UUID.randomUUID();
+        com.trainingapp.training.domain.SessionExercise seA = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(seA, "id", seAId);
+        seA.setSession(session);
+        seA.setSortOrder(0);
+        com.trainingapp.training.domain.Exercise exA = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(exA, "id", UUID.randomUUID());
+        exA.setName("Exercise A");
+        seA.setExercise(exA);
+
+        UUID seBId = UUID.randomUUID();
+        com.trainingapp.training.domain.SessionExercise seB = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(seB, "id", seBId);
+        seB.setSession(session);
+        seB.setSortOrder(1);
+        com.trainingapp.training.domain.Exercise exB = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(exB, "id", UUID.randomUUID());
+        exB.setName("Exercise B");
+        seB.setExercise(exB);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId))
+            .thenReturn(List.of(seA, seB))
+            .thenReturn(List.of(seB, seA));
+
+        List<com.trainingapp.training.dto.SessionExerciseReorderRequest> requests = List.of(
+            new com.trainingapp.training.dto.SessionExerciseReorderRequest(seAId, 1),
+            new com.trainingapp.training.dto.SessionExerciseReorderRequest(seBId, 0)
+        );
+
+        List<com.trainingapp.training.dto.SessionExerciseResponse> result = sessionService.reorderSessionExercises(sessionId, userId, requests);
+
+        assertThat(result).hasSize(2);
+        assertThat(seA.getSortOrder()).isEqualTo(1);
+        assertThat(seB.getSortOrder()).isEqualTo(0);
     }
 
     @Test
