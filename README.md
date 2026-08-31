@@ -4,7 +4,35 @@ I built Yes App to track my own workouts, manage fitness programs, and analyze l
 
 ## Architecture
 
-![Architecture Diagram](docs/architecture.svg)
+[![Architecture Diagram](docs/architecture.svg)](https://jsr-mario.github.io/training-app/architecture.html)
+
+*Click the diagram above or open [`docs/architecture.html`](docs/architecture.html) locally for the interactive architecture viewer (guided tours, metric flows, and route tracing).*
+
+### Architectural Highlights
+
+1. **Edge & Ingress (Zero Trust)**
+   - **Cloudflare Tunnel**: Routes incoming HTTPS traffic into Caddy with zero open public ports.
+   - **Caddy Proxy**: Internal reverse proxy routing static PWA requests to Nginx and `/api/**` to API Gateway.
+
+2. **Microservices Core & Data**
+   - **API Gateway (:8080)**: Stateless JWT verification, Redis rate-limiting (20 req/min), and CORS.
+   - **Auth Service (:8081)**: BCrypt 12, JWT issuance, HttpOnly refresh cookies, and email verification.
+   - **Training Service (:8082)**: Core domain logic (Programs, Workouts, Exercises).
+   - **Analytics Service (:8083)**: Pre-calculated volume and progress metrics fed via asynchronous fire-and-forget events.
+   - **PostgreSQL 16**: Multi-schema isolation (`auth`, `training`, `analytics`) with Flyway migrations.
+   - **Redis 7**: Cache and API Gateway rate-limiting storage.
+
+3. **Observability Stack (PLG)**
+   - **Prometheus (:9090)**: Continuous 30s scraping of Spring Boot `/actuator/prometheus` metrics.
+   - **Promtail**: Docker log scraper attached directly to `docker.sock`.
+   - **Grafana Loki (:3100)**: Low-footprint indexed log stream storage.
+   - **Grafana (:3000)**: Unified dashboards visualizing system health, p95 latencies, and logs.
+
+4. **AWS Cloud & DevOps**
+   - **AWS Lightsail Linux VM**: Docker Compose production host.
+   - **AWS S3**: Daily automated 3:00 AM cron backups (`backup-s3.sh`) storing encrypted PostgreSQL dumps.
+   - **AWS SES / SMTP**: Transactional emails for account verification links.
+   - **GitHub Actions & GHCR**: Automated CI testing on PRs and CD multi-stage image deployment.
 
 
 ## Tech Stack
