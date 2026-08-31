@@ -7,6 +7,7 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
 import { CARDIO_TYPES } from '../../../../core/constants/cardio-types';
 
 export type CardioTimeRange = '7D' | '1M' | '1Y' | 'ALL';
+export type CardioMetric = 'duration' | 'distance';
 
 @Component({
   selector: 'app-cardio-chart',
@@ -22,6 +23,7 @@ export class CardioChartComponent implements OnInit {
   logs = signal<CardioLogResponse[]>([]);
 
   activeRange = signal<CardioTimeRange>('7D');
+  activeMetric = signal<CardioMetric>('duration');
 
   readonly timeRanges = [
     { id: '7D', label: '7D' },
@@ -32,6 +34,11 @@ export class CardioChartComponent implements OnInit {
 
   setRange(range: CardioTimeRange) {
     this.activeRange.set(range);
+    this.updateChart();
+  }
+
+  setMetric(metric: CardioMetric) {
+    this.activeMetric.set(metric);
     this.updateChart();
   }
 
@@ -118,6 +125,7 @@ export class CardioChartComponent implements OnInit {
     }
 
     const range = this.activeRange();
+    const isDistance = this.activeMetric() === 'distance';
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -168,7 +176,8 @@ export class CardioChartComponent implements OnInit {
         aggregated.set(date, new Map<string, number>());
       }
       const dateMap = aggregated.get(date)!;
-      dateMap.set(type, (dateMap.get(type) || 0) + (entry.durationMinutes || 0));
+      const value = isDistance ? (Number(entry.distanceKm) || 0) : (entry.durationMinutes || 0);
+      dateMap.set(type, Math.round(((dateMap.get(type) || 0) + value) * 100) / 100);
     });
 
     const sortedDates = Array.from(aggregated.keys()).sort();
@@ -178,13 +187,13 @@ export class CardioChartComponent implements OnInit {
       return;
     }
 
-    // Calculate total duration per date for trendline
+    // Calculate daily totals for trendline
     const dailyTotals = sortedDates.map(d => {
       const dateMap = aggregated.get(d);
       if (!dateMap) return 0;
       let sum = 0;
       dateMap.forEach(val => sum += val);
-      return sum;
+      return Math.round(sum * 100) / 100;
     });
 
     // Linear regression for Trend Line
@@ -210,7 +219,7 @@ export class CardioChartComponent implements OnInit {
 
       for (let i = 0; i < n; i++) {
         const val = slope * i + intercept;
-        trendValues.push(Math.max(0, Math.round(val * 10) / 10));
+        trendValues.push(Math.max(0, Math.round(val * 100) / 100));
       }
     }
 
@@ -251,6 +260,30 @@ export class CardioChartComponent implements OnInit {
         order: -1
       });
     }
+
+    this.chartOptions = {
+      ...this.chartOptions,
+      scales: {
+        x: {
+          stacked: true,
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: { color: '#94a3b8' }
+        },
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          grid: { color: 'rgba(255, 255, 255, 0.1)' },
+          ticks: { color: '#10b981' },
+          title: {
+            display: true,
+            text: isDistance ? 'Distance (Kilometers)' : 'Duration (Minutes)',
+            color: '#10b981'
+          },
+          beginAtZero: true
+        }
+      }
+    };
 
     this.chartData = {
       labels: sortedDates,

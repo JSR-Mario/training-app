@@ -30,6 +30,7 @@ public class CardioLogService {
         log.setUserId(userId);
         log.setDurationMinutes(request.durationMinutes());
         log.setCardioType(request.cardioType());
+        log.setDistanceKm(request.distanceKm());
         log.setPerformedOn(request.performedOn());
         
         CardioLog saved = cardioLogRepository.save(log);
@@ -53,6 +54,7 @@ public class CardioLogService {
 
         log.setDurationMinutes(request.durationMinutes());
         log.setCardioType(request.cardioType());
+        log.setDistanceKm(request.distanceKm());
         log.setPerformedOn(request.performedOn());
 
         CardioLog updated = cardioLogRepository.save(log);
@@ -76,6 +78,7 @@ public class CardioLogService {
             log.getId(),
             log.getDurationMinutes(),
             log.getCardioType(),
+            log.getDistanceKm(),
             log.getPerformedOn(),
             log.getCreatedAt()
         );
