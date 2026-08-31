@@ -3,7 +3,7 @@ import { ActiveWorkoutComponent } from './active-workout.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { WorkoutService } from '../../services/workout.service';
 import { ProgramService } from '../../../programs/services/program.service';
 import { ExerciseService } from '../../../exercises/services/exercise.service';
@@ -375,6 +375,57 @@ describe('ActiveWorkoutComponent', () => {
 
       expect(workoutService.removeSessionExercise).toHaveBeenCalledWith('test-id', 'se-1');
       expect(workoutSpy).toHaveBeenCalled();
+    });
+
+    it('should swap exercise positions, update sort orders and call reorderSessionExercises', () => {
+      const workoutService = TestBed.inject(WorkoutService);
+      (workoutService.reorderSessionExercises as jasmine.Spy).and.returnValue(of([]));
+
+      component.sessionId.set('test-id');
+      const ex1: DayExercise = {
+        id: 'se-1', exerciseId: 'e1', exerciseName: 'Bench Press', sets: 3, reps: 10, sortOrder: 0,
+        isAmrap: false, unilateral: false, isBodyweight: false
+      };
+      const ex2: DayExercise = {
+        id: 'se-2', exerciseId: 'e2', exerciseName: 'Incline Dumbbell Press', sets: 3, reps: 10, sortOrder: 1,
+        isAmrap: false, unilateral: false, isBodyweight: false
+      };
+      component.exercises.set([ex1, ex2]);
+
+      // Move second exercise up
+      component.moveExercise('se-2', -1);
+
+      expect(component.exercises()[0].id).toBe('se-2');
+      expect(component.exercises()[0].sortOrder).toBe(0);
+      expect(component.exercises()[1].id).toBe('se-1');
+      expect(component.exercises()[1].sortOrder).toBe(1);
+
+      expect(workoutService.reorderSessionExercises).toHaveBeenCalledWith('test-id', [
+        { id: 'se-2', sortOrder: 0 },
+        { id: 'se-1', sortOrder: 1 }
+      ]);
+    });
+
+    it('should rollback exercise positions if reorderSessionExercises fails', () => {
+      const workoutService = TestBed.inject(WorkoutService);
+      (workoutService.reorderSessionExercises as jasmine.Spy).and.returnValue(throwError(() => new Error('Network error')));
+
+      component.sessionId.set('test-id');
+      const ex1: DayExercise = {
+        id: 'se-1', exerciseId: 'e1', exerciseName: 'Bench Press', sets: 3, reps: 10, sortOrder: 0,
+        isAmrap: false, unilateral: false, isBodyweight: false
+      };
+      const ex2: DayExercise = {
+        id: 'se-2', exerciseId: 'e2', exerciseName: 'Incline Dumbbell Press', sets: 3, reps: 10, sortOrder: 1,
+        isAmrap: false, unilateral: false, isBodyweight: false
+      };
+      component.exercises.set([ex1, ex2]);
+
+      component.moveExercise('se-2', -1);
+
+      // Should be rolled back to original order
+      expect(component.exercises()[0].id).toBe('se-1');
+      expect(component.exercises()[1].id).toBe('se-2');
     });
   });
 });

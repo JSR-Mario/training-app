@@ -793,6 +793,11 @@ public class WorkoutSessionService {
             .map(de -> de.getExercise().getId())
             .collect(Collectors.toSet());
 
+        int nextSortOrder = sessionExercises.stream()
+            .mapToInt(SessionExercise::getSortOrder)
+            .max()
+            .orElse(-1) + 1;
+
         // 1. Update existing exercises & 2. Add new exercises
         for (DayExercise de : templateExercises) {
             SessionExercise se = sessionByExerciseId.get(de.getExercise().getId());
@@ -800,7 +805,6 @@ public class WorkoutSessionService {
                 se.setSets(de.getSets());
                 se.setReps(de.getReps());
                 se.setRepsMax(de.getRepsMax());
-                se.setSortOrder(de.getSortOrder());
                 se.setAmrap(de.isAmrap());
                 sessionExerciseRepository.save(se);
             } else {
@@ -810,7 +814,7 @@ public class WorkoutSessionService {
                 newSe.setSets(de.getSets());
                 newSe.setReps(de.getReps());
                 newSe.setRepsMax(de.getRepsMax());
-                newSe.setSortOrder(de.getSortOrder());
+                newSe.setSortOrder(nextSortOrder++);
                 newSe.setAmrap(de.isAmrap());
                 sessionExerciseRepository.save(newSe);
             }
