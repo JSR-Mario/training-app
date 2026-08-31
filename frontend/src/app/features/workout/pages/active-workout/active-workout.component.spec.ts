@@ -371,9 +371,10 @@ describe('ActiveWorkoutComponent', () => {
       (workoutService.removeSessionExercise as jasmine.Spy).and.returnValue(of(undefined));
 
       component.sessionId.set('test-id');
+      component.confirmRemoveSaveToDayTemplate.set(true);
       component.confirmRemoveExercise('se-1');
 
-      expect(workoutService.removeSessionExercise).toHaveBeenCalledWith('test-id', 'se-1');
+      expect(workoutService.removeSessionExercise).toHaveBeenCalledWith('test-id', 'se-1', true);
       expect(workoutSpy).toHaveBeenCalled();
     });
 

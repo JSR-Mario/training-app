@@ -1050,6 +1050,21 @@ import { DayVolumeEntry } from '../../../../core/types/analytics.types';
                 Warning: {{ getSetsForExercise(exId).length }} logged set(s) for this exercise will also be deleted.
               </div>
             }
+            <div class="flex items-center gap-3 pt-1 mb-4">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  [checked]="confirmRemoveSaveToDayTemplate()"
+                  (change)="confirmRemoveSaveToDayTemplate.set($any($event.target).checked)"
+                  class="sr-only peer"
+                  id="removeSaveToDayTemplate"
+                >
+                <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-pos rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-pos"></div>
+              </label>
+              <label for="removeSaveToDayTemplate" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                Update Program Routine (Day Template)
+              </label>
+            </div>
             <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700/60">
               <button type="button" (click)="cancelRemoveExercise()" class="px-4 py-2 text-gray-500 hover:text-black dark:hover:text-white transition-colors text-sm">Cancel</button>
               <button type="button" (click)="confirmRemoveExercise(exId)" [disabled]="isRemovingExercise()" class="px-5 py-2 bg-accent-neg hover:opacity-80 text-white font-semibold rounded-xl text-sm disabled:opacity-50 transition-colors">
@@ -1233,6 +1248,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
   editingTargetExerciseId = signal<string | null>(null);
   isSavingTargets = signal<boolean>(false);
   confirmRemoveExerciseId = signal<string | null>(null);
+  confirmRemoveSaveToDayTemplate = signal<boolean>(true);
   isRemovingExercise = signal<boolean>(false);
 
   editingTargetExercise = computed(() => {
@@ -1474,6 +1490,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
 
   promptRemoveExercise(exId: string) {
     this.closeOptionsModal();
+    this.confirmRemoveSaveToDayTemplate.set(true);
     this.confirmRemoveExerciseId.set(exId);
   }
 
@@ -1490,7 +1507,7 @@ export class ActiveWorkoutComponent implements OnInit, OnDestroy {
     if (!sessionId || !exId || this.isRemovingExercise()) return;
 
     this.isRemovingExercise.set(true);
-    this.workoutService.removeSessionExercise(sessionId, exId).subscribe({
+    this.workoutService.removeSessionExercise(sessionId, exId, this.confirmRemoveSaveToDayTemplate()).subscribe({
       next: () => {
         this.isRemovingExercise.set(false);
         this.confirmRemoveExerciseId.set(null);

@@ -789,25 +789,10 @@ public class WorkoutSessionService {
                 (a, b) -> a
             ));
 
-        Set<UUID> templateExerciseIds = templateExercises.stream()
-            .map(de -> de.getExercise().getId())
-            .collect(Collectors.toSet());
-
-        int nextSortOrder = sessionExercises.stream()
-            .mapToInt(SessionExercise::getSortOrder)
-            .max()
-            .orElse(-1) + 1;
-
-        // 1. Update existing exercises & 2. Add new exercises
-        for (DayExercise de : templateExercises) {
-            SessionExercise se = sessionByExerciseId.get(de.getExercise().getId());
-            if (se != null) {
-                se.setSets(de.getSets());
-                se.setReps(de.getReps());
-                se.setRepsMax(de.getRepsMax());
-                se.setAmrap(de.isAmrap());
-                sessionExerciseRepository.save(se);
-            } else {
+        // If the session has no exercises at all (e.g. template was empty at start and now has exercises), populate from template
+        if (sessionExercises.isEmpty()) {
+            int nextSortOrder = 0;
+            for (DayExercise de : templateExercises) {
                 SessionExercise newSe = new SessionExercise();
                 newSe.setSession(session);
                 newSe.setExercise(de.getExercise());
@@ -818,19 +803,16 @@ public class WorkoutSessionService {
                 newSe.setAmrap(de.isAmrap());
                 sessionExerciseRepository.save(newSe);
             }
-        }
-
-        // 3. Remove exercises that are no longer in template ONLY IF they have no logged sets
-        List<WorkoutSet> allSessionSets = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId());
-        Set<UUID> sessionExerciseIdsWithSets = allSessionSets.stream()
-            .map(s -> s.getSessionExercise().getId())
-            .collect(Collectors.toSet());
-
-        for (SessionExercise se : sessionExercises) {
-            if (!templateExerciseIds.contains(se.getExercise().getId())) {
-                if (!sessionExerciseIdsWithSets.contains(se.getId())) {
-                    ratingRepository.deleteBySessionIdAndSessionExerciseId(session.getId(), se.getId());
-                    sessionExerciseRepository.delete(se);
+        } else {
+            // Update targets (sets/reps) for existing matching exercises from the template
+            for (DayExercise de : templateExercises) {
+                SessionExercise se = sessionByExerciseId.get(de.getExercise().getId());
+                if (se != null) {
+                    se.setSets(de.getSets());
+                    se.setReps(de.getReps());
+                    se.setRepsMax(de.getRepsMax());
+                    se.setAmrap(de.isAmrap());
+                    sessionExerciseRepository.save(se);
                 }
             }
         }
@@ -902,6 +884,11 @@ public class WorkoutSessionService {
 
     @Transactional
     public void removeSessionExercise(UUID sessionId, UUID userId, UUID sessionExerciseId) {
+        removeSessionExercise(sessionId, userId, sessionExerciseId, false);
+    }
+
+    @Transactional
+    public void removeSessionExercise(UUID sessionId, UUID userId, UUID sessionExerciseId, boolean saveToDayTemplate) {
         WorkoutSession session = getSessionEntity(sessionId, userId);
         SessionExercise se = sessionExerciseRepository.findById(sessionExerciseId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session exercise not found"));
@@ -909,6 +896,8 @@ public class WorkoutSessionService {
         if (!se.getSession().getId().equals(session.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your session exercise");
         }
+
+        Exercise exercise = se.getExercise();
 
         // Clean up associated sets and ratings before deleting session exercise
         List<WorkoutSet> setsToDelete = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId())
@@ -919,6 +908,22 @@ public class WorkoutSessionService {
 
         ratingRepository.deleteBySessionIdAndSessionExerciseId(session.getId(), se.getId());
         sessionExerciseRepository.delete(se);
+
+        if (saveToDayTemplate && session.getDayTemplate() != null) {
+            DayTemplate dayTemplate = session.getDayTemplate();
+            if (dayTemplate.getWeekTemplate() != null &&
+                dayTemplate.getWeekTemplate().getProgram() != null &&
+                dayTemplate.getWeekTemplate().getProgram().getUserId().equals(userId)) {
+
+                List<DayExercise> dayExercises = dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplate.getId());
+                for (DayExercise de : dayExercises) {
+                    if (de.getExercise().getId().equals(exercise.getId())) {
+                        dayExerciseRepository.delete(de);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     @Transactional

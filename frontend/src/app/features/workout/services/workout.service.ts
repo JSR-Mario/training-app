@@ -106,8 +106,10 @@ export class WorkoutService {
     return this.http.post<SessionExerciseResponse>(`${this.baseUrl}/sessions/${sessionId}/exercises`, request);
   }
 
-  removeSessionExercise(sessionId: string, sessionExerciseId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/sessions/${sessionId}/exercises/${sessionExerciseId}`);
+  removeSessionExercise(sessionId: string, sessionExerciseId: string, saveToDayTemplate = false): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/sessions/${sessionId}/exercises/${sessionExerciseId}`, {
+      params: { saveToDayTemplate: saveToDayTemplate.toString() }
+    });
   }
 
   replaceSessionExercise(sessionId: string, sessionExerciseId: string, req: import('../../../core/types/training.types').SessionExerciseReplaceRequest): Observable<SessionExerciseResponse> {
