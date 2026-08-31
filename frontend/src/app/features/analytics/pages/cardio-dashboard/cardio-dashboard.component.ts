@@ -23,14 +23,7 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
       <!-- Logging Form & Chart Container -->
       <div id="tutorial-cardio-form" class="solid-card border border-gray-300 dark:border-gray-700 p-6 mb-6">
         
-        <form [formGroup]="cardioForm" (ngSubmit)="onSubmit()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 items-end gap-4 mb-6">
-          
-          <div class="w-full">
-            <label for="performedOn" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-            <input id="performedOn" type="date" formControlName="performedOn" 
-                   class="w-full solid-input">
-          </div>
-          
+        <form [formGroup]="cardioForm" (ngSubmit)="onSubmit()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-end gap-4 mb-6">
           <div class="w-full">
             <label for="durationMinutes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
             <input id="durationMinutes" type="number" formControlName="durationMinutes" min="1" placeholder="e.g. 30"
@@ -303,9 +296,16 @@ export class CardioDashboardComponent implements OnInit {
     if (this.cardioForm.invalid) return;
 
     this.isSubmitting.set(true);
-    this.cardioService.logCardio(this.cardioForm.value).subscribe({
+    const formVal = this.cardioForm.value;
+    const payload = {
+      ...formVal,
+      performedOn: formVal.performedOn || this.getLocalDateString()
+    };
+
+    this.cardioService.logCardio(payload).subscribe({
       next: () => {
         this.cardioForm.patchValue({
+          performedOn: this.getLocalDateString(),
           durationMinutes: null,
           distanceKm: null,
           cardioType: ''

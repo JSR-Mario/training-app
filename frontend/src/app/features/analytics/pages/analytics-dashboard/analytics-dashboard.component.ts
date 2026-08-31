@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ProgressChartComponent } from '../../components/progress-chart/progress-chart.component';
 import { ExerciseProgressChartComponent } from '../../components/exercise-progress-chart/exercise-progress-chart.component';
+import { CardioProgressChartComponent } from '../../components/cardio-progress-chart/cardio-progress-chart.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { environment } from '../../../../../environments/environment';
 import { TutorialService } from '../../../../core/services/tutorial.service';
@@ -11,7 +12,7 @@ import { TutorialService } from '../../../../core/services/tutorial.service';
 @Component({
   standalone: true,
   selector: 'app-analytics-dashboard',
-  imports: [CommonModule, ProgressChartComponent, ExerciseProgressChartComponent],
+  imports: [CommonModule, ProgressChartComponent, ExerciseProgressChartComponent, CardioProgressChartComponent],
   templateUrl: './analytics-dashboard.component.html',
   styles: ``
 })
@@ -21,7 +22,7 @@ export class AnalyticsDashboardComponent implements OnInit {
   private tutorialService = inject(TutorialService);
   authService = inject(AuthService);
   
-  activeTab = signal<'volume' | 'exercise'>('volume');
+  activeTab = signal<'volume' | 'exercise' | 'cardio'>('volume');
   
   isResyncing = signal(false);
   resyncSuccess = signal(false);

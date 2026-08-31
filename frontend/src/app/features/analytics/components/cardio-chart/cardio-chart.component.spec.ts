@@ -29,9 +29,8 @@ describe('CardioChartComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should default to 7D range and ALL activity', () => {
+  it('should default to 7D range', () => {
     expect(component.activeRange()).toBe('7D');
-    expect(component.selectedActivity()).toBe('ALL');
   });
 
   it('should change range when setRange is called', () => {
@@ -39,19 +38,7 @@ describe('CardioChartComponent', () => {
     expect(component.activeRange()).toBe('1M');
   });
 
-  it('should change activity when setActivity is called', () => {
-    component.setActivity('Running');
-    expect(component.selectedActivity()).toBe('Running');
-  });
-
-  it('should format duration properly', () => {
-    expect(component.formatDuration(0)).toBe('0 min');
-    expect(component.formatDuration(45)).toBe('45 min');
-    expect(component.formatDuration(60)).toBe('1h');
-    expect(component.formatDuration(90)).toBe('1h 30m');
-  });
-
-  it('should compute KPIs and chart datasets for all activities and specific activity', () => {
+  it('should build stacked duration bars for cardio sessions', () => {
     const todayStr = new Date().toISOString().split('T')[0];
     component.logs.set([
       {
@@ -72,30 +59,9 @@ describe('CardioChartComponent', () => {
       }
     ]);
 
-    // Test ALL activities mode
-    component.setActivity('ALL');
-    expect(component.sessionCount()).toBe(2);
-    expect(component.totalDurationMinutes()).toBe(50);
-    expect(component.totalDistanceKm()).toBe(5.0);
-    expect(component.averagePace()).toBe('10:00 /km');
-    expect(component.chartData.datasets.length).toBeGreaterThanOrEqual(1);
-
-    // Test specific sport mode with distance (Running)
-    component.setActivity('Running');
-    expect(component.sessionCount()).toBe(1);
-    expect(component.totalDurationMinutes()).toBe(30);
-    expect(component.totalDistanceKm()).toBe(5.0);
-    expect(component.averagePace()).toBe('6:00 /km');
-    // Running has distance: should have Distance bars and Duration line
-    expect(component.chartData.datasets.some(d => d.label?.includes('Distance'))).toBeTrue();
-
-    // Test specific sport mode without distance (Jump Rope)
-    component.setActivity('Jump Rope');
-    expect(component.sessionCount()).toBe(1);
-    expect(component.totalDurationMinutes()).toBe(20);
-    expect(component.totalDistanceKm()).toBe(0);
-    expect(component.averagePace()).toBeNull();
-    // Jump rope has no distance: only duration bars
-    expect(component.chartData.datasets.some(d => d.label?.includes('Distance'))).toBeFalse();
+    component.setRange('7D');
+    expect(component.chartData.datasets.length).toBe(2);
+    expect(component.chartData.datasets.some(d => d.label === 'Running')).toBeTrue();
+    expect(component.chartData.datasets.some(d => d.label === 'Jump Rope')).toBeTrue();
   });
 });
