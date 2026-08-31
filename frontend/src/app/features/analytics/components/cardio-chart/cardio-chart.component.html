@@ -1,28 +1,93 @@
 <div class="animate-fade-in relative">
 
-  <!-- Range Selector Bar -->
-  <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-    <div class="flex items-center gap-2">
-      <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration (min) & Distance (km)</span>
+  <!-- KPI Summary Header Cards -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+    <div class="solid-card bg-gray-50/70 dark:bg-gray-800/40 p-3 rounded-xl border border-gray-200 dark:border-gray-800">
+      <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block truncate">Total Time</span>
+      <span class="text-lg sm:text-xl font-bold text-black dark:text-white tracking-tight">
+        {{ formatDuration(totalDurationMinutes()) }}
+      </span>
     </div>
 
-    <div class="flex items-center gap-2">
-      <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Time Range</span>
-      <div class="flex gap-1 p-1 bg-gray-200 dark:bg-gray-900 rounded-lg shrink-0">
-        @for (range of timeRanges; track range.id) {
+    <div class="solid-card bg-gray-50/70 dark:bg-gray-800/40 p-3 rounded-xl border border-gray-200 dark:border-gray-800">
+      <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block truncate">Total Distance</span>
+      <span class="text-lg sm:text-xl font-bold text-accent-pos tracking-tight">
+        @if (totalDistanceKm() > 0) {
+          {{ totalDistanceKm() | number:'1.1-2' }} <span class="text-xs font-normal text-gray-500 dark:text-gray-400">km</span>
+        } @else {
+          —
+        }
+      </span>
+    </div>
+
+    <div class="solid-card bg-gray-50/70 dark:bg-gray-800/40 p-3 rounded-xl border border-gray-200 dark:border-gray-800">
+      <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block truncate">Sessions</span>
+      <span class="text-lg sm:text-xl font-bold text-black dark:text-white tracking-tight">
+        {{ sessionCount() }}
+      </span>
+    </div>
+
+    <div class="solid-card bg-gray-50/70 dark:bg-gray-800/40 p-3 rounded-xl border border-gray-200 dark:border-gray-800">
+      <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block truncate">Avg Pace</span>
+      <span class="text-lg sm:text-xl font-bold text-sky-500 dark:text-sky-400 tracking-tight">
+        {{ averagePace() || '—' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Filter Controls: Sport Selector & Time Range Selector -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pt-1">
+    
+    <!-- Sport Filter Pills -->
+    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+      <button
+        type="button"
+        (click)="setActivity('ALL')"
+        [class.bg-accent-pos]="selectedActivity() === 'ALL'"
+        [class.text-white]="selectedActivity() === 'ALL'"
+        [class.solid-btn]="selectedActivity() === 'ALL'"
+        [class.text-gray-600]="selectedActivity() !== 'ALL'"
+        [class.dark:text-gray-300]="selectedActivity() !== 'ALL'"
+        [class.bg-gray-100]="selectedActivity() !== 'ALL'"
+        [class.dark:bg-gray-800]="selectedActivity() !== 'ALL'"
+        class="px-3 py-1 text-xs font-semibold rounded-lg transition-colors shrink-0">
+        All Sports
+      </button>
+
+      @for (act of availableActivities(); track act.value) {
+        @if (act.value !== 'ALL') {
           <button
             type="button"
-            (click)="setRange(range.id)"
-            [class.bg-accent-pos]="activeRange() === range.id"
-            [class.text-white]="activeRange() === range.id"
-            [class.solid-btn]="activeRange() === range.id"
-            [class.text-gray-500]="activeRange() !== range.id"
-            [class.dark:text-gray-400]="activeRange() !== range.id"
-            class="px-3 py-1 text-xs font-medium rounded-md transition-colors hover:text-black dark:hover:text-white">
-            {{ range.label }}
+            (click)="setActivity(act.value)"
+            [class.bg-accent-pos]="selectedActivity() === act.value"
+            [class.text-white]="selectedActivity() === act.value"
+            [class.solid-btn]="selectedActivity() === act.value"
+            [class.text-gray-600]="selectedActivity() !== act.value"
+            [class.dark:text-gray-300]="selectedActivity() !== act.value"
+            [class.bg-gray-100]="selectedActivity() !== act.value"
+            [class.dark:bg-gray-800]="selectedActivity() !== act.value"
+            class="px-3 py-1 text-xs font-semibold rounded-lg transition-colors shrink-0">
+            {{ act.label }}
           </button>
         }
-      </div>
+      }
+    </div>
+
+    <!-- Time Range Selector -->
+    <div class="flex items-center gap-1 p-1 bg-gray-200 dark:bg-gray-900 rounded-lg shrink-0 self-start sm:self-auto">
+      @for (range of timeRanges; track range.id) {
+        <button
+          type="button"
+          (click)="setRange(range.id)"
+          [class.bg-accent-pos]="activeRange() === range.id"
+          [class.text-white]="activeRange() === range.id"
+          [class.solid-btn]="activeRange() === range.id"
+          [class.text-gray-500]="activeRange() !== range.id"
+          [class.dark:text-gray-400]="activeRange() !== range.id"
+          class="px-3 py-1 text-xs font-medium rounded-md transition-colors hover:text-black dark:hover:text-white">
+          {{ range.label }}
+        </button>
+      }
     </div>
   </div>
   

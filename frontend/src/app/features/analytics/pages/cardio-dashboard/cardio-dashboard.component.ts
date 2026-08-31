@@ -38,7 +38,7 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
           </div>
 
           <div class="w-full">
-            <label for="distanceKm" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distance (km)</label>
+            <label for="distanceKm" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distance (km) (Optional)</label>
             <input id="distanceKm" type="number" step="0.01" min="0.01" formControlName="distanceKm" placeholder="e.g. 5.2"
                    class="w-full solid-input">
           </div>
@@ -111,7 +111,7 @@ import { CardioLogResponse } from '../../../../core/types/training.types';
 
                 <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                   @if (log.distanceKm !== null && log.distanceKm !== undefined) {
-                    <span class="shrink-0 whitespace-nowrap inline-flex items-center justify-center text-xs sm:text-sm font-semibold text-accent-pos bg-accent-pos/10 px-2.5 sm:px-3 py-1 rounded-full border border-accent-pos/20">
+                    <span class="shrink-0 whitespace-nowrap inline-flex items-center justify-center text-xs sm:text-sm font-semibold text-sky-500 bg-sky-500/10 px-2.5 sm:px-3 py-1 rounded-full border border-sky-500/20">
                       {{ log.distanceKm }} km
                     </span>
                   }
