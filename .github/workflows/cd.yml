@@ -56,9 +56,13 @@ jobs:
     name: Deploy to Local Server
     needs: build-and-push
     runs-on: self-hosted
+    env:
+      GIT_SSH_COMMAND: "ssh -i /home/jsr-mario/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
+      HOME: /home/jsr-mario
     steps:
       - name: Deploy Containers
         run: |
+          set -euo pipefail
           cd /home/jsr-mario/training-app
           git fetch origin
           git checkout main
