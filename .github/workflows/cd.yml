@@ -4,27 +4,104 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has-services: ${{ steps.set-matrix.outputs.has-services }}
+      should-deploy: ${{ steps.set-matrix.outputs.should-deploy }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Filter changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            common:
+              - 'pom.xml'
+              - '.github/workflows/cd.yml'
+            api-gateway:
+              - 'services/api-gateway/**'
+            auth-service:
+              - 'services/auth-service/**'
+            training-service:
+              - 'services/training-service/**'
+            analytics-service:
+              - 'services/analytics-service/**'
+            frontend:
+              - 'frontend/**'
+            infra:
+              - 'docker-compose.yml'
+              - 'Caddyfile'
+              - '.env.example'
+
+      - name: Build matrix
+        id: set-matrix
+        shell: bash
+        run: |
+          MANUAL="${{ github.event_name == 'workflow_dispatch' }}"
+          COMMON="${{ steps.filter.outputs.common }}"
+          INFRA="${{ steps.filter.outputs.infra }}"
+
+          SERVICES=()
+
+          if [ "$MANUAL" = "true" ] || [ "$COMMON" = "true" ] || [ "${{ steps.filter.outputs.api-gateway }}" = "true" ]; then
+            SERVICES+=('{"name":"api-gateway","context":".","dockerfile":"services/api-gateway/Dockerfile"}')
+          fi
+
+          if [ "$MANUAL" = "true" ] || [ "$COMMON" = "true" ] || [ "${{ steps.filter.outputs.auth-service }}" = "true" ]; then
+            SERVICES+=('{"name":"auth-service","context":".","dockerfile":"services/auth-service/Dockerfile"}')
+          fi
+
+          if [ "$MANUAL" = "true" ] || [ "$COMMON" = "true" ] || [ "${{ steps.filter.outputs.training-service }}" = "true" ]; then
+            SERVICES+=('{"name":"training-service","context":".","dockerfile":"services/training-service/Dockerfile"}')
+          fi
+
+          if [ "$MANUAL" = "true" ] || [ "$COMMON" = "true" ] || [ "${{ steps.filter.outputs.analytics-service }}" = "true" ]; then
+            SERVICES+=('{"name":"analytics-service","context":".","dockerfile":"services/analytics-service/Dockerfile"}')
+          fi
+
+          if [ "$MANUAL" = "true" ] || [ "$COMMON" = "true" ] || [ "${{ steps.filter.outputs.frontend }}" = "true" ]; then
+            SERVICES+=('{"name":"frontend","context":"frontend","dockerfile":"frontend/Dockerfile"}')
+          fi
+
+          COUNT=${#SERVICES[@]}
+          if [ $COUNT -gt 0 ]; then
+            JSON_ARRAY=$(IFS=,; echo "[${SERVICES[*]}]")
+            echo "matrix={\"service\":$JSON_ARRAY}" >> "$GITHUB_OUTPUT"
+            echo "has-services=true" >> "$GITHUB_OUTPUT"
+            echo "should-deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matrix={\"service\":[]}" >> "$GITHUB_OUTPUT"
+            echo "has-services=false" >> "$GITHUB_OUTPUT"
+            if [ "$INFRA" = "true" ]; then
+              echo "should-deploy=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "should-deploy=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
   build-and-push:
     name: Build and Push Docker Images
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-services == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     strategy:
-      matrix:
-        service:
-          - { name: api-gateway, context: ., dockerfile: services/api-gateway/Dockerfile }
-          - { name: auth-service, context: ., dockerfile: services/auth-service/Dockerfile }
-          - { name: training-service, context: ., dockerfile: services/training-service/Dockerfile }
-          - { name: analytics-service, context: ., dockerfile: services/analytics-service/Dockerfile }
-          - { name: frontend, context: frontend, dockerfile: frontend/Dockerfile }
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
 
     steps:
       - name: Checkout repository
@@ -54,7 +131,8 @@ jobs:
 
   deploy:
     name: Deploy to Local Server
-    needs: build-and-push
+    needs: [detect-changes, build-and-push]
+    if: always() && !cancelled() && needs.detect-changes.outputs.should-deploy == 'true' && (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped')
     runs-on: self-hosted
     env:
       GIT_SSH_COMMAND: "ssh -i /home/jsr-mario/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
@@ -68,5 +146,5 @@ jobs:
           git checkout main
           git reset --hard origin/main
           docker compose pull
-          docker compose up -d
+          docker compose up -d --wait
           docker image prune -f

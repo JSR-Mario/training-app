@@ -9,13 +9,19 @@
         Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
     }
 
-    # Route API requests to the API Gateway
+    # Route API requests to the API Gateway with retry buffering during restarts
     handle /api/* {
-        reverse_proxy api-gateway:8080
+        reverse_proxy api-gateway:8080 {
+            lb_try_duration 30s
+            lb_try_interval 250ms
+        }
     }
 
-    # Route everything else to the Angular Frontend
+    # Route everything else to the Angular Frontend with retry buffering
     handle {
-        reverse_proxy frontend:80
+        reverse_proxy frontend:80 {
+            lb_try_duration 15s
+            lb_try_interval 250ms
+        }
     }
 }
