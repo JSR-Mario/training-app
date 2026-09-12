@@ -31,7 +31,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "up",
+          "expr": "up{job=~\"api-gateway|auth-service|training-service|analytics-service\"}",
           "legendFormat": "{{job}}",
           "range": true,
           "refId": "A"
@@ -112,7 +112,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "process_uptime_seconds",
+          "expr": "process_uptime_seconds{job=~\"api-gateway|auth-service|training-service|analytics-service\"}",
           "legendFormat": "{{application}}",
           "range": true,
           "refId": "A"
@@ -164,7 +164,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_server_requests_seconds_count[1m]))",
+          "expr": "sum(rate(http_server_requests_seconds_count{job=~\"api-gateway|auth-service|training-service|analytics-service\"}[1m]))",
           "legendFormat": "Global RPS",
           "range": true,
           "refId": "A"
@@ -216,7 +216,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[1m])) or vector(0)",
+          "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\", job=~\"api-gateway|auth-service|training-service|analytics-service\"}[1m])) or vector(0)",
           "legendFormat": "5xx RPS",
           "range": true,
           "refId": "A"
@@ -281,7 +281,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_server_requests_seconds_count[1m])) by (application, status)",
+          "expr": "sum(rate(http_server_requests_seconds_count{job=~\"api-gateway|auth-service|training-service|analytics-service\"}[1m])) by (application, status)",
           "legendFormat": "{{application}} - {{status}}",
           "range": true,
           "refId": "A"
@@ -324,7 +324,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, application))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket{job=~\"api-gateway|auth-service|training-service|analytics-service\"}[5m])) by (le, application))",
           "legendFormat": "{{application}} (p50)",
           "range": true,
           "refId": "A"
@@ -335,7 +335,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, application))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=~\"api-gateway|auth-service|training-service|analytics-service\"}[5m])) by (le, application))",
           "legendFormat": "{{application}} (p95)",
           "range": true,
           "refId": "B"
@@ -346,7 +346,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, application))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{job=~\"api-gateway|auth-service|training-service|analytics-service\"}[5m])) by (le, application))",
           "legendFormat": "{{application}} (p99)",
           "range": true,
           "refId": "C"
@@ -385,7 +385,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_server_requests_seconds_count{status=~\"4..\"}[5m])) by (application, status)",
+          "expr": "sum(rate(http_server_requests_seconds_count{status=~\"4..\", job=~\"api-gateway|auth-service|training-service|analytics-service\"}[5m])) by (application, status)",
           "legendFormat": "{{application}} - {{status}}",
           "range": true,
           "refId": "A"
@@ -406,9 +406,60 @@
       "collapsed": false,
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 12
+      },
+      "id": 15,
+      "title": "5xx Errors by Service (Breakdown)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\", job=~\"api-gateway|auth-service|training-service|analytics-service\"}[5m])) by (application, status)",
+          "legendFormat": "{{application}} - {{status}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "unit": "reqps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 0.01 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 20
       },
       "id": 8,
       "title": "Database Connection Pool (HikariCP)",
@@ -424,8 +475,8 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "hikaricp_connections_active",
-          "legendFormat": "{{application}} Active",
+          "expr": "hikaricp_connections_active{job=~\"auth-service|training-service|analytics-service\"}",
+          "legendFormat": "{{application}} / {{pool}} Active",
           "range": true,
           "refId": "A"
         },
@@ -435,8 +486,8 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "hikaricp_connections_idle",
-          "legendFormat": "{{application}} Idle",
+          "expr": "hikaricp_connections_idle{job=~\"auth-service|training-service|analytics-service\"}",
+          "legendFormat": "{{application}} / {{pool}} Idle",
           "range": true,
           "refId": "B"
         },
@@ -446,8 +497,8 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "hikaricp_connections_pending",
-          "legendFormat": "{{application}} Pending (Waiting)",
+          "expr": "hikaricp_connections_pending{job=~\"auth-service|training-service|analytics-service\"}",
+          "legendFormat": "{{application}} Pending",
           "range": true,
           "refId": "C"
         },
@@ -457,7 +508,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "hikaricp_connections_max",
+          "expr": "hikaricp_connections_max{job=~\"auth-service|training-service|analytics-service\"}",
           "legendFormat": "{{application}} Max",
           "range": true,
           "refId": "D"
@@ -480,7 +531,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 12
+        "y": 20
       },
       "id": 9,
       "title": "Database Connection Acquire Time",
@@ -496,7 +547,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(hikaricp_connections_acquire_seconds_sum[5m]) / rate(hikaricp_connections_acquire_seconds_count[5m])",
+          "expr": "rate(hikaricp_connections_acquire_seconds_sum{job=~\"auth-service|training-service|analytics-service\"}[5m]) / rate(hikaricp_connections_acquire_seconds_count{job=~\"auth-service|training-service|analytics-service\"}[5m])",
           "legendFormat": "{{application}} Avg Acquire Time",
           "range": true,
           "refId": "A"
@@ -519,7 +570,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 20
+        "y": 28
       },
       "id": 10,
       "title": "JVM Memory Usage (Heap & Non-Heap)",
@@ -535,7 +586,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(jvm_memory_used_bytes{area=\"heap\"}) by (application)",
+          "expr": "sum(jvm_memory_used_bytes{area=\"heap\", job=~\"api-gateway|auth-service|training-service|analytics-service\"}) by (application)",
           "legendFormat": "{{application}} Heap Used",
           "range": true,
           "refId": "A"
@@ -546,10 +597,21 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(jvm_memory_used_bytes{area=\"nonheap\"}) by (application)",
-          "legendFormat": "{{application}} Non-Heap Used",
+          "expr": "sum(jvm_memory_max_bytes{area=\"heap\", job=~\"api-gateway|auth-service|training-service|analytics-service\"}) by (application)",
+          "legendFormat": "{{application}} Heap Max",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(jvm_memory_used_bytes{area=\"nonheap\", job=~\"api-gateway|auth-service|training-service|analytics-service\"}) by (application)",
+          "legendFormat": "{{application}} Non-Heap Used",
+          "range": true,
+          "refId": "C"
         }
       ],
       "fieldConfig": {
@@ -569,7 +631,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 20
+        "y": 28
       },
       "id": 11,
       "title": "CPU Usage (System vs Process)",
@@ -585,7 +647,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "system_cpu_usage",
+          "expr": "system_cpu_usage{job=~\"api-gateway|auth-service|training-service|analytics-service\"}",
           "legendFormat": "{{application}} system cpu",
           "range": true,
           "refId": "A"
@@ -596,7 +658,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "process_cpu_usage",
+          "expr": "process_cpu_usage{job=~\"api-gateway|auth-service|training-service|analytics-service\"}",
           "legendFormat": "{{application}} process cpu",
           "range": true,
           "refId": "B"
@@ -619,7 +681,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 20
+        "y": 28
       },
       "id": 12,
       "title": "JVM GC Pause Duration & Live Threads",
@@ -635,7 +697,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(jvm_gc_pause_seconds_sum[1m])) by (application)",
+          "expr": "sum(rate(jvm_gc_pause_seconds_sum{job=~\"api-gateway|auth-service|training-service|analytics-service\"}[1m])) by (application)",
           "legendFormat": "{{application}} GC Pause Time/s",
           "range": true,
           "refId": "A"
@@ -646,7 +708,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "jvm_threads_live_threads",
+          "expr": "jvm_threads_live_threads{job=~\"api-gateway|auth-service|training-service|analytics-service\"}",
           "legendFormat": "{{application}} Live Threads",
           "range": true,
           "refId": "B"
@@ -684,9 +746,114 @@
       "collapsed": false,
       "gridPos": {
         "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "id": 16,
+      "title": "Gateway Request Rate by Route",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(spring_cloud_gateway_requests_seconds_count[5m])) by (routeId, outcome)",
+          "legendFormat": "{{routeId}} - {{outcome}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth"
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "id": 17,
+      "title": "Rate Limiter - 429 Rejected Requests",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(spring_cloud_gateway_requests_seconds_count{outcome=\"FORWARD\"}[5m])) by (routeId)",
+          "legendFormat": "{{routeId}} - Allowed",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"api-gateway\", status=\"429\"}[5m])) by (application)",
+          "legendFormat": "{{application}} - 429 Rejected",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth"
+          },
+          "unit": "reqps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*429 Rejected.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
         "w": 8,
         "x": 0,
-        "y": 28
+        "y": 44
       },
       "id": 13,
       "title": "Log Volume by Severity (Loki)",
@@ -702,8 +869,8 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({container=~\".+\"} |= \"ERROR\" [1m]))",
-          "legendFormat": "ERROR Logs",
+          "expr": "sum(count_over_time({container=~\"auth-service|training-service|analytics-service|api-gateway\"} != \"wget\" != \"caller=marker.go\" != \"caller=metrics.go\" |= \"ERROR\" [1m])) by (container)",
+          "legendFormat": "{{container}} ERROR",
           "queryType": "range",
           "refId": "A"
         },
@@ -713,8 +880,8 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({container=~\".+\"} |= \"WARN\" [1m]))",
-          "legendFormat": "WARN Logs",
+          "expr": "sum(count_over_time({container=~\"auth-service|training-service|analytics-service|api-gateway\"} != \"wget\" != \"caller=marker.go\" != \"caller=metrics.go\" |= \"WARN\" [1m])) by (container)",
+          "legendFormat": "{{container}} WARN",
           "queryType": "range",
           "refId": "B"
         },
@@ -724,8 +891,8 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({container=~\".+\"} |= \"INFO\" [1m]))",
-          "legendFormat": "INFO Logs",
+          "expr": "sum(count_over_time({container=~\"auth-service|training-service|analytics-service|api-gateway\"} != \"wget\" != \"caller=marker.go\" != \"caller=metrics.go\" |= \"INFO\" [1m])) by (container)",
+          "legendFormat": "{{container}} INFO",
           "queryType": "range",
           "refId": "C"
         }
@@ -744,8 +911,8 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byName",
-              "options": "ERROR Logs"
+              "id": "byRegexp",
+              "options": ".* ERROR"
             },
             "properties": [
               {
@@ -759,8 +926,8 @@
           },
           {
             "matcher": {
-              "id": "byName",
-              "options": "WARN Logs"
+              "id": "byRegexp",
+              "options": ".* WARN"
             },
             "properties": [
               {
@@ -774,8 +941,8 @@
           },
           {
             "matcher": {
-              "id": "byName",
-              "options": "INFO Logs"
+              "id": "byRegexp",
+              "options": ".* INFO"
             },
             "properties": [
               {
@@ -796,10 +963,10 @@
         "h": 8,
         "w": 16,
         "x": 8,
-        "y": 28
+        "y": 44
       },
       "id": 14,
-      "title": "Application Logs Stream (Loki)",
+      "title": "Application Logs Stream (ERROR + WARN only)",
       "type": "logs",
       "datasource": {
         "type": "loki",
@@ -812,7 +979,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{container=~\".+\"}",
+          "expr": "{container=~\"auth-service|training-service|analytics-service|api-gateway\"} != \"wget\" != \"caller=marker.go\" != \"caller=metrics.go\" != \"caller=chunk_\" |~ \"ERROR|WARN\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -841,7 +1008,7 @@
           "type": "prometheus",
           "uid": "Prometheus"
         },
-        "definition": "label_values(up, job)",
+        "definition": "label_values(up{job=~\"api-gateway|auth-service|training-service|analytics-service\"}, job)",
         "hide": 0,
         "includeAll": true,
         "label": "Service",
@@ -849,7 +1016,7 @@
         "name": "service",
         "options": [],
         "query": {
-          "query": "label_values(up, job)",
+          "query": "label_values(up{job=~\"api-gateway|auth-service|training-service|analytics-service\"}, job)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -861,12 +1028,12 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "System Health & Observability",
   "uid": "system-health-dashboard",
-  "version": 2
+  "version": 3
 }
