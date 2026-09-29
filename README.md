@@ -28,8 +28,8 @@ I built Yes App to track my own workouts, manage fitness programs, and analyze l
    - **Grafana Loki (:3100)**: Low-footprint indexed log stream storage.
    - **Grafana (:3000)**: Unified dashboards visualizing system health, p95 latencies, and logs.
 
-4. **AWS Cloud & DevOps**
-   - **AWS Lightsail Linux VM**: Docker Compose production host.
+4. **Infrastructure & DevOps**
+   - **Self-Hosted Linux Server**: Docker Compose production host.
    - **AWS S3**: Daily automated 3:00 AM cron backups (`backup-s3.sh`) storing encrypted PostgreSQL dumps.
    - **AWS SES / SMTP**: Transactional emails for account verification links.
    - **GitHub Actions & GHCR**: Automated CI testing on PRs and CD multi-stage image deployment.
@@ -56,7 +56,7 @@ I built Yes App to track my own workouts, manage fitness programs, and analyze l
 **Infrastructure & DevOps**
 - **Docker & Docker Compose:** Containerized environments for consistent development and production.
 - **GitHub Actions (CI/CD):** Automated testing and multi-stage container builds.
-- **AWS Lightsail & Cloudflare Tunnels:** Secure deployment without exposed public ports.
+- **Self-Hosted Linux Server & Cloudflare Tunnels:** Secure deployment without exposed public ports.
 
 ## Key Technical Highlights
 
@@ -109,7 +109,7 @@ docker compose up -d
 
 ## Hosting on a New Server
 
-When setting up a fresh Linux instance (e.g., AWS Lightsail, EC2), here is everything needed to get the stack running.
+When setting up a fresh Linux server (e.g., a dedicated server, VPS, or cloud instance), here is everything needed to get the stack running.
 
 ### 1. Initial Server Dependencies
 
@@ -143,7 +143,7 @@ echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
 1. Clone the repository and navigate to the project root.
 2. Create your `.env` file from `.env.example` and fill in all production values.
 3. Run `aws configure` to grant S3 access to the backup scripts.
-4. **If migrating from another server:** update the corresponding secrets in your GitHub repository settings (`CLOUDFLARE_TUNNEL_TOKEN`, SSH keys, server IPs) so that your GitHub Actions pipelines target the new environment correctly.
+4. **If migrating from another server:** update the corresponding secrets in your GitHub repository settings (SSH keys, server IPs, tunnel tokens) so that your GitHub Actions pipelines target the new environment correctly.
 
 ### 3. Database Initialization (Fresh vs Restore)
 
@@ -270,7 +270,7 @@ GRAFANA_PASSWORD=changeme_grafana_pw
 
 ## Deployment & Infrastructure
 
-The production environment is hosted on an AWS Lightsail instance, secured entirely behind Cloudflare Tunnels (Zero Trust Access). No application ports are exposed to the public internet.
+The production environment runs on a self-hosted Linux server, secured entirely behind Cloudflare Tunnels (Zero Trust Access). No application ports are exposed to the public internet.
 
 **Automated Backups:**
 Host-level cron scripts (`scripts/backup-s3.sh`) push daily Postgres database snapshots to an encrypted AWS S3 bucket. A companion script (`scripts/restore-from-s3.sh`) is provided for disaster recovery and seamless migration across instances.
