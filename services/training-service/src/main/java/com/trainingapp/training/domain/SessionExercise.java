@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.util.UUID;
+import java.time.Instant;
 
 /**
  * An exercise assigned to a specific {@link WorkoutSession}.
@@ -47,6 +48,14 @@ public class SessionExercise {
     @Column(name = "is_amrap", nullable = false)
     private boolean isAmrap = false;
 
+    /**
+     * Last time the targets of this session exercise were created
+     * (copied from the day template when the session started) or edited
+     * in-workout. Used by sync to decide the most recent edit.
+     */
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
     public UUID getId() { return id; }
     public WorkoutSession getSession() { return session; }
     public void setSession(WorkoutSession session) { this.session = session; }
@@ -62,4 +71,6 @@ public class SessionExercise {
     public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
     public boolean isAmrap() { return isAmrap; }
     public void setAmrap(boolean amrap) { isAmrap = amrap; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

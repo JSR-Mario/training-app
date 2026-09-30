@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -70,7 +71,11 @@ class DayExerciseServiceTest {
         UUID exerciseId = UUID.randomUUID();
         when(dayTemplateService.findOwned(userId, dayId)).thenReturn(sampleDay);
         when(exerciseService.findOwned(userId, exerciseId)).thenReturn(sampleExercise);
-        when(dayExerciseRepository.save(any())).thenReturn(sampleDayExercise);
+        when(dayExerciseRepository.save(any())).thenAnswer(inv -> {
+            DayExercise se = inv.getArgument(0);
+            se.touch();
+            return se;
+        });
 
         DayExerciseResponse result = dayExerciseService.create(userId, dayId,
                 new DayExerciseRequest(exerciseId, 3, 10, null, false, 1));
@@ -116,6 +121,29 @@ class DayExerciseServiceTest {
                 new DayExerciseRequest(exerciseId, 3, 10, null, false, 1)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Cannot add private exercise to a public program. The exercise must be public.");
+    }
+
+    @Test
+    void update_targetsChanges_stampsUpdatedAtForSync() {
+        // #331: plan-side target edits must stamp updatedAt so sync compares freshness
+        UUID deId = UUID.randomUUID();
+        UUID exId = UUID.randomUUID();
+        ReflectionTestUtils.setField(sampleDayExercise, "id", deId);
+        ReflectionTestUtils.setField(sampleExercise, "id", exId);
+        java.time.Instant stale = java.time.Instant.now().minusSeconds(3600);
+        sampleDayExercise.setUpdatedAt(stale);
+
+        when(dayExerciseRepository.findById(deId)).thenReturn(Optional.of(sampleDayExercise));
+        when(dayTemplateService.findOwned(userId, sampleDay.getId())).thenReturn(sampleDay);
+        when(exerciseService.findOwned(userId, exId)).thenReturn(sampleExercise);
+        when(dayExerciseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        dayExerciseService.update(userId, deId, new DayExerciseRequest(exId, 4, 12, 15, false, 1));
+
+        assertThat(sampleDayExercise.getSets()).isEqualTo(4);
+        assertThat(sampleDayExercise.getReps()).isEqualTo(12);
+        assertThat(sampleDayExercise.getRepsMax()).isEqualTo(15);
+        assertThat(sampleDayExercise.getUpdatedAt()).isAfter(stale);
     }
 
     @Test

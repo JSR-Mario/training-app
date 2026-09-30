@@ -1183,6 +1183,7 @@ class WorkoutSessionServiceTest {
         seA.setSets(3);
         seA.setReps(10);
         seA.setSortOrder(0);
+        seA.setUpdatedAt(java.time.Instant.now().minusSeconds(1800));
 
         // Exercise B was added/customized in the active session
         com.trainingapp.training.domain.SessionExercise seB = new com.trainingapp.training.domain.SessionExercise();
@@ -1200,6 +1201,7 @@ class WorkoutSessionServiceTest {
         deA.setSets(4); // Changed from 3 to 4 in template
         deA.setReps(12);
         deA.setSortOrder(0);
+        deA.setUpdatedAt(java.time.Instant.now().minusSeconds(600)); // Edited after the session copied it
 
         // Exercise C was added in the template routine, but session is already in progress with its own customizations
         com.trainingapp.training.domain.DayExercise deC = new com.trainingapp.training.domain.DayExercise();
@@ -1274,6 +1276,7 @@ class WorkoutSessionServiceTest {
         seA.setSets(3);
         seA.setReps(10);
         seA.setSortOrder(1);
+        seA.setUpdatedAt(java.time.Instant.now().minusSeconds(1800));
 
         com.trainingapp.training.domain.SessionExercise seB = new com.trainingapp.training.domain.SessionExercise();
         ReflectionTestUtils.setField(seB, "id", UUID.randomUUID());
@@ -1282,6 +1285,7 @@ class WorkoutSessionServiceTest {
         seB.setSets(3);
         seB.setReps(10);
         seB.setSortOrder(0);
+        seB.setUpdatedAt(java.time.Instant.now().minusSeconds(1800));
 
         // DayTemplate has original order: A first (sortOrder 0), B second (sortOrder 1)
         com.trainingapp.training.domain.DayExercise deA = new com.trainingapp.training.domain.DayExercise();
@@ -1291,6 +1295,7 @@ class WorkoutSessionServiceTest {
         deA.setSets(4);
         deA.setReps(12);
         deA.setSortOrder(0);
+        deA.setUpdatedAt(java.time.Instant.now().minusSeconds(600));
 
         com.trainingapp.training.domain.DayExercise deB = new com.trainingapp.training.domain.DayExercise();
         ReflectionTestUtils.setField(deB, "id", UUID.randomUUID());
@@ -1299,6 +1304,7 @@ class WorkoutSessionServiceTest {
         deB.setSets(4);
         deB.setReps(12);
         deB.setSortOrder(1);
+        deB.setUpdatedAt(java.time.Instant.now().minusSeconds(600));
 
         when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
         when(dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplateId)).thenReturn(List.of(deA, deB));
@@ -1316,6 +1322,101 @@ class WorkoutSessionServiceTest {
         // Custom workout session sort orders MUST NOT be overwritten by day template sort orders
         assertThat(seA.getSortOrder()).isEqualTo(1);
         assertThat(seB.getSortOrder()).isEqualTo(0);
+    }
+
+    // #331: in-workout targets edited without updating the plan must survive sync/reload
+    @Test
+    void syncSessionExercises_KeepsNewerInWorkoutEdits_WhenPlanNotUpdated() {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setDayTemplate(dayTemplate);
+        java.time.Instant sessionStart = java.time.Instant.now().minusSeconds(3600);
+        session.setStartedAt(sessionStart);
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", UUID.randomUUID());
+
+        // Targets edited in the workout (3 x 6-9), plan NOT updated
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", UUID.randomUUID());
+        se.setSession(session);
+        se.setExercise(ex);
+        se.setSets(3);
+        se.setReps(6);
+        se.setRepsMax(9);
+        se.setSortOrder(0);
+        se.setUpdatedAt(sessionStart.plusSeconds(600));
+
+        // Plan targets still from session start (4 x 12)
+        com.trainingapp.training.domain.DayExercise de = new com.trainingapp.training.domain.DayExercise();
+        ReflectionTestUtils.setField(de, "id", UUID.randomUUID());
+        de.setDayTemplate(dayTemplate);
+        de.setExercise(ex);
+        de.setSets(4);
+        de.setReps(12);
+        de.setSortOrder(0);
+        de.setUpdatedAt(sessionStart);
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplateId)).thenReturn(List.of(de));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(se));
+
+        sessionService.syncSessionExercises(sessionId, userId);
+
+        // The newer in-workout edit is kept even after sync
+        assertThat(se.getSets()).isEqualTo(3);
+        assertThat(se.getReps()).isEqualTo(6);
+        assertThat(se.getRepsMax()).isEqualTo(9);
+        assertThat(se.getSortOrder()).isEqualTo(0);
+        verify(sessionExerciseRepository, never()).save(any());
+    }
+
+    // #331 (mirror): when the plan is edited AFTER the in-workout edit, sync applies the plan
+    @Test
+    void syncSessionExercises_AppliesPlanChange_WhenPlanEditedAfterWorkoutEdit() {
+        UUID sessionId = UUID.randomUUID();
+        WorkoutSession session = new WorkoutSession();
+        ReflectionTestUtils.setField(session, "id", sessionId);
+        session.setDayTemplate(dayTemplate);
+        java.time.Instant sessionStart = java.time.Instant.now().minusSeconds(3600);
+        session.setStartedAt(sessionStart);
+
+        com.trainingapp.training.domain.Exercise ex = new com.trainingapp.training.domain.Exercise();
+        ReflectionTestUtils.setField(ex, "id", UUID.randomUUID());
+
+        // Targets edited in the workout (3 x 6-9), plan NOT updated
+        com.trainingapp.training.domain.SessionExercise se = new com.trainingapp.training.domain.SessionExercise();
+        ReflectionTestUtils.setField(se, "id", UUID.randomUUID());
+        se.setSession(session);
+        se.setExercise(ex);
+        se.setSets(3);
+        se.setReps(6);
+        se.setRepsMax(9);
+        se.setSortOrder(0);
+        se.setUpdatedAt(sessionStart.plusSeconds(300));
+
+        // Plan edited after the in-workout edit, so the plan wins
+        com.trainingapp.training.domain.DayExercise de = new com.trainingapp.training.domain.DayExercise();
+        ReflectionTestUtils.setField(de, "id", UUID.randomUUID());
+        de.setDayTemplate(dayTemplate);
+        de.setExercise(ex);
+        de.setSets(4);
+        de.setReps(12);
+        de.setSortOrder(0);
+        de.setUpdatedAt(sessionStart.plusSeconds(600));
+
+        when(sessionRepository.findByIdAndUserId(sessionId, userId)).thenReturn(Optional.of(session));
+        when(dayExerciseRepository.findByDayTemplateIdOrderBySortOrderAsc(dayTemplateId)).thenReturn(List.of(de));
+        when(sessionExerciseRepository.findBySessionIdOrderBySortOrderAsc(sessionId)).thenReturn(List.of(se));
+
+        sessionService.syncSessionExercises(sessionId, userId);
+
+        assertThat(se.getSets()).isEqualTo(4);
+        assertThat(se.getReps()).isEqualTo(12);
+        verify(sessionExerciseRepository).save(se);
+        // Synced row is stamped with the template edit time so further syncs are stable
+        assertThat(se.getUpdatedAt()).isEqualTo(sessionStart.plusSeconds(600));
     }
 
     @Test
