@@ -117,6 +117,7 @@ public class WorkoutSessionService {
             se.setRepsMax(de.getRepsMax());
             se.setSortOrder(de.getSortOrder());
             se.setAmrap(de.isAmrap());
+            se.setUpdatedAt(now);
             sessionExerciseRepository.save(se);
         });
 
@@ -741,6 +742,7 @@ public class WorkoutSessionService {
         se.setRepsMax(request.repsMax());
         se.setAmrap(request.isAmrap());
         se.setSortOrder(maxOrder + 1);
+        se.setUpdatedAt(session.getStartedAt() != null ? session.getStartedAt() : Instant.now());
 
         SessionExercise saved = sessionExerciseRepository.save(se);
 
@@ -765,6 +767,7 @@ public class WorkoutSessionService {
                     dayExercise.setRepsMax(request.isAmrap() ? null : request.repsMax());
                     dayExercise.setAmrap(request.isAmrap());
                     dayExercise.setSortOrder(maxDayOrder + 1);
+                    dayExercise.touch();
                     dayExerciseRepository.save(dayExercise);
                 }
             }
@@ -792,6 +795,8 @@ public class WorkoutSessionService {
                 (a, b) -> a
             ));
 
+        Instant sessionBaseline = session.getStartedAt();
+
         // If the session has no exercises at all (e.g. template was empty at start and now has exercises), populate from template
         if (sessionExercises.isEmpty()) {
             int nextSortOrder = 0;
@@ -804,17 +809,26 @@ public class WorkoutSessionService {
                 newSe.setRepsMax(de.getRepsMax());
                 newSe.setSortOrder(nextSortOrder++);
                 newSe.setAmrap(de.isAmrap());
+                newSe.setUpdatedAt(Instant.now());
                 sessionExerciseRepository.save(newSe);
             }
         } else {
-            // Update targets (sets/reps) for existing matching exercises from the template
+            // Update targets (sets/reps) for existing matching exercises from the template,
+            // but only when the template row is the most recent edit. In-workout edits made
+            // without updating the plan (saveToDayTemplate=false) must survive sync/reload.
             for (DayExercise de : templateExercises) {
                 SessionExercise se = sessionByExerciseId.get(de.getExercise().getId());
-                if (se != null) {
+                if (se == null) {
+                    continue;
+                }
+                Instant templateEditedAt = de.getUpdatedAt();
+                Instant sessionEditedAt = se.getUpdatedAt() != null ? se.getUpdatedAt() : sessionBaseline;
+                if (templateEditedAt == null || templateEditedAt.isAfter(sessionEditedAt)) {
                     se.setSets(de.getSets());
                     se.setReps(de.getReps());
                     se.setRepsMax(de.getRepsMax());
                     se.setAmrap(de.isAmrap());
+                    se.setUpdatedAt(templateEditedAt);
                     sessionExerciseRepository.save(se);
                 }
             }
@@ -850,6 +864,9 @@ public class WorkoutSessionService {
             }
             se.setRepsMax(request.repsMax());
         }
+        // Targets changed in-workout: mark this as the most recent edit so a later
+        // sync does not overwrite it with stale template values.
+        se.setUpdatedAt(Instant.now());
 
         SessionExercise saved = sessionExerciseRepository.save(se);
 
@@ -875,6 +892,7 @@ public class WorkoutSessionService {
                             }
                             de.setRepsMax(request.repsMax());
                         }
+                        de.touch();
                         dayExerciseRepository.save(de);
                         break;
                     }
@@ -960,6 +978,8 @@ public class WorkoutSessionService {
         if (request.isAmrap() != null) {
             se.setAmrap(request.isAmrap());
         }
+        // Replacement re-targets the session exercise row: mark as most recent edit.
+        se.setUpdatedAt(Instant.now());
 
         // Delete any logged sets for the replaced exercise
         List<WorkoutSet> setsToDelete = setRepository.findBySessionIdOrderByLoggedAtAsc(session.getId())
@@ -996,6 +1016,7 @@ public class WorkoutSessionService {
                                 de.setRepsMax(request.repsMax());
                             }
                         }
+                        de.touch();
                         dayExerciseRepository.save(de);
                         break;
                     }

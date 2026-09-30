@@ -10,11 +10,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
  * An exercise assigned to a {@link DayTemplate}, with prescribed sets, reps,
  * and a user-defined display order.
+ *
+ * <p>The {@code updatedAt} timestamp records when targets were last edited
+ * (creation or modification) and is used to decide whether a session-side
+ * edit or a template-side edit is the most recent one during
+ * {@code syncSessionExercises}.
  *
  * <p>The {@code sortOrder} field determines the visual position of this
  * exercise within the day. The reorder endpoint allows batch-updating
@@ -52,6 +58,9 @@ public class DayExercise {
     @Column(name = "is_amrap", nullable = false)
     private boolean isAmrap = false;
 
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt = Instant.now();
+
     public UUID getId() { return id; }
     public DayTemplate getDayTemplate() { return dayTemplate; }
     public void setDayTemplate(DayTemplate dayTemplate) { this.dayTemplate = dayTemplate; }
@@ -67,4 +76,9 @@ public class DayExercise {
     public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
     public boolean isAmrap() { return isAmrap; }
     public void setAmrap(boolean amrap) { isAmrap = amrap; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    /** Refreshes the last-edit timestamp. Called whenever targets are created or modified. */
+    public void touch() { this.updatedAt = Instant.now(); }
 }

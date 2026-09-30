@@ -72,6 +72,7 @@ public class DayExerciseService {
         dayExercise.setRepsMax(request.isAmrap() ? null : request.repsMax());
         dayExercise.setAmrap(request.isAmrap());
         dayExercise.setSortOrder(request.sortOrder());
+        dayExercise.touch();
         return toResponse(dayExerciseRepository.save(dayExercise));
     }
 
@@ -94,6 +95,7 @@ public class DayExerciseService {
         dayExercise.setRepsMax(request.isAmrap() ? null : request.repsMax());
         dayExercise.setAmrap(request.isAmrap());
         dayExercise.setSortOrder(request.sortOrder());
+        dayExercise.touch();
         return toResponse(dayExerciseRepository.save(dayExercise));
     }
 
