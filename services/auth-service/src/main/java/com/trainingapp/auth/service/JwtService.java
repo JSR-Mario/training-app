@@ -84,6 +84,18 @@ public class JwtService {
     }
 
     /**
+     * Extracts and returns the issued-at timestamp from a valid token.
+     *
+     * @param token the JWT string to parse
+     * @return the {@link Instant} when the token was issued
+     * @throws InvalidTokenException if the token is invalid or expired
+     */
+    public Instant extractIssuedAt(String token) {
+        Date issuedAt = parseClaims(token).getIssuedAt();
+        return issuedAt != null ? issuedAt.toInstant() : null;
+    }
+
+    /**
      * Returns {@code true} if the token is well-formed, correctly signed,
      * and has not yet expired.
      *

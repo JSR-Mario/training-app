@@ -69,4 +69,42 @@ class AuthControllerTest {
                 .andExpect(cookie().exists("refresh_token"))
                 .andExpect(cookie().httpOnly("refresh_token", true));
     }
+
+    @Test
+    void forgotPassword_Success() throws Exception {
+        com.trainingapp.auth.dto.ForgotPasswordRequest req = new com.trainingapp.auth.dto.ForgotPasswordRequest("test@example.com");
+
+        mockMvc.perform(post("/api/v1/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("If that email address is in our system, we have sent a password reset link."));
+
+        Mockito.verify(authService).forgotPassword("test@example.com");
+    }
+
+    @Test
+    void resetPassword_Success() throws Exception {
+        com.trainingapp.auth.dto.ResetPasswordRequest req = new com.trainingapp.auth.dto.ResetPasswordRequest("token-123", "NewValidPassword123");
+
+        mockMvc.perform(post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Password has been reset successfully."));
+
+        Mockito.verify(authService).resetPassword("token-123", "NewValidPassword123");
+    }
+
+    @Test
+    void resetPassword_invalidPasswordPattern_returnsBadRequest() throws Exception {
+        com.trainingapp.auth.dto.ResetPasswordRequest req = new com.trainingapp.auth.dto.ResetPasswordRequest("token-123", "alllowercasepassword");
+
+        mockMvc.perform(post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(authService, Mockito.never()).resetPassword(any(), any());
+    }
 }
