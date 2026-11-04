@@ -53,6 +53,7 @@ class AuthServiceTest {
     @Mock private JwtService jwtService;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private EmailService emailService;
+    @Mock private java.util.concurrent.Executor emailExecutor;
 
     @InjectMocks
     private AuthService authService;
@@ -62,6 +63,11 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.lenient().doAnswer(inv -> {
+            ((Runnable) inv.getArgument(0)).run();
+            return null;
+        }).when(emailExecutor).execute(any(Runnable.class));
+
         sampleId = UUID.randomUUID();
         sampleUser = new User();
         ReflectionTestUtils.setField(sampleUser, "id", sampleId);
@@ -295,6 +301,7 @@ class AuthServiceTest {
         token.setExpiresAt(Instant.now().plus(java.time.Duration.ofMinutes(15)));
 
         when(passwordResetTokenRepository.findByTokenHash(tokenHash)).thenReturn(Optional.of(token));
+        when(passwordResetTokenRepository.deleteByTokenHash(tokenHash)).thenReturn(1);
         when(passwordEncoder.encode("NewSecret123")).thenReturn("newHashedPassword");
 
         authService.resetPassword(rawToken, "NewSecret123");
@@ -324,6 +331,28 @@ class AuthServiceTest {
                 .isInstanceOf(InvalidResetTokenException.class);
 
         verify(passwordResetTokenRepository).delete(token);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void resetPassword_doubleUse_throwsInvalidResetTokenException() throws Exception {
+        String rawToken = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+        String tokenHash = java.util.HexFormat.of().formatHex(digest.digest(rawToken.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+
+        PasswordResetToken token = new PasswordResetToken();
+        token.setUser(sampleUser);
+        token.setTokenHash(tokenHash);
+        token.setExpiresAt(Instant.now().plus(java.time.Duration.ofMinutes(15)));
+
+        when(passwordResetTokenRepository.findByTokenHash(tokenHash)).thenReturn(Optional.of(token));
+        // Simulate concurrent consumption or already deleted row
+        when(passwordResetTokenRepository.deleteByTokenHash(tokenHash)).thenReturn(0);
+
+        assertThatThrownBy(() -> authService.resetPassword(rawToken, "NewSecret123"))
+                .isInstanceOf(InvalidResetTokenException.class)
+                .hasMessage("Invalid or expired password reset token.");
+
         verify(userRepository, never()).save(any());
     }
 
@@ -386,6 +415,40 @@ class AuthServiceTest {
         when(jwtService.extractUserId("refresh.token")).thenReturn(sampleId);
         when(userRepository.findById(sampleId)).thenReturn(Optional.of(sampleUser));
         when(jwtService.extractIssuedAt("refresh.token")).thenReturn(passwordChanged.plusSeconds(10));
+        when(jwtService.generateAccessToken(sampleUser)).thenReturn("new-access-token");
+        when(jwtService.accessExpirySeconds()).thenReturn(900L);
+
+        AuthResponse resp = authService.refresh("refresh.token");
+
+        assertThat(resp.accessToken()).isEqualTo("new-access-token");
+    }
+
+    @Test
+    void refresh_issuedSameSecondAsPasswordChangedAt_success() {
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        sampleUser.setPasswordChangedAt(now);
+
+        when(jwtService.isValid("refresh.token")).thenReturn(true);
+        when(jwtService.isRefreshToken("refresh.token")).thenReturn(true);
+        when(jwtService.extractUserId("refresh.token")).thenReturn(sampleId);
+        when(userRepository.findById(sampleId)).thenReturn(Optional.of(sampleUser));
+        when(jwtService.extractIssuedAt("refresh.token")).thenReturn(now);
+        when(jwtService.generateAccessToken(sampleUser)).thenReturn("new-access-token");
+        when(jwtService.accessExpirySeconds()).thenReturn(900L);
+
+        AuthResponse resp = authService.refresh("refresh.token");
+
+        assertThat(resp.accessToken()).isEqualTo("new-access-token");
+    }
+
+    @Test
+    void refresh_nullPasswordChangedAt_legacyUser_success() {
+        sampleUser.setPasswordChangedAt(null);
+
+        when(jwtService.isValid("refresh.token")).thenReturn(true);
+        when(jwtService.isRefreshToken("refresh.token")).thenReturn(true);
+        when(jwtService.extractUserId("refresh.token")).thenReturn(sampleId);
+        when(userRepository.findById(sampleId)).thenReturn(Optional.of(sampleUser));
         when(jwtService.generateAccessToken(sampleUser)).thenReturn("new-access-token");
         when(jwtService.accessExpirySeconds()).thenReturn(900L);
 

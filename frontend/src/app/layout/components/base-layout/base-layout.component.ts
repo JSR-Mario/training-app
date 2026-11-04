@@ -477,7 +477,7 @@ export class BaseLayoutComponent {
         next: () => {
           this.isResettingPassword.set(false);
           this.resetPasswordSuccess.set(true);
-          this.resetPasswordFeedback.set('Reset link sent to your email!');
+          this.resetPasswordFeedback.set('Reset link sent! Check your inbox.');
           setTimeout(() => this.resetPasswordFeedback.set(''), 4000);
         },
         error: () => {

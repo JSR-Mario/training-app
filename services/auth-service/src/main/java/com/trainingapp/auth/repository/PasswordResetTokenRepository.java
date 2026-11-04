@@ -24,6 +24,17 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
 
     void deleteByUser(User user);
 
+    /**
+     * Atomically deletes a token by its hash and returns the number of affected rows.
+     * Ensures single-use consumption even under concurrent requests.
+     *
+     * @param tokenHash SHA-256 hash of the reset token
+     * @return number of affected rows (1 if deleted successfully, 0 if already consumed)
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM PasswordResetToken t WHERE t.tokenHash = :tokenHash")
+    int deleteByTokenHash(@Param("tokenHash") String tokenHash);
+
     @Modifying
     @Query("DELETE FROM PasswordResetToken t WHERE t.expiresAt < :now")
     void deleteExpiredTokens(@Param("now") Instant now);

@@ -21,6 +21,7 @@ import com.trainingapp.auth.repository.UserRepository;
 import com.trainingapp.auth.repository.VerificationTokenRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ import java.util.HexFormat;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 /**
  * Core authentication business logic.
@@ -57,6 +59,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final Executor emailExecutor;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AuthService(UserRepository userRepository,
@@ -64,13 +67,15 @@ public class AuthService {
                        PasswordResetTokenRepository passwordResetTokenRepository,
                        JwtService jwtService,
                        PasswordEncoder passwordEncoder,
-                       EmailService emailService) {
+                       EmailService emailService,
+                       @Qualifier("emailExecutor") Executor emailExecutor) {
         this.userRepository = userRepository;
         this.verificationTokenRepository = verificationTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.emailExecutor = emailExecutor;
     }
 
     /**
@@ -216,29 +221,24 @@ public class AuthService {
         resetToken.setExpiresAt(Instant.now().plus(Duration.ofMinutes(15)));
         passwordResetTokenRepository.save(resetToken);
 
-        // Dispatch email asynchronously after the transaction successfully commits
+        // Dispatch email asynchronously using dedicated bounded executor after transaction commit
+        Runnable sendEmailTask = () -> {
+            try {
+                emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), rawToken);
+            } catch (Exception e) {
+                log.error("Failed to asynchronously send password reset email due to {}", e.getClass().getSimpleName());
+            }
+        };
+
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    CompletableFuture.runAsync(() -> {
-                        try {
-                            emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), rawToken);
-                        } catch (Exception e) {
-                            log.error("Failed to asynchronously send password reset email: {}", e.getMessage());
-                        }
-                    });
+                    CompletableFuture.runAsync(sendEmailTask, emailExecutor);
                 }
             });
         } else {
-            // Non-transactional fallback (e.g. direct test invocations without active transaction manager)
-            CompletableFuture.runAsync(() -> {
-                try {
-                    emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), rawToken);
-                } catch (Exception e) {
-                    log.error("Failed to asynchronously send password reset email: {}", e.getMessage());
-                }
-            });
+            CompletableFuture.runAsync(sendEmailTask, emailExecutor);
         }
     }
 
@@ -247,8 +247,8 @@ public class AuthService {
      *
      * <p>Hashes the input token, validates existence and expiration, updates the password,
      * sets {@code passwordChangedAt} for session/refresh-token invalidation, activates
-     * email verification (proof of email access), deletes the token to guarantee single-use,
-     * and asynchronously dispatches a notification email.
+     * email verification (proof of email access), deletes the token atomically to guarantee single-use,
+     * and asynchronously dispatches a notification email via the dedicated thread pool.
      *
      * @param rawToken    the raw unhashed reset token
      * @param newPassword the new plain-text password
@@ -271,36 +271,38 @@ public class AuthService {
             throw new DemoUserProtectionException("Demo user account cannot be modified.");
         }
 
+        // Atomic consume: delete the token by hash. Must affect exactly 1 row.
+        int deleted = passwordResetTokenRepository.deleteByTokenHash(tokenHash);
+        if (deleted != 1) {
+            throw new InvalidResetTokenException("Invalid or expired password reset token.");
+        }
+
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setPasswordChangedAt(Instant.now().truncatedTo(ChronoUnit.SECONDS));
         user.setEmailVerified(true);
         userRepository.save(user);
 
-        // Single-use: delete all tokens for this user
+        // Single-use hygiene: delete any other remaining tokens for this user
         passwordResetTokenRepository.deleteByUser(user);
 
-        // Dispatch confirmation notification asynchronously after commit
+        // Dispatch confirmation notification asynchronously after commit using dedicated executor
+        Runnable sendNotificationTask = () -> {
+            try {
+                emailService.sendPasswordChangedNotificationEmail(user.getEmail(), user.getUsername());
+            } catch (Exception e) {
+                log.error("Failed to asynchronously send password changed notification due to {}", e.getClass().getSimpleName());
+            }
+        };
+
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    CompletableFuture.runAsync(() -> {
-                        try {
-                            emailService.sendPasswordChangedNotificationEmail(user.getEmail(), user.getUsername());
-                        } catch (Exception e) {
-                            log.error("Failed to asynchronously send password changed notification: {}", e.getMessage());
-                        }
-                    });
+                    CompletableFuture.runAsync(sendNotificationTask, emailExecutor);
                 }
             });
         } else {
-            CompletableFuture.runAsync(() -> {
-                try {
-                    emailService.sendPasswordChangedNotificationEmail(user.getEmail(), user.getUsername());
-                } catch (Exception e) {
-                    log.error("Failed to asynchronously send password changed notification: {}", e.getMessage());
-                }
-            });
+            CompletableFuture.runAsync(sendNotificationTask, emailExecutor);
         }
     }
 
@@ -333,7 +335,9 @@ public class AuthService {
 
     /**
      * Issues a new access token in exchange for a valid refresh token.
-     * Rejects refresh tokens whose issued-at time is before {@code passwordChangedAt}.
+     * Rejects refresh tokens whose issued-at time is strictly before {@code passwordChangedAt}.
+     * Both timestamps are truncated to second precision for safe comparison.
+     * Legacy users with {@code passwordChangedAt == null} are accepted without invalidation.
      *
      * @param refreshToken the JWT refresh token from the HttpOnly cookie
      * @return a new {@link AuthResponse} with a fresh access token
@@ -358,8 +362,12 @@ public class AuthService {
 
         if (user.getPasswordChangedAt() != null) {
             Instant issuedAt = jwtService.extractIssuedAt(refreshToken);
-            if (issuedAt != null && issuedAt.isBefore(user.getPasswordChangedAt())) {
-                throw new InvalidTokenException("Refresh token was invalidated by a recent password change. Please log in again.");
+            if (issuedAt != null) {
+                Instant truncatedIssuedAt = issuedAt.truncatedTo(ChronoUnit.SECONDS);
+                Instant truncatedPasswordChangedAt = user.getPasswordChangedAt().truncatedTo(ChronoUnit.SECONDS);
+                if (truncatedIssuedAt.isBefore(truncatedPasswordChangedAt)) {
+                    throw new InvalidTokenException("Refresh token was invalidated by a recent password change. Please log in again.");
+                }
             }
         }
 

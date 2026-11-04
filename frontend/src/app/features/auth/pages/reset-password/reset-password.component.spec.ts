@@ -57,6 +57,13 @@ describe('ResetPasswordComponent', () => {
     expect(component.resetForm.hasError('passwordMismatch')).toBeTrue();
 
     component.resetForm.setValue({
+      newPassword: 'A1a' + 'a'.repeat(70),
+      confirmPassword: 'A1a' + 'a'.repeat(70)
+    });
+    expect(component.resetForm.invalid).toBeTrue();
+    expect(component.resetForm.get('newPassword')?.hasError('maxlength')).toBeTrue();
+
+    component.resetForm.setValue({
       newPassword: 'ValidPassword1',
       confirmPassword: 'ValidPassword1'
     });

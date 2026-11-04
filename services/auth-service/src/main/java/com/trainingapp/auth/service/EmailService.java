@@ -1,5 +1,6 @@
 package com.trainingapp.auth.service;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +16,9 @@ import java.util.Optional;
 /**
  * Service for sending account verification and password reset emails.
  *
- * <p>If SMTP is not configured, console logging of links is strictly restricted to
- * development and test environments. In production environments, misconfigurations
- * are logged as errors without leaking tokens or URLs.
+ * <p>Console logging of sensitive links is strictly gated to development and test profiles.
+ * In production or when no dev profile is active, missing SMTP configuration or failures
+ * are logged as generic errors without leaking tokens, URLs, or personal data.
  */
 @Service
 public class EmailService {
@@ -30,7 +31,7 @@ public class EmailService {
     @Value("${spring.mail.host:}")
     private String mailHost;
 
-    @Value("${app.frontend.url:http://localhost:4200}")
+    @Value("${app.frontend.url:}")
     private String frontendUrl;
 
     public EmailService(Optional<JavaMailSender> mailSender, Environment environment) {
@@ -38,15 +39,20 @@ public class EmailService {
         this.environment = environment;
     }
 
+    @PostConstruct
+    public void validateConfiguration() {
+        if (frontendUrl == null || frontendUrl.isBlank()) {
+            throw new IllegalStateException("app.frontend.url must be configured and cannot be blank.");
+        }
+    }
+
     /**
      * Checks whether the current runtime environment is considered a development/test environment.
+     * Depends strictly on active Spring profiles (dev, local, test) - never heuristics.
      *
-     * @return true if dev/test or frontend URL is localhost
+     * @return true if an active profile matches dev, local, or test; false otherwise.
      */
-    private boolean isDevEnvironment() {
-        if (frontendUrl != null && (frontendUrl.contains("localhost") || frontendUrl.contains("127.0.0.1"))) {
-            return true;
-        }
+    boolean isDevEnvironment() {
         return Arrays.stream(environment.getActiveProfiles())
                 .anyMatch(p -> p.equalsIgnoreCase("dev") || p.equalsIgnoreCase("local") || p.equalsIgnoreCase("test"));
     }
@@ -82,7 +88,7 @@ public class EmailService {
                 log.info("Verification Link: {}", verificationUrl);
                 log.info("=================================================================");
             } else {
-                log.error("Failed to send verification email to {}: SMTP host is not configured.", maskEmail(toEmail));
+                log.error("Failed to send verification email: SMTP host is not configured.");
             }
             return;
         }
@@ -112,7 +118,7 @@ public class EmailService {
 
             log.info("Verification email successfully sent to {}", maskEmail(toEmail));
         } catch (Exception e) {
-            log.error("Failed to send verification email to {}: {}", maskEmail(toEmail), e.getMessage());
+            log.error("Failed to send verification email: {}", e.getClass().getSimpleName());
             if (isDevEnvironment()) {
                 log.info("FALLBACK VERIFICATION LINK for {}: {}", maskEmail(toEmail), verificationUrl);
             }
@@ -139,7 +145,7 @@ public class EmailService {
                 log.info("Reset Link: {}", resetUrl);
                 log.info("=================================================================");
             } else {
-                log.error("Failed to send password reset email to {}: SMTP host is not configured.", maskEmail(toEmail));
+                log.error("Failed to send password reset email: SMTP host is not configured.");
             }
             return;
         }
@@ -170,7 +176,7 @@ public class EmailService {
 
             log.info("Password reset email successfully sent to {}", maskEmail(toEmail));
         } catch (Exception e) {
-            log.error("Failed to send password reset email to {}: {}", maskEmail(toEmail), e.getMessage());
+            log.error("Failed to send password reset email: {}", e.getClass().getSimpleName());
             if (isDevEnvironment()) {
                 log.info("FALLBACK RESET LINK for {}: {}", maskEmail(toEmail), resetUrl);
             }
@@ -187,6 +193,8 @@ public class EmailService {
         if (mailSender == null || mailHost == null || mailHost.isBlank()) {
             if (isDevEnvironment()) {
                 log.info("PASSWORD CHANGED NOTIFICATION (Dev): Sent to {} ({})", username, maskEmail(toEmail));
+            } else {
+                log.error("Failed to send password changed notification email: SMTP host is not configured.");
             }
             return;
         }
@@ -213,7 +221,7 @@ public class EmailService {
 
             log.info("Password changed confirmation email sent to {}", maskEmail(toEmail));
         } catch (Exception e) {
-            log.error("Failed to send password changed notification email to {}: {}", maskEmail(toEmail), e.getMessage());
+            log.error("Failed to send password changed notification email: {}", e.getClass().getSimpleName());
         }
     }
 }

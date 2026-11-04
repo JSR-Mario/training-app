@@ -97,6 +97,32 @@ class AuthControllerTest {
     }
 
     @Test
+    void register_passwordExceeds72Chars_returnsBadRequest() throws Exception {
+        String longPassword = "A1a" + "a".repeat(70); // 73 chars
+        RegisterRequest req = new RegisterRequest("testuser", "test@example.com", longPassword);
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(authService, Mockito.never()).register(any());
+    }
+
+    @Test
+    void resetPassword_passwordExceeds72Chars_returnsBadRequest() throws Exception {
+        String longPassword = "A1a" + "a".repeat(70); // 73 chars
+        com.trainingapp.auth.dto.ResetPasswordRequest req = new com.trainingapp.auth.dto.ResetPasswordRequest("token-123", longPassword);
+
+        mockMvc.perform(post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(authService, Mockito.never()).resetPassword(any(), any());
+    }
+
+    @Test
     void resetPassword_invalidPasswordPattern_returnsBadRequest() throws Exception {
         com.trainingapp.auth.dto.ResetPasswordRequest req = new com.trainingapp.auth.dto.ResetPasswordRequest("token-123", "alllowercasepassword");
 

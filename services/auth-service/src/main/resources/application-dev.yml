@@ -6,6 +6,8 @@ spring:
 app:
   jwt:
     cookie-secure: false
+  frontend:
+    url: ${APP_FRONTEND_URL:http://localhost:4200}
 
 # Override memory (Spring Boot DevTools restart can take more memory)
 # We set this via JAVA_TOOL_OPTIONS in docker-compose or start scripts, 
