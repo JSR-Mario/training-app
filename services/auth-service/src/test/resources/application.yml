@@ -1,4 +1,4 @@
-# Test configuration — uses H2 in-memory database.
+# Test configuration - uses H2 in-memory database.
 # Flyway is disabled; Hibernate creates the schema from entity definitions.
 # JWT secret is a test-only 32-byte hex value.
 
@@ -33,3 +33,5 @@ app:
     access-expiry-minutes: 15
     refresh-expiry-days: 7
     cookie-secure: false
+  frontend:
+    url: "http://localhost:4200"

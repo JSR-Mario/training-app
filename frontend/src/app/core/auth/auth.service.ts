@@ -136,6 +136,18 @@ export class AuthService {
     return this.http.post<void>('/api/v1/auth/resend-verification', { email });
   }
 
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>('/api/v1/auth/forgot-password', { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>('/api/v1/auth/reset-password', { token, newPassword }).pipe(
+      tap(() => {
+        this.accessTokenSignal.set(null);
+      })
+    );
+  }
+
   loginAsDemo(): Observable<AuthResponse> {
     return this.login({ username: 'demo', password: 'demo' });
   }

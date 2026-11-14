@@ -59,6 +59,9 @@ public class User {
     @Column(name = "theme_neg", length = 50)
     private String themeNeg = "red";
 
+    @Column(name = "password_changed_at")
+    private Instant passwordChangedAt;
+
     /**
      * Sets {@code createdAt} to the current UTC instant before the first persist.
      * Ensures the field is always populated regardless of the caller.
@@ -113,4 +116,7 @@ public class User {
 
     public String getThemeNeg() { return themeNeg; }
     public void setThemeNeg(String themeNeg) { this.themeNeg = themeNeg; }
+
+    public Instant getPasswordChangedAt() { return passwordChangedAt; }
+    public void setPasswordChangedAt(Instant passwordChangedAt) { this.passwordChangedAt = passwordChangedAt; }
 }

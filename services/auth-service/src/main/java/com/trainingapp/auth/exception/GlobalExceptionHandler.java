@@ -52,6 +52,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles invalid or expired password reset tokens.
+     *
+     * @param ex the invalid reset token exception
+     * @return 400 Bad Request with RFC 7807 body
+     */
+    @ExceptionHandler(InvalidResetTokenException.class)
+    public ProblemDetail handleInvalidResetToken(InvalidResetTokenException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Invalid Reset Token");
+        return problem;
+    }
+
+    /**
      * Handles user not found by ID (e.g., on the {@code /me} endpoint).
      *
      * @param ex the resource not found exception

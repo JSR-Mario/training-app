@@ -7,15 +7,15 @@ import jakarta.validation.constraints.Size;
 /**
  * Request body for {@code POST /api/v1/auth/register}.
  *
- * @param username desired login name (3–100 characters)
+ * @param username desired login name (3-100 characters)
  * @param email    valid email address
- * @param password plain-text password (8–100 characters); hashed before storage
+ * @param password plain-text password (8-72 characters); hashed before storage
  */
 public record RegisterRequest(
         @NotBlank @Size(min = 3, max = 100) String username,
         @NotBlank @Email @Size(max = 255) String email,
         @NotBlank 
-        @Size(min = 8, max = 100) 
+        @Size(min = 8, max = 72) 
         @jakarta.validation.constraints.Pattern(
                 regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$", 
                 message = "Password must contain at least one uppercase letter, one lowercase letter, and one number"

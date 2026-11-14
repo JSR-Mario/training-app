@@ -47,6 +47,8 @@ app:
     access-expiry-minutes: ${JWT_ACCESS_EXPIRY_MINUTES:15}
     refresh-expiry-days: ${JWT_REFRESH_EXPIRY_DAYS:7}
     cookie-secure: ${COOKIE_SECURE:false}
+  frontend:
+    url: ${APP_FRONTEND_URL:}
 
 management:
   endpoints:

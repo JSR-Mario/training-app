@@ -250,6 +250,37 @@ import { CoachMarkComponent } from '../../../shared/components/coach-mark/coach-
                       Grafana Dashboard
                     </a>
                   }
+                  <button 
+                    (click)="triggerPasswordReset()" 
+                    [disabled]="authService.isDemoUser || isResettingPassword()"
+                    [title]="authService.isDemoUser ? 'Demo account cannot reset password' : 'Send password reset link to your email'"
+                    class="w-full text-left py-1.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    @if (isResettingPassword()) {
+                      <svg class="animate-spin h-4 w-4 mr-2 text-accent-pos" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending link...
+                    } @else {
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                      </svg>
+                      Reset Password
+                    }
+                  </button>
+
+                  @if (resetPasswordFeedback()) {
+                    <div 
+                      class="text-[11px] font-semibold py-1 px-2 rounded-lg"
+                      [class.bg-accent-pos/10]="resetPasswordSuccess()"
+                      [class.text-accent-pos]="resetPasswordSuccess()"
+                      [class.bg-accent-neg/10]="!resetPasswordSuccess()"
+                      [class.text-accent-neg]="!resetPasswordSuccess()"
+                    >
+                      {{ resetPasswordFeedback() }}
+                    </div>
+                  }
                   <button (click)="logout()" class="w-full text-left py-1.5 text-sm font-bold text-accent-neg hover:opacity-80 transition-colors flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -322,6 +353,10 @@ export class BaseLayoutComponent {
   nextLevelXp = signal<number>(0);
 
   username = computed(() => this.authService.username);
+  currentUserEmail = signal<string>('');
+  isResettingPassword = signal<boolean>(false);
+  resetPasswordFeedback = signal<string>('');
+  resetPasswordSuccess = signal<boolean>(false);
   
   xpProgressPercent = computed(() => {
     const next = this.nextLevelXp();
@@ -368,6 +403,7 @@ export class BaseLayoutComponent {
     
     this.authService.getMe().subscribe({
       next: (user) => {
+        this.currentUserEmail.set(user.email);
         this.themeService.syncFromServer({
           themeMode: user.themeMode,
           themePos: user.themePos,
@@ -419,6 +455,54 @@ export class BaseLayoutComponent {
     if (this.isMobile()) {
       this.isSidebarOpen.set(false);
       window.dispatchEvent(new CustomEvent('sidebar-toggled', { detail: false }));
+    }
+  }
+
+  triggerPasswordReset() {
+    if (this.authService.isDemoUser || this.isResettingPassword()) {
+      return;
+    }
+
+    this.isResettingPassword.set(true);
+    this.resetPasswordFeedback.set('');
+
+    const proceedWithEmail = (email: string) => {
+      if (!email) {
+        this.isResettingPassword.set(false);
+        this.resetPasswordSuccess.set(false);
+        this.resetPasswordFeedback.set('Could not find account email.');
+        return;
+      }
+      this.authService.forgotPassword(email).subscribe({
+        next: () => {
+          this.isResettingPassword.set(false);
+          this.resetPasswordSuccess.set(true);
+          this.resetPasswordFeedback.set('Reset link sent! Check your inbox.');
+          setTimeout(() => this.resetPasswordFeedback.set(''), 4000);
+        },
+        error: () => {
+          this.isResettingPassword.set(false);
+          this.resetPasswordSuccess.set(false);
+          this.resetPasswordFeedback.set('Failed to send reset link.');
+          setTimeout(() => this.resetPasswordFeedback.set(''), 4000);
+        }
+      });
+    };
+
+    if (this.currentUserEmail()) {
+      proceedWithEmail(this.currentUserEmail());
+    } else {
+      this.authService.getMe().subscribe({
+        next: (user) => {
+          this.currentUserEmail.set(user.email);
+          proceedWithEmail(user.email);
+        },
+        error: () => {
+          this.isResettingPassword.set(false);
+          this.resetPasswordSuccess.set(false);
+          this.resetPasswordFeedback.set('Could not fetch user details.');
+        }
+      });
     }
   }
 

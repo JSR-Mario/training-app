@@ -3,8 +3,11 @@ package com.trainingapp.auth.controller;
 import com.trainingapp.auth.config.AuthConstants;
 import com.trainingapp.auth.config.JwtProperties;
 import com.trainingapp.auth.dto.AuthResponse;
+import com.trainingapp.auth.dto.ForgotPasswordRequest;
 import com.trainingapp.auth.dto.LoginRequest;
+import com.trainingapp.auth.dto.MessageResponse;
 import com.trainingapp.auth.dto.RegisterRequest;
+import com.trainingapp.auth.dto.ResetPasswordRequest;
 import com.trainingapp.auth.dto.UpdatePreferencesRequest;
 import com.trainingapp.auth.dto.UserResponse;
 import com.trainingapp.auth.service.AuthService;
@@ -79,6 +82,20 @@ public class AuthController {
     public ResponseEntity<Void> resendVerification(@Valid @RequestBody com.trainingapp.auth.dto.ResendVerificationRequest request) {
         authService.resendVerification(request.email());
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Request password reset link via email")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.email());
+        return ResponseEntity.ok(new MessageResponse("If that email address is in our system, we have sent a password reset link."));
+    }
+
+    @Operation(summary = "Reset password using reset token")
+    @PostMapping("/reset-password")
+    public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok(new MessageResponse("Password has been reset successfully."));
     }
 
     /**

@@ -55,4 +55,32 @@ describe('AuthService', () => {
     expect(service.isAuthenticated).toBeFalse();
     expect(service.accessToken).toBeNull();
   });
+
+  it('should send forgot password request', () => {
+    service.forgotPassword('user@example.com').subscribe(res => {
+      expect(res.message).toContain('sent a password reset link');
+    });
+
+    const req = httpMock.expectOne('/api/v1/auth/forgot-password');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'user@example.com' });
+    req.flush({ message: 'If that email address is in our system, we have sent a password reset link.' });
+  });
+
+  it('should send reset password request and clear access token', () => {
+    service['accessTokenSignal'].set('current-token');
+    expect(service.isAuthenticated).toBeTrue();
+
+    service.resetPassword('secret-token', 'NewPassword123').subscribe(res => {
+      expect(res.message).toBe('Password has been reset successfully.');
+    });
+
+    const req = httpMock.expectOne('/api/v1/auth/reset-password');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ token: 'secret-token', newPassword: 'NewPassword123' });
+    req.flush({ message: 'Password has been reset successfully.' });
+
+    expect(service.isAuthenticated).toBeFalse();
+    expect(service.accessToken).toBeNull();
+  });
 });
